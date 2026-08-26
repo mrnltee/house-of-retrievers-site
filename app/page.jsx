@@ -103,6 +103,33 @@ export default function Home() {
     };
   }, [modalOpen]);
 
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setModalOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [modalOpen]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    const story = Number(params.get("story"));
+    if (view === "impact" || view === "families") setPackView(view);
+    if (Number.isInteger(story) && story >= 0 && story < activities.length) {
+      setActiveStory(story);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", packView);
+    params.set("story", String(activeStory));
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
+  }, [packView, activeStory]);
+
   const openJoin = () => {
     setSent(false);
     setModalOpen(true);
@@ -116,12 +143,13 @@ export default function Home() {
 
   return (
     <main>
+      <a href="#top" className="skip-link">Skip to content</a>
       <div className="scroll-progress" style={{ transform: `scaleX(${progress / 100})` }} />
 
       <header className="site-header">
         <a href="#top" className="brand" aria-label="House of Retrievers home">
           <span className="brand-logo-frame">
-            <img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" />
+            <img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" fetchPriority="high" />
           </span>
         </a>
 
@@ -166,7 +194,14 @@ export default function Home() {
         </div>
 
         <div className="story-stage">
-          <article className="story-image" style={{ backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(20, 19, 14, .72)), url(${active.image})` }} aria-label={active.alt}>
+          <article className="story-image" aria-label={active.alt}>
+            {activities.map((item, index) => (
+              <div
+                key={item.title}
+                className={index === activeStory ? "story-image-layer active" : "story-image-layer"}
+                style={{ backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(20, 19, 14, .72)), url(${item.image})` }}
+              />
+            ))}
             <div className="story-caption">
               <span>{String(activeStory + 1).padStart(2, "0")}</span>
               <div><small>{active.eyebrow}</small><strong>{active.title}</strong></div>
@@ -192,13 +227,31 @@ export default function Home() {
               <h2>Every good story<br />starts with a <em>pack.</em></h2>
             </div>
             <div className="view-switch" role="tablist" aria-label="Pack content">
-              <button className={packView === "impact" ? "active" : ""} onClick={() => setPackView("impact")}>How to join</button>
-              <button className={packView === "families" ? "active" : ""} onClick={() => setPackView("families")}>Founding families</button>
+              <button
+                id="pack-tab-impact"
+                role="tab"
+                aria-selected={packView === "impact"}
+                aria-controls="pack-panel-impact"
+                className={packView === "impact" ? "active" : ""}
+                onClick={() => setPackView("impact")}
+              >
+                How to join
+              </button>
+              <button
+                id="pack-tab-families"
+                role="tab"
+                aria-selected={packView === "families"}
+                aria-controls="pack-panel-families"
+                className={packView === "families" ? "active" : ""}
+                onClick={() => setPackView("families")}
+              >
+                Founding families
+              </button>
             </div>
           </div>
 
           {packView === "impact" ? (
-            <div className="join-grid">
+            <div id="pack-panel-impact" role="tabpanel" aria-labelledby="pack-tab-impact" className="join-grid">
               {[
                 ["01", "Become a member", "Meet fellow retriever families, exchange practical care knowledge, and join community activities."],
                 ["02", "Volunteer together", "Bring your time, skills, or friendly retriever to outreach programs where your presence can help."],
@@ -210,7 +263,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="family-grid">
+            <div id="pack-panel-families" role="tabpanel" aria-labelledby="pack-tab-families" className="family-grid">
               {families.map((family) => (
                 <article className={`family-card ${family.tone}`} key={family.group}>
                   <div className="family-orbit"><Icon name="paw" size={30} /></div>
@@ -230,7 +283,7 @@ export default function Home() {
       </section>
 
       <footer>
-        <div className="brand footer-brand"><span className="brand-logo-frame"><img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" /></span></div>
+        <div className="brand footer-brand"><span className="brand-logo-frame"><img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" loading="lazy" /></span></div>
         <p>Responsible ownership. Compassionate community.</p>
         <span>Private concept preview • Sample imagery</span>
       </footer>
@@ -252,8 +305,8 @@ export default function Home() {
                   ))}
                 </div>
                 <form onSubmit={submit}>
-                  <label>Name<input required name="name" placeholder="Your name" /></label>
-                  <label>Email<input required type="email" name="email" placeholder="you@email.com" /></label>
+                  <label>Name<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
+                  <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
                   <label>Tell us about your retriever or interest<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
                   <button className="button dark" type="submit">Continue as {interest} <Icon name="arrow" /></button>
                   <small className="prototype-note">Prototype only—submissions are not sent yet.</small>
