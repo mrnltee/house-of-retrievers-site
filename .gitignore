@@ -1,0 +1,10 @@
+.next
+dist
+out
+node_modules
+.npm-cache
+.DS_Store
+npm-debug.log*
+*.tgz
+*-source.zip
+upload
