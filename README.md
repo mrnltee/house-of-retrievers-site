@@ -11,6 +11,19 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Agent tooling
+
+The repository includes MCP configuration for Next.js tooling, browser diagnostics,
+GitHub, and current library documentation:
+
+- Codex loads the project-specific Next.js server from `.codex/config.toml` and
+  merges it with MCP servers configured in the user's global Codex settings.
+- MCP clients that support the shared `.mcp.json` format can load the complete
+  project set from that file.
+- Remote GitHub access may prompt for OAuth the first time it is used.
+
+Restart your MCP client after cloning or after changing either configuration file.
+
 ## Production build
 
 ```bash

@@ -1,0 +1,7 @@
+# Project-specific MCP servers for Codex.
+# Codex also merges the user's global MCP configuration when this repository is trusted.
+
+[mcp_servers.next-devtools]
+command = "npx"
+args = ["-y", "next-devtools-mcp@0.4.0"]
+startup_timeout_sec = 30

@@ -28,7 +28,7 @@ a { color: inherit; text-decoration: none; }
 .site-header { height: 88px; padding: 0 clamp(24px, 5vw, 76px); display: flex; align-items: center; justify-content: space-between; position: absolute; top: 0; inset-inline: 0; z-index: 20; color: white; border-bottom: 1px solid rgba(255,255,255,.2); }
 .brand { display: inline-flex; align-items: center; }
 .brand-logo-frame { position: relative; display: block; width: clamp(248px, 23vw, 285px); height: 88px; overflow: hidden; background: transparent; }
-.brand-logo { position: absolute; top: -15%; left: 0; display: block; width: 100%; height: auto; }
+.brand-logo { position: absolute; top: 0; left: 0; display: block; width: 75%; height: auto; }
 .nav { display: flex; align-items: center; gap: clamp(24px, 3vw, 48px); font-size: 14px; }
 .nav a { opacity: .82; transition: opacity .2s; }
 .nav a:hover { opacity: 1; }
