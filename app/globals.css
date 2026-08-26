@@ -114,8 +114,14 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .final-cta p { font-family: "DM Serif Display", serif; font-size: 22px; line-height: 1.2; margin: 0; }
 .mini-mark { width: 45px; height: 45px; color: var(--gold); display: grid; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; }
 
-footer { background: #070707; color: rgba(255,255,255,.52); padding: 34px clamp(24px, 6vw, 84px); display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 11px; }
+footer { background: var(--gold); color: var(--ink); padding: 34px clamp(24px, 6vw, 84px); display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 11px; }
 .footer-brand .brand-logo-frame { width: clamp(280px, 26vw, 340px); height: 104px; box-shadow: none; }
+.footer-brand .brand-logo { filter: brightness(0); }
+.social-links { display: flex; align-items: center; gap: 10px; }
+.social-button { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--ink); border-radius: 999px; color: var(--ink); padding: 10px 15px 10px 10px; transition: color .2s, background .2s, transform .2s; }
+.social-button:hover, .social-button:focus-visible { color: var(--gold); background: var(--ink); transform: translateY(-2px); }
+.social-mark { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--gold); font-family: Arial, sans-serif; font-size: 18px; font-weight: 700; line-height: 1; }
+.instagram-mark { font-size: 10px; text-transform: uppercase; }
 
 .modal-backdrop { position: fixed; z-index: 200; inset: 0; background: rgba(13,13,13,.82); backdrop-filter: blur(10px); display: grid; place-items: center; padding: 20px; animation: fadeIn .2s both; }
 .join-modal { width: min(620px, 100%); max-height: calc(100svh - 40px); overflow: auto; overscroll-behavior: contain; background: var(--paper); padding: clamp(30px, 5vw, 58px); position: relative; animation: modalIn .3s ease-out both; }
@@ -179,6 +185,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .final-cta { flex-direction: column; align-items: stretch; }
   .final-cta .button { width: 100%; }
   footer { flex-direction: column; align-items: flex-start; }
+  .social-links { flex-wrap: wrap; }
   .interest-grid { grid-template-columns: 1fr; }
 }
 
