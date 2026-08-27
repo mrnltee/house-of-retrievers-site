@@ -24,9 +24,10 @@ const activities = [
     eyebrow: "Activities for a cause",
     title: "Every gathering can give back",
     copy: "Joyful pack activities designed to rally support, with proceeds intended for a clearly named beneficiary.",
+    video: "/mby-give-back.mp4",
     image:
       "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=85",
-    alt: "Retriever enjoying time outside",
+    alt: "House of Retrievers community gathering",
   },
 ];
 
@@ -276,8 +277,23 @@ export default function Home() {
               <div
                 key={item.title}
                 className={index === activeStory ? "story-image-layer active" : "story-image-layer"}
-                style={{ backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(20, 19, 14, .72)), url(${item.image})` }}
-              />
+                style={{ backgroundImage: `url(${item.image})` }}
+              >
+                {item.video && index === activeStory ? (
+                  <video
+                    className="story-video"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster={item.image}
+                    aria-hidden="true"
+                  >
+                    <source src={item.video} type="video/mp4" />
+                  </video>
+                ) : null}
+              </div>
             ))}
             <div className="story-caption">
               <span>{String(activeStory + 1).padStart(2, "0")}</span>
