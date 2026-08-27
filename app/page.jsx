@@ -241,7 +241,7 @@ export default function Home() {
 
       <section className="hero" id="top">
         <video className="hero-photo" autoPlay muted loop playsInline poster="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=2200&q=90" aria-hidden="true">
-          <source src="/house-of-retrievers-ph-hero-1080p.mp4" type="video/mp4" />
+          <source src="/house-of-retrievers-hero-1080p.mp4" type="video/mp4" />
         </video>
         <div className="hero-shade" />
         <div className="hero-copy reveal-now">
