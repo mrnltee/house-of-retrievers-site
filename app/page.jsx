@@ -207,7 +207,7 @@ export default function Home() {
         <div className="hero-copy reveal-now">
           <div className="eyebrow light">A community with heart</div>
           <h1>Good dogs.<br />Good people.<br /><em>Greater Good.</em></h1>
-          <p>We are responsible retriever families turning companionship into meaningful service<br className="desktop-break" />{" "}one paw, <span className="nowrap">one person, and one community at a time.</span></p>
+          <p>We are responsible retriever families turning companionship into meaningful service<br className="desktop-break" /><br className="mobile-break" />{" "}one paw, one person, and one community at a time.</p>
           <div className="hero-actions">
             <button className="button primary" onClick={openJoin}>Join the pack <Icon name="arrow" /></button>
             <a className="text-link" href="#mission">Discover our purpose <span>↓</span></a>
