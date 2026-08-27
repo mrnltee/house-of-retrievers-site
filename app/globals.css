@@ -48,6 +48,7 @@ h1, h2 { font-family: "DM Serif Display", serif; font-weight: 400; letter-spacin
 h1 { font-size: clamp(66px, 8.5vw, 126px); }
 h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .hero-copy > p { max-width: 580px; color: rgba(255,255,255,.74); font-size: clamp(16px, 1.5vw, 19px); line-height: 1.7; }
+.nowrap { white-space: nowrap; }
 .desktop-break { display: none; }
 .hero-actions { display: flex; align-items: center; gap: 32px; margin-top: 38px; }
 .button { border: 0; border-radius: 999px; padding: 17px 24px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 16px; transition: transform .2s, background .2s; }
@@ -203,13 +204,14 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 
 @media (max-width: 680px) {
   .site-header .brand-logo-frame { width: 215px; height: 66px; }
-  h1 { font-size: clamp(58px, 17vw, 84px); }
+  h1 { font-size: clamp(52px, 14.5vw, 72px); }
   .hero-copy { padding-top: 134px; }
   .hero-copy > p { font-size: 15px; }
   .hero-actions { align-items: flex-start; flex-direction: column; gap: 20px; }
   .hero-actions > .button,
   .hero-actions > .text-link { width: 100vw; max-width: 100vw; margin-left: -24px; padding-left: 24px; padding-right: 24px; }
-  .hero-actions > .text-link { justify-content: flex-start; }
+  .hero-actions > .button { width: 100%; max-width: 100%; margin-left: 0; }
+  .hero-actions > .text-link { display: none; }
   .hero-card { left: 0; right: auto; bottom: 24px; width: 100%; max-width: 100vw; min-width: 0; padding-left: 24px; padding-right: 24px; }
   .mission { padding-top: 90px; padding-bottom: 90px; }
   .section-intro { margin-bottom: 48px; }
@@ -227,9 +229,10 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .final-cta .button { width: 100%; }
   footer { flex-direction: column; align-items: center; text-align: center; }
   .footer-brand { width: 100%; }
-  .footer-brand .brand-logo-frame { width: 100vw; max-width: 100vw; height: 140px; margin-left: -24px; display: grid; place-items: center; }
+  .footer-brand .brand-logo-frame { width: 100%; max-width: 100%; height: 140px; margin-left: 0; display: grid; place-items: center; }
   .footer-brand .brand-logo { position: static; width: min(78vw, 340px); height: auto; }
-  .social-links { width: 100vw; max-width: 100vw; margin-left: -24px; padding: 0 24px; flex-direction: column; align-items: center; gap: 12px; }
+  .social-links { width: 100%; max-width: 100%; margin-left: 0; padding: 0; flex-direction: column; align-items: center; gap: 12px; }
+  .social-button { width: 100%; justify-content: center; }
   .interest-grid { grid-template-columns: 1fr; }
 }
 
