@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { HandHeart, Heart, HeartHandshake, UserRoundPlus, UsersRound } from "lucide-react";
 
 const activities = [
   {
     eyebrow: "Community outreach",
-    title: "Paws with purpose",
+    title: "Paws for a purpose",
     copy: "Volunteer-led activities where retriever families show up, lend a paw, and help communities that need support.",
     image:
       "https://images.unsplash.com/photo-1558788353-f76d92427f16?auto=format&fit=crop&w=1200&q=85",
@@ -33,20 +34,59 @@ const families = [
   {
     group: "The Dallas family",
     names: "Sir Dallas & Mary Jane",
-    note: "Founding fur family",
+    note: "@thegolden.nuggets",
+    socialUrl: "https://www.instagram.com/thegolden.nuggets/",
     tone: "cream",
+    frontImage: "/DallasMJFrontCard.jpg",
+    backImage: "/dallasMJBackCard.jpg",
+    imageAlt: "Sir Dallas and Mary Jane front photocard",
   },
   {
     group: "The Macchi family",
     names: "Macchiato",
-    note: "Golden retriever • born 22 March 2022",
+    note: "@dailydoseofmacchiato_",
+    socialUrl: "https://www.instagram.com/dailydoseofmacchiato_/",
     tone: "gold",
+    frontImage: "/MacchiFrontCard.jpg",
+    backImage: "/MacchiBackCard.jpg",
+    imageAlt: "Macchiato front photocard",
+  },
+  {
+    group: "The Pancake family",
+    names: "Faye",
+    note: "@itsmefayethepancakee",
+    socialUrl: "https://www.instagram.com/itsmefayethepancakee/",
+    tone: "sage",
+    frontImage: "/FayeFrontCard.jpg",
+    backImage: "/FayeBackCard.jpg",
+    imageAlt: "Faye front photocard",
+  },
+  {
+    group: "The LL Bros",
+    names: "Luka & Luji",
+    note: "@lukaxluji_goldenbros",
+    socialUrl: "https://www.instagram.com/lukaxluji_goldenbros/",
+    tone: "cream",
+    frontImage: "/LukaLujiFrontCard.jpg",
+    backImage: "/LukaLujiBackCard.jpg",
+    imageAlt: "Luka and Luji front photocard",
+  },
+  {
+    group: "The Bear Duo",
+    names: "Molly & Maverick",
+    note: "@molly.maverickthebears",
+    socialUrl: "https://www.instagram.com/molly.maverickthebears/",
+    tone: "gold",
+    frontImage: "/MollyMavFrontCard.jpg",
+    backImage: "/MollyMavBackCard.jpg",
+    imageAlt: "Molly and Maverick front photocard",
   },
   {
     group: "Growing together",
     names: "More family stories soon",
     note: "Ready for verified sibling and family details",
     tone: "sage",
+    noAvatar: true,
   },
 ];
 
@@ -83,8 +123,29 @@ export default function Home() {
   const [interest, setInterest] = useState("Member");
   const [sent, setSent] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [flippedFamilies, setFlippedFamilies] = useState(() => ({}));
 
   const active = useMemo(() => activities[activeStory], [activeStory]);
+  const joinContext = {
+    Member: {
+      profileLabel: "Instagram or Facebook profile (optional)",
+      profilePlaceholder: "e.g. @yourhandle or profile URL",
+      dogLabel: "Retriever's name (optional)",
+      dogPlaceholder: "e.g. Macchiato",
+    },
+    Volunteer: {
+      profileLabel: "Instagram or Facebook profile (optional)",
+      profilePlaceholder: "e.g. @yourhandle or profile URL",
+      dogLabel: "Retriever's name (optional)",
+      dogPlaceholder: "e.g. Dallas, Faye, or your retriever",
+    },
+    Partner: {
+      profileLabel: "Instagram or Facebook profile (optional)",
+      profilePlaceholder: "e.g. @yourhandle or organization profile URL",
+      dogLabel: "Retriever's name (optional)",
+      dogPlaceholder: "e.g. the retriever joining your activity",
+    },
+  }[interest];
 
   useEffect(() => {
     const update = () => {
@@ -103,6 +164,43 @@ export default function Home() {
     };
   }, [modalOpen]);
 
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setModalOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [modalOpen]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    const story = Number(params.get("story"));
+    if (view === "impact" || view === "families") setPackView(view);
+    if (Number.isInteger(story) && story >= 0 && story < activities.length) {
+      setActiveStory(story);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", packView);
+    params.set("story", String(activeStory));
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
+  }, [packView, activeStory]);
+
+  useEffect(() => {
+    if (document.getElementById("juicer-embed-script")) return;
+    const script = document.createElement("script");
+    script.id = "juicer-embed-script";
+    script.src = "https://www.juicer.io/embed/houseofretrieversph/embed-code.js";
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+  }, []);
+
   const openJoin = () => {
     setSent(false);
     setModalOpen(true);
@@ -114,14 +212,19 @@ export default function Home() {
     setSent(true);
   };
 
+  const toggleFamilyCard = (group) => {
+    setFlippedFamilies((current) => ({ ...current, [group]: !current[group] }));
+  };
+
   return (
     <main>
+      <a href="#top" className="skip-link">Skip to content</a>
       <div className="scroll-progress" style={{ transform: `scaleX(${progress / 100})` }} />
 
       <header className="site-header">
         <a href="#top" className="brand" aria-label="House of Retrievers home">
           <span className="brand-logo-frame">
-            <img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" />
+            <img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" fetchPriority="high" />
           </span>
         </a>
 
@@ -137,19 +240,21 @@ export default function Home() {
       </header>
 
       <section className="hero" id="top">
-        <div className="hero-photo" role="img" aria-label="Golden retriever running through a sunlit field" />
+        <video className="hero-photo" autoPlay muted loop playsInline poster="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=2200&q=90" aria-hidden="true">
+          <source src="/house-of-retrievers-ph-hero-1080p.mp4" type="video/mp4" />
+        </video>
         <div className="hero-shade" />
         <div className="hero-copy reveal-now">
           <div className="eyebrow light">A community with heart</div>
-          <h1>Good dogs.<br />Good people.<br /><em>Greater good.</em></h1>
-          <p>We are responsible retriever families turning companionship into meaningful service—one paw, one person, and one community at a time.</p>
+          <h1>Good dogs.<br />Good people.<br /><em>Greater Good.</em></h1>
+          <p>We are responsible retriever families turning companionship into meaningful service<br className="desktop-break" /><br className="mobile-break" />{" "}one paw, one person, and one community at a time.</p>
           <div className="hero-actions">
             <button className="button primary" onClick={openJoin}>Join the pack <Icon name="arrow" /></button>
             <a className="text-link" href="#mission">Discover our purpose <span>↓</span></a>
           </div>
         </div>
         <div className="hero-card">
-          <span className="heart-badge"><Icon name="heart" /></span>
+          <span className="heart-badge"><Heart className="promise-heart" fill="currentColor" /></span>
           <div>
             <small>Our shared promise</small>
             <strong>Raise responsibly.<br />Serve generously.</strong>
@@ -166,7 +271,14 @@ export default function Home() {
         </div>
 
         <div className="story-stage">
-          <article className="story-image" style={{ backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(20, 19, 14, .72)), url(${active.image})` }} aria-label={active.alt}>
+          <article className="story-image" aria-label={active.alt}>
+            {activities.map((item, index) => (
+              <div
+                key={item.title}
+                className={index === activeStory ? "story-image-layer active" : "story-image-layer"}
+                style={{ backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(20, 19, 14, .72)), url(${item.image})` }}
+              />
+            ))}
             <div className="story-caption">
               <span>{String(activeStory + 1).padStart(2, "0")}</span>
               <div><small>{active.eyebrow}</small><strong>{active.title}</strong></div>
@@ -184,6 +296,23 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="instagram-section section-shell" id="instagram" aria-labelledby="instagram-title">
+        <div className="instagram-heading">
+          <div>
+            <div className="eyebrow">From the pack</div>
+            <h2 id="instagram-title">Life with the <em>retrievers.</em></h2>
+          </div>
+          <a className="instagram-follow" href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">
+            Follow @houseofretrieversph <Icon name="arrow" size={16} />
+          </a>
+        </div>
+        <div className="juicer-frame">
+          <ul className="juicer-feed" data-feed-id="houseofretrieversph">
+            <li className="juicer-loading">Loading the latest from Instagram…</li>
+          </ul>
+        </div>
+      </section>
+
       <section className="pack" id="pack">
         <div className="pack-inner section-shell">
           <div className="pack-heading">
@@ -192,47 +321,117 @@ export default function Home() {
               <h2>Every good story<br />starts with a <em>pack.</em></h2>
             </div>
             <div className="view-switch" role="tablist" aria-label="Pack content">
-              <button className={packView === "impact" ? "active" : ""} onClick={() => setPackView("impact")}>How to join</button>
-              <button className={packView === "families" ? "active" : ""} onClick={() => setPackView("families")}>Founding families</button>
+              <button
+                id="pack-tab-impact"
+                role="tab"
+                aria-selected={packView === "impact"}
+                aria-controls="pack-panel-impact"
+                className={packView === "impact" ? "active" : ""}
+                onClick={() => setPackView("impact")}
+              >
+                How to join
+              </button>
+              <button
+                id="pack-tab-families"
+                role="tab"
+                aria-selected={packView === "families"}
+                aria-controls="pack-panel-families"
+                className={packView === "families" ? "active" : ""}
+                onClick={() => setPackView("families")}
+              >
+                Founding families
+              </button>
             </div>
           </div>
 
           {packView === "impact" ? (
-            <div className="join-grid">
+            <div id="pack-panel-impact" role="tabpanel" aria-labelledby="pack-tab-impact" className="join-grid">
               {[
-                ["01", "Become a member", "Meet fellow retriever families, exchange practical care knowledge, and join community activities."],
-                ["02", "Volunteer together", "Bring your time, skills, or friendly retriever to outreach programs where your presence can help."],
-                ["03", "Partner for a cause", "Collaborate on a transparent, beneficiary-led activity that turns a gathering into meaningful support."],
-              ].map(([number, title, copy]) => (
+                ["01", "Become a member", "Meet fellow retriever families, exchange practical care knowledge, and join community activities.", UsersRound],
+                ["02", "Volunteer together", "Bring your time, skills, or friendly retriever to outreach programs where your presence can help.", HandHeart],
+                ["03", "Partner for a cause", "Collaborate on a transparent, beneficiary-led activity that turns a gathering into meaningful support.", HeartHandshake],
+              ].map(([number, title, copy, CardIcon]) => (
                 <article key={title} className="join-card">
-                  <span>{number}</span><div><h3>{title}</h3><p>{copy}</p></div>
+                  <span className="join-number">{number}</span>
+                  <CardIcon className="join-icon" size={34} strokeWidth={1.4} aria-hidden="true" />
+                  <div><h3>{title}</h3><p>{copy}</p></div>
                 </article>
               ))}
             </div>
           ) : (
-            <div className="family-grid">
-              {families.map((family) => (
-                <article className={`family-card ${family.tone}`} key={family.group}>
-                  <div className="family-orbit"><Icon name="paw" size={30} /></div>
-                  <small>{family.group}</small>
-                  <h3>{family.names}</h3>
-                  <p>{family.note}</p>
-                </article>
-              ))}
+            <div id="pack-panel-families" role="tabpanel" aria-labelledby="pack-tab-families" className="family-grid">
+              {families.map((family) => {
+                if (family.noAvatar) {
+                  return (
+                    <article className={`family-card ${family.tone} no-avatar`} key={family.group}>
+                      <small>{family.group}</small>
+                      <h3>{family.names}</h3>
+                      <p>{family.note}</p>
+                    </article>
+                  );
+                }
+
+                const isFlipped = Boolean(flippedFamilies[family.group]);
+                return (
+                  <article
+                    className={`family-card family-flip-card ${family.tone}${isFlipped ? " is-flipped" : ""}`}
+                    key={family.group}
+                    onClick={() => toggleFamilyCard(family.group)}
+                    onKeyDown={(event) => {
+                      if (event.target.closest("a")) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggleFamilyCard(family.group);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isFlipped}
+                    aria-label={`${isFlipped ? "Show details for" : "Show photo for"} ${family.names}`}
+                  >
+                    <span className="family-flip-inner">
+                      <span className="family-flip-face family-card-front">
+                        <img className="family-card-image" src={family.frontImage} alt={family.imageAlt} />
+                        <span className="family-card-info">
+                          <small>{family.group}</small>
+                          <strong>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</strong>
+                          <a className="family-social" href={family.socialUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{family.note}</a>
+                        </span>
+                      </span>
+                      <span className="family-flip-face family-card-back" aria-hidden={!isFlipped}>
+                        <img className="family-card-image" src={family.backImage} alt={`${family.names} back photocard`} />
+                      </span>
+                    </span>
+                  </article>
+                );
+              })}
             </div>
           )}
 
-          <div className="final-cta">
-            <div><span className="mini-mark"><Icon name="paw" /></span><p>There is always room<br />for one more good human.</p></div>
-            <button className="button cream" onClick={openJoin}>Start your journey <Icon name="arrow" /></button>
-          </div>
         </div>
       </section>
 
+      <section className="final-cta" id="finalCTA" aria-label="Join the House of Retrievers community">
+        <video className="final-cta-video" autoPlay muted loop playsInline preload="metadata" aria-hidden="true">
+          <source src="/CTA-join-us.MP4" type="video/mp4" />
+        </video>
+        <div className="final-cta-shade" />
+        <div><span className="mini-mark"><UserRoundPlus size={22} strokeWidth={1.5} aria-hidden="true" /></span><p>There is always room<br />for one more good human.</p></div>
+        <button className="button cream" onClick={openJoin}>Come join us <Icon name="arrow" /></button>
+      </section>
+
       <footer>
-        <div className="brand footer-brand"><span className="brand-logo-frame"><img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" /></span></div>
-        <p>Responsible ownership. Compassionate community.</p>
-        <span>Private concept preview • Sample imagery</span>
+        <div className="brand footer-brand"><span className="brand-logo-frame"><img className="brand-logo" src="/house-of-retrievers-logo-original.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" loading="lazy" /></span></div>
+        <div className="social-links" aria-label="Social media links">
+          <a className="social-button" href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noreferrer" aria-label="House of Retrievers on Facebook">
+            <span className="social-mark" aria-hidden="true">f</span>
+            <span>Facebook</span>
+          </a>
+          <a className="social-button" href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer" aria-label="House of Retrievers on Instagram">
+            <span className="social-mark instagram-mark" aria-hidden="true">ig</span>
+            <span>Instagram</span>
+          </a>
+        </div>
       </footer>
 
       {modalOpen && (
@@ -252,8 +451,10 @@ export default function Home() {
                   ))}
                 </div>
                 <form onSubmit={submit}>
-                  <label>Name<input required name="name" placeholder="Your name" /></label>
-                  <label>Email<input required type="email" name="email" placeholder="you@email.com" /></label>
+                  <label>Name<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
+                  <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
+                  <label>{joinContext.profileLabel}<input name="profile" type="text" autoComplete="url" placeholder={joinContext.profilePlaceholder} /></label>
+                  <label>{joinContext.dogLabel}<input name="dogName" type="text" placeholder={joinContext.dogPlaceholder} /></label>
                   <label>Tell us about your retriever or interest<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
                   <button className="button dark" type="submit">Continue as {interest} <Icon name="arrow" /></button>
                   <small className="prototype-note">Prototype only—submissions are not sent yet.</small>
