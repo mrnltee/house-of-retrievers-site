@@ -130,8 +130,19 @@ export default function Home() {
   const [sent, setSent] = useState(false);
   const [progress, setProgress] = useState(0);
   const [flippedFamilies, setFlippedFamilies] = useState(() => ({}));
+  const [instagramPosts, setInstagramPosts] = useState([]);
+  const [instagramStatus, setInstagramStatus] = useState("loading");
+  const [instagramSlide, setInstagramSlide] = useState(0);
 
   const active = useMemo(() => activities[activeStory], [activeStory]);
+  const instagramWindow = useMemo(() => {
+    if (!instagramPosts.length) return [];
+    const visibleCount = Math.min(3, instagramPosts.length);
+    return Array.from(
+      { length: visibleCount },
+      (_, index) => instagramPosts[(instagramSlide + index) % instagramPosts.length],
+    );
+  }, [instagramPosts, instagramSlide]);
   const joinContext = {
     Member: {
       profileLabel: "Instagram or Facebook profile (optional)",
@@ -206,13 +217,22 @@ export default function Home() {
   }, [activeStory]);
 
   useEffect(() => {
-    if (document.getElementById("juicer-embed-script")) return;
-    const script = document.createElement("script");
-    script.id = "juicer-embed-script";
-    script.src = "https://www.juicer.io/embed/houseofretrieversph/embed-code.js";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
+    const controller = new AbortController();
+
+    const loadInstagramPosts = async () => {
+      try {
+        const response = await fetch("/api/instagram", { signal: controller.signal });
+        if (!response.ok) throw new Error("Instagram feed is unavailable");
+        const payload = await response.json();
+        setInstagramPosts(Array.isArray(payload.posts) ? payload.posts : []);
+        setInstagramStatus(payload.posts?.length ? "ready" : "empty");
+      } catch (error) {
+        if (error.name !== "AbortError") setInstagramStatus("error");
+      }
+    };
+
+    loadInstagramPosts();
+    return () => controller.abort();
   }, []);
 
   const openJoin = () => {
@@ -375,10 +395,64 @@ export default function Home() {
             Follow @houseofretrieversph <Icon name="arrow" size={16} />
           </a>
         </div>
-        <div className="juicer-frame">
-          <ul className="juicer-feed" data-feed-id="houseofretrieversph">
-            <li className="juicer-loading">Loading the latest from Instagram…</li>
-          </ul>
+        <div className="instagram-carousel" role="region" aria-roledescription="carousel" aria-label="Latest House of Retrievers Instagram posts">
+          <div className="instagram-toolbar">
+            <p aria-live="polite">
+              {instagramStatus === "ready" ? `Showing post ${instagramSlide + 1} of ${instagramPosts.length}` : "Latest posts from @houseofretrieversph"}
+            </p>
+            {instagramPosts.length > 1 ? (
+              <div className="instagram-controls">
+                <button
+                  type="button"
+                  aria-label="Show previous Instagram post"
+                  onClick={() => setInstagramSlide((current) => (current - 1 + instagramPosts.length) % instagramPosts.length)}
+                >
+                  <ChevronLeft size={18} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Show next Instagram post"
+                  onClick={() => setInstagramSlide((current) => (current + 1) % instagramPosts.length)}
+                >
+                  <ChevronRight size={18} aria-hidden="true" />
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          {instagramStatus === "loading" ? (
+            <div className="instagram-grid" aria-label="Loading Instagram posts">
+              {[0, 1, 2].map((item) => <div className="instagram-skeleton" key={item} />)}
+            </div>
+          ) : null}
+
+          {instagramStatus === "ready" ? (
+            <div className="instagram-grid">
+              {instagramWindow.map((post) => {
+                const caption = post.caption?.trim() || "A moment from the House of Retrievers pack.";
+                const alt = caption.length > 120 ? `${caption.slice(0, 117)}…` : caption;
+                return (
+                  <a className="instagram-card" href={post.permalink} target="_blank" rel="noreferrer" key={post.id}>
+                    <span className="instagram-media">
+                      <img src={post.imageUrl} alt={alt} loading="lazy" />
+                      {post.mediaType === "VIDEO" ? <span className="instagram-video-badge">Video</span> : null}
+                    </span>
+                    <span className="instagram-card-copy">
+                      <span>{caption}</span>
+                      {post.timestamp ? <small>{new Intl.DateTimeFormat("en-PH", { dateStyle: "medium" }).format(new Date(post.timestamp))}</small> : null}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {instagramStatus === "error" || instagramStatus === "empty" ? (
+            <div className="instagram-fallback">
+              <p>The latest posts are taking a short paws. You can still visit the full feed on Instagram.</p>
+              <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">Open Instagram <Icon name="arrow" size={16} /></a>
+            </div>
+          ) : null}
         </div>
       </section>
 
