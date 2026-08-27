@@ -51,12 +51,14 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .desktop-break { display: none; }
 .hero-actions { display: flex; align-items: center; gap: 32px; margin-top: 38px; }
 .button { border: 0; border-radius: 999px; padding: 17px 24px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 16px; transition: transform .2s, background .2s; }
+.hero-actions > .button,
+.final-cta > .button { width: 280px; }
 .button:hover { transform: translateY(-2px); }
 .button.primary { background: var(--gold); color: var(--ink); }
 .button.cream { background: var(--gold); color: var(--ink); }
 .button.dark { background: var(--forest); color: white; width: 100%; margin-top: 6px; }
 .text-link { display: inline-flex; gap: 16px; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.4); padding-bottom: 6px; }
-.hero-card { position: absolute; z-index: 3; right: clamp(24px, 6vw, 90px); bottom: 76px; display: flex; gap: 16px; align-items: center; background: rgba(244,240,231,.96); color: var(--ink); padding: 20px 26px; min-width: 290px; border-radius: 18px; overflow: hidden; backdrop-filter: blur(12px); }
+.hero-card { position: absolute; z-index: 3; right: clamp(24px, 6vw, 90px); bottom: 76px; display: flex; gap: 16px; align-items: center; background: rgba(244,240,231,.96); color: var(--ink); padding: 20px 26px; width: 280px; min-width: 0; border-radius: 18px; overflow: hidden; backdrop-filter: blur(12px); }
 .heart-badge { width: 46px; height: 46px; display: grid; place-items: center; color: var(--gold); border: 1px solid rgba(13,13,13,.18); border-radius: 50%; }
 .hero-card small { display: block; text-transform: uppercase; letter-spacing: .14em; font-size: 9px; color: #777b6d; margin-bottom: 5px; }
 .hero-card strong { font-family: "DM Serif Display", serif; font-size: 19px; line-height: 1.1; }
