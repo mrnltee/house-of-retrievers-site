@@ -79,6 +79,16 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .story-image-layer::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, transparent 45%, rgba(20, 19, 14, .72)); pointer-events: none; }
 .story-image-layer.active { opacity: 1; }
 .story-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.story-carousel { position: absolute; inset: 0; }
+.story-carousel-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; transform: scale(1.02); transition: opacity .55s ease, transform 5s ease; }
+.story-carousel-slide.active { opacity: 1; transform: scale(1); }
+.story-carousel-controls { position: absolute; z-index: 3; top: 22px; right: 22px; display: flex; align-items: center; gap: 10px; padding: 7px; border: 1px solid rgba(255,255,255,.36); border-radius: 999px; background: rgba(17,17,17,.48); color: white; backdrop-filter: blur(10px); }
+.story-carousel-controls > button { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; transition: color .2s, background .2s; }
+.story-carousel-controls > button:hover, .story-carousel-controls > button:focus-visible { color: var(--ink); background: var(--gold); outline: none; }
+.story-carousel-dots { display: flex; align-items: center; gap: 7px; }
+.story-carousel-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.46); transition: width .2s, background .2s; }
+.story-carousel-dots button.active { width: 20px; border-radius: 999px; background: var(--gold); }
+.story-carousel-dots button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
 .story-caption { position: absolute; z-index: 2; left: 34px; right: 34px; bottom: 28px; color: white; display: flex; align-items: flex-end; gap: 18px; }
 .story-caption > span { font-family: "DM Serif Display", serif; color: var(--gold); font-size: 42px; line-height: 1; }
 .story-caption small { display: block; text-transform: uppercase; letter-spacing: .15em; font-size: 9px; color: rgba(255,255,255,.65); margin-bottom: 6px; }
@@ -236,6 +246,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .mission { padding-top: 90px; padding-bottom: 90px; }
   .section-intro { margin-bottom: 48px; }
   .story-image { min-height: 380px; }
+  .story-carousel-controls { top: 16px; right: 16px; }
   .story-item { padding: 23px 20px; grid-template-columns: 28px 1fr 18px; gap: 10px; }
   .story-item p { display: none; }
   .story-item strong { font-size: 20px; }

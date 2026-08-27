@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { HandHeart, Heart, HeartHandshake, UserRoundPlus, UsersRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, HandHeart, Heart, HeartHandshake, UserRoundPlus, UsersRound } from "lucide-react";
 
 const activities = [
   {
     eyebrow: "Community outreach",
     title: "Paws for a purpose",
     copy: "Volunteer-led activities where retriever families show up, lend a paw, and help communities that need support.",
-    image:
-      "https://images.unsplash.com/photo-1558788353-f76d92427f16?auto=format&fit=crop&w=1200&q=85",
-    alt: "A happy retriever outdoors with its owner",
+    image: "/purpaws1.jpg",
+    gallery: [
+      { src: "/purpaws1.jpg", alt: "Golden retriever greeting people during a community outreach visit" },
+      { src: "/purpaws2.jpg", alt: "Golden retriever receiving affection during a community outreach visit" },
+      { src: "/purpaws3.jpg", alt: "Golden retriever connecting with participants during a community outreach visit" },
+    ],
+    alt: "Paws for a purpose community outreach photo gallery",
   },
   {
     eyebrow: "Responsible ownership",
@@ -118,6 +122,7 @@ const Icon = ({ name, size = 20 }) => {
 
 export default function Home() {
   const [activeStory, setActiveStory] = useState(0);
+  const [activePurpawsSlide, setActivePurpawsSlide] = useState(0);
   const [packView, setPackView] = useState("impact");
   const [modalOpen, setModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -191,6 +196,14 @@ export default function Home() {
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
   }, [packView, activeStory]);
+
+  useEffect(() => {
+    if (activeStory !== 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setActivePurpawsSlide((current) => (current + 1) % activities[0].gallery.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [activeStory]);
 
   useEffect(() => {
     if (document.getElementById("juicer-embed-script")) return;
@@ -279,7 +292,47 @@ export default function Home() {
                 className={index === activeStory ? "story-image-layer active" : "story-image-layer"}
                 style={{ backgroundImage: `url(${item.image})` }}
               >
-                {item.video && index === activeStory ? (
+                {item.gallery && index === activeStory ? (
+                  <div className="story-carousel" role="region" aria-roledescription="carousel" aria-label="Paws for a purpose photos">
+                    {item.gallery.map((photo, slideIndex) => (
+                      <img
+                        key={photo.src}
+                        className={slideIndex === activePurpawsSlide ? "story-carousel-slide active" : "story-carousel-slide"}
+                        src={photo.src}
+                        alt={slideIndex === activePurpawsSlide ? photo.alt : ""}
+                        aria-hidden={slideIndex !== activePurpawsSlide}
+                      />
+                    ))}
+                    <div className="story-carousel-controls" aria-label="Photo gallery controls">
+                      <button
+                        type="button"
+                        onClick={() => setActivePurpawsSlide((current) => (current - 1 + item.gallery.length) % item.gallery.length)}
+                        aria-label="Previous photo"
+                      >
+                        <ChevronLeft size={18} aria-hidden="true" />
+                      </button>
+                      <div className="story-carousel-dots">
+                        {item.gallery.map((photo, slideIndex) => (
+                          <button
+                            key={photo.src}
+                            type="button"
+                            className={slideIndex === activePurpawsSlide ? "active" : ""}
+                            onClick={() => setActivePurpawsSlide(slideIndex)}
+                            aria-label={`Show photo ${slideIndex + 1} of ${item.gallery.length}`}
+                            aria-current={slideIndex === activePurpawsSlide ? "true" : undefined}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActivePurpawsSlide((current) => (current + 1) % item.gallery.length)}
+                        aria-label="Next photo"
+                      >
+                        <ChevronRight size={18} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                ) : item.video && index === activeStory ? (
                   <video
                     className="story-video"
                     autoPlay
