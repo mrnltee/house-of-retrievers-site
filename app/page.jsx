@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { HandHeart, Heart, HeartHandshake, Image as ImageIcon, UserRoundPlus, UsersRound } from "lucide-react";
 
 const activities = [
   {
@@ -33,13 +34,36 @@ const families = [
   {
     group: "The Dallas family",
     names: "Sir Dallas & Mary Jane",
-    note: "Founding fur family",
+    note: "@thegolden.nuggets",
+    socialUrl: "https://www.instagram.com/thegolden.nuggets/",
     tone: "cream",
   },
   {
     group: "The Macchi family",
     names: "Macchiato",
-    note: "Golden retriever • born 22 March 2022",
+    note: "@dailydoseofmacchiato_",
+    socialUrl: "https://www.instagram.com/dailydoseofmacchiato_/",
+    tone: "gold",
+  },
+  {
+    group: "The Pancake family",
+    names: "Faye",
+    note: "@itsmefayethepancakee",
+    socialUrl: "https://www.instagram.com/itsmefayethepancakee/",
+    tone: "sage",
+  },
+  {
+    group: "The LL Bros",
+    names: "Luka & Luji",
+    note: "@lukaxluji_goldenbros",
+    socialUrl: "https://www.instagram.com/lukaxluji_goldenbros/",
+    tone: "cream",
+  },
+  {
+    group: "The Bear Duo",
+    names: "Molly & Maverick",
+    note: "@molly.maverickthebears",
+    socialUrl: "https://www.instagram.com/molly.maverickthebears/",
     tone: "gold",
   },
   {
@@ -47,6 +71,7 @@ const families = [
     names: "More family stories soon",
     note: "Ready for verified sibling and family details",
     tone: "sage",
+    noAvatar: true,
   },
 ];
 
@@ -130,6 +155,16 @@ export default function Home() {
     window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
   }, [packView, activeStory]);
 
+  useEffect(() => {
+    if (document.getElementById("juicer-embed-script")) return;
+    const script = document.createElement("script");
+    script.id = "juicer-embed-script";
+    script.src = "https://www.juicer.io/embed/houseofretrieversph/embed-code.js";
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+  }, []);
+
   const openJoin = () => {
     setSent(false);
     setModalOpen(true);
@@ -165,19 +200,21 @@ export default function Home() {
       </header>
 
       <section className="hero" id="top">
-        <div className="hero-photo" role="img" aria-label="Golden retriever running through a sunlit field" />
+        <video className="hero-photo" autoPlay muted loop playsInline poster="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=2200&q=90" aria-hidden="true">
+          <source src="/house-of-retrievers-hero-1080p.mp4" type="video/mp4" />
+        </video>
         <div className="hero-shade" />
         <div className="hero-copy reveal-now">
           <div className="eyebrow light">A community with heart</div>
-          <h1>Good dogs.<br />Good people.<br /><em>Greater good.</em></h1>
-          <p>We are responsible retriever families turning companionship into meaningful service—one paw, one person, and one community at a time.</p>
+          <h1>Good dogs.<br />Good people.<br /><em>Greater Good.</em></h1>
+          <p>We are responsible retriever families turning companionship into meaningful service<br className="desktop-break" />{" "}one paw, one person, and one community at a time.</p>
           <div className="hero-actions">
             <button className="button primary" onClick={openJoin}>Join the pack <Icon name="arrow" /></button>
             <a className="text-link" href="#mission">Discover our purpose <span>↓</span></a>
           </div>
         </div>
         <div className="hero-card">
-          <span className="heart-badge"><Icon name="heart" /></span>
+          <span className="heart-badge"><Heart className="promise-heart" fill="currentColor" /></span>
           <div>
             <small>Our shared promise</small>
             <strong>Raise responsibly.<br />Serve generously.</strong>
@@ -219,6 +256,23 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="instagram-section section-shell" id="instagram" aria-labelledby="instagram-title">
+        <div className="instagram-heading">
+          <div>
+            <div className="eyebrow">From the pack</div>
+            <h2 id="instagram-title">Life with the <em>retrievers.</em></h2>
+          </div>
+          <a className="instagram-follow" href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">
+            Follow @houseofretrieversph <Icon name="arrow" size={16} />
+          </a>
+        </div>
+        <div className="juicer-frame">
+          <ul className="juicer-feed" data-feed-id="houseofretrieversph">
+            <li className="juicer-loading">Loading the latest from Instagram…</li>
+          </ul>
+        </div>
+      </section>
+
       <section className="pack" id="pack">
         <div className="pack-inner section-shell">
           <div className="pack-heading">
@@ -253,37 +307,39 @@ export default function Home() {
           {packView === "impact" ? (
             <div id="pack-panel-impact" role="tabpanel" aria-labelledby="pack-tab-impact" className="join-grid">
               {[
-                ["01", "Become a member", "Meet fellow retriever families, exchange practical care knowledge, and join community activities."],
-                ["02", "Volunteer together", "Bring your time, skills, or friendly retriever to outreach programs where your presence can help."],
-                ["03", "Partner for a cause", "Collaborate on a transparent, beneficiary-led activity that turns a gathering into meaningful support."],
-              ].map(([number, title, copy]) => (
+                ["01", "Become a member", "Meet fellow retriever families, exchange practical care knowledge, and join community activities.", UsersRound],
+                ["02", "Volunteer together", "Bring your time, skills, or friendly retriever to outreach programs where your presence can help.", HandHeart],
+                ["03", "Partner for a cause", "Collaborate on a transparent, beneficiary-led activity that turns a gathering into meaningful support.", HeartHandshake],
+              ].map(([number, title, copy, CardIcon]) => (
                 <article key={title} className="join-card">
-                  <span>{number}</span><div><h3>{title}</h3><p>{copy}</p></div>
+                  <span className="join-number">{number}</span>
+                  <CardIcon className="join-icon" size={34} strokeWidth={1.4} aria-hidden="true" />
+                  <div><h3>{title}</h3><p>{copy}</p></div>
                 </article>
               ))}
             </div>
           ) : (
             <div id="pack-panel-families" role="tabpanel" aria-labelledby="pack-tab-families" className="family-grid">
               {families.map((family) => (
-                <article className={`family-card ${family.tone}`} key={family.group}>
-                  <div className="family-orbit"><Icon name="paw" size={30} /></div>
+                <article className={`family-card ${family.tone}${family.noAvatar ? " no-avatar" : ""}`} key={family.group}>
+                  {!family.noAvatar && <div className="family-avatar" aria-label="Family image placeholder"><ImageIcon size={24} strokeWidth={1.4} aria-hidden="true" /></div>}
                   <small>{family.group}</small>
-                  <h3>{family.names}</h3>
-                  <p>{family.note}</p>
+                  <h3>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</h3>
+                  <p>{family.socialUrl ? <a className="family-social" href={family.socialUrl} target="_blank" rel="noreferrer">{family.note}</a> : family.note}</p>
                 </article>
               ))}
             </div>
           )}
 
           <div className="final-cta">
-            <div><span className="mini-mark"><Icon name="paw" /></span><p>There is always room<br />for one more good human.</p></div>
-            <button className="button cream" onClick={openJoin}>Start your journey <Icon name="arrow" /></button>
+            <div><span className="mini-mark"><UserRoundPlus size={22} strokeWidth={1.5} aria-hidden="true" /></span><p>There is always room<br />for one more good human.</p></div>
+            <button className="button cream" onClick={openJoin}>Come join us <Icon name="arrow" /></button>
           </div>
         </div>
       </section>
 
       <footer>
-        <div className="brand footer-brand"><span className="brand-logo-frame"><img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" loading="lazy" /></span></div>
+        <div className="brand footer-brand"><span className="brand-logo-frame"><img className="brand-logo" src="/house-of-retrievers-logo-original.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" loading="lazy" /></span></div>
         <div className="social-links" aria-label="Social media links">
           <a className="social-button" href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noreferrer" aria-label="House of Retrievers on Facebook">
             <span className="social-mark" aria-hidden="true">f</span>
