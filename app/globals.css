@@ -210,7 +210,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .hero-actions > .button,
   .hero-actions > .text-link { width: 100vw; max-width: 100vw; margin-left: -24px; padding-left: 24px; padding-right: 24px; }
   .hero-actions > .text-link { justify-content: flex-start; }
-  .hero-card { left: 0; right: auto; bottom: 24px; width: 100vw; min-width: 0; padding-inline: 24px; }
+  .hero-card { left: 0; right: auto; bottom: 24px; width: 100%; max-width: 100vw; min-width: 0; padding-left: 24px; padding-right: 24px; }
   .mission { padding-top: 90px; padding-bottom: 90px; }
   .section-intro { margin-bottom: 48px; }
   .story-image { min-height: 380px; }
