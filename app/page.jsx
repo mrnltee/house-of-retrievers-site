@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { HandHeart, Heart, HeartHandshake, Image as ImageIcon, UserRoundPlus, UsersRound } from "lucide-react";
+import { HandHeart, Heart, HeartHandshake, UserRoundPlus, UsersRound } from "lucide-react";
 
 const activities = [
   {
@@ -37,6 +37,9 @@ const families = [
     note: "@thegolden.nuggets",
     socialUrl: "https://www.instagram.com/thegolden.nuggets/",
     tone: "cream",
+    frontImage: "/DallasMJFrontCard.jpg",
+    backImage: "/dallasMJBackCard.jpg",
+    imageAlt: "Sir Dallas and Mary Jane front photocard",
   },
   {
     group: "The Macchi family",
@@ -44,6 +47,9 @@ const families = [
     note: "@dailydoseofmacchiato_",
     socialUrl: "https://www.instagram.com/dailydoseofmacchiato_/",
     tone: "gold",
+    frontImage: "/MacchiFrontCard.jpg",
+    backImage: "/MacchiBackCard.jpg",
+    imageAlt: "Macchiato front photocard",
   },
   {
     group: "The Pancake family",
@@ -51,6 +57,9 @@ const families = [
     note: "@itsmefayethepancakee",
     socialUrl: "https://www.instagram.com/itsmefayethepancakee/",
     tone: "sage",
+    frontImage: "/FayeFrontCard.jpg",
+    backImage: "/FayeBackCard.jpg",
+    imageAlt: "Faye front photocard",
   },
   {
     group: "The LL Bros",
@@ -58,6 +67,9 @@ const families = [
     note: "@lukaxluji_goldenbros",
     socialUrl: "https://www.instagram.com/lukaxluji_goldenbros/",
     tone: "cream",
+    frontImage: "/LukaLujiFrontCard.jpg",
+    backImage: "/LukaLujiBackCard.jpg",
+    imageAlt: "Luka and Luji front photocard",
   },
   {
     group: "The Bear Duo",
@@ -65,6 +77,9 @@ const families = [
     note: "@molly.maverickthebears",
     socialUrl: "https://www.instagram.com/molly.maverickthebears/",
     tone: "gold",
+    frontImage: "/MollyMavFrontCard.jpg",
+    backImage: "/MollyMavBackCard.jpg",
+    imageAlt: "Molly and Maverick front photocard",
   },
   {
     group: "Growing together",
@@ -108,8 +123,29 @@ export default function Home() {
   const [interest, setInterest] = useState("Member");
   const [sent, setSent] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [flippedFamilies, setFlippedFamilies] = useState(() => ({}));
 
   const active = useMemo(() => activities[activeStory], [activeStory]);
+  const joinContext = {
+    Member: {
+      profileLabel: "Instagram or Facebook profile (optional)",
+      profilePlaceholder: "e.g. @yourhandle or profile URL",
+      dogLabel: "Retriever's name (optional)",
+      dogPlaceholder: "e.g. Macchiato",
+    },
+    Volunteer: {
+      profileLabel: "Instagram or Facebook profile (optional)",
+      profilePlaceholder: "e.g. @yourhandle or profile URL",
+      dogLabel: "Retriever's name (optional)",
+      dogPlaceholder: "e.g. Dallas, Faye, or your retriever",
+    },
+    Partner: {
+      profileLabel: "Instagram or Facebook profile (optional)",
+      profilePlaceholder: "e.g. @yourhandle or organization profile URL",
+      dogLabel: "Retriever's name (optional)",
+      dogPlaceholder: "e.g. the retriever joining your activity",
+    },
+  }[interest];
 
   useEffect(() => {
     const update = () => {
@@ -174,6 +210,10 @@ export default function Home() {
   const submit = (event) => {
     event.preventDefault();
     setSent(true);
+  };
+
+  const toggleFamilyCard = (group) => {
+    setFlippedFamilies((current) => ({ ...current, [group]: !current[group] }));
   };
 
   return (
@@ -320,14 +360,51 @@ export default function Home() {
             </div>
           ) : (
             <div id="pack-panel-families" role="tabpanel" aria-labelledby="pack-tab-families" className="family-grid">
-              {families.map((family) => (
-                <article className={`family-card ${family.tone}${family.noAvatar ? " no-avatar" : ""}`} key={family.group}>
-                  {!family.noAvatar && <div className="family-avatar" aria-label="Family image placeholder"><ImageIcon size={24} strokeWidth={1.4} aria-hidden="true" /></div>}
-                  <small>{family.group}</small>
-                  <h3>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</h3>
-                  <p>{family.socialUrl ? <a className="family-social" href={family.socialUrl} target="_blank" rel="noreferrer">{family.note}</a> : family.note}</p>
-                </article>
-              ))}
+              {families.map((family) => {
+                if (family.noAvatar) {
+                  return (
+                    <article className={`family-card ${family.tone} no-avatar`} key={family.group}>
+                      <small>{family.group}</small>
+                      <h3>{family.names}</h3>
+                      <p>{family.note}</p>
+                    </article>
+                  );
+                }
+
+                const isFlipped = Boolean(flippedFamilies[family.group]);
+                return (
+                  <article
+                    className={`family-card family-flip-card ${family.tone}${isFlipped ? " is-flipped" : ""}`}
+                    key={family.group}
+                    onClick={() => toggleFamilyCard(family.group)}
+                    onKeyDown={(event) => {
+                      if (event.target.closest("a")) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggleFamilyCard(family.group);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isFlipped}
+                    aria-label={`${isFlipped ? "Show details for" : "Show photo for"} ${family.names}`}
+                  >
+                    <span className="family-flip-inner">
+                      <span className="family-flip-face family-card-front">
+                        <img className="family-card-image" src={family.frontImage} alt={family.imageAlt} />
+                        <span className="family-card-info">
+                          <small>{family.group}</small>
+                          <strong>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</strong>
+                          <a className="family-social" href={family.socialUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{family.note}</a>
+                        </span>
+                      </span>
+                      <span className="family-flip-face family-card-back" aria-hidden={!isFlipped}>
+                        <img className="family-card-image" src={family.backImage} alt={`${family.names} back photocard`} />
+                      </span>
+                    </span>
+                  </article>
+                );
+              })}
             </div>
           )}
 
@@ -376,6 +453,8 @@ export default function Home() {
                 <form onSubmit={submit}>
                   <label>Name<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
                   <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
+                  <label>{joinContext.profileLabel}<input name="profile" type="text" autoComplete="url" placeholder={joinContext.profilePlaceholder} /></label>
+                  <label>{joinContext.dogLabel}<input name="dogName" type="text" placeholder={joinContext.dogPlaceholder} /></label>
                   <label>Tell us about your retriever or interest<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
                   <button className="button dark" type="submit">Continue as {interest} <Icon name="arrow" /></button>
                   <small className="prototype-note">Prototype only—submissions are not sent yet.</small>
