@@ -39,16 +39,19 @@ export async function POST(request) {
     );
   }
 
+  // Field names and nesting are dictated by the Apps Script in
+  // scripts/apps-script/Code.gs — change both together or submissions are
+  // rejected as "Select a join type."
   const payload = {
     secret,
-    interest,
-    name,
-    email,
-    profile: clean(body?.profile, LIMITS.profile),
-    dogName: clean(body?.dogName, LIMITS.dogName),
-    message: clean(body?.message, LIMITS.message),
-    submittedAt: new Date().toISOString(),
-    source: "house-of-retrievers-site",
+    submission: {
+      joinType: interest,
+      name,
+      email,
+      socialProfile: clean(body?.profile, LIMITS.profile),
+      retrieverName: clean(body?.dogName, LIMITS.dogName),
+      message: clean(body?.message, LIMITS.message),
+    },
   };
 
   try {
