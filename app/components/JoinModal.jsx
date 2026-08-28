@@ -72,7 +72,9 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                 {submitting ? "Sending…" : <>Continue as {interest} <Icon name="arrow" /></>}
               </button>
               {submitError ? <p className="form-error" role="alert">{submitError}</p> : null}
-              <small className="prototype-note">We only use your details to follow up about the pack.</small>
+              <small className="form-note">
+                We keep your name, email, and anything you share here in a private House of Retrievers list, and use it only to follow up about joining. Message us on <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">Instagram</a> or <a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noreferrer">Facebook</a> any time to have your details removed.
+              </small>
             </form>
           </>
         ) : (

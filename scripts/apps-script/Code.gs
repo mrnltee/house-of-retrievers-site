@@ -15,6 +15,7 @@
  *
  * Script properties used:
  *   JOIN_FORM_SECRET   required, must match the Vercel value
+ *   SHEET_ID           required, the id from the spreadsheet URL between /d/ and /edit
  *   NOTIFICATION_EMAIL optional, sends an alert per submission
  */
 
@@ -48,8 +49,17 @@ function doPost(e) {
       });
     }
 
+    const spreadsheetId = properties.getProperty('SHEET_ID');
+
+    if (!spreadsheetId) {
+      return response({
+        ok: false,
+        error: 'Script property SHEET_ID is not set.'
+      });
+    }
+
     const sheet = SpreadsheetApp
-      .openById('1Bhx3uk7F32XEklRf12iQeWfLsy7-j3d_AKXoI4XyrTQ5j4erOAaEDkcr')
+      .openById(spreadsheetId)
       .getSheetByName(SHEET_NAME);
 
     if (!sheet) throw new Error(`Missing sheet: ${SHEET_NAME}`);
@@ -91,6 +101,15 @@ function doPost(e) {
       error: 'Could not save the application.'
     });
   }
+}
+
+/**
+ * Health check. Without this, opening the /exec URL in a browser shows
+ * "Script function not found: doGet", which looks like a broken deployment.
+ * Deliberately reveals nothing about the sheet or the secret.
+ */
+function doGet() {
+  return response({ ok: true, service: 'house-of-retrievers-join' });
 }
 
 function clean(value, maxLength) {
