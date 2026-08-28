@@ -1,9 +1,9 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "House of Retrievers — Good Dogs. Good People. Greater Good.",
+  title: "House of Retrievers PH - Good Dogs. Good People. Greater Good.",
   description:
-    "A community of responsible retriever families turning companionship into meaningful service.",
+    "A Philippine nonprofit of retriever families raising their dogs well and bringing them along to help people and animals who need it. Volunteers welcome, with or without a dog.",
 };
 
 export const viewport = {
