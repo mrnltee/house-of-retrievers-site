@@ -224,6 +224,8 @@ label { display: grid; gap: 7px; color: #64675e; font-size: 11px; font-weight: 7
 input, textarea { width: 100%; border: 1px solid var(--line); background: white; padding: 14px 15px; border-radius: 0; color: var(--ink); outline: none; text-transform: none; letter-spacing: 0; resize: vertical; }
 input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(167,133,63,.14); }
 .prototype-note { text-align: center; color: #85887f; font-size: 10px; }
+.form-error { margin: 4px 0 0; text-align: center; color: #9c2f2f; font-size: 12px; line-height: 1.4; }
+.join-modal form button[type="submit"][disabled] { opacity: 0.6; cursor: not-allowed; }
 .success-state { min-height: 460px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
 .success-state > span { width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; background: var(--gold); color: var(--forest); margin-bottom: 32px; }
 .success-state p { color: #6f736a; line-height: 1.65; }

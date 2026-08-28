@@ -128,6 +128,8 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [interest, setInterest] = useState("Member");
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [progress, setProgress] = useState(0);
   const [flippedFamilies, setFlippedFamilies] = useState(() => ({}));
   const [instagramPosts, setInstagramPosts] = useState([]);
@@ -238,13 +240,47 @@ export default function Home() {
 
   const openJoin = () => {
     setSent(false);
+    setSubmitError("");
+    setSubmitting(false);
     setModalOpen(true);
     setMenuOpen(false);
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    setSent(true);
+    if (submitting) return;
+
+    const formData = new FormData(event.currentTarget);
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interest,
+          name: formData.get("name"),
+          email: formData.get("email"),
+          profile: formData.get("profile"),
+          dogName: formData.get("dogName"),
+          message: formData.get("message"),
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setSubmitError(result?.error || "We could not send your request. Please try again.");
+        return;
+      }
+
+      setSent(true);
+    } catch {
+      setSubmitError("We could not reach the server. Please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const toggleFamilyCard = (group) => {
@@ -608,16 +644,19 @@ export default function Home() {
                   <label>{joinContext.profileLabel}<input name="profile" type="text" autoComplete="url" placeholder={joinContext.profilePlaceholder} /></label>
                   <label>{joinContext.dogLabel}<input name="dogName" type="text" placeholder={joinContext.dogPlaceholder} /></label>
                   <label>Tell us about your retriever or interest<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
-                  <button className="button dark" type="submit">Continue as {interest} <Icon name="arrow" /></button>
-                  <small className="prototype-note">Prototype only—submissions are not sent yet.</small>
+                  <button className="button dark" type="submit" disabled={submitting}>
+                    {submitting ? "Sending\u2026" : <>Continue as {interest} <Icon name="arrow" /></>}
+                  </button>
+                  {submitError ? <p className="form-error" role="alert">{submitError}</p> : null}
+                  <small className="prototype-note">We only use your details to follow up about the pack.</small>
                 </form>
               </>
             ) : (
               <div className="success-state">
                 <span><Icon name="check" size={34} /></span>
-                <div className="eyebrow">Preview complete</div>
-                <h2>Your interest flow works.</h2>
-                <p>This is where the live website will confirm the request and guide the visitor to the next step.</p>
+                <div className="eyebrow">Request received</div>
+                <h2>Welcome to the pack.</h2>
+                <p>Thank you for reaching out as a {interest.toLowerCase()}. We have your details and will be in touch soon.</p>
                 <button className="button dark" onClick={() => setModalOpen(false)}>Back to the site <Icon name="arrow" /></button>
               </div>
             )}
