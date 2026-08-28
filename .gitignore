@@ -10,8 +10,10 @@ npm-debug.log*
 upload
 .env.local
 .vercel
+public/**/MBY.mp4
 public/MBY.mp4
 public/house-of-retrievers-hero-1080p-old.mp4
+public/**/*.JPEG
 public/purpaws*.JPEG
 .env*
 !.env.example
