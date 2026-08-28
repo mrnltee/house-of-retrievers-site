@@ -44,8 +44,7 @@ export const activities = [
     title: "Every gathering can give back",
     copy: "Joyful pack activities designed to rally support, with proceeds intended for a clearly named beneficiary.",
     video: "/mby-give-back.mp4",
-    image:
-      "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=85",
-    alt: "House of Retrievers community gathering",
+    image: "/mby-give-back-poster.jpg",
+    alt: "Two golden retrievers beside a car boot loaded with donated dog food",
   },
 ];
