@@ -13,3 +13,5 @@ upload
 public/MBY.mp4
 public/house-of-retrievers-hero-1080p-old.mp4
 public/purpaws*.JPEG
+.env*
+!.env.example

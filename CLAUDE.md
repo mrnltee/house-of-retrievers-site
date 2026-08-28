@@ -16,20 +16,21 @@ Refactor and continue the House of Retrievers concept site without changing its 
 ## Current implementation
 
 - Next.js 15 App Router with React 19
-- Static export packaged into `dist/client`
-- Production worker entrypoint at `dist/server/index.js`
-- All page behavior currently lives in `app/page.jsx`
-- Styling currently lives in `app/globals.css`
-- No backend, CMS, analytics, or form submission is connected
+- Deployed on Vercel as a Next.js server app. The old static export to `dist/client` and its worker entrypoint were retired once server routes were needed.
+- Page composition lives in `app/page.jsx`; sections are components in `app/components/`
+- Editable content lives in `app/content/` (`activities.js`, `families.js`, `join.js`)
+- Styling lives in `app/globals.css`
+- Server routes in `app/api/`: `instagram` (feed proxy) and `join` (form intake)
+- Secrets stay server-side and are managed in Vercel. Pull them locally with `npx vercel env pull .env.local`. Never expose them via `NEXT_PUBLIC_`.
 
-## Recommended refactor
+## Refactor status
 
-1. Split `app/page.jsx` into reusable `Header`, `Hero`, `PurposeStories`, `Pack`, `JoinModal`, and `Footer` components.
-2. Move editable activities and founding-family entries into a typed content module.
-3. Preserve the current three-section information architecture and primary Join the Pack CTA.
-4. Replace sample photography only with approved House of Retrievers assets and meaningful alt text.
-5. Connect the join form only after the submission destination, privacy copy, and consent requirements are confirmed.
-6. Keep the existing ChatGPT Sites packaging scripts working unless deployment is intentionally migrated.
+1. Done — `app/page.jsx` is split into `Header`, `Hero`, `PurposeStories`, `InstagramFeed`, `Pack`, `FinalCta`, `JoinModal`, and `Footer` under `app/components/`.
+2. Done — activities, founding families, and join copy live in `app/content/`, documented with JSDoc typedefs. The repo is plain JSX; confirm with the owner before introducing TypeScript.
+3. Preserve the current information architecture and primary Join the Pack CTA.
+4. Open — replace remaining sample photography only with approved House of Retrievers assets and meaningful alt text. Unsplash stock still appears in `app/content/activities.js`, the hero poster in `app/components/Hero.jsx`, the `.hero-photo` fallback in `app/globals.css`, and the `preconnect` in `app/layout.jsx`.
+5. Done — the join form posts to `app/api/join/route.js`, which forwards to Google Apps Script with `JOIN_FORM_SECRET` in the request body so the secret never reaches the browser. Privacy and consent copy still needs owner sign-off.
+6. Retired — the ChatGPT Sites packaging scripts were removed after the deployment moved to Vercel.
 
 ## Verification
 
