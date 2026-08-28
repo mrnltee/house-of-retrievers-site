@@ -133,6 +133,7 @@ export default function Home() {
   const [instagramPosts, setInstagramPosts] = useState([]);
   const [instagramStatus, setInstagramStatus] = useState("loading");
   const [instagramSlide, setInstagramSlide] = useState(0);
+  const [instagramDirection, setInstagramDirection] = useState("next");
 
   const active = useMemo(() => activities[activeStory], [activeStory]);
   const instagramWindow = useMemo(() => {
@@ -405,14 +406,20 @@ export default function Home() {
                 <button
                   type="button"
                   aria-label="Show previous Instagram post"
-                  onClick={() => setInstagramSlide((current) => (current - 1 + instagramPosts.length) % instagramPosts.length)}
+                  onClick={() => {
+                    setInstagramDirection("previous");
+                    setInstagramSlide((current) => (current - 1 + instagramPosts.length) % instagramPosts.length);
+                  }}
                 >
                   <ChevronLeft size={18} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   aria-label="Show next Instagram post"
-                  onClick={() => setInstagramSlide((current) => (current + 1) % instagramPosts.length)}
+                  onClick={() => {
+                    setInstagramDirection("next");
+                    setInstagramSlide((current) => (current + 1) % instagramPosts.length);
+                  }}
                 >
                   <ChevronRight size={18} aria-hidden="true" />
                 </button>
@@ -427,7 +434,8 @@ export default function Home() {
           ) : null}
 
           {instagramStatus === "ready" ? (
-            <div className="instagram-grid">
+            <div className={`instagram-slide-window instagram-slide-${instagramDirection}`} key={instagramSlide}>
+              <div className="instagram-grid">
               {instagramWindow.map((post) => {
                 const caption = post.caption?.trim() || "A moment from the House of Retrievers pack.";
                 const alt = caption.length > 120 ? `${caption.slice(0, 117)}…` : caption;
@@ -444,6 +452,7 @@ export default function Home() {
                   </a>
                 );
               })}
+              </div>
             </div>
           ) : null}
 
