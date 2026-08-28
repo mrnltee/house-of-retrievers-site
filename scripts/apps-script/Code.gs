@@ -10,7 +10,7 @@
  *
  * Reads a payload shaped by app/api/join/route.js:
  *   { secret, submission: { joinType, name, email, socialProfile,
- *                           retrieverName, message } }
+ *                           furbabyName, message } }
  * Renaming a field here means renaming it there too.
  *
  * Script properties used:
@@ -35,7 +35,7 @@ function doPost(e) {
     const name = clean(form.name, 120);
     const email = clean(form.email, 254);
     const socialProfile = clean(form.socialProfile, 300);
-    const furbabyName = clean(form.retrieverName, 120);
+    const furbabyName = clean(form.furbabyName, 120);
     const message = clean(form.message, 2000);
 
     if (!['Member', 'Volunteer', 'Partner'].includes(joinType)) {

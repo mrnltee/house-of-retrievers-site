@@ -26,7 +26,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           name: formData.get("name"),
           email: formData.get("email"),
           profile: formData.get("profile"),
-          dogName: formData.get("dogName"),
+          furbabyName: formData.get("furbabyName"),
           message: formData.get("message"),
         }),
       });
@@ -66,7 +66,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               <label>Name<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
               <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
               <label>{fieldCopy.profileLabel}<input name="profile" type="text" autoComplete="url" placeholder={fieldCopy.profilePlaceholder} /></label>
-              <label>{fieldCopy.dogLabel}<input name="dogName" type="text" placeholder={fieldCopy.dogPlaceholder} /></label>
+              <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label>
               <label>Tell us about your retriever or interest<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
               <button className="button dark" type="submit" disabled={submitting}>
                 {submitting ? "Sending…" : <>Continue as {interest} <Icon name="arrow" /></>}

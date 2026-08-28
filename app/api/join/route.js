@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const INTERESTS = ["Member", "Volunteer", "Partner"];
-const LIMITS = { name: 120, email: 200, profile: 300, dogName: 120, message: 2000 };
+const LIMITS = { name: 120, email: 200, profile: 300, furbabyName: 120, message: 2000 };
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -49,7 +49,7 @@ export async function POST(request) {
       name,
       email,
       socialProfile: clean(body?.profile, LIMITS.profile),
-      retrieverName: clean(body?.dogName, LIMITS.dogName),
+      furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
       message: clean(body?.message, LIMITS.message),
     },
   };

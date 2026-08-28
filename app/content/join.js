@@ -46,8 +46,8 @@ export const joinRoutes = [
  * @typedef {Object} JoinFieldCopy
  * @property {string} profileLabel
  * @property {string} profilePlaceholder
- * @property {string} dogLabel
- * @property {string} dogPlaceholder
+ * @property {string} furbabyLabel
+ * @property {string} furbabyPlaceholder
  */
 
 /** @type {Record<string, JoinFieldCopy>} */
@@ -55,19 +55,19 @@ export const joinFieldCopy = {
   Member: {
     profileLabel: "Instagram or Facebook profile (optional)",
     profilePlaceholder: "e.g. @yourhandle or profile URL",
-    dogLabel: "Retriever's name (optional)",
-    dogPlaceholder: "e.g. Macchiato",
+    furbabyLabel: "Furbaby name (optional)",
+    furbabyPlaceholder: "e.g. Macchiato",
   },
   Volunteer: {
     profileLabel: "Instagram or Facebook profile (optional)",
     profilePlaceholder: "e.g. @yourhandle or profile URL",
-    dogLabel: "Retriever's name (optional)",
-    dogPlaceholder: "e.g. Dallas, Faye, or your retriever",
+    furbabyLabel: "Furbaby name (optional)",
+    furbabyPlaceholder: "e.g. Dallas, Faye, or your furbaby",
   },
   Partner: {
     profileLabel: "Instagram or Facebook profile (optional)",
     profilePlaceholder: "e.g. @yourhandle or organization profile URL",
-    dogLabel: "Retriever's name (optional)",
-    dogPlaceholder: "e.g. the retriever joining your activity",
+    furbabyLabel: "Furbaby name (optional)",
+    furbabyPlaceholder: "e.g. the furbaby joining your activity",
   },
 };
