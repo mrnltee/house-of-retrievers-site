@@ -73,5 +73,6 @@ The join form posts to `/api/join`, which forwards submissions to a Google Apps 
 - `public/house-of-retrievers-logo-original.png` — exact supplied artwork
 - `public/house-of-retrievers-logo-reverse.png` — contrast-safe dark-background version
 - `scripts/create-reversed-logo.py` — deterministic reversed-logo generator
+- `scripts/apps-script/Code.gs` — Google Apps Script that records join submissions to a sheet
 
 See `CLAUDE.md` for refactoring constraints and recommended next work.
