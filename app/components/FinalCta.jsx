@@ -18,7 +18,7 @@ export default function FinalCta({ onJoin }) {
         <source src="/CTA-join-us.MP4" type="video/mp4" />
       </video>
       <div className="final-cta-shade" />
-      <div><FamilyDogMark /><p>There’s always room<br />for one more pawsome pawmily.</p></div>
+      <div><FamilyDogMark /><p>There’s always room<br />{" "}for one more pawsome pawmily.</p></div>
       <button className="button cream" onClick={onJoin}>COME JOIN US <Icon name="paw" size={18} /></button>
     </section>
   );
