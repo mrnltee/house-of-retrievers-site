@@ -31,7 +31,7 @@ export default function PurposeStories({ activeStory, setActiveStory }) {
       <div className="section-intro">
         <div className="eyebrow">What moves us</div>
         <h2>More than a breed.<br /><em>A way to give back.</em></h2>
-        <p>House of Retrievers brings pet families together around responsible ownership, shared joy, and practical acts of service.</p>
+        <p>House of Retrievers brings pet families together to serve their communities, grow alongside one another, and turn a gathering into something that gives back.</p>
       </div>
 
       <div className="story-stage">

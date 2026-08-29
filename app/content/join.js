@@ -23,7 +23,7 @@ export const joinRoutes = [
   {
     number: "01",
     title: "Become a member",
-    copy: "Meet fellow retriever families, exchange practical care knowledge, and join community activities.",
+    copy: "Meet fellow retriever families, trade notes on everyday care, and join community activities.",
     icon: UsersRound,
   },
   {
@@ -35,7 +35,7 @@ export const joinRoutes = [
   {
     number: "03",
     title: "Partner for a cause",
-    copy: "Collaborate on a transparent, beneficiary-led activity that turns a gathering into meaningful support.",
+    copy: "Collaborate on an activity built around a named beneficiary, run openly from start to finish.",
     icon: HeartHandshake,
   },
 ];

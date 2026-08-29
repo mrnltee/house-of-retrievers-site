@@ -46,7 +46,7 @@ export const activities = [
   {
     eyebrow: "Shared experience",
     title: "Better humans for better dogs",
-    copy: "Trips, workshops, and gatherings where retriever families learn from each other and build a circle that lasts.",
+    copy: "Trips, workshops, and days out where retriever families learn from each other and build a circle that lasts.",
     image: "/2-better/better1.jpg",
     gallery: [
       { src: "/2-better/better1.jpg", alt: "Members and their golden retrievers sharing paddleboards out in the surf" },
@@ -63,7 +63,7 @@ export const activities = [
   {
     eyebrow: "Activities for a cause",
     title: "Every gathering can give back",
-    copy: "Joyful pack activities designed to rally support, with proceeds intended for a clearly named beneficiary.",
+    copy: "Pack activities that rally real support, for a beneficiary we name up front so everyone can see where it goes.",
     video: "/3-giveback/mby-give-back.mp4",
     image: "/3-giveback/mby-give-back-poster.jpg",
     alt: "Two golden retrievers beside a car boot loaded with donated dog food",
