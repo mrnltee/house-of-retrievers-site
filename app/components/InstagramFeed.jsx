@@ -3,18 +3,28 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Icon from "./Icon";
 
 const VISIBLE_POSTS = 4;
+const MOBILE_QUERY = "(max-width: 680px)";
 
 export default function InstagramFeed() {
   const [posts, setPosts] = useState([]);
   const [status, setStatus] = useState("loading");
   const [slide, setSlide] = useState(0);
   const [direction, setDirection] = useState("next");
+  const [visiblePosts, setVisiblePosts] = useState(VISIBLE_POSTS);
 
   const window_ = useMemo(() => {
     if (!posts.length) return [];
-    const visibleCount = Math.min(VISIBLE_POSTS, posts.length);
+    const visibleCount = Math.min(visiblePosts, posts.length);
     return Array.from({ length: visibleCount }, (_, index) => posts[(slide + index) % posts.length]);
-  }, [posts, slide]);
+  }, [posts, slide, visiblePosts]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_QUERY);
+    const updateVisiblePosts = () => setVisiblePosts(mediaQuery.matches ? 1 : VISIBLE_POSTS);
+    updateVisiblePosts();
+    mediaQuery.addEventListener("change", updateVisiblePosts);
+    return () => mediaQuery.removeEventListener("change", updateVisiblePosts);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -49,7 +59,7 @@ export default function InstagramFeed() {
       <div className="instagram-carousel" role="region" aria-roledescription="carousel" aria-label="Latest House of Retrievers Instagram posts">
         <div className="instagram-toolbar">
           <p aria-live="polite">
-            {status === "ready" ? `Showing ${window_.length} posts, starting at ${slide + 1} of ${posts.length}` : "Latest posts from @houseofretrieversph"}
+            {status === "ready" ? `Showing ${window_.length} ${window_.length === 1 ? "post" : "posts"}, starting at ${slide + 1} of ${posts.length}` : "Latest posts from @houseofretrieversph"}
           </p>
           {posts.length > 1 ? (
             <div className="instagram-controls">
@@ -58,7 +68,7 @@ export default function InstagramFeed() {
                 aria-label="Show previous Instagram posts"
                 onClick={() => {
                   setDirection("previous");
-                  setSlide((current) => (current - VISIBLE_POSTS + posts.length) % posts.length);
+                  setSlide((current) => (current - visiblePosts + posts.length) % posts.length);
                 }}
               >
                 <ChevronLeft size={18} aria-hidden="true" />
@@ -68,7 +78,7 @@ export default function InstagramFeed() {
                 aria-label="Show next Instagram posts"
                 onClick={() => {
                   setDirection("next");
-                  setSlide((current) => (current + VISIBLE_POSTS) % posts.length);
+                  setSlide((current) => (current + visiblePosts) % posts.length);
                 }}
               >
                 <ChevronRight size={18} aria-hidden="true" />
