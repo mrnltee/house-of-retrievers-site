@@ -3,17 +3,28 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Icon from "./Icon";
 import { activities } from "../content/activities";
 
+/** Above this many photos the dots stop fitting the control pill on a phone. */
+const MAX_DOTS = 6;
+
 export default function PurposeStories({ activeStory, setActiveStory }) {
-  const [activePurpawsSlide, setActivePurpawsSlide] = useState(0);
+  const [slide, setSlide] = useState(0);
   const active = activities[activeStory];
+  const gallery = active.gallery;
+  // Clamp rather than trust the state: galleries differ in length, so the
+  // index survives a switch from a longer story to a shorter one.
+  const activeSlide = gallery ? slide % gallery.length : 0;
 
   useEffect(() => {
-    if (activeStory !== 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setSlide(0);
+  }, [activeStory]);
+
+  useEffect(() => {
+    if (!gallery || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
-      setActivePurpawsSlide((current) => (current + 1) % activities[0].gallery.length);
+      setSlide((current) => (current + 1) % gallery.length);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [activeStory]);
+  }, [gallery]);
 
   return (
     <section className="mission section-shell" id="mission">
@@ -36,35 +47,41 @@ export default function PurposeStories({ activeStory, setActiveStory }) {
                   {item.gallery.map((photo, slideIndex) => (
                     <img
                       key={photo.src}
-                      className={slideIndex === activePurpawsSlide ? "story-carousel-slide active" : "story-carousel-slide"}
+                      className={slideIndex === activeSlide ? "story-carousel-slide active" : "story-carousel-slide"}
                       src={photo.src}
-                      alt={slideIndex === activePurpawsSlide ? photo.alt : ""}
-                      aria-hidden={slideIndex !== activePurpawsSlide}
+                      alt={slideIndex === activeSlide ? photo.alt : ""}
+                      aria-hidden={slideIndex !== activeSlide}
                     />
                   ))}
                   <div className="story-carousel-controls" aria-label="Photo gallery controls">
                     <button
                       type="button"
-                      onClick={() => setActivePurpawsSlide((current) => (current - 1 + item.gallery.length) % item.gallery.length)}
+                      onClick={() => setSlide((current) => (current - 1 + item.gallery.length) % item.gallery.length)}
                       aria-label="Previous photo"
                     >
                       <ChevronLeft size={18} aria-hidden="true" />
                     </button>
-                    <div className="story-carousel-dots">
-                      {item.gallery.map((photo, slideIndex) => (
-                        <button
-                          key={photo.src}
-                          type="button"
-                          className={slideIndex === activePurpawsSlide ? "active" : ""}
-                          onClick={() => setActivePurpawsSlide(slideIndex)}
-                          aria-label={`Show photo ${slideIndex + 1} of ${item.gallery.length}`}
-                          aria-current={slideIndex === activePurpawsSlide ? "true" : undefined}
-                        />
-                      ))}
-                    </div>
+                    {item.gallery.length > MAX_DOTS ? (
+                      <p className="story-carousel-count" aria-live="polite">
+                        {activeSlide + 1} / {item.gallery.length}
+                      </p>
+                    ) : (
+                      <div className="story-carousel-dots">
+                        {item.gallery.map((photo, slideIndex) => (
+                          <button
+                            key={photo.src}
+                            type="button"
+                            className={slideIndex === activeSlide ? "active" : ""}
+                            onClick={() => setSlide(slideIndex)}
+                            aria-label={`Show photo ${slideIndex + 1} of ${item.gallery.length}`}
+                            aria-current={slideIndex === activeSlide ? "true" : undefined}
+                          />
+                        ))}
+                      </div>
+                    )}
                     <button
                       type="button"
-                      onClick={() => setActivePurpawsSlide((current) => (current + 1) % item.gallery.length)}
+                      onClick={() => setSlide((current) => (current + 1) % item.gallery.length)}
                       aria-label="Next photo"
                     >
                       <ChevronRight size={18} aria-hidden="true" />
