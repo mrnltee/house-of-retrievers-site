@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { getAccessToken } from "../../lib/instagramToken";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
+  const { token: accessToken } = await getAccessToken();
   const userId = process.env.INSTAGRAM_USER_ID || "17841440369853992";
   const apiVersion = process.env.INSTAGRAM_API_VERSION || "v26.0";
 
@@ -20,7 +21,7 @@ export async function GET() {
   try {
     const response = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      next: { revalidate: 3600 },
+      next: { revalidate: 3600, tags: ["instagram"] },
     });
 
     if (!response.ok) {

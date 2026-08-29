@@ -1,0 +1,179 @@
+[ 4811409ms] [WARNING] A speculation rule set was inserted into the document but will be ignored. This might happen, for example, if it was previously inserted into another document, or if it was created using the innerHTML setter. @ https://www.google.com/search?q=packwalk.ph&sca_esv=e7f60b519972b3f7&biw=1200&bih=889&ei=Gi2TavfLCvOBvr0PubneuA0&ved=0ahUKEwj3wNLXw8aWAxXzgK8BHbmcF9cQ4dUDCBA&uact=5&oq=packwalk.ph&gs_lp=Egxnd3Mtd2l6LXNlcnAiC3BhY2t3YWxrLnBoSJQoUK8GWI8ncAF4AZABAJgBjQGgAfMHqgEDOC4zuAEDyAEA-AEBmAILoALyB8ICChAAGEcY1gQYsAPCAhcQLhjcBhi4BhjaBhjYAhjIAxiwA9gBAcICCxAuGIAEGIoFGJECwgILEAAYgAQYigUYkQLCAhAQLhiABBiKBRhDGMcBGNEDwgIKEC4YgAQYigUYQ8ICCxAAGIAEGLEDGIMBwgIIEAAYgAQYsQPCAgsQLhiABBjHARjRA8ICGhAuGIAEGIoFGJECGJcFGNwEGN4EGN8E2AECwgIOEAAYgAQYigUYkQIYsQPCAhEQLhiABBiKBRiRAhjHARivAcICCxAuGIAEGLEDGIMBwgIIEC4YgAQYsQPCAgUQABiABMICEBAuGIAEGIoFGEMYsQMYgwHCAgoQABiABBiKBRhDwgIgEC4YgAQYigUYkQIYxwEYrwEYlwUY3AQY3gQY4ATYAQLCAgsQLhiABBjHARivAcICDBAAGIAEGAoYCxixA8ICCRAAGIAEGAoYC8ICBBAAGB7CAgYQABgFGB7CAgUQABjvBcICBhAAGAgYHpgDAIgGAZAGCboGBAgBGBm6BgYIAhABGBSSBwM3LjSgB79qsgcDNi40uAfaB8IHBzAuMy41LjPIBzuACAE&sclient=gws-wiz-serp:33
+[ 4824205ms] [WARNING] A speculation rule set was inserted into the document but will be ignored. This might happen, for example, if it was previously inserted into another document, or if it was created using the innerHTML setter. @ https://www.google.com/search?q=packwalk.ph&sca_esv=e7f60b519972b3f7&biw=1200&bih=889&ei=Gi2TavfLCvOBvr0PubneuA0&uact=5&oq=packwalk.ph&gs_lp=Egxnd3Mtd2l6LXNlcnAiC3BhY2t3YWxrLnBoSJQoUK8GWI8ncAF4AZABAJgBjQGgAfMHqgEDOC4zuAEDyAEA-AEBmAILoALyB8ICChAAGEcY1gQYsAPCAhcQLhjcBhi4BhjaBhjYAhjIAxiwA9gBAcICCxAuGIAEGIoFGJECwgILEAAYgAQYigUYkQLCAhAQLhiABBiKBRhDGMcBGNEDwgIKEC4YgAQYigUYQ8ICCxAAGIAEGLEDGIMBwgIIEAAYgAQYsQPCAgsQLhiABBjHARjRA8ICGhAuGIAEGIoFGJECGJcFGNwEGN4EGN8E2AECwgIOEAAYgAQYigUYkQIYsQPCAhEQLhiABBiKBRiRAhjHARivAcICCxAuGIAEGLEDGIMBwgIIEC4YgAQYsQPCAgUQABiABMICEBAuGIAEGIoFGEMYsQMYgwHCAgoQABiABBiKBRhDwgIgEC4YgAQYigUYkQIYxwEYrwEYlwUY3AQY3gQY4ATYAQLCAgsQLhiABBjHARivAcICDBAAGIAEGAoYCxixA8ICCRAAGIAEGAoYC8ICBBAAGB7CAgYQABgFGB7CAgUQABjvBcICBhAAGAgYHpgDAIgGAZAGCboGBAgBGBm6BgYIAhABGBSSBwM3LjSgB79qsgcDNi40uAfaB8IHBzAuMy41LjPIBzuACAE&sclient=gws-wiz-serp&zx=1788035018067&dlnr=1&ved=2ahUKEwi0hOS_1caWAxUdcvUHHYErJ6IQl6ENegQIDxAI:33
+[ 4838932ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://web.facebook.com/woofgang.packwalkPH/?_rdc=1&_rdr#:0
+[ 4839006ms] [ERROR] ErrorUtils caught an error:
+
+terminate stream because StartStreamFailure with msg : UNAUTHENTICATED [Caught in: Subscription error in preprocessResponse]
+
+Subsequent non-fatal errors won't be logged; see https://fburl.com/debugjs. {column: 180, clientTime: 1788035045, extra: Object, guardList: Array(0), hash: vgh04r} @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:83
+[ 4839009ms] [LOG] 
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black; @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4839009ms] [LOG] 
+%cThis is a browser feature intended for developers. If someone told you to copy-paste something here to enable a Facebook feature or "hack" someone's account, it's a scam and will give them access to your Facebook account. font-family:helvetica; font-size:20px;  @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4839009ms] [LOG] 
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px;  @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4839009ms] [LOG] 
+%c  @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4839933ms] [WARNING] Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently @ https://static.xx.fbcdn.net/rsrc.php/v4/yd/r/QpQ4ZveDLN4.js:59
+[ 4850566ms] [WARNING] A speculation rule set was inserted into the document but will be ignored. This might happen, for example, if it was previously inserted into another document, or if it was created using the innerHTML setter. @ https://www.google.com/search?q=packwalk.ph&sca_esv=e7f60b519972b3f7&biw=1200&bih=889&ei=Gi2TavfLCvOBvr0PubneuA0&uact=5&oq=packwalk.ph&gs_lp=Egxnd3Mtd2l6LXNlcnAiC3BhY2t3YWxrLnBoSJQoUK8GWI8ncAF4AZABAJgBjQGgAfMHqgEDOC4zuAEDyAEA-AEBmAILoALyB8ICChAAGEcY1gQYsAPCAhcQLhjcBhi4BhjaBhjYAhjIAxiwA9gBAcICCxAuGIAEGIoFGJECwgILEAAYgAQYigUYkQLCAhAQLhiABBiKBRhDGMcBGNEDwgIKEC4YgAQYigUYQ8ICCxAAGIAEGLEDGIMBwgIIEAAYgAQYsQPCAgsQLhiABBjHARjRA8ICGhAuGIAEGIoFGJECGJcFGNwEGN4EGN8E2AECwgIOEAAYgAQYigUYkQIYsQPCAhEQLhiABBiKBRiRAhjHARivAcICCxAuGIAEGLEDGIMBwgIIEC4YgAQYsQPCAgUQABiABMICEBAuGIAEGIoFGEMYsQMYgwHCAgoQABiABBiKBRhDwgIgEC4YgAQYigUYkQIYxwEYrwEYlwUY3AQY3gQY4ATYAQLCAgsQLhiABBjHARivAcICDBAAGIAEGAoYCxixA8ICCRAAGIAEGAoYC8ICBBAAGB7CAgYQABgFGB7CAgUQABjvBcICBhAAGAgYHpgDAIgGAZAGCboGBAgBGBm6BgYIAhABGBSSBwM3LjSgB79qsgcDNi40uAfaB8IHBzAuMy41LjPIBzuACAE&sclient=gws-wiz-serp&zx=1788035018067&dlnr=1&ved=2ahUKEwi0hOS_1caWAxUdcvUHHYErJ6IQl6ENegQIDxAI:33
+[ 4856535ms] [LOG]  @ https://scripts.jixie.media/jxpublisher_3_1.nb.min.js:0
+[ 4856930ms] [WARNING] [GPT] PubAdsService.setTargeting is deprecated, use googletag.setConfig({targeting: ...}) instead.
+https://goo.gle/gpt-message#170 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202608270101/pubads_impl.js?cb=122880735:18
+[ 4857026ms] [WARNING] [GPT] Slot.setTargeting is deprecated, use Slot.setConfig({targeting: ...}) instead.
+https://goo.gle/gpt-message#171 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202608270101/pubads_impl.js?cb=122880735:18
+[ 4857469ms] [LOG] Nexus Related Stories with image: Proxy(Array) @ https://www.spot.ph/_nuxt/BsRSIw8d.js:77
+[ 4857471ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857471ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782719637-marikina" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857471ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857471ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782719637-marikina" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857471ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857471ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782719637-marikina" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782719637-marikina" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782724367-QC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782724367-QC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782724367-QC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857472ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1782724367-QC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1756799737-Untitled" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1756799737-Untitled" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1756799737-Untitled" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857473ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1756799737-Untitled" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857710ms] [WARNING] [GPT] Using deprecated googletag.encryptedSignalProviders. Please use googletag.secureSignalProviders instead.
+https://goo.gle/gpt-message#155 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202608270101/pubads_impl.js?cb=122880735:18
+[ 4857729ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_bidder @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4857730ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_pb @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4857730ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_adid @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4857730ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_size @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4857730ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_format @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4857730ms] [LOG] Prebid requestBids called @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4857738ms] [LOG] ad timer was set for .catfish @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4857738ms] [LOG] ad timer was set for .stripads2 @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4857755ms] [LOG] Nexus Reco with image: Proxy(Object) @ https://www.spot.ph/_nuxt/BsRSIw8d.js:77
+[ 4857755ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857755ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1785393517-QMC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857755ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857755ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1785393517-QMC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857755ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857755ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1785393517-QMC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857755ms] [WARNING] Failed parsing 'srcset' attribute value since it has an unknown descriptor. @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857756ms] [WARNING] Dropped srcset candidate "https://images.spot.ph/dynsto/1785393517-QMC" @ https://www.spot.ph/_nuxt/BsRSIw8d.js:19
+[ 4857897ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857905ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857910ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857915ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857921ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857925ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857930ms] [LOG] Element Visibility Data: [] @ :0
+[ 4857941ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4857943ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4858155ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://ups.analytics.yahoo.com/ups/58813/fed?gpp_sid=-1&v=1&url=https%3A%2F%2Fwww.spot.ph%2Fthings-to-do%2Fthe-latest-things-to-do%2Fsaturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4858363ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://dyndi-assets.summitmedia-digital.com/campaigns/spot-ph/active/carousel-takeover.json:0
+[ 4858363ms] [WARNING] Failed to fetch overlay config: Error: HTTP error! status: 404
+    at N (https://www.spot.ph/_nuxt/BsRSIw8d.js:78:68185)
+    at async A (https://www.spot.ph/_nuxt/BsRSIw8d.js:78:69380)
+    at async https://www.spot.ph/_nuxt/BsRSIw8d.js:78:73599 @ https://www.spot.ph/_nuxt/BsRSIw8d.js:77
+[ 4858363ms] [LOG] Error Reading Carousel Takeover JSON config @ https://www.spot.ph/_nuxt/BsRSIw8d.js:77
+[ 4858364ms] [ERROR] Access to fetch at 'https://api.rlcdn.com/api/identity/envelope?pid=1258' from origin 'https://www.spot.ph' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4858364ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://api.rlcdn.com/api/identity/envelope?pid=1258:0
+[ 4858624ms] [WARNING] Placements With no Content: Below Article Thumbnails 1 | Lazy Injected 1 @ https://cdn.taboola.com/libtrc/summitmediaph-spotph/loader.js:0
+[ 4858625ms] [WARNING] Placements With no Content: Below Article Thumbnails 1 | Lazy Injected 1 @ https://cdn.taboola.com/libtrc/summitmediaph-spotph/loader.js:0
+[ 4859036ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_bidder @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4859036ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_pb @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4859036ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_adid @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4859036ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_size @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4859036ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_format @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4859036ms] [LOG] Prebid requestBids called @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4859142ms] [LOG] /1019353/spot_smart_banner_desktop_things_to_do was requested @ https://www.spot.ph/_nuxt/BjguUE9W.js:0
+[ 4859221ms] [ERROR] ErrorUtils caught an error:
+
+Cannot listen to an undefined element. [Caught in: Tried to listen to element of type click]
+
+Subsequent non-fatal errors won't be logged; see https://fburl.com/debugjs. {column: 180, clientTime: 1788035065, extra: Object, guardList: Array(4), hash: 10nk04} @ https://static.xx.fbcdn.net/rsrc.php/v4/yd/r/L1bd4mv9BD2.js:82
+[ 4859826ms] [LOG] Image Takeover Loaded! @ :13
+[ 4859844ms] [LOG] /1019353/spot_smart_catfish_things_to_do_dyn was requested @ https://www.spot.ph/_nuxt/BjguUE9W.js:0
+[ 4860913ms] [ERROR] Attestation check for Shared Storage on https://www.googleadservices.com failed. @ https://www.googleadservices.com/pagead/managed/js/activeview/current/reach_worklet.html:0
+[ 4861925ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://xn--sync-k6d.copper6.com/image?pbjs=1&coppa=0:0
+[ 4862153ms] [LOG] Ignoring gdpr param, it should be 1 or 0 @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4862153ms] [LOG] Ignoring gdpr_consent param, it should be a non empty value @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4862432ms] [LOG] Invoking image pixel user sync for bidder: "conversant" @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4863037ms] [LOG] Invoking image pixel user sync for bidder: "kargo" @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4863144ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4863145ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4863356ms] [LOG] Invoking image pixel user sync for bidder: "unruly" @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4865077ms] [LOG] Invoking iframe pixel user sync for bidder: "mycodemedia" @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4867944ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4867945ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4869524ms] [LOG] Invoking image pixel user sync for bidder: "appnexus" @ https://scripts.jixie.media/jx-load-cookie.html?coop_sync=false&bidders=appnexus%2Cconversant%2Ckargo%2Cmobkoi%2Cmycodemedia%2Cshowheroes%2Cunruly:9
+[ 4872760ms] [LOG] ad was refreshed for .catfish @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4872763ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_bidder @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872764ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_pb @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872764ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_adid @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872764ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_size @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872764ms] [LOG] clrTgt_div-gpt-ad-1372220318117-0_jxhb_format @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872764ms] [LOG] Prebid requestBids called @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4872789ms] [LOG] ad was refreshed for .stripads2 @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4872790ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_bidder @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872790ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_pb @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872790ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_adid @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872790ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_size @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872790ms] [LOG] clrTgt_div-gpt-ad-1372220318117-2_jxhb_format @ https://scripts.jixie.media/onescript/Sp821V05VN/jx-Sp408821mE9eT.min.js:54
+[ 4872790ms] [LOG] Prebid requestBids called @ https://www.spot.ph/_nuxt/BsRSIw8d.js:80
+[ 4873147ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4873148ms] [LOG] Running Replace @ https://track.omguk.com/la?aid=2109697&ref=https%3A//www.spot.ph/things-to-do/the-latest-things-to-do/saturday-morning-pack-walks-upd-a2826-20260604-bsc:0
+[ 4873207ms] [LOG] /1019353/spot_smart_banner_desktop_things_to_do was requested @ https://www.spot.ph/_nuxt/BjguUE9W.js:0
+[ 4873247ms] [LOG] Image Takeover Loaded! @ :13
+[ 4873284ms] [LOG] /1019353/spot_smart_catfish_things_to_do_dyn was requested @ https://www.spot.ph/_nuxt/BjguUE9W.js:0
+[ 4873472ms] [ERROR] Attestation check for Shared Storage on https://www.googleadservices.com failed. @ https://www.googleadservices.com/pagead/managed/js/activeview/current/reach_worklet.html:0
+[ 4874414ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://dps.jp.cinarra.com/pxd?PLATFORM_ID=1&USER_ID=8d4a9665-afc3-8012-e904-b6e343aecfc6:0
+[ 4883081ms] [WARNING] A speculation rule set was inserted into the document but will be ignored. This might happen, for example, if it was previously inserted into another document, or if it was created using the innerHTML setter. @ https://www.google.com/search?q=the+poodle+society+philippines&oq=the+poodle+society+philippines&gs_lcrp=EgZjaHJvbWUyCQgAEEUYORigATIHCAEQIRigATIHCAIQIRifBTIHCAMQIRifBTIHCAQQIRifBTIHCAUQIRifBTIHCAYQIRifBdIBCDYwNDVqMGo0qAIAsAIB&sourceid=chrome&source=chrome.ob&ie=UTF-8:33
+[ 4915470ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://web.facebook.com/100076300991938/videos/bonding-with-the-house-of-retrievers-ph%EF%B8%8F-/1771657440482552/:0
+[ 4915519ms] [ERROR] ErrorUtils caught an error:
+
+terminate stream because StartStreamFailure with msg : UNAUTHENTICATED [Caught in: Subscription error in preprocessResponse]
+
+Subsequent non-fatal errors won't be logged; see https://fburl.com/debugjs. {column: 180, clientTime: 1788035121, extra: Object, guardList: Array(0), hash: clokcv} @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:83
+[ 4915521ms] [LOG] 
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black; @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4915521ms] [LOG] 
+%cThis is a browser feature intended for developers. If someone told you to copy-paste something here to enable a Facebook feature or "hack" someone's account, it's a scam and will give them access to your Facebook account. font-family:helvetica; font-size:20px;  @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4915521ms] [LOG] 
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px;  @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4915521ms] [LOG] 
+%c  @ https://static.xx.fbcdn.net/rsrc.php/v4/yo/r/XrOVaBLe-P9.js:250
+[ 4915788ms] [WARNING] Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently @ https://static.xx.fbcdn.net/rsrc.php/v4iYBd4/yk/l/en_US-j/QpQ4ZveDLN4zqmqwu3OPiYkuqUCLzgRA1broP8HwT8mW_pl0_hIz92ikYE3QEEpPuT-yEwuPKSfI5.js:59
+[ 4934236ms] [LOG] 
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black; @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4934236ms] [LOG] 
+%cThis is a browser feature intended for developers. If someone told you to copy-paste something here to enable an Instagram feature or "hack" someone's account, it is a scam and will give them access to your Instagram account. font-family:helvetica; font-size:20px;  @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4934236ms] [LOG] 
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px;  @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4934236ms] [LOG] 
+%c  @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4934647ms] [ERROR] Access to XMLHttpRequest at 'https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#' (redirected from 'https://www.facebook.com/ig_xsite_user_info/') from origin 'https://www.instagram.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://www.instagram.com/p/DcLt1z3ThcX/:0
+[ 4934648ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#:0
+[ 4935332ms] [ERROR] Access to XMLHttpRequest at 'https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#' (redirected from 'https://www.facebook.com/ig_xsite_user_info/') from origin 'https://www.instagram.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://www.instagram.com/p/DcLt1z3ThcX/:0
+[ 4935332ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#:0
+[ 4935998ms] [ERROR] Access to XMLHttpRequest at 'https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#' (redirected from 'https://www.facebook.com/ig_xsite_user_info/') from origin 'https://www.instagram.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://www.instagram.com/p/DcLt1z3ThcX/:0
+[ 4935998ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#:0
+[ 4943260ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://www.google.com/search/about-this-result?origin=www.google.com&req=CqoBL2dvdG8_dXJsPUNBRVNkQUhyT3pBVnlDSTRvaDJZNWFSNFdTQ3hDcE01aUY1SWRHRzF3WHZOUDMzZ2k5ckt4a0dUUG9oSFdLTkRIMjZTVG43amprTHRVb1BoVThweHJDNjZmSmIwTm5aVjZtVnpOTVc5WEs5cjRvQnJJekZydlNKYWdjeFo5c1R4X2pXcW9JWWV3RFliNUIxd1dXVmVBRVZDZldRQ1RfWWkSBBoCCAAayQMSABoCCAEiACoAMgYIAhICcGg6AEIECAEQAEoAWgByAHoAgkCjAwgAEAAYACAAKhQKBWhvdXNlFUmihUAaBmhvdXNlcyoJCgJvZhUAAAAAKi0KCnJldHJpZXZlcnMVkIFoQBoJcmV0cmlldmVyGg9pdjtwO3JldHJpZXZlcnMqFgoCcGgV6a0HQBoLcGhpbGlwcGluZXMyPGh0dHBzOi8vd3d3Lmluc3RhZ3JhbS5jb20vaG91c2VvZnJldHJpZXZlcnNwaC9wL0RjTHQxejNUaGNYLzpGT3VyIDxiPmhvdXNlPC9iPiB3ZWxjb21lcyB5b3UhIEpvaW4gdGhlIDxiPkhPVVNFIE9GIFJFVFJJRVZFUlM8L2I-IC4uLkKmAVdlJiMzOTtyZSBidWlsZGluZyBhIDxiPmhvbWUtc3R5bGUgcGV0IGJvYXJkaW5nIGV4cGVyaWVuY2U8L2I-IHdoZXJlIHlvdXIgZnVyIGJhYnkgY2FuIGVhdCwgcGxheSwgcmVzdCwgYW5kIGJlIGNhcmVkIGZvciB3aGlsZSB5b3UmIzM5O3JlIGF3YXkuIDVGIEdyZWVuaGlsbHMmbmJzcDsuLi5KAm9mIgIQAUgAWABoAA&hl=en-PH&gl=PH&ilrm=zpr&vet=10CD0Qt5oMahcKEwjAk4_91caWAxUAAAAAHQAAAAAQDA..i&ved=0CD0Qt5oMahcKEwjAk4_91caWAxUAAAAAHQAAAAAQDA&uact=1:0
+[ 4950251ms] [LOG] 
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black; @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4950252ms] [LOG] 
+%cThis is a browser feature intended for developers. If someone told you to copy-paste something here to enable an Instagram feature or "hack" someone's account, it is a scam and will give them access to your Instagram account. font-family:helvetica; font-size:20px;  @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4950252ms] [LOG] 
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px;  @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4950252ms] [LOG] 
+%c  @ https://static.cdninstagram.com/rsrc.php/v4io6W4/ys/l/en_US/M-LBWHhsGRVQZZd1OgdFw1ycXlViP5_7VzhtoBytpD5YTYrXMbbspbI_LRGT3n7iPzfr-bzYTEhse30srA8i11PLHUrPRMPbjNhzJ8lvJuII-DYi4C-iVc_UyrrCxjEFdRGjiFGHh9ozlMIvuXlW2RxTmw3EJHxYtojJyZNlOUn6Yi6uZ3miApV9Cr1L8PagX6jAakfGOZEe11axkphhshD5-sc1QqP2W9xWp-2yDVLRUsQn4GvhxBsqV8DYwEa2rrgkTPQAWzvHO7H0hHHV9GU3h_MzwXpKzMGU-W7GsTMMsiJC02ez.js:116
+[ 4950693ms] [ERROR] Access to XMLHttpRequest at 'https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#' (redirected from 'https://www.facebook.com/ig_xsite_user_info/') from origin 'https://www.instagram.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://www.instagram.com/p/DcLt1z3ThcX/:0
+[ 4950694ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#:0
+[ 4951421ms] [ERROR] Access to XMLHttpRequest at 'https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#' (redirected from 'https://www.facebook.com/ig_xsite_user_info/') from origin 'https://www.instagram.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://www.instagram.com/p/DcLt1z3ThcX/:0
+[ 4951421ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://web.facebook.com/ig_xsite_user_info/?_rdc=1&_rdr#:0
+[ 4952443ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://www.google.com/search/about-this-result?origin=www.google.com&req=CqoBL2dvdG8_dXJsPUNBRVNkQUhyT3pBVnlDSTRvaDJZNWFSNFdTQ3hDcE01aUY1SWRHRzF3WHZOUDMzZ2k5ckt4a0dUUG9oSFdLTkRIMjZTVG43amprTHRVb1BoVThweHJDNjZmSmIwTm5aVjZtVnpOTVc5WEs5cjRvQnJJekZydlNKYWdjeFo5c1R4X2pXcW9JWWV3RFliNUIxd1dXVmVBRVZDZldRQ1RfWWkSBBoCCAAayQMSABoCCAEiACoAMgYIAhICcGg6AEIECAEQAEoAWgByAHoAgkCjAwgAEAAYACAAKhQKBWhvdXNlFUmihUAaBmhvdXNlcyoJCgJvZhUAAAAAKi0KCnJldHJpZXZlcnMVkIFoQBoJcmV0cmlldmVyGg9pdjtwO3JldHJpZXZlcnMqFgoCcGgV6a0HQBoLcGhpbGlwcGluZXMyPGh0dHBzOi8vd3d3Lmluc3RhZ3JhbS5jb20vaG91c2VvZnJldHJpZXZlcnNwaC9wL0RjTHQxejNUaGNYLzpGT3VyIDxiPmhvdXNlPC9iPiB3ZWxjb21lcyB5b3UhIEpvaW4gdGhlIDxiPkhPVVNFIE9GIFJFVFJJRVZFUlM8L2I-IC4uLkKmAVdlJiMzOTtyZSBidWlsZGluZyBhIDxiPmhvbWUtc3R5bGUgcGV0IGJvYXJkaW5nIGV4cGVyaWVuY2U8L2I-IHdoZXJlIHlvdXIgZnVyIGJhYnkgY2FuIGVhdCwgcGxheSwgcmVzdCwgYW5kIGJlIGNhcmVkIGZvciB3aGlsZSB5b3UmIzM5O3JlIGF3YXkuIDVGIEdyZWVuaGlsbHMmbmJzcDsuLi5KAm9mIgIQAUgAWABoAA&hl=en-PH&gl=PH&ilrm=zpr&vet=10CD0Qt5oMahcKEwjIx8yD1saWAxUAAAAAHQAAAAAQCg..i&ved=0CD0Qt5oMahcKEwjIx8yD1saWAxUAAAAAHQAAAAAQCg&uact=1:0
