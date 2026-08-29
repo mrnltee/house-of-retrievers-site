@@ -1,7 +1,21 @@
-# Project-specific MCP servers for Codex.
-# Codex also merges the user's global MCP configuration when this repository is trusted.
-
 [mcp_servers.next-devtools]
 command = "npx"
-args = ["-y", "next-devtools-mcp@0.4.0"]
+args = [
+    "-y",
+    "next-devtools-mcp@0.4.0",
+]
 startup_timeout_sec = 30
+
+[mcp_servers.chrome-devtools]
+command = "npx"
+args = [
+    "-y",
+    "chrome-devtools-mcp@1.7.0",
+    "--no-usage-statistics",
+]
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"

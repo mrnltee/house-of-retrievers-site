@@ -1,4 +1,4 @@
-# Claude Code handoff
+# Codex handoff
 
 ## Product goal
 
