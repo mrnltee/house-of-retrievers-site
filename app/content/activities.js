@@ -44,9 +44,9 @@ export const activities = [
     alt: "Paws for a purpose community outreach photo gallery",
   },
   {
-    eyebrow: "Responsible ownership",
+    eyebrow: "Shared experience",
     title: "Better humans for better dogs",
-    copy: "Practical learning, shared experience, and a supportive circle for raising healthy, well-socialized retrievers.",
+    copy: "Trips, workshops, and gatherings where retriever families learn from each other and build a circle that lasts.",
     image: "/2-better/better1.jpg",
     gallery: [
       { src: "/2-better/better1.jpg", alt: "Members and their golden retrievers sharing paddleboards out in the surf" },
