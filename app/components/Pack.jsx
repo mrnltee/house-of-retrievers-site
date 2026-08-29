@@ -36,7 +36,7 @@ export default function Pack({ packView, setPackView }) {
               className={packView === "families" ? "active" : ""}
               onClick={() => setPackView("families")}
             >
-              Founding families
+              Meet the Founding Pawmilies
             </button>
           </div>
         </div>

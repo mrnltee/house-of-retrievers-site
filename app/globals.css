@@ -108,7 +108,7 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .instagram-controls { display: flex; gap: 8px; }
 .instagram-controls button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink); transition: background .2s, border-color .2s, color .2s, transform .2s; }
 .instagram-controls button:hover, .instagram-controls button:focus-visible { background: var(--gold); border-color: var(--gold); transform: translateY(-2px); }
-.instagram-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.instagram-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 .instagram-slide-window { overflow: hidden; }
 .instagram-slide-next { animation: instagram-slide-next .48s cubic-bezier(.22, 1, .36, 1) both; }
 .instagram-slide-previous { animation: instagram-slide-previous .48s cubic-bezier(.22, 1, .36, 1) both; }
@@ -190,6 +190,11 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .final-cta > div:not(.final-cta-shade) { display: flex; flex-direction: column; align-items: center; gap: 18px; }
 .final-cta p { color: white; font-family: "DM Serif Display", serif; font-size: 22px; line-height: 1.2; margin: 0; }
 .mini-mark { width: 45px; height: 45px; color: var(--gold); display: grid; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; }
+.family-dog-mark { width: 58px; height: 58px; position: relative; display: block; }
+.family-dog-mark svg { position: absolute; }
+.family-dog-people { left: 8px; bottom: 10px; }
+.family-dog-pet { right: 7px; bottom: 9px; }
+.family-dog-heart { top: 8px; left: 24px; }
 
 footer { background: var(--taupe); color: var(--ink); padding: 34px clamp(24px, 6vw, 84px); display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 11px; }
 .footer-brand .brand-logo-frame { width: clamp(280px, 26vw, 340px); height: 104px; box-shadow: none; }

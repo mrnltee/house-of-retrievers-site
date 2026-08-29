@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Icon from "./Icon";
 
+const VISIBLE_POSTS = 4;
+
 export default function InstagramFeed() {
   const [posts, setPosts] = useState([]);
   const [status, setStatus] = useState("loading");
@@ -10,7 +12,7 @@ export default function InstagramFeed() {
 
   const window_ = useMemo(() => {
     if (!posts.length) return [];
-    const visibleCount = Math.min(3, posts.length);
+    const visibleCount = Math.min(VISIBLE_POSTS, posts.length);
     return Array.from({ length: visibleCount }, (_, index) => posts[(slide + index) % posts.length]);
   }, [posts, slide]);
 
@@ -47,26 +49,26 @@ export default function InstagramFeed() {
       <div className="instagram-carousel" role="region" aria-roledescription="carousel" aria-label="Latest House of Retrievers Instagram posts">
         <div className="instagram-toolbar">
           <p aria-live="polite">
-            {status === "ready" ? `Showing post ${slide + 1} of ${posts.length}` : "Latest posts from @houseofretrieversph"}
+            {status === "ready" ? `Showing ${window_.length} posts, starting at ${slide + 1} of ${posts.length}` : "Latest posts from @houseofretrieversph"}
           </p>
           {posts.length > 1 ? (
             <div className="instagram-controls">
               <button
                 type="button"
-                aria-label="Show previous Instagram post"
+                aria-label="Show previous Instagram posts"
                 onClick={() => {
                   setDirection("previous");
-                  setSlide((current) => (current - 1 + posts.length) % posts.length);
+                  setSlide((current) => (current - VISIBLE_POSTS + posts.length) % posts.length);
                 }}
               >
                 <ChevronLeft size={18} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                aria-label="Show next Instagram post"
+                aria-label="Show next Instagram posts"
                 onClick={() => {
                   setDirection("next");
-                  setSlide((current) => (current + 1) % posts.length);
+                  setSlide((current) => (current + VISIBLE_POSTS) % posts.length);
                 }}
               >
                 <ChevronRight size={18} aria-hidden="true" />
@@ -77,7 +79,7 @@ export default function InstagramFeed() {
 
         {status === "loading" ? (
           <div className="instagram-grid" aria-label="Loading Instagram posts">
-            {[0, 1, 2].map((item) => <div className="instagram-skeleton" key={item} />)}
+            {[0, 1, 2, 3].map((item) => <div className="instagram-skeleton" key={item} />)}
           </div>
         ) : null}
 

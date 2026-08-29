@@ -16,7 +16,7 @@
 /** @type {Family[]} */
 export const families = [
   {
-    group: "The Dallas family",
+    group: "The Golden Nuggets",
     names: "Sir Dallas & Mary Jane",
     note: "@thegolden.nuggets",
     socialUrl: "https://www.instagram.com/thegolden.nuggets/",
@@ -26,7 +26,7 @@ export const families = [
     imageAlt: "Sir Dallas and Mary Jane front photocard",
   },
   {
-    group: "The Macchi family",
+    group: "The Caffeine Family",
     names: "Macchiato",
     note: "@dailydoseofmacchiato_",
     socialUrl: "https://www.instagram.com/dailydoseofmacchiato_/",
@@ -46,7 +46,7 @@ export const families = [
     imageAlt: "Faye front photocard",
   },
   {
-    group: "The LL Bros",
+    group: "The LL Golden Bros",
     names: "Luka & Luji",
     note: "@lukaxluji_goldenbros",
     socialUrl: "https://www.instagram.com/lukaxluji_goldenbros/",
@@ -56,7 +56,7 @@ export const families = [
     imageAlt: "Luka and Luji front photocard",
   },
   {
-    group: "The Bear Duo",
+    group: "The Bear Bros",
     names: "Molly & Maverick",
     note: "@molly.maverickthebears",
     socialUrl: "https://www.instagram.com/molly.maverickthebears/",
