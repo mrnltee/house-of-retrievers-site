@@ -106,7 +106,7 @@ export default function InstagramFeed() {
 
         {status === "error" || status === "empty" ? (
           <div className="instagram-fallback">
-            <p>The latest posts are taking a short paws. You can still visit the full feed on Instagram.</p>
+            <p>The latest posts are taking a short paws. You can still catch the full feed on Instagram.</p>
             <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">Open Instagram <Icon name="arrow" size={16} /></a>
           </div>
         ) : null}

@@ -8,7 +8,7 @@ export default function FinalCta({ onJoin }) {
         <source src="/CTA-join-us.MP4" type="video/mp4" />
       </video>
       <div className="final-cta-shade" />
-      <div><span className="mini-mark"><UserRoundPlus size={22} strokeWidth={1.5} aria-hidden="true" /></span><p>There is always room<br />for one more good human.</p></div>
+      <div><span className="mini-mark"><UserRoundPlus size={22} strokeWidth={1.5} aria-hidden="true" /></span><p>There’s always room<br />for one more good human.</p></div>
       <button className="button cream" onClick={onJoin}>Come join us <Icon name="arrow" /></button>
     </section>
   );

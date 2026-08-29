@@ -34,13 +34,13 @@ export default function JoinModal({ interest, setInterest, onClose }) {
       const result = await response.json().catch(() => null);
 
       if (!response.ok) {
-        setSubmitError(result?.error || "We could not send your request. Please try again.");
+        setSubmitError(result?.error || "That didn’t go through. Mind trying again?");
         return;
       }
 
       setSent(true);
     } catch {
-      setSubmitError("We could not reach the server. Please check your connection and try again.");
+      setSubmitError("We couldn’t reach the server. Check your connection and give it another go?");
     } finally {
       setSubmitting(false);
     }
@@ -54,7 +54,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           <>
             <div className="eyebrow">Your first step</div>
             <h2 id="join-title">How would you like<br />to join the pack?</h2>
-            <p className="modal-lead">Choose what fits you today. You can always explore the others later.</p>
+            <p className="modal-lead">Pick whatever fits you today — you can always join the rest later.</p>
             <div className="interest-grid">
               {interests.map((item) => (
                 <button key={item} className={interest === item ? "active" : ""} onClick={() => setInterest(item)}>
@@ -73,16 +73,16 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               </button>
               {submitError ? <p className="form-error" role="alert">{submitError}</p> : null}
               <small className="form-note">
-                We keep your name, email, and anything you share here in a private House of Retrievers list, and use it only to follow up about joining. Message us on <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">Instagram</a> or <a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noreferrer">Facebook</a> any time to have your details removed.
+                We keep your name, email, and anything you share here on a private House of Retrievers list, and we only use it to follow up about joining. Message us on <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">Instagram</a> or <a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noreferrer">Facebook</a> any time and we’ll take you off it.
               </small>
             </form>
           </>
         ) : (
           <div className="success-state">
             <span><Icon name="check" size={34} /></span>
-            <div className="eyebrow">Request received</div>
+            <div className="eyebrow">Got it</div>
             <h2>Welcome to the pack.</h2>
-            <p>Thank you for reaching out as a {interest.toLowerCase()}. We have your details and will be in touch soon.</p>
+            <p>Thanks for reaching out as a {interest.toLowerCase()}. We’ve got your details, and someone from the pack will be in touch soon.</p>
             <button className="button dark" onClick={onClose}>Back to the site <Icon name="arrow" /></button>
           </div>
         )}

@@ -23,19 +23,19 @@ export const joinRoutes = [
   {
     number: "01",
     title: "Become a member",
-    copy: "Meet fellow retriever families, trade notes on everyday care, and join community activities.",
+    copy: "Meet other furparents, trade notes on the everyday stuff, and come along to whatever we’re up to next.",
     icon: UsersRound,
   },
   {
     number: "02",
     title: "Volunteer together",
-    copy: "Bring your time, skills, or friendly retriever to outreach programs where your presence can help.",
+    copy: "Bring your time, your skills, or your friendly furbaby. No dog of your own? Come anyway — the help matters more.",
     icon: HandHeart,
   },
   {
     number: "03",
     title: "Partner for a cause",
-    copy: "Collaborate on an activity built around a named beneficiary, run openly from start to finish.",
+    copy: "Build an activity with us around a beneficiary we name from the start, run openly the whole way through.",
     icon: HeartHandshake,
   },
 ];

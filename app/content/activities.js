@@ -22,7 +22,7 @@ export const activities = [
   {
     eyebrow: "Community outreach",
     title: "Paws for a purpose",
-    copy: "Volunteer-led activities where retriever families show up, lend a paw, and help communities that need support.",
+    copy: "Days when we show up where we’re needed, furbabies in tow, and lend a paw to people who could use one.",
     image: "/1-purpaws/purpaw1.jpg",
     gallery: [
       { src: "/1-purpaws/purpaw1.jpg", alt: "A volunteer kneeling to greet a golden retriever in an orange bandana during a care home visit" },
@@ -46,7 +46,7 @@ export const activities = [
   {
     eyebrow: "Shared experience",
     title: "Better humans for better dogs",
-    copy: "Trips, workshops, and days out where retriever families learn from each other and build a circle that lasts.",
+    copy: "Trips, workshops, and days out where we swap what we’ve learned — and the friendships outlast the day.",
     image: "/2-better/better1.jpg",
     gallery: [
       { src: "/2-better/better1.jpg", alt: "Members and their golden retrievers sharing paddleboards out in the surf" },
@@ -63,7 +63,7 @@ export const activities = [
   {
     eyebrow: "Activities for a cause",
     title: "Every gathering can give back",
-    copy: "Pack activities that rally real support, for a beneficiary we name up front so everyone can see where it goes.",
+    copy: "The fun kind of fundraising: a day the whole pack looks forward to, for a beneficiary we name up front so everyone sees where it goes.",
     video: "/3-giveback/mby-give-back.mp4",
     image: "/3-giveback/mby-give-back-poster.jpg",
     alt: "Two golden retrievers beside a car boot loaded with donated dog food",

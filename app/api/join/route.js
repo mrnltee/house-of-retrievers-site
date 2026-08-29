@@ -16,7 +16,7 @@ export async function POST(request) {
 
   if (!endpoint || !secret) {
     return NextResponse.json(
-      { error: "The join form is not configured yet." },
+      { error: "The join form isn’t set up yet. Please try again later." },
       { status: 503, headers: noStore },
     );
   }
@@ -25,7 +25,7 @@ export async function POST(request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400, headers: noStore });
+    return NextResponse.json({ error: "Something went wrong with that request." }, { status: 400, headers: noStore });
   }
 
   const name = clean(body?.name, LIMITS.name);
@@ -34,7 +34,7 @@ export async function POST(request) {
 
   if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json(
-      { error: "Please enter your name and a valid email address." },
+      { error: "We’ll need your name and a valid email address." },
       { status: 422, headers: noStore },
     );
   }
@@ -65,7 +65,7 @@ export async function POST(request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "We could not record your request. Please try again." },
+        { error: "We couldn’t save that just now. Mind trying again?" },
         { status: 502, headers: noStore },
       );
     }
@@ -80,7 +80,7 @@ export async function POST(request) {
 
     if (result && result.ok === false) {
       return NextResponse.json(
-        { error: "We could not record your request. Please try again." },
+        { error: "We couldn’t save that just now. Mind trying again?" },
         { status: 502, headers: noStore },
       );
     }
@@ -88,7 +88,7 @@ export async function POST(request) {
     return NextResponse.json({ ok: true }, { headers: noStore });
   } catch {
     return NextResponse.json(
-      { error: "The join form is temporarily unavailable. Please try again." },
+      { error: "The form is having a moment. Please try again shortly." },
       { status: 502, headers: noStore },
     );
   }
