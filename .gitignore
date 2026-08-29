@@ -23,3 +23,6 @@ public/2-better/*
 public/3-giveback/*
 !public/3-giveback/mby-give-back.mp4
 !public/3-giveback/mby-give-back-poster.jpg
+
+# Browser-tool artifacts
+.playwright-mcp
