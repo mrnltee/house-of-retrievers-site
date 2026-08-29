@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Icon from "./Icon";
 import { activities } from "../content/activities";
 
 /** Above this many photos the dots stop fitting the control pill on a phone. */
 const MAX_DOTS = 6;
 
-export default function PurposeStories({ activeStory, setActiveStory }) {
+function StoryMedia({ item }) {
   const [slide, setSlide] = useState(0);
-  const active = activities[activeStory];
-  const gallery = active.gallery;
-  // Clamp rather than trust the state: galleries differ in length, so the
-  // index survives a switch from a longer story to a shorter one.
+  const gallery = item.gallery;
   const activeSlide = gallery ? slide % gallery.length : 0;
-
-  useEffect(() => {
-    setSlide(0);
-  }, [activeStory]);
 
   useEffect(() => {
     if (!gallery || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -27,6 +19,56 @@ export default function PurposeStories({ activeStory, setActiveStory }) {
   }, [gallery]);
 
   return (
+    <div className="pillar-media">
+      {gallery ? (
+        <div className="story-carousel" role="region" aria-roledescription="carousel" aria-label={`${item.title} photos`}>
+          {gallery.map((photo, index) => (
+            <img
+              key={photo.src}
+              className={index === activeSlide ? "story-carousel-slide active" : "story-carousel-slide"}
+              src={photo.src}
+              alt={index === activeSlide ? photo.alt : ""}
+              aria-hidden={index !== activeSlide}
+            />
+          ))}
+          <div className="story-carousel-controls" aria-label={`${item.title} gallery controls`}>
+            <button type="button" onClick={() => setSlide((current) => (current - 1 + gallery.length) % gallery.length)} aria-label={`Previous ${item.title} photo`}>
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+            {gallery.length > MAX_DOTS ? (
+              <p className="story-carousel-count" aria-live="polite">{activeSlide + 1} / {gallery.length}</p>
+            ) : (
+              <div className="story-carousel-dots">
+                {gallery.map((photo, index) => (
+                  <button
+                    key={photo.src}
+                    type="button"
+                    className={index === activeSlide ? "active" : ""}
+                    onClick={() => setSlide(index)}
+                    aria-label={`Show ${item.title} photo ${index + 1} of ${gallery.length}`}
+                    aria-current={index === activeSlide ? "true" : undefined}
+                  />
+                ))}
+              </div>
+            )}
+            <button type="button" onClick={() => setSlide((current) => (current + 1) % gallery.length)} aria-label={`Next ${item.title} photo`}>
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      ) : item.video ? (
+        <video className="story-video" autoPlay muted loop playsInline preload="metadata" poster={item.image} aria-label={item.alt}>
+          <source src={item.video} type="video/mp4" />
+        </video>
+      ) : (
+        <img className="pillar-image" src={item.image} alt={item.alt} />
+      )}
+    </div>
+  );
+}
+
+export default function PurposeStories() {
+  return (
     <section className="mission section-shell" id="mission">
       <div className="section-intro">
         <div className="eyebrow">What moves us</div>
@@ -34,90 +76,18 @@ export default function PurposeStories({ activeStory, setActiveStory }) {
         <p>We bring furparents and their furbabies together to serve our communities, grow alongside each other, and turn a gathering into something that gives back.</p>
       </div>
 
-      <div className="story-stage">
-        <article className="story-image" aria-label={active.alt}>
-          {activities.map((item, index) => (
-            <div
-              key={item.title}
-              className={index === activeStory ? "story-image-layer active" : "story-image-layer"}
-              style={{ backgroundImage: `url(${item.image})` }}
-            >
-              {item.gallery && index === activeStory ? (
-                <div className="story-carousel" role="region" aria-roledescription="carousel" aria-label="Paws for a purpose photos">
-                  {item.gallery.map((photo, slideIndex) => (
-                    <img
-                      key={photo.src}
-                      className={slideIndex === activeSlide ? "story-carousel-slide active" : "story-carousel-slide"}
-                      src={photo.src}
-                      alt={slideIndex === activeSlide ? photo.alt : ""}
-                      aria-hidden={slideIndex !== activeSlide}
-                    />
-                  ))}
-                  <div className="story-carousel-controls" aria-label="Photo gallery controls">
-                    <button
-                      type="button"
-                      onClick={() => setSlide((current) => (current - 1 + item.gallery.length) % item.gallery.length)}
-                      aria-label="Previous photo"
-                    >
-                      <ChevronLeft size={18} aria-hidden="true" />
-                    </button>
-                    {item.gallery.length > MAX_DOTS ? (
-                      <p className="story-carousel-count" aria-live="polite">
-                        {activeSlide + 1} / {item.gallery.length}
-                      </p>
-                    ) : (
-                      <div className="story-carousel-dots">
-                        {item.gallery.map((photo, slideIndex) => (
-                          <button
-                            key={photo.src}
-                            type="button"
-                            className={slideIndex === activeSlide ? "active" : ""}
-                            onClick={() => setSlide(slideIndex)}
-                            aria-label={`Show photo ${slideIndex + 1} of ${item.gallery.length}`}
-                            aria-current={slideIndex === activeSlide ? "true" : undefined}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setSlide((current) => (current + 1) % item.gallery.length)}
-                      aria-label="Next photo"
-                    >
-                      <ChevronRight size={18} aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-              ) : item.video && index === activeStory ? (
-                <video
-                  className="story-video"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  poster={item.image}
-                  aria-hidden="true"
-                >
-                  <source src={item.video} type="video/mp4" />
-                </video>
-              ) : null}
+      <div className="pillar-list">
+        {activities.map((item, index) => (
+          <article className="pillar-row" key={item.title}>
+            <div className="pillar-copy">
+              <span className="pillar-number">{String(index + 1).padStart(2, "0")}</span>
+              <div className="eyebrow">{item.eyebrow}</div>
+              <h3>{item.title}</h3>
+              <p>{item.copy}</p>
             </div>
-          ))}
-          <div className="story-caption">
-            <span>{String(activeStory + 1).padStart(2, "0")}</span>
-            <div><small>{active.eyebrow}</small><strong>{active.title}</strong></div>
-          </div>
-        </article>
-        <div className="story-list">
-          {activities.map((item, index) => (
-            <button key={item.title} className={index === activeStory ? "story-item active" : "story-item"} onClick={() => setActiveStory(index)}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <div><strong>{item.title}</strong><p>{item.copy}</p></div>
-              <Icon name="arrow" />
-            </button>
-          ))}
-        </div>
+            <StoryMedia item={item} />
+          </article>
+        ))}
       </div>
     </section>
   );

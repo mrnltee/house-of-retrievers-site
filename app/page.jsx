@@ -9,10 +9,8 @@ import Pack from "./components/Pack";
 import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import JoinModal from "./components/JoinModal";
-import { activities } from "./content/activities";
 
 export default function Home() {
-  const [activeStory, setActiveStory] = useState(0);
   const [packView, setPackView] = useState("impact");
   const [modalOpen, setModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -48,20 +46,16 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
-    const story = Number(params.get("story"));
     if (view === "impact" || view === "families") setPackView(view);
-    if (Number.isInteger(story) && story >= 0 && story < activities.length) {
-      setActiveStory(story);
-    }
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     params.set("view", packView);
-    params.set("story", String(activeStory));
+    params.delete("story");
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
-  }, [packView, activeStory]);
+  }, [packView]);
 
   const openJoin = () => {
     setModalOpen(true);
@@ -75,7 +69,7 @@ export default function Home() {
 
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} />
       <Hero onJoin={openJoin} />
-      <PurposeStories activeStory={activeStory} setActiveStory={setActiveStory} />
+      <PurposeStories />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} />
       <FinalCta onJoin={openJoin} />
