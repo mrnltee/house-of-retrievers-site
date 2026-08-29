@@ -73,18 +73,16 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .section-intro .eyebrow { grid-column: 1 / -1; align-self: start; padding-top: 8px; }
 .section-intro h2, .pack-heading h2 { font-size: clamp(48px, 5.8vw, 84px); margin: 0; }
 .section-intro > p { color: #6d7066; line-height: 1.75; margin: 8px 0 0; }
-.pillar-list { border-top: 1px solid var(--line); }
-.pillar-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr); min-height: 520px; border-bottom: 1px solid var(--line); }
-.pillar-row:nth-child(even) { grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr); }
+.pillar-list { display: grid; gap: clamp(90px, 11vw, 150px); }
+.pillar-row { display: grid; grid-template-columns: minmax(0, .88fr) minmax(0, 1.2fr); align-items: center; padding-top: 34px; border-top: 1px solid var(--line); }
+.pillar-row:nth-child(even) { grid-template-columns: minmax(0, 1.2fr) minmax(0, .88fr); }
 .pillar-row:nth-child(even) .pillar-media { grid-column: 1; grid-row: 1; }
 .pillar-row:nth-child(even) .pillar-copy { grid-column: 2; grid-row: 1; }
-.pillar-copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(48px, 6vw, 82px); background: rgba(255,255,255,.28); }
-.pillar-row:nth-child(even) .pillar-copy { background: rgba(255,255,255,.58); }
-.pillar-number { margin-bottom: auto; color: var(--gold); font-family: "DM Serif Display", serif; font-size: 20px; }
-.pillar-copy .eyebrow { margin-top: 48px; }
-.pillar-copy h3 { max-width: 440px; margin: 18px 0 22px; font-family: "DM Serif Display", serif; font-size: clamp(38px, 4vw, 58px); font-weight: 400; letter-spacing: -.04em; line-height: 1; }
+.pillar-copy { padding: clamp(24px, 4.5vw, 68px); }
+.pillar-number { display: block; margin-bottom: clamp(62px, 8vw, 108px); color: var(--gold); font-family: "DM Serif Display", serif; font-size: 20px; }
+.pillar-copy h3 { max-width: 440px; margin: 18px 0 22px; font-family: "DM Serif Display", serif; font-size: clamp(38px, 3.5vw, 52px); font-weight: 400; letter-spacing: -.04em; line-height: 1; }
 .pillar-copy > p { max-width: 460px; margin: 0; color: #6d7066; font-size: 15px; line-height: 1.75; }
-.pillar-media { min-height: 520px; position: relative; overflow: hidden; background: #cbc4b5; }
+.pillar-media { min-height: clamp(470px, 42vw, 590px); position: relative; overflow: hidden; background: #cbc4b5; box-shadow: 0 24px 60px rgba(46,45,34,.1); }
 .pillar-image, .story-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .story-carousel { position: absolute; inset: 0; }
 .story-carousel-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; transform: scale(1.02); transition: opacity .55s ease, transform 5s ease; }
@@ -244,8 +242,10 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .pillar-row, .pillar-row:nth-child(even) { grid-template-columns: 1fr; }
   .pillar-row .pillar-media, .pillar-row:nth-child(even) .pillar-media { grid-column: 1; grid-row: 1; }
   .pillar-row .pillar-copy, .pillar-row:nth-child(even) .pillar-copy { grid-column: 1; grid-row: 2; }
+  .pillar-list { gap: 90px; }
   .pillar-media { min-height: 460px; }
-  .pillar-copy { min-height: 360px; }
+  .pillar-copy { padding: 44px 24px 0; }
+  .pillar-number { margin-bottom: 42px; }
   .instagram-heading { align-items: flex-start; flex-direction: column; }
   .instagram-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pack-heading { align-items: flex-start; flex-direction: column; }
@@ -272,9 +272,8 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .mission { padding-top: 90px; padding-bottom: 90px; }
   .section-intro { margin-bottom: 48px; }
   .pillar-media { min-height: 380px; }
-  .pillar-copy { min-height: 0; padding: 38px 24px 46px; }
+  .pillar-copy { padding: 38px 0 0; }
   .pillar-number { margin-bottom: 34px; }
-  .pillar-copy .eyebrow { margin-top: 0; }
   .pillar-copy h3 { font-size: 38px; }
   .story-carousel-controls { top: 16px; right: 16px; }
   .instagram-carousel { min-height: 0; }
