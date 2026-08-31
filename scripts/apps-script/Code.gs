@@ -169,6 +169,20 @@ function doGet() {
 }
 
 /**
+ * Run this once from the editor after adding or restoring the Drive code.
+ *
+ * Apps Script asks for a scope only when something actually needs it, and a
+ * deployment does not gain scopes on its own. doGet touches nothing in Drive,
+ * so running that grants nothing; this does, which brings up the consent
+ * screen for Drive. Once granted, the deployed web app has it too.
+ */
+function authorizeDrive() {
+  const name = DriveApp.getRootFolder().getName();
+  console.log('Drive is authorized. Root folder: ' + name);
+  return name;
+}
+
+/**
  * Build a filename that can be recognised at a glance in the Drive folder:
  *
  *   thegolden.nuggets - Maria S - 2026-08-31.jpg
