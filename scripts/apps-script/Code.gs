@@ -109,7 +109,7 @@ function doPost(e) {
     // community, not something to publish — the owner opens them signed in.
     if (photo) {
       try {
-        const photoUrl = savePhoto(photo, photoName, name);
+        const photoUrl = savePhoto(photo, socialProfile, name);
         if (photoUrl) {
           sheet
             .getRange(row, PHOTO_COLUMN)
@@ -122,8 +122,12 @@ function doPost(e) {
         }
       } catch (photoError) {
         // A failed photo must not lose the application it came with.
+        // Put the reason in the cell, not just the log: Cloud logging is not
+        // always available on this project, and a bare "failed" says nothing.
         console.error(photoError);
-        sheet.getRange(row, PHOTO_COLUMN).setValue('Photo failed to save');
+        sheet
+          .getRange(row, PHOTO_COLUMN)
+          .setValue('Photo failed: ' + String((photoError && photoError.message) || photoError).slice(0, 250));
       }
     }
 
@@ -165,10 +169,39 @@ function doGet() {
 }
 
 /**
+ * Build a filename that can be recognised at a glance in the Drive folder:
+ *
+ *   thegolden.nuggets - Maria S - 2026-08-31.jpg
+ *
+ * The handle leads so a person's photos sort together, then the submitter as
+ * a first name and surname initial, then the date so two submissions from the
+ * same person stay distinct. Any part that is missing is simply left out.
+ */
+function photoFileName(handle, submitterName, extension) {
+  const safe = (value) => String(value || '').replace(/[^A-Za-z0-9._ -]/g, '').trim();
+
+  const parts = [];
+  const cleanHandle = safe(String(handle || '').replace(/^@+/, ''));
+  if (cleanHandle) parts.push(cleanHandle);
+
+  // First word is the given name, last word the surname — so "Maria Cristina
+  // Dela Cruz Santos" becomes "Maria S".
+  const words = safe(submitterName).split(/\s+/).filter(Boolean);
+  if (words.length === 1) {
+    parts.push(words[0]);
+  } else if (words.length > 1) {
+    parts.push(words[0] + ' ' + words[words.length - 1].charAt(0).toUpperCase());
+  }
+
+  parts.push(Utilities.formatDate(new Date(), 'Asia/Manila', 'yyyy-MM-dd'));
+  return parts.join(' - ').slice(0, 120) + '.' + extension;
+}
+
+/**
  * Decode the data URL and file it in Drive. Returns the file's URL.
  * The folder id is remembered so this does not search Drive on every submission.
  */
-function savePhoto(dataUrl, originalName, submitterName) {
+function savePhoto(dataUrl, handle, submitterName) {
   const match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
   if (!match) return '';
 
@@ -205,14 +238,12 @@ function savePhoto(dataUrl, originalName, submitterName) {
     properties.setProperty('PHOTO_FOLDER_ID', folder.getId());
   }
 
-  const stamp = Utilities.formatDate(new Date(), 'Asia/Manila', 'yyyy-MM-dd HHmmss');
-  const safeName = (submitterName || 'submission').replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60);
   const extension = match[1] === 'image/png' ? 'png' : match[1] === 'image/webp' ? 'webp' : 'jpg';
 
   const blob = Utilities.newBlob(
     Utilities.base64Decode(match[2]),
     match[1],
-    stamp + ' - ' + safeName + '.' + extension
+    photoFileName(handle, submitterName, extension)
   );
 
   return folder.createFile(blob).getUrl();
