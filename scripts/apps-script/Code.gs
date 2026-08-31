@@ -185,8 +185,23 @@ function savePhoto(dataUrl, originalName, submitterName) {
   }
 
   if (!folder) {
-    const existing = DriveApp.getFoldersByName(PHOTO_FOLDER_NAME);
-    folder = existing.hasNext() ? existing.next() : DriveApp.createFolder(PHOTO_FOLDER_NAME);
+    // Keep the photos beside the sheet they belong to rather than loose at the
+    // root of Drive, and work it out from the sheet itself so there is nothing
+    // extra to configure.
+    let parent = DriveApp.getRootFolder();
+    const spreadsheetId = properties.getProperty('SHEET_ID');
+
+    if (spreadsheetId) {
+      try {
+        const parents = DriveApp.getFileById(spreadsheetId).getParents();
+        if (parents.hasNext()) parent = parents.next();
+      } catch (unreachable) {
+        // Fall back to the root folder.
+      }
+    }
+
+    const existing = parent.getFoldersByName(PHOTO_FOLDER_NAME);
+    folder = existing.hasNext() ? existing.next() : parent.createFolder(PHOTO_FOLDER_NAME);
     properties.setProperty('PHOTO_FOLDER_ID', folder.getId());
   }
 
