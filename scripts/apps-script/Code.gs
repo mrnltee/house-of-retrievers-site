@@ -28,8 +28,14 @@ const SOCIAL_COLUMN = 5;
 /** Column the furbaby photo link lands in. */
 const PHOTO_COLUMN = 9;
 
-/** Drive folder the photos are filed into. Created on first use. */
-const PHOTO_FOLDER_NAME = 'House of Retrievers — Join photos';
+/**
+ * Drive folder the photos are filed into, created on first use.
+ *
+ * Only consulted when PHOTO_FOLDER_ID is missing — the folder is normally
+ * found by id, so renaming it in Drive is safe. Keep this in step with the
+ * real name anyway, or a recovery would create a second folder beside it.
+ */
+const PHOTO_FOLDER_NAME = 'HOR Member photos';
 
 function doPost(e) {
   try {
