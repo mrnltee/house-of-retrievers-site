@@ -56,6 +56,29 @@ rewrite its own environment variables, so the token does not live in one.
 To recover if the blob is ever lost: generate a token, set it as
 `INSTAGRAM_ACCESS_TOKEN`, redeploy, and the next cron run re-seeds the blob.
 
+## Join photos
+
+An optional furbaby photo is resized in the browser (`app/lib/resizeImage.js`,
+longest edge 1600, quality 0.82) and travels as a base64 data URL through
+`app/api/join/route.js` to the Apps Script, which files it in Drive and links
+the sheet cell to it.
+
+- Photos go to **Drive, not Vercel Blob**. Blob on Hobby cuts off access for
+  thirty days once its limits are passed, and the Instagram token lives there —
+  photo traffic must not be able to take the feed down with it.
+- The folder is found by the id in the `PHOTO_FOLDER_ID` script property, so
+  renaming it in Drive is safe. `PHOTO_FOLDER_NAME` is only the fallback.
+- Files are **not shared**. They are personal photos offered to join a
+  community; the owner opens them signed in.
+- They cannot be displayed inside a cell. Google blocks `drive.google.com`
+  URLs in `IMAGE()`, and the old `/uc?export=view` workaround now returns 403.
+  Clicking the cell's link shows Sheets' own preview card, which works on a
+  private file — that is the display. Making it work in-cell would mean
+  publishing the photos.
+- Adding a Drive call to the script needs the scope granted by hand: run
+  `authorizeDrive` from the editor. Apps Script grants only the scope a run
+  reaches for, so the function has to write, not just read.
+
 ## Media conventions
 
 - Story media lives in per-section folders under `public/`: `1-purpaws/`, `2-better/`, `3-giveback/`.
