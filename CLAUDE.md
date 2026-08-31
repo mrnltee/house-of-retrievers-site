@@ -29,8 +29,32 @@ Refactor and continue the House of Retrievers concept site without changing its 
 2. Done — activities, founding families, and join copy live in `app/content/`, documented with JSDoc typedefs. The repo is plain JSX; confirm with the owner before introducing TypeScript.
 3. Preserve the current information architecture and primary Join the Pack CTA.
 4. Done — every image is now an approved House of Retrievers asset with alt text describing what is actually in the frame. The Unsplash preconnect is gone. Story photos live in `public/1-purpaws/purpaw[n].jpg` and `public/2-better/better[n].jpg`; add to a gallery by dropping the next number in the folder and appending an entry in `app/content/activities.js`.
-5. Done — the join form posts to `app/api/join/route.js`, which forwards to Google Apps Script with `JOIN_FORM_SECRET` in the request body so the secret never reaches the browser. Verified end to end in production. The field names are a contract with `scripts/apps-script/Code.gs`: the payload nests under `submission` and uses `joinType`, `socialProfile`, and `furbabyName`. Rename in one place and submissions are silently rejected, so change both together and redeploy the script.
+5. Done — the join form posts to `app/api/join/route.js`, which forwards to Google Apps Script with `JOIN_FORM_SECRET` in the request body so the secret never reaches the browser. Verified end to end in production. The field names are a contract with `scripts/apps-script/Code.gs`: the payload nests under `submission` and uses `joinType`, `socialProfile`, `socialUrl`, and `furbabyName`. `socialUrl` is what makes the sheet cell a clickable link. Rename in one place and submissions are silently rejected, so change both together and redeploy the script.
 6. Retired — the ChatGPT Sites packaging scripts were removed after the deployment moved to Vercel.
+
+## Instagram feed and its token
+
+The feed at `app/api/instagram/route.js` needs a long-lived Instagram token,
+and those expire 60 days after they are issued. A running function cannot
+rewrite its own environment variables, so the token does not live in one.
+
+- The **live token sits in a private Vercel Blob**, `instagram/access-token.json`,
+  read and written through `app/lib/instagramToken.js`.
+- `INSTAGRAM_ACCESS_TOKEN` is only a **seed**. It is used until the first
+  rotation writes a blob, and as a fallback if the blob cannot be read. After
+  the first rotation it is stale and is no longer what the feed serves —
+  replacing it changes nothing while the blob is healthy.
+- A **daily cron** (`vercel.json` → `/api/cron/refresh-instagram-token`) trades
+  the current token for a fresh 60-day one through `ig_refresh_token`, with no
+  re-authentication. It returns early while the token is under 30 days old, so
+  most runs cost nothing. Daily rather than monthly on purpose: monthly gave the
+  rotation a single attempt, and one failure would have run out the clock.
+- The cron route answers only to Vercel's signed call (`CRON_SECRET`).
+- Blob reads go through the SDK with the CDN cache off. A private blob cannot be
+  fetched from its URL, and a cached copy would hand back the token just replaced.
+
+To recover if the blob is ever lost: generate a token, set it as
+`INSTAGRAM_ACCESS_TOKEN`, redeploy, and the next cron run re-seeds the blob.
 
 ## Media conventions
 
