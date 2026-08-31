@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseSocialProfile } from "../../lib/socialProfile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +40,17 @@ export async function POST(request) {
     );
   }
 
+  // Parse here rather than in the browser: the handle decides what the sheet
+  // links to, so it has to be derived somewhere a visitor cannot edit.
+  const { profile: social, error: socialError } = parseSocialProfile(
+    clean(body?.profile, LIMITS.profile),
+    body?.socialPlatform,
+  );
+
+  if (socialError) {
+    return NextResponse.json({ error: socialError }, { status: 422, headers: noStore });
+  }
+
   // Field names and nesting are dictated by the Apps Script in
   // scripts/apps-script/Code.gs — change both together or submissions are
   // rejected as "Select a join type."
@@ -48,7 +60,8 @@ export async function POST(request) {
       joinType: interest,
       name,
       email,
-      socialProfile: clean(body?.profile, LIMITS.profile),
+      socialProfile: social ? social.display : "",
+      socialUrl: social ? social.url : "",
       furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
       message: clean(body?.message, LIMITS.message),
     },

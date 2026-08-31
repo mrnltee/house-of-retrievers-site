@@ -9,7 +9,7 @@
  * then has to be updated in Vercel.
  *
  * Reads a payload shaped by app/api/join/route.js:
- *   { secret, submission: { joinType, name, email, socialProfile,
+ *   { secret, submission: { joinType, name, email, socialProfile, socialUrl,
  *                           furbabyName, message } }
  * Renaming a field here means renaming it there too.
  *
@@ -20,6 +20,9 @@
  */
 
 const SHEET_NAME = 'Applications';
+
+/** Column the social handle lands in, counting from 1. */
+const SOCIAL_COLUMN = 5;
 
 function doPost(e) {
   try {
@@ -35,6 +38,7 @@ function doPost(e) {
     const name = clean(form.name, 120);
     const email = clean(form.email, 254);
     const socialProfile = clean(form.socialProfile, 300);
+    const socialUrl = clean(form.socialUrl, 400);
     const furbabyName = clean(form.furbabyName, 120);
     const message = clean(form.message, 2000);
 
@@ -74,6 +78,20 @@ function doPost(e) {
       message,
       'New'
     ]);
+
+    // Make the handle clickable. Rich text keeps the cell's value as plain
+    // text, so filters, sorting and CSV exports still see "@handle" — a
+    // HYPERLINK formula would leave the formula in the cell instead.
+    if (socialProfile && /^https:\/\//.test(socialUrl)) {
+      sheet
+        .getRange(sheet.getLastRow(), SOCIAL_COLUMN)
+        .setRichTextValue(
+          SpreadsheetApp.newRichTextValue()
+            .setText(socialProfile)
+            .setLinkUrl(socialUrl)
+            .build()
+        );
+    }
 
     const recipient = properties.getProperty('NOTIFICATION_EMAIL');
 

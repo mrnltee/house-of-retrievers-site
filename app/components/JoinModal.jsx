@@ -1,9 +1,12 @@
 import { useState } from "react";
 import Icon from "./Icon";
 import { interests, joinFieldCopy } from "../content/join";
+import { socialPlatforms } from "../lib/socialProfile";
 
 export default function JoinModal({ interest, setInterest, onClose }) {
   const [sent, setSent] = useState(false);
+  const [social, setSocial] = useState("");
+  const [socialPlatform, setSocialPlatform] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -25,7 +28,8 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           interest,
           name: formData.get("name"),
           email: formData.get("email"),
-          profile: formData.get("profile"),
+          profile: social,
+          socialPlatform,
           furbabyName: formData.get("furbabyName"),
           message: formData.get("message"),
         }),
@@ -65,7 +69,41 @@ export default function JoinModal({ interest, setInterest, onClose }) {
             <form onSubmit={submit}>
               <label>Name<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
               <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
-              <label>{fieldCopy.profileLabel}<input name="profile" type="text" autoComplete="url" placeholder={fieldCopy.profilePlaceholder} /></label>
+              <div className="social-field">
+                <label htmlFor="join-social">{fieldCopy.profileLabel}</label>
+                <div className="social-row">
+                  <input
+                    id="join-social"
+                    name="profile"
+                    type="text"
+                    autoComplete="url"
+                    placeholder={fieldCopy.profilePlaceholder}
+                    value={social}
+                    onChange={(event) => {
+                      setSocial(event.target.value);
+                      // Clearing the field clears the choice with it, so a
+                      // platform can never be left selected against no handle.
+                      if (!event.target.value.trim()) setSocialPlatform("");
+                    }}
+                  />
+                  <div className="social-platforms" role="radiogroup" aria-label="Which platform is that handle on?">
+                    {socialPlatforms.map((name) => (
+                      <label key={name} className={socialPlatform === name ? "active" : ""}>
+                        <input
+                          type="radio"
+                          name="socialPlatform"
+                          value={name}
+                          checked={socialPlatform === name}
+                          disabled={!social.trim()}
+                          onChange={() => setSocialPlatform(name)}
+                        />
+                        <span aria-hidden="true">{name === "Instagram" ? "IG" : "FB"}</span>
+                        <span className="visually-hidden">{name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label>
               <label>Message<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
               <button className="button dark" type="submit" disabled={submitting}>
