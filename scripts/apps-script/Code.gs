@@ -172,14 +172,15 @@ function doGet() {
  * Run this once from the editor after adding or restoring the Drive code.
  *
  * Apps Script asks for a scope only when something actually needs it, and a
- * deployment does not gain scopes on its own. doGet touches nothing in Drive,
- * so running that grants nothing; this does, which brings up the consent
- * screen for Drive. Once granted, the deployed web app has it too.
+ * deployment does not gain scopes on its own. It also grants the narrowest
+ * scope the run reaches for, so a function that only reads Drive earns
+ * read-only access and writing a file still fails afterwards. This creates the
+ * photos folder, which asks for the write scope and leaves the folder ready.
  */
 function authorizeDrive() {
-  const name = DriveApp.getRootFolder().getName();
-  console.log('Drive is authorized. Root folder: ' + name);
-  return name;
+  const folder = getPhotoFolder();
+  console.log('Drive is authorized. Photos folder: ' + folder.getUrl());
+  return folder.getUrl();
 }
 
 /**
@@ -212,6 +213,43 @@ function photoFileName(handle, submitterName, extension) {
 }
 
 /**
+ * The Drive folder photos are filed into, creating it on first use.
+ *
+ * Kept beside the spreadsheet rather than loose at the root of Drive, worked
+ * out from the sheet itself so there is nothing extra to configure. The id is
+ * remembered so this does not search Drive on every submission.
+ */
+function getPhotoFolder() {
+  const properties = PropertiesService.getScriptProperties();
+  const savedId = properties.getProperty('PHOTO_FOLDER_ID');
+
+  if (savedId) {
+    try {
+      return DriveApp.getFolderById(savedId);
+    } catch (missing) {
+      // Deleted or moved out of reach — fall through and make a new one.
+    }
+  }
+
+  let parent = DriveApp.getRootFolder();
+  const spreadsheetId = properties.getProperty('SHEET_ID');
+
+  if (spreadsheetId) {
+    try {
+      const parents = DriveApp.getFileById(spreadsheetId).getParents();
+      if (parents.hasNext()) parent = parents.next();
+    } catch (unreachable) {
+      // Fall back to the root folder.
+    }
+  }
+
+  const existing = parent.getFoldersByName(PHOTO_FOLDER_NAME);
+  const folder = existing.hasNext() ? existing.next() : parent.createFolder(PHOTO_FOLDER_NAME);
+  properties.setProperty('PHOTO_FOLDER_ID', folder.getId());
+  return folder;
+}
+
+/**
  * Decode the data URL and file it in Drive. Returns the file's URL.
  * The folder id is remembered so this does not search Drive on every submission.
  */
@@ -219,39 +257,7 @@ function savePhoto(dataUrl, handle, submitterName) {
   const match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
   if (!match) return '';
 
-  const properties = PropertiesService.getScriptProperties();
-  let folder;
-  const savedId = properties.getProperty('PHOTO_FOLDER_ID');
-
-  if (savedId) {
-    try {
-      folder = DriveApp.getFolderById(savedId);
-    } catch (missing) {
-      folder = null;
-    }
-  }
-
-  if (!folder) {
-    // Keep the photos beside the sheet they belong to rather than loose at the
-    // root of Drive, and work it out from the sheet itself so there is nothing
-    // extra to configure.
-    let parent = DriveApp.getRootFolder();
-    const spreadsheetId = properties.getProperty('SHEET_ID');
-
-    if (spreadsheetId) {
-      try {
-        const parents = DriveApp.getFileById(spreadsheetId).getParents();
-        if (parents.hasNext()) parent = parents.next();
-      } catch (unreachable) {
-        // Fall back to the root folder.
-      }
-    }
-
-    const existing = parent.getFoldersByName(PHOTO_FOLDER_NAME);
-    folder = existing.hasNext() ? existing.next() : parent.createFolder(PHOTO_FOLDER_NAME);
-    properties.setProperty('PHOTO_FOLDER_ID', folder.getId());
-  }
-
+  const folder = getPhotoFolder();
   const extension = match[1] === 'image/png' ? 'png' : match[1] === 'image/webp' ? 'webp' : 'jpg';
 
   const blob = Utilities.newBlob(
