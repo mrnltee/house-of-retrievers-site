@@ -5,7 +5,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const INTERESTS = ["Member", "Volunteer", "Partner"];
-const LIMITS = { name: 120, email: 200, profile: 300, furbabyName: 120, message: 2000 };
+const LIMITS = { name: 120, email: 200, profile: 300, furbabyName: 120, message: 2000, photoName: 120 };
+
+/** Room for a resized photo plus base64's ~33% overhead, and nothing more. */
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+const PHOTO_DATA_URL = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/;
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -51,6 +55,29 @@ export async function POST(request) {
     return NextResponse.json({ error: socialError }, { status: 422, headers: noStore });
   }
 
+  // The browser resizes before uploading, so anything arriving oversized has
+  // bypassed the form. Reject rather than forward it to Apps Script, which
+  // stops accepting payloads at 50MB.
+  const photoRaw = typeof body?.photo === "string" ? body.photo : "";
+  let photo = "";
+
+  if (photoRaw) {
+    const match = photoRaw.match(PHOTO_DATA_URL);
+    if (!match) {
+      return NextResponse.json(
+        { error: "That photo did not come through. Try another one?" },
+        { status: 422, headers: noStore },
+      );
+    }
+    if (Math.ceil((match[2].length * 3) / 4) > MAX_PHOTO_BYTES) {
+      return NextResponse.json(
+        { error: "That photo is too large. Try a smaller one?" },
+        { status: 422, headers: noStore },
+      );
+    }
+    photo = photoRaw;
+  }
+
   // Field names and nesting are dictated by the Apps Script in
   // scripts/apps-script/Code.gs — change both together or submissions are
   // rejected as "Select a join type."
@@ -63,6 +90,8 @@ export async function POST(request) {
       socialProfile: social ? social.display : "",
       socialUrl: social ? social.url : "",
       furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
+      photo,
+      photoName: clean(body?.photoName, LIMITS.photoName),
       message: clean(body?.message, LIMITS.message),
     },
   };
