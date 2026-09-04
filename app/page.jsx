@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import BrandTransition from "./components/BrandTransition";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import PurposeStories from "./components/PurposeStories";
@@ -16,6 +17,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [interest, setInterest] = useState("Member");
   const [progress, setProgress] = useState(0);
+  const [joinTransitionId, setJoinTransitionId] = useState(0);
 
   useEffect(() => {
     const update = () => {
@@ -58,14 +60,19 @@ export default function Home() {
   }, [packView]);
 
   const openJoin = () => {
-    setModalOpen(true);
     setMenuOpen(false);
+    setJoinTransitionId((current) => current + 1);
   };
+
+  const finishJoinTransition = useCallback(() => {
+    setModalOpen(true);
+  }, []);
 
   return (
     <main>
       <a href="#top" className="skip-link">Skip to content</a>
       <div className="scroll-progress" style={{ transform: `scaleX(${progress / 100})` }} />
+      <BrandTransition interactionId={joinTransitionId} onInteractionComplete={finishJoinTransition} />
 
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} />
       <Hero onJoin={openJoin} />
