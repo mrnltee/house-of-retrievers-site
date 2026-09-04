@@ -1,6 +1,6 @@
 export const INTRO_SESSION_KEY = "hor-brand-intro";
 export const motionDurations = Object.freeze({
-  intro: 3000,
+  intro: 4200,
   interaction: 560,
   reduced: 180,
 });

@@ -46,8 +46,8 @@ test("marking the intro is safe when session storage is unavailable", () => {
   assert.doesNotThrow(() => markIntroSeen(unavailableStorage));
 });
 
-test("uses a three-second intro without slowing later interactions", () => {
-  assert.equal(brandMotion.motionDurations?.intro, 3000);
+test("gives the first-load intro enough time to show both logo nods", () => {
+  assert.equal(brandMotion.motionDurations?.intro, 4200);
   assert.equal(brandMotion.motionDurations?.interaction, 560);
   assert.equal(brandMotion.motionDurations?.reduced, 180);
 });
