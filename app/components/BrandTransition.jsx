@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { markIntroSeen, motionDurations, shouldShowIntro } from "../lib/brandMotion.mjs";
+import { motionDurations, shouldShowIntro } from "../lib/brandMotion.mjs";
 
 function AnimatedLogo() {
   return (
@@ -28,12 +28,11 @@ export default function BrandTransition({ interactionId, onInteractionComplete }
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!shouldShowIntro(window.sessionStorage)) {
+    if (!shouldShowIntro()) {
       setVisible(false);
       return undefined;
     }
 
-    markIntroSeen(window.sessionStorage);
     const timer = window.setTimeout(
       () => setVisible(false),
       reducedMotion ? motionDurations.reduced : motionDurations.intro,
