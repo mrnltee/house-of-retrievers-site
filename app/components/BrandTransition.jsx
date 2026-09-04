@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { markIntroSeen, shouldShowIntro } from "../lib/brandMotion.mjs";
-
-const INTRO_DURATION = 1450;
-const INTERACTION_DURATION = 560;
-const REDUCED_MOTION_DURATION = 180;
+import { markIntroSeen, motionDurations, shouldShowIntro } from "../lib/brandMotion.mjs";
 
 function AnimatedLogo() {
   return (
@@ -40,7 +36,7 @@ export default function BrandTransition({ interactionId, onInteractionComplete }
     markIntroSeen(window.sessionStorage);
     const timer = window.setTimeout(
       () => setVisible(false),
-      reducedMotion ? REDUCED_MOTION_DURATION : INTRO_DURATION,
+      reducedMotion ? motionDurations.reduced : motionDurations.intro,
     );
 
     return () => window.clearTimeout(timer);
@@ -56,7 +52,7 @@ export default function BrandTransition({ interactionId, onInteractionComplete }
     const timer = window.setTimeout(() => {
       setVisible(false);
       onInteractionComplete();
-    }, reducedMotion ? REDUCED_MOTION_DURATION : INTERACTION_DURATION);
+    }, reducedMotion ? motionDurations.reduced : motionDurations.interaction);
 
     return () => window.clearTimeout(timer);
   }, [interactionId, onInteractionComplete]);

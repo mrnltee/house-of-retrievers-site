@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
+import * as brandMotion from "./brandMotion.mjs";
+
+const {
   INTRO_SESSION_KEY,
   markIntroSeen,
   shouldShowIntro,
-} from "./brandMotion.mjs";
+} = brandMotion;
 
 function memoryStorage() {
   const values = new Map();
@@ -42,4 +44,10 @@ test("marking the intro is safe when session storage is unavailable", () => {
   };
 
   assert.doesNotThrow(() => markIntroSeen(unavailableStorage));
+});
+
+test("uses a three-second intro without slowing later interactions", () => {
+  assert.equal(brandMotion.motionDurations?.intro, 3000);
+  assert.equal(brandMotion.motionDurations?.interaction, 560);
+  assert.equal(brandMotion.motionDurations?.reduced, 180);
 });
