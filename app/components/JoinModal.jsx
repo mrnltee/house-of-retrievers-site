@@ -17,7 +17,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const fieldCopy = joinFieldCopy[interest];
+  const fieldCopy = joinFieldCopy[interest] || joinFieldCopy.Member;
 
   useEffect(() => {
     const opener = document.activeElement;
