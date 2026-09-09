@@ -95,7 +95,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
             <p className="modal-lead">Pick whatever fits you today — you can always join the rest later.</p>
             <div className="interest-grid">
               {interests.map((item) => (
-                <button key={item} className={interest === item ? "active" : ""} onClick={() => setInterest(item)}>
+                <button type="button" key={item} className={interest === item ? "active" : ""} onClick={() => setInterest(item)}>
                   <span><Icon name={interest === item ? "check" : "paw"} size={17} /></span>{item}
                 </button>
               ))}

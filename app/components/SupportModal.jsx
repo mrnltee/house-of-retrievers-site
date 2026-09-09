@@ -28,7 +28,7 @@ export default function SupportModal({ onClose, onJoin }) {
         <h2 id="support-title">Help us make<br /><em>more good.</em></h2>
         <p className="modal-lead">Every contribution helps us show up for dogs, people, and the communities we share.</p>
         <div className="support-switch" role="tablist" aria-label="Donation methods">
-          {[['qr','QR code'],['bank','Bank transfer'],['paymongo','PayMongo']].map(([id,label]) => <button key={id} role="tab" aria-selected={method === id} className={method === id ? 'active' : ''} onClick={() => setMethod(id)}>{label}</button>)}
+          {[['qr','QR code'],['bank','Bank transfer'],['paymongo','PayMongo']].map(([id,label]) => <button type="button" key={id} role="tab" aria-selected={method === id} className={method === id ? 'active' : ''} onClick={() => setMethod(id)}>{label}</button>)}
         </div>
         <div className="support-method-detail">
           {method === 'qr' && <><div className="qr-placeholder" aria-label="QR code coming soon"><span>QR</span></div><h3>Scan to give</h3><p>We’re preparing the verified donation QR code. It will appear here once the receiving account is confirmed.</p></>}
