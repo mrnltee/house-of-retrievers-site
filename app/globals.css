@@ -119,7 +119,7 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .button.primary { background: var(--gold); color: var(--ink); }
 .button.cream { background: var(--gold); color: var(--ink); }
 .button.dark { background: var(--forest); color: white; width: 100%; margin-top: 6px; }
-.support-modal { position: relative; width: min(620px, calc(100vw - 32px)); max-height: min(760px, calc(100vh - 32px)); overflow-x: hidden; overflow-y: auto; padding: clamp(30px, 5vw, 54px); border-radius: 22px; background: var(--cream); color: var(--ink); box-shadow: 0 30px 90px rgba(0,0,0,.35); }
+.support-modal { position: relative; width: min(820px, calc(100vw - 32px)); max-height: min(820px, calc(100vh - 32px)); overflow-x: hidden; overflow-y: auto; padding: clamp(34px, 4.5vw, 58px); border-radius: 22px; background: var(--cream); color: var(--ink); box-shadow: 0 30px 90px rgba(0,0,0,.35); }
 .support-modal h2 { font-size: clamp(46px, 6vw, 70px); margin: 18px 0; }
 .support-switch { display: flex; gap: 5px; margin: 28px 0 20px; padding: 5px; border-radius: 999px; background: rgba(17,17,17,.08); }
 .support-switch button { flex: 1; border: 0; border-radius: 999px; padding: 11px 8px; background: transparent; color: #555950; font-size: 12px; font-weight: 700; }
@@ -282,6 +282,7 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .join-number { align-self: flex-start; color: var(--gold); font-family: "DM Serif Display", serif; font-size: 19px; }
 .join-icon { color: var(--gold); margin: 24px 0 28px; }
 .join-card h3, .family-card h3 { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(26px, 2.5vw, 36px); margin: 0 0 14px; }
+.join-card h3 { white-space: nowrap; font-size: clamp(28px, 2.15vw, 34px); letter-spacing: -.05em; }
 .join-card p { color: rgba(255,255,255,.58); line-height: 1.7; margin: 0 auto; font-size: 14px; max-width: 300px; }
 .family-grid { border: 0; gap: 16px; }
 .family-card { min-height: 280px; color: var(--ink); padding: 30px; position: relative; overflow: hidden; border: 1px solid transparent; border-radius: 14px; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
@@ -348,7 +349,7 @@ footer { background: var(--taupe); color: var(--ink); padding: 34px clamp(24px, 
 }
 
 .modal-backdrop { position: fixed; z-index: 200; inset: 0; background: rgba(13,13,13,.82); backdrop-filter: blur(10px); display: grid; place-items: center; padding: 20px; animation: fadeIn .2s both; }
-.join-modal { width: min(620px, 100%); max-height: calc(100svh - 40px); overflow: auto; overscroll-behavior: contain; background: var(--paper); padding: clamp(30px, 5vw, 58px); position: relative; animation: modalIn .3s ease-out both; }
+.join-modal { width: min(820px, 100%); max-height: calc(100svh - 40px); overflow: auto; overscroll-behavior: contain; background: var(--paper); padding: clamp(34px, 4.5vw, 58px); position: relative; animation: modalIn .3s ease-out both; }
 .modal-close { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: transparent; color: #555950; padding: 0; }
 .join-modal h2 { font-size: clamp(43px, 6vw, 66px); margin: 22px 0 16px; }
 .modal-lead { color: #6f736a; line-height: 1.6; }
@@ -471,6 +472,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .view-switch button { flex: 1; }
   .join-grid, .family-grid { grid-template-columns: 1fr; }
   .join-card { min-height: 210px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.14); }
+  .join-card h3 { white-space: normal; font-size: 32px; }
   .family-card { min-height: 230px; }
   .family-flip-inner, .family-card-back-content { min-height: 230px; }
   .final-cta { align-items: center; }
@@ -487,6 +489,15 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 }
 @media (max-width: 420px) {
   .interest-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .support-modal, .join-modal { width: calc(100vw - 20px); max-height: calc(100svh - 20px); padding: 26px 20px; border-radius: 18px; }
+  .support-modal h2, .join-modal h2 { font-size: clamp(40px, 12vw, 52px); margin: 14px 0; }
+  .support-switch { margin: 20px 0 16px; }
+  .support-method-detail { min-height: 0; gap: 16px; }
+  .join-modal form { gap: 12px; }
+  .interest-grid { margin: 20px 0; }
 }
 
 button:focus-visible,
