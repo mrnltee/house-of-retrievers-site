@@ -133,6 +133,10 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .donation-details span, .donation-details small { color: #6d7066; font-size: 11px; }
 .qr-method-tabs button { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid rgba(17,17,17,.12); border-radius: 8px; background: rgba(255,255,255,.7); text-align: left; color: var(--ink); cursor: pointer; }
 .qr-method-tabs button.active { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); background: #fff; }
+.bank-method-tabs { grid-column: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
+.bank-method-tabs button { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid rgba(17,17,17,.12); border-radius: 8px; background: rgba(255,255,255,.7); text-align: left; color: var(--ink); cursor: pointer; }
+.bank-method-tabs button.active { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); background: #fff; }
+.bank-method-tabs + p { grid-column: 2; text-align: left; }
 @media (max-width: 600px) { .support-method-detail { grid-template-columns: 1fr; padding: 20px; } .support-method-copy, .donation-details { grid-column: 1; } .qr-placeholder { grid-row: auto; } .donation-details { grid-template-columns: 1fr; } }
 .support-note { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; font-size: 13px; }
 .support-note strong { font-family: "DM Serif Display", serif; font-size: 18px; font-weight: 400; }

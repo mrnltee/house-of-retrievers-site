@@ -5,6 +5,7 @@ export default function SupportModal({ onClose, onJoin }) {
   const dialog = useRef(null);
   const [method, setMethod] = useState("qr");
   const [qrMethod, setQrMethod] = useState("gcash");
+  const [bankMethod, setBankMethod] = useState("bdo");
   useEffect(() => {
     const opener = document.activeElement;
     const node = dialog.current;
@@ -33,7 +34,7 @@ export default function SupportModal({ onClose, onJoin }) {
         </div>
         <div className="support-method-detail">
           {method === 'qr' && <><div className="support-method-copy"><h3>Scan to give</h3><p>Choose a payment method to view its QR code.</p></div><div className="qr-placeholder" aria-label={`${qrMethod} QR code coming soon`}><span>QR<br /><small>Coming soon</small></span></div><div className="donation-details qr-method-tabs" role="tablist" aria-label="QR payment methods">{[['gcash','GCash','0912 345 6789'],['maya','Maya','QR code coming soon'],['qrph','QRPh','QR code coming soon'],['bdo','BDO','QR code coming soon']].map(([id,label,detail]) => <button type="button" role="tab" aria-selected={qrMethod === id} className={qrMethod === id ? 'active' : ''} key={id} onClick={() => setQrMethod(id)}><strong>{label}</strong><span>{detail}</span><small>House of Retrievers PH</small></button>)}</div></>}
-          {method === 'bank' && <><span className="support-method-icon">₱</span><h3>Bank transfer</h3><div className="donation-details"><div><strong>BDO</strong><span>Account number coming soon</span><small>House of Retrievers PH</small></div><div><strong>UnionBank</strong><span>Account number coming soon</span><small>House of Retrievers PH</small></div></div><p>We’ll publish the verified account details here before accepting transfers.</p></>}
+          {method === 'bank' && <><div className="support-method-copy"><h3>Bank transfer</h3><p>Select a bank to view its transfer details.</p></div><span className="support-method-icon">₱</span><div className="donation-details bank-method-tabs" role="tablist" aria-label="Bank transfer methods">{[['bdo','BDO'],['unionbank','UnionBank']].map(([id,label]) => <button type="button" role="tab" aria-selected={bankMethod === id} className={bankMethod === id ? 'active' : ''} key={id} onClick={() => setBankMethod(id)}><strong>{label}</strong><span>Account number coming soon</span><small>House of Retrievers PH</small></button>)}</div><p>We’ll publish the verified account details here before accepting transfers.</p></>}
           {method === 'paymongo' && <><span className="support-method-icon">↗</span><h3>PayMongo payment link</h3><p>PayMongo will be enabled after the organization account is approved. This keeps the prototype from accepting unconfigured payments.</p></>}
         </div>
         <div className="support-note"><strong>Want to sponsor an activity?</strong><button className="sponsor-cta" onClick={onJoin}>Talk to us <Icon name="arrow" size={15} /></button></div>
