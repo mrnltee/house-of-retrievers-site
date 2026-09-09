@@ -9,6 +9,16 @@ export default function Pack({ packView, setPackView, onSupport }) {
     setFlippedFamilies((current) => ({ ...current, [group]: !current[group] }));
   };
 
+  const handleTabKey = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const tabs = [...event.currentTarget.parentElement.querySelectorAll('[role="tab"]')];
+    const current = tabs.indexOf(event.currentTarget);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    tabs[next].focus();
+    tabs[next].click();
+  };
+
   return (
     <section className="pack" id="pack">
       <div className="pack-inner section-shell">
@@ -23,8 +33,10 @@ export default function Pack({ packView, setPackView, onSupport }) {
               role="tab"
               aria-selected={packView === "impact"}
               aria-controls="pack-panel-impact"
+              tabIndex={packView === "impact" ? 0 : -1}
               className={packView === "impact" ? "active" : ""}
               onClick={() => setPackView("impact")}
+              onKeyDown={handleTabKey}
             >
               How to join
             </button>
@@ -33,8 +45,10 @@ export default function Pack({ packView, setPackView, onSupport }) {
               role="tab"
               aria-selected={packView === "families"}
               aria-controls="pack-panel-families"
+              tabIndex={packView === "families" ? 0 : -1}
               className={packView === "families" ? "active" : ""}
               onClick={() => setPackView("families")}
+              onKeyDown={handleTabKey}
             >
               Meet the Founding Pawmilies
             </button>

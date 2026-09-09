@@ -23,10 +23,10 @@
 const SHEET_NAME = 'Applications';
 
 /** Column the social handle lands in, counting from 1. */
-const SOCIAL_COLUMN = 5;
+const SOCIAL_COLUMN = 6;
 
 /** Column the furbaby photo link lands in. */
-const PHOTO_COLUMN = 9;
+const PHOTO_COLUMN = 10;
 
 /**
  * Drive folder the photos are filed into, created on first use.
@@ -149,6 +149,7 @@ function doPost(e) {
           <p><strong>Join type:</strong> ${escapeHtml(joinType)}</p>
           <p><strong>Name:</strong> ${escapeHtml(name)}</p>
           <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+          <p><strong>Organization:</strong> ${escapeHtml(organization || '—')}</p>
           <p><strong>Social profile:</strong> ${escapeHtml(socialProfile || '—')}</p>
           <p><strong>Furbaby name:</strong> ${escapeHtml(furbabyName || '—')}</p>
           <p><strong>Message:</strong><br>
