@@ -84,7 +84,7 @@ export default function Pack({ packView, setPackView }) {
                 >
                   <span className="family-flip-inner">
                     <span className="family-flip-face family-card-front">
-                      <img className="family-card-image" src={family.frontImage} alt={family.imageAlt} />
+                      <img loading="lazy" decoding="async" className="family-card-image" src={family.frontImage} alt={family.imageAlt} />
                       <span className="family-card-info">
                         <small>{family.group}</small>
                         <strong>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</strong>
@@ -92,7 +92,7 @@ export default function Pack({ packView, setPackView }) {
                       </span>
                     </span>
                     <span className="family-flip-face family-card-back" aria-hidden={!isFlipped}>
-                      <img className="family-card-image" src={family.backImage} alt={`${family.names} back photocard`} />
+                      <img loading="lazy" decoding="async" className="family-card-image" src={family.backImage} alt={`${family.names} back photocard`} />
                     </span>
                   </span>
                 </article>

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import { interests, joinFieldCopy } from "../content/join";
 import { socialPlatforms } from "../lib/socialProfile";
 import { resizeImage } from "../lib/resizeImage";
 
 export default function JoinModal({ interest, setInterest, onClose }) {
+  const dialog = useRef(null);
   const [sent, setSent] = useState(false);
   const [social, setSocial] = useState("");
   const [socialPlatform, setSocialPlatform] = useState("");
@@ -15,6 +16,31 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const [submitError, setSubmitError] = useState("");
 
   const fieldCopy = joinFieldCopy[interest];
+
+  useEffect(() => {
+    const opener = document.activeElement;
+    const element = dialog.current;
+    element.querySelector("button").focus();
+    const trapFocus = (event) => {
+      if (event.key !== "Tab") return;
+      const controls = [...element.querySelectorAll('button, input, textarea, select, a[href], [tabindex="0"]')]
+        .filter((control) => !control.disabled && control.getClientRects().length);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !element.contains(document.activeElement))) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !element.contains(document.activeElement))) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      document.removeEventListener("keydown", trapFocus);
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, []);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -58,7 +84,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="join-modal" role="dialog" aria-modal="true" aria-labelledby="join-title">
+      <section ref={dialog} className="join-modal" role="dialog" aria-modal="true" aria-labelledby="join-title">
         <button className="modal-close" onClick={onClose} aria-label="Close form"><Icon name="close" /></button>
         {!sent ? (
           <>

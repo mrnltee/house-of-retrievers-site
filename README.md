@@ -44,7 +44,9 @@ npx vercel env pull .env.local
 | --- | --- |
 | `GOOGLE_APPS_SCRIPT_URL` | Web App `/exec` URL that records join submissions |
 | `JOIN_FORM_SECRET` | Shared secret sent in the join request body |
-| `INSTAGRAM_ACCESS_TOKEN` | Instagram Graph API token for the feed |
+| `INSTAGRAM_ACCESS_TOKEN` | Seed token; the live rotating token is stored in private Vercel Blob |
+| `BLOB_READ_WRITE_TOKEN` | Access to the private Instagram token blob |
+| `CRON_SECRET` | Authenticates the daily token refresh |
 | `INSTAGRAM_USER_ID` | Instagram account id |
 | `INSTAGRAM_API_VERSION` | Graph API version |
 
@@ -61,7 +63,7 @@ All of these are read server-side only. Never prefix them with `NEXT_PUBLIC_`, a
 
 ## Important content note
 
-The join form posts to `/api/join`, which forwards submissions to a Google Apps Script endpoint. Some activity photography and organization details are still placeholders until verified House of Retrievers content is supplied.
+The join form posts to `/api/join`, which forwards submissions to a Google Apps Script endpoint. Activity photography uses approved House of Retrievers assets. The final founding-family card reserves space for future verified family details.
 
 ## Project structure
 

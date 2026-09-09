@@ -1,32 +1,51 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import BackgroundVideo from "./BackgroundVideo";
 import { activities } from "../content/activities";
 
 /** Above this many photos the dots stop fitting the control pill on a phone. */
 const MAX_DOTS = 6;
 
 function StoryMedia({ item }) {
+  const container = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(true);
   const [slide, setSlide] = useState(0);
   const gallery = item.gallery;
   const activeSlide = gallery ? slide % gallery.length : 0;
 
   useEffect(() => {
-    if (!gallery || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotion = () => setReducedMotion(motion.matches);
+    updateMotion();
+    motion.addEventListener("change", updateMotion);
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
+    observer.observe(container.current);
+    return () => {
+      observer.disconnect();
+      motion.removeEventListener("change", updateMotion);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!gallery || !visible || reducedMotion) return;
     const timer = window.setInterval(() => {
       setSlide((current) => (current + 1) % gallery.length);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [gallery]);
+  }, [gallery, visible, reducedMotion]);
 
   return (
-    <div className="pillar-media">
+    <div className="pillar-media" ref={container}>
       {gallery ? (
         <div className="story-carousel" role="region" aria-roledescription="carousel" aria-label={`${item.title} photos`}>
           {gallery.map((photo, index) => (
-            <img
+            (index === activeSlide || index === (activeSlide + 1) % gallery.length || index === (activeSlide - 1 + gallery.length) % gallery.length) && <img
               key={photo.src}
               className={index === activeSlide ? "story-carousel-slide active" : "story-carousel-slide"}
               src={photo.src}
+              loading="lazy"
+              decoding="async"
               alt={index === activeSlide ? photo.alt : ""}
               aria-hidden={index !== activeSlide}
             />
@@ -57,11 +76,9 @@ function StoryMedia({ item }) {
           </div>
         </div>
       ) : item.video ? (
-        <video className="story-video" autoPlay muted loop playsInline preload="metadata" poster={item.image} aria-label={item.alt}>
-          <source src={item.video} type="video/mp4" />
-        </video>
+        <BackgroundVideo className="story-video" src={item.video} poster={item.image} aria-label={item.alt} />
       ) : (
-        <img className="pillar-image" src={item.image} alt={item.alt} />
+        <img loading="lazy" decoding="async" className="pillar-image" src={item.image} alt={item.alt} />
       )}
     </div>
   );

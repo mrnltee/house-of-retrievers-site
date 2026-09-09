@@ -10,24 +10,14 @@ import Pack from "./components/Pack";
 import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import JoinModal from "./components/JoinModal";
+import ScrollProgress from "./components/ScrollProgress";
 
 export default function Home() {
   const [packView, setPackView] = useState("impact");
   const [modalOpen, setModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [interest, setInterest] = useState("Member");
-  const [progress, setProgress] = useState(0);
   const [joinTransitionId, setJoinTransitionId] = useState(0);
-
-  useEffect(() => {
-    const update = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? (window.scrollY / max) * 100 : 0);
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, []);
 
   useEffect(() => {
     document.body.style.overflow = modalOpen ? "hidden" : "";
@@ -71,7 +61,7 @@ export default function Home() {
   return (
     <main>
       <a href="#top" className="skip-link">Skip to content</a>
-      <div className="scroll-progress" style={{ transform: `scaleX(${progress / 100})` }} />
+      <ScrollProgress />
       <BrandTransition interactionId={joinTransitionId} onInteractionComplete={finishJoinTransition} />
 
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} />
