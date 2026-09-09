@@ -10,11 +10,13 @@ import Pack from "./components/Pack";
 import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import JoinModal from "./components/JoinModal";
+import SupportModal from "./components/SupportModal";
 import ScrollProgress from "./components/ScrollProgress";
 
 export default function Home() {
   const [packView, setPackView] = useState("impact");
   const [modalOpen, setModalOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [interest, setInterest] = useState("Member");
   const [joinTransitionId, setJoinTransitionId] = useState(0);
@@ -49,8 +51,9 @@ export default function Home() {
     window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
   }, [packView]);
 
-  const openJoin = () => {
+  const openJoin = (nextInterest = "Member") => {
     setMenuOpen(false);
+    setInterest(nextInterest);
     setJoinTransitionId((current) => current + 1);
   };
 
@@ -64,7 +67,7 @@ export default function Home() {
       <ScrollProgress />
       <BrandTransition interactionId={joinTransitionId} onInteractionComplete={finishJoinTransition} />
 
-      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} />
+      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} onSupport={() => { setMenuOpen(false); setSupportOpen(true); }} />
       <Hero onJoin={openJoin} />
       <PurposeStories />
       <InstagramFeed />
@@ -75,6 +78,7 @@ export default function Home() {
       {modalOpen && (
         <JoinModal interest={interest} setInterest={setInterest} onClose={() => setModalOpen(false)} />
       )}
+      {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} onJoin={() => { setSupportOpen(false); openJoin("Sponsor"); }} />}
     </main>
   );
 }

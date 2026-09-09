@@ -9,7 +9,9 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const [sent, setSent] = useState(false);
   const [social, setSocial] = useState("");
   const [socialPlatform, setSocialPlatform] = useState("");
+  const [profileHelpOpen, setProfileHelpOpen] = useState(false);
   const [photo, setPhoto] = useState(null);
+  const [hasFurbaby, setHasFurbaby] = useState(interest === "Member" ? "yes" : "");
   const [photoError, setPhotoError] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -99,17 +101,17 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               ))}
             </div>
             <form onSubmit={submit}>
-              <label>Name<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
+              <label>{interest === "Sponsor" ? "Contact person" : "Name"}<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
               <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
               <div className="social-field">
-                <label htmlFor="join-social">{fieldCopy.profileLabel}</label>
+                <div className="profile-label-row"><label htmlFor="join-social">{fieldCopy.profileLabel}</label>{socialPlatform ? <button type="button" className="profile-help-link" onClick={() => setProfileHelpOpen(true)}>Where do I find this?</button> : null}</div>
                 <div className="social-row">
                   <input
                     id="join-social"
                     name="profile"
                     type="text"
                     autoComplete="url"
-                    placeholder={fieldCopy.profilePlaceholder}
+                    placeholder={socialPlatform === "Facebook" ? "e.g. facebook.com/yourname" : socialPlatform === "Instagram" ? "e.g. instagram.com/yourname" : fieldCopy.profilePlaceholder}
                     value={social}
                     onChange={(event) => {
                       setSocial(event.target.value);
@@ -136,8 +138,10 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                   </div>
                 </div>
               </div>
-              <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label>
-              <div className="photo-field">
+              {profileHelpOpen ? <div className="profile-help" role="dialog" aria-label={`Finding your ${socialPlatform} profile URL`}><div><strong>Find your {socialPlatform} profile link</strong><button type="button" onClick={() => setProfileHelpOpen(false)} aria-label="Close profile link help"><Icon name="close" size={16} /></button></div><ol><li>Open {socialPlatform} and go to your profile.</li><li>Use the <b>Share</b> or <b>···</b> menu.</li><li>Choose <b>Copy profile link</b>, then paste it here.</li></ol><p>Example: <code>{socialPlatform === "Facebook" ? "facebook.com/yourname" : "instagram.com/yourname"}</code></p></div> : null}
+              <fieldset className="furbaby-question"><legend>Do you have a furbaby?</legend><div className="furbaby-options"><label><input type="radio" name="hasFurbaby" value="yes" checked={hasFurbaby === "yes"} onChange={() => setHasFurbaby("yes")} /> Yes</label><label><input type="radio" name="hasFurbaby" value="no" checked={hasFurbaby === "no"} onChange={() => { setHasFurbaby("no"); setPhoto(null); }} /> Not yet</label></div></fieldset>
+              {hasFurbaby === "yes" ? <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label> : null}
+              {hasFurbaby === "yes" ? <div className="photo-field">
                 <label htmlFor="join-photo">Furbaby photo (optional)</label>
                 {photo ? (
                   <div className="photo-preview">
@@ -175,8 +179,8 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                 )}
                 {photoBusy ? <small className="photo-hint">Getting that ready&hellip;</small> : null}
                 {photoError ? <small className="photo-hint error">{photoError}</small> : null}
-              </div>
-              <label>Message<textarea name="message" placeholder="A short hello is perfect" rows="3" /></label>
+              </div> : null}
+              <label>{interest === "Sponsor" ? "Sponsorship details" : "Message"}<textarea name="message" placeholder={interest === "Sponsor" ? "Tell us about your sponsorship goals or activity interest" : "A short hello is perfect"} rows="3" /></label>
               <button className="button dark" type="submit" disabled={submitting}>
                 {submitting ? "Sending…" : <>Continue as {interest} <Icon name="arrow" /></>}
               </button>

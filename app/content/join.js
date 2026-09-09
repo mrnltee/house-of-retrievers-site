@@ -4,9 +4,9 @@ import { HandHeart, HeartHandshake, UsersRound } from "lucide-react";
  * The ways a visitor can join. Kept in sync with the server-side whitelist in
  * `app/api/join/route.js` — add a value in both places or it will be rejected.
  *
- * @type {readonly ["Member", "Volunteer", "Partner"]}
+ * @type {readonly ["Member", "Volunteer", "Partner", "Sponsor"]}
  */
-export const interests = ["Member", "Volunteer", "Partner"];
+export const interests = ["Member", "Volunteer", "Partner", "Sponsor"];
 
 /**
  * A "how to join" card in the pack section.
@@ -69,5 +69,11 @@ export const joinFieldCopy = {
     profilePlaceholder: "e.g. @yourhandle or organization profile URL",
     furbabyLabel: "Furbaby name (optional)",
     furbabyPlaceholder: "e.g. the furbaby joining your activity",
+  },
+  Sponsor: {
+    profileLabel: "Organization or company profile (optional)",
+    profilePlaceholder: "e.g. your website or social profile",
+    furbabyLabel: "Organization or company name",
+    furbabyPlaceholder: "e.g. Acme Pet Care",
   },
 };

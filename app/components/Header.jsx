@@ -1,6 +1,6 @@
 import Icon from "./Icon";
 
-export default function Header({ menuOpen, setMenuOpen, onJoin }) {
+export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
   return (
     <header className="site-header">
       <a href="#top" className="brand" aria-label="House of Retrievers home">
@@ -16,6 +16,7 @@ export default function Header({ menuOpen, setMenuOpen, onJoin }) {
       <nav className={menuOpen ? "nav open" : "nav"} aria-label="Primary navigation">
         <a href="#mission" onClick={() => setMenuOpen(false)}>Our purpose</a>
         <a href="#pack" onClick={() => setMenuOpen(false)}>The pack</a>
+        <button className="nav-support" onClick={onSupport}>Support the pack</button>
         <button className="nav-cta" onClick={onJoin}>Join the pack <Icon name="arrow" size={16} /></button>
       </nav>
     </header>

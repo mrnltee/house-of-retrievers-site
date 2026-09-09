@@ -57,7 +57,7 @@ function doPost(e) {
     const furbabyName = clean(form.furbabyName, 120);
     const message = clean(form.message, 2000);
 
-    if (!['Member', 'Volunteer', 'Partner'].includes(joinType)) {
+    if (!['Member', 'Volunteer', 'Partner', 'Sponsor'].includes(joinType)) {
       return response({ ok: false, error: 'Select a join type.' });
     }
 

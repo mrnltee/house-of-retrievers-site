@@ -4,7 +4,7 @@ import { parseSocialProfile } from "../../lib/socialProfile";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const INTERESTS = ["Member", "Volunteer", "Partner"];
+const INTERESTS = ["Member", "Volunteer", "Partner", "Sponsor"];
 const LIMITS = { name: 120, email: 200, profile: 300, furbabyName: 120, message: 2000, photoName: 120 };
 
 /** Room for a resized photo plus base64's ~33% overhead, and nothing more. */
