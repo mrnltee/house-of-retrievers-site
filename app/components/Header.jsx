@@ -17,7 +17,7 @@ export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
         <a href="#mission" onClick={() => setMenuOpen(false)}>Our purpose</a>
         <a href="#pack" onClick={() => setMenuOpen(false)}>The pack</a>
         <button className="nav-support" onClick={onSupport}>Support the pack</button>
-        <button className="nav-cta" onClick={onJoin}>Join the pack <Icon name="arrow" size={16} /></button>
+        <button className="nav-cta" onClick={() => onJoin()}>Join the pack <Icon name="arrow" size={16} /></button>
       </nav>
     </header>
   );
