@@ -304,12 +304,12 @@ input, textarea { width: 100%; border: 1px solid var(--line); background: white;
 input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(167,133,63,.14); }
 .social-field { display: grid; gap: 7px; }
 .furbaby-question { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.38); }
-.furbaby-question legend { margin: 0; padding: 0; color: var(--ink); font: 400 23px "DM Serif Display", serif; }
+.furbaby-question legend { margin: 0; padding: 0; color: var(--ink); font: 400 clamp(19px, 3vw, 23px) "DM Serif Display", serif; }
 .furbaby-hint { margin: 4px 0 12px; color: #777a70; font-size: 12px; }
 .furbaby-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.furbaby-options label { display: flex; align-items: center; gap: 9px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #65695f; font-size: 13px; font-weight: 600; cursor: pointer; }
+.furbaby-options label { display: flex; align-items: center; gap: 9px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #65695f; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .furbaby-options label.selected { border-color: var(--forest); background: var(--gold); color: var(--ink); }
-.furbaby-options input { accent-color: var(--gold); }
+.furbaby-options input { width: auto; margin: 0; accent-color: var(--gold); }
 .profile-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .profile-label-row label { margin: 0; }
 .profile-help-link { padding: 0; border: 0; border-bottom: 1px solid var(--gold); background: transparent; color: var(--forest); font-size: 11px; font-weight: 700; }
