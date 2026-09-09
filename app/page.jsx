@@ -71,7 +71,7 @@ export default function Home() {
       <Hero onJoin={openJoin} />
       <PurposeStories />
       <InstagramFeed />
-      <Pack packView={packView} setPackView={setPackView} />
+      <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
       <FinalCta onJoin={openJoin} />
       <Footer />
 

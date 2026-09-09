@@ -2,7 +2,7 @@ import { useState } from "react";
 import { families } from "../content/families";
 import { joinRoutes } from "../content/join";
 
-export default function Pack({ packView, setPackView }) {
+export default function Pack({ packView, setPackView, onSupport }) {
   const [flippedFamilies, setFlippedFamilies] = useState(() => ({}));
 
   const toggleFamilyCard = (group) => {
@@ -100,6 +100,11 @@ export default function Pack({ packView, setPackView }) {
             })}
           </div>
         )}
+
+        <div className="pack-support-banner">
+          <div><span className="eyebrow light">A little goes a long way</span><h3>Help the pack do more good.</h3><p>Support a community activity through QR, bank transfer, or PayMongo.</p></div>
+          <button className="button primary" onClick={onSupport}>Support the pack <span aria-hidden="true">→</span></button>
+        </div>
 
       </div>
     </section>

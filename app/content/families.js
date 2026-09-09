@@ -26,7 +26,7 @@ export const families = [
     imageAlt: "Sir Dallas and Mary Jane front photocard",
   },
   {
-    group: "The Caffeine Family",
+    group: "The Daily Love you a Latte",
     names: "Macchiato",
     note: "@dailydoseofmacchiato_",
     socialUrl: "https://www.instagram.com/dailydoseofmacchiato_/",
