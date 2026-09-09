@@ -103,6 +103,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
             <form onSubmit={submit}>
               <label>{interest === "Sponsor" ? "Contact person" : "Name"}<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
               <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
+              <label>{fieldCopy.organizationLabel}<input name="organization" type="text" placeholder={fieldCopy.organizationPlaceholder} /></label>
               <div className="social-field">
                 <div className="profile-label-row"><label htmlFor="join-social">{fieldCopy.profileLabel}</label>{socialPlatform ? <button type="button" className="profile-help-link" onClick={() => setProfileHelpOpen(true)}>Where do I find this?</button> : null}</div>
                 <div className="social-row">

@@ -46,6 +46,8 @@ export const joinRoutes = [
  * @typedef {Object} JoinFieldCopy
  * @property {string} profileLabel
  * @property {string} profilePlaceholder
+ * @property {string} organizationLabel
+ * @property {string} organizationPlaceholder
  * @property {string} furbabyLabel
  * @property {string} furbabyPlaceholder
  */
@@ -55,25 +57,30 @@ export const joinFieldCopy = {
   Member: {
     profileLabel: "Instagram or Facebook profile (optional)",
     profilePlaceholder: "e.g. @yourhandle or profile URL",
+    organizationLabel: "Organization or company name (optional)", organizationPlaceholder: "e.g. Acme Pet Care",
     furbabyLabel: "Furbaby name (optional)",
     furbabyPlaceholder: "e.g. Macchiato",
   },
   Volunteer: {
     profileLabel: "Instagram or Facebook profile (optional)",
     profilePlaceholder: "e.g. @yourhandle or profile URL",
+    organizationLabel: "Organization or company name (optional)", organizationPlaceholder: "e.g. Acme Pet Care",
     furbabyLabel: "Furbaby name (optional)",
     furbabyPlaceholder: "e.g. Dallas, Faye, or your furbaby",
   },
   Partner: {
     profileLabel: "Instagram or Facebook profile (optional)",
     profilePlaceholder: "e.g. @yourhandle or organization profile URL",
+    organizationLabel: "Organization or company name (optional)", organizationPlaceholder: "e.g. Acme Pet Care",
     furbabyLabel: "Furbaby name (optional)",
     furbabyPlaceholder: "e.g. the furbaby joining your activity",
   },
   Sponsor: {
     profileLabel: "Organization or company profile (optional)",
     profilePlaceholder: "e.g. your website or social profile",
-    furbabyLabel: "Organization or company name",
-    furbabyPlaceholder: "e.g. Acme Pet Care",
+    organizationLabel: "Organization or company name",
+    organizationPlaceholder: "e.g. Acme Pet Care",
+    furbabyLabel: "Furbaby name (optional)",
+    furbabyPlaceholder: "e.g. the furbaby joining your activity",
   },
 };
