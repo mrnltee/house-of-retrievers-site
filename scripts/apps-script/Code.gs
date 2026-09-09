@@ -10,7 +10,7 @@
  *
  * Reads a payload shaped by app/api/join/route.js:
  *   { secret, submission: { joinType, name, email, socialProfile, socialUrl,
- *                           furbabyName, photo, photoName, message } }
+ *                           organization, furbabyName, photo, photoName, message } }
  * `photo` is a base64 data URL; it is filed in Drive, never in the sheet.
  * Renaming a field here means renaming it there too.
  *
@@ -52,6 +52,7 @@ function doPost(e) {
     const email = clean(form.email, 254);
     const socialProfile = clean(form.socialProfile, 300);
     const socialUrl = clean(form.socialUrl, 400);
+    const organization = clean(form.organization, 160);
     const photo = String(form.photo || '');
     const photoName = clean(form.photoName, 120);
     const furbabyName = clean(form.furbabyName, 120);
@@ -88,6 +89,7 @@ function doPost(e) {
       joinType,
       name,
       email,
+      organization,
       socialProfile,
       furbabyName,
       message,

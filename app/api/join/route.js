@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const INTERESTS = ["Member", "Volunteer", "Partner", "Sponsor"];
-const LIMITS = { name: 120, email: 200, profile: 300, furbabyName: 120, message: 2000, photoName: 120 };
+const LIMITS = { name: 120, email: 200, profile: 300, organization: 160, furbabyName: 120, message: 2000, photoName: 120 };
 
 /** Room for a resized photo plus base64's ~33% overhead, and nothing more. */
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -89,6 +89,7 @@ export async function POST(request) {
       email,
       socialProfile: social ? social.display : "",
       socialUrl: social ? social.url : "",
+      organization: clean(body?.organization, LIMITS.organization),
       furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
       photo,
       photoName: clean(body?.photoName, LIMITS.photoName),
