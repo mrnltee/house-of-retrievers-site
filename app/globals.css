@@ -125,6 +125,9 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .qr-placeholder { display: grid; place-items: center; width: 108px; height: 108px; grid-row: span 2; border: 7px solid white; outline: 1px solid var(--ink); background: repeating-conic-gradient(var(--ink) 0 25%, white 0 50%) 50% / 14px 14px; }
 .qr-placeholder span { padding: 4px; background: white; font-size: 11px; font-weight: 800; }
 .qr-placeholder small { font-size: 8px; font-weight: 600; color: #6d7066; }
+.provider-qr { outline-color: var(--provider-color); background: repeating-conic-gradient(var(--provider-color) 0 25%, white 0 50%) 50% / 14px 14px; transition: background .2s ease, outline-color .2s ease; }
+.provider-qr span { color: var(--provider-color); }
+.provider-details strong { color: var(--provider-color); transition: color .2s ease; }
 .support-method-copy { grid-column: 1 / -1; align-self: end; text-align: left; }
 .support-method-copy p { margin-top: 4px; }
 .donation-details { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
@@ -142,7 +145,7 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .payment-panel { min-width: 0; }
 .payment-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
 .payment-tabs button { flex: 1; min-width: 0; padding: 9px 7px; border: 1px solid rgba(17,17,17,.14); border-radius: 999px; background: transparent; color: #676a61; font-size: 10px; font-weight: 750; cursor: pointer; }
-.payment-tabs button.active { border-color: var(--ink); background: var(--ink); color: white; }
+.payment-tabs button.active { border-color: var(--tab-color, var(--ink)); background: var(--tab-color, var(--ink)); color: var(--tab-contrast, white); }
 .account-details { display: grid; gap: 3px; text-align: left; }
 .account-details strong { font: 400 20px "DM Serif Display", serif; }
 .account-details span, .account-details b { font-size: 12px; }
