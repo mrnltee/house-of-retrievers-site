@@ -87,8 +87,14 @@ export const authOptions = {
   pages: { signIn: "/admin/sign-in", error: "/admin/sign-in" },
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" && profile?.email_verified !== true) return false;
-      return allowAndRecord(user?.email, user?.name);
+      if (account?.provider === "google" && profile?.email_verified !== true) {
+        console.warn("admin sign-in refused: Google email not verified", user?.email);
+        return false;
+      }
+      const allowed = await allowAndRecord(user?.email, user?.name);
+      // Logged so an Owner can see which account was turned away and invite it.
+      if (!allowed) console.warn("admin sign-in refused: not on the admin list", user?.email);
+      return allowed;
     },
     async jwt({ token, account }) {
       // A new sign-in (account is set only then) restarts the clock that
