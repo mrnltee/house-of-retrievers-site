@@ -10,7 +10,7 @@ export default function SupportModal({ onClose, onJoin }) {
   const [demoName, setDemoName] = useState("");
   const [demoPayment, setDemoPayment] = useState("GCash");
   const [demoComplete, setDemoComplete] = useState(false);
-  const qrOptions = [['gcash','GCash','0912 345 6789','#007DFE','#0D0D0D'],['maya','Maya','QR code coming soon','#00E091','#0D0D0D'],['qrph','QRPh','QR code coming soon','#0067B1','#FFFFFF'],['bdo','BDO Pay','QR code coming soon','#003B70','#FFFFFF']];
+  const qrOptions = [['gcash','GCash','09XX XXX XXXX','#007DFE','#0D0D0D'],['maya','Maya','QR code coming soon','#00E091','#0D0D0D'],['qrph','QRPh','QR code coming soon','#0067B1','#FFFFFF'],['bdo','BDO Pay','QR code coming soon','#003B70','#FFFFFF']];
   const bankOptions = [['bdo','BDO'],['unionbank','UnionBank']];
   const selectedQr = qrOptions.find(([id]) => id === qrMethod);
   const selectedBank = bankOptions.find(([id]) => id === bankMethod);
