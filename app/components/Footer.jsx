@@ -1,13 +1,13 @@
+import LogoMoments from "./LogoMoments";
 import FooterLegal from "./FooterLegal";
 
 export default function Footer() {
   return (
     <footer>
       <div className="brand footer-brand">
-        <picture className="brand-logo-frame">
-          <source media="(prefers-color-scheme: dark)" srcSet="/house-of-retrievers-logo-reverse.png" />
-          <img className="brand-logo" src="/house-of-retrievers-logo-original.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" loading="lazy" />
-        </picture>
+        <span className="brand-logo-frame">
+          <LogoMoments className="brand-logo" tone="auto" />
+        </span>
       </div>
       <FooterLegal />
       <div className="social-links" aria-label="Social media links">

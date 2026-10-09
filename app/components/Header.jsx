@@ -1,5 +1,5 @@
 import Icon from "./Icon";
-import AnimatedLogo from "./AnimatedLogo";
+import LogoMoments from "./LogoMoments";
 import { EVENTS_URL } from "../lib/eventsHost.mjs";
 
 export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
@@ -7,7 +7,7 @@ export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
     <header className="site-header">
       <a href="#top" className="brand" aria-label="House of Retrievers home">
         <span className="brand-logo-frame">
-          <AnimatedLogo className="brand-logo" variant="reverse" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" fetchPriority="high" />
+          <LogoMoments className="brand-logo" tone="dark" priority />
         </span>
       </a>
 
