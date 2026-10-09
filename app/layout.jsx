@@ -1,4 +1,5 @@
 import "./globals.css";
+import Script from "next/script";
 import {
   HOME_URL,
   SITE_DESCRIPTION,
@@ -49,6 +50,9 @@ export const metadata = {
       "max-video-preview": -1,
     },
   },
+  verification: {
+    google: "mdp09wptJveFFdLSADCxnY7kXz-_1oPI7ggmejURnz4",
+  },
 };
 
 export const viewport = {
@@ -73,6 +77,16 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>{children}</body>
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-MNCGQGDRPR"
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-MNCGQGDRPR');`}
+      </Script>
     </html>
   );
 }
