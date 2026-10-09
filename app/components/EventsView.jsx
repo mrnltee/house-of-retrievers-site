@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Icon from "./Icon";
+import AnimatedLogo from "./AnimatedLogo";
 import Footer from "./Footer";
 import JoinModal from "./JoinModal";
 import RsvpModal from "./RsvpModal";
@@ -193,7 +194,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
       <header className="site-header">
         <a href={HOME_URL} className="brand" aria-label="House of Retrievers home">
           <span className="brand-logo-frame">
-            <img className="brand-logo" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" fetchPriority="high" />
+            <AnimatedLogo className="brand-logo" variant="reverse" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" fetchPriority="high" />
           </span>
         </a>
 

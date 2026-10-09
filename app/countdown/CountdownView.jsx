@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { QUOTES, quoteAt } from "./quotes.mjs";
+import AnimatedLogo from "../components/AnimatedLogo";
 import { SITE_URL, SOCIAL_PROFILES } from "../lib/siteSeo.mjs";
 
 const UNITS = [
@@ -118,8 +119,8 @@ export default function CountdownView({ launchAt, serverNow, initialQuote, initi
 
       <div className="cd-inner">
         <span className="cd-logo">
-          <img className="cd-logo-dark" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" />
-          <img className="cd-logo-light" src="/house-of-retrievers-logo-original.png" alt="" width="1396" height="564" />
+          <AnimatedLogo className="cd-logo-dark" variant="reverse" src="/house-of-retrievers-logo-reverse.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" />
+          <AnimatedLogo className="cd-logo-light" variant="original" src="/house-of-retrievers-logo-original.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" />
         </span>
 
         {open ? (

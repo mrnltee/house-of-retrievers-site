@@ -671,3 +671,15 @@ main:focus { outline: none; }
 .event-detail .event-meta div { grid-template-columns: 64px 1fr; }
 .event-summary-full { font-size: 17px; line-height: 1.65; color: #3d3b35; margin-top: 8px; }
 .event-map { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; margin-top: 16px; }
+
+/* Animated logo (AnimatedLogo.jsx). The flat image stays in place; while a
+   trick plays it is clipped to the wordmark, and the dog layers move above it. */
+.logo-fun { position: relative; display: block; }
+.logo-fun-flat { display: block; width: 100%; height: auto; }
+.logo-fun.is-playing .logo-fun-flat { clip-path: inset(0 0 0 41.2607%); }
+.logo-fun-stage { position: absolute; inset: 0; pointer-events: none; }
+.logo-fun-stage img { position: absolute; display: block; max-width: none; will-change: transform; }
+.logo-fun-heart { position: absolute; opacity: 0; overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .logo-fun-stage { display: none; } .logo-fun.is-playing .logo-fun-flat { clip-path: none; } }
+.logo-fun-reverse .logo-fun-heart { color: #f5f1e6; }
+.logo-fun-original .logo-fun-heart { color: #0d0d0d; }
