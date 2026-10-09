@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getServerSession } from "next-auth/next";
@@ -7,11 +8,23 @@ import { parseEmailList } from "./roles.mjs";
 /**
  * Admin sign-in. Only Google accounts that an Owner invited (rows in `admins`)
  * or that are listed in ADMIN_OWNER_EMAILS can get in. Sessions are signed
- * cookies (NEXTAUTH_SECRET); roles are read from the database on every
+ * cookies (see sessionSecret); roles are read from the database on every
  * request, never trusted from the cookie.
  */
 
 const ownerEmails = () => parseEmailList(process.env.ADMIN_OWNER_EMAILS);
+
+/**
+ * Session signing key. NEXTAUTH_SECRET when set; otherwise derived from the
+ * database URL, which is already a server-only secret, so nobody has to
+ * create and paste another one. Rotating the database password signs
+ * everyone out, which is fine.
+ */
+function sessionSecret() {
+  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+  if (!process.env.DATABASE_URL) return undefined;
+  return createHash("sha256").update(`hor-admin-session:v1:${process.env.DATABASE_URL}`).digest("base64");
+}
 
 /**
  * Local testing only: sign in by typing an invited email, no Google. Needs
@@ -69,7 +82,7 @@ if (devLoginEnabled) {
 
 export const authOptions = {
   providers,
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: sessionSecret(),
   session: { strategy: "jwt", maxAge: 12 * 60 * 60 },
   pages: { signIn: "/admin/sign-in", error: "/admin/sign-in" },
   callbacks: {

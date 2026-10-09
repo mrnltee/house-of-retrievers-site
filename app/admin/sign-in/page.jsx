@@ -13,7 +13,7 @@ const ERRORS = {
 
 export default async function SignInPage({ searchParams }) {
   const params = await searchParams;
-  const ready = hasDatabase() && Boolean(process.env.NEXTAUTH_SECRET);
+  const ready = hasDatabase();
   if (ready && (await currentAdmin()) && !params?.reauth) redirect(await adminHref("/"));
   const googleReady = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const error = params?.error ? ERRORS[params.error] || ERRORS.Default : null;
