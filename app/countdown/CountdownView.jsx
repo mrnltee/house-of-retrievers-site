@@ -169,10 +169,6 @@ export default function CountdownView({ launchAt, serverNow, initialQuote, initi
         </nav>
       </div>
 
-      <div className="cd-footer" role="contentinfo">
-        <p className="cd-org">The House of Retrievers Society Inc.</p>
-        <p>SEC Registration No. 2026090268846-06</p>
-      </div>
     </main>
   );
 }
