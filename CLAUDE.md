@@ -45,6 +45,10 @@ Refactor and continue the House of Retrievers concept site without changing its 
 - Go-live order: add `events.houseofretrieversph.org` in Vercel → Project → Settings → Domains first (DNS is on Vercel, so the record and certificate are automatic), then merge. Merging first would send the header's Events link to an address that does not resolve yet.
 - Search Console: use a Domain property for `houseofretrieversph.org` so the subdomain is covered and the cross-host sitemap entry is accepted.
 
+## Countdown (temporary, until 10 Oct 2026, 5 PM Manila)
+
+Until `LAUNCH_AT` in `app/lib/countdownHost.mjs`, the main site (www and apex) redirects (307, no-store) to `countdown.houseofretrieversph.org`, which renders `app/countdown/`. At `LAUNCH_AT` the redirect stops by itself and the countdown host sends visitors to www; no deploy needed. Events, admin, API and files are untouched. Only a browser that opened `www.…/?preview=<COUNTDOWN_PREVIEW_KEY>` (cookie, 7 days) sees the main site early; `?preview=0` clears it. Deliberately not by IP: phones on the same Wi-Fi share it. Quotes rotate on a shared schedule (5–15 min slots) in `app/countdown/quotes.mjs`. Remove the module, the middleware call and the Vercel domain after launch.
+
 ## Admin module (Phase 1)
 
 `admin.houseofretrieversph.org` is served by this project from `app/admin/`, routed like the events subdomain (`app/lib/adminHost.mjs`). On previews and localhost it lives at `/admin`. The plan is the "Admin module plan" tab of the HOR audit doc; screens are on the "Admin module (Oct 2026)" page of the HOR Figma file.
