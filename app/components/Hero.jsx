@@ -5,7 +5,7 @@ import BackgroundVideo from "./BackgroundVideo";
 export default function Hero({ onJoin }) {
   return (
     <section className="hero" id="top">
-      <BackgroundVideo className="hero-photo" src="/house-of-retrievers-hero-1080p.mp4" poster="/house-of-retrievers-hero-poster.jpg" aria-hidden="true" />
+      <BackgroundVideo className="hero-photo" src="/house-of-retrievers-hero-1080p.mp4" poster="/house-of-retrievers-hero-poster.jpg" aria-hidden="true" controlLabel="hero video" controlClassName="video-toggle-hero" />
       <div className="hero-shade" />
       <div className="hero-copy reveal-now">
         <div className="eyebrow light">A community with heart</div>

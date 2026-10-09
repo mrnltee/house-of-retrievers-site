@@ -76,7 +76,7 @@ function StoryMedia({ item }) {
           </div>
         </div>
       ) : item.video ? (
-        <BackgroundVideo className="story-video" src={item.video} poster={item.image} aria-label={item.alt} />
+        <BackgroundVideo className="story-video" src={item.video} poster={item.image} aria-label={item.alt} controlLabel={`${item.title} video`} />
       ) : (
         <img loading="lazy" decoding="async" className="pillar-image" src={item.image} alt={item.alt} />
       )}

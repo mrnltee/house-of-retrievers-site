@@ -80,35 +80,28 @@ export default function Pack({ packView, setPackView, onSupport }) {
 
               const isFlipped = Boolean(flippedFamilies[family.group]);
               return (
-                <article
-                  className={`family-card family-flip-card ${family.tone}${isFlipped ? " is-flipped" : ""}`}
-                  key={family.group}
-                  onClick={() => toggleFamilyCard(family.group)}
-                  onKeyDown={(event) => {
-                    if (event.target.closest("a")) return;
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      toggleFamilyCard(family.group);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-pressed={isFlipped}
-                  aria-label={`${isFlipped ? "Show details for" : "Show photo for"} ${family.names}`}
-                >
-                  <span className="family-flip-inner">
-                    <span className="family-flip-face family-card-front">
-                      <img loading="lazy" decoding="async" className="family-card-image" src={family.frontImage} alt={family.imageAlt} />
-                      <span className="family-card-info">
-                        <small>{family.group}</small>
-                        <strong>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</strong>
-                        <a className="family-social" href={family.socialUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{family.note}</a>
+                <article className={`family-card family-flip-card ${family.tone}${isFlipped ? " is-flipped" : ""}`} key={family.group}>
+                  <button
+                    type="button"
+                    className="family-flip-toggle"
+                    onClick={() => toggleFamilyCard(family.group)}
+                    aria-label={isFlipped ? `Show the front of ${family.names}'s card` : `Flip ${family.names}'s card to see their photocard`}
+                  >
+                    <span className="family-flip-inner">
+                      <span className="family-flip-face family-card-front" aria-hidden={isFlipped}>
+                        <img loading="lazy" decoding="async" className="family-card-image" src={family.frontImage} alt={family.imageAlt} />
+                        <span className="family-card-info">
+                          <small>{family.group}</small>
+                          <strong>{family.names === "Sir Dallas & Mary Jane" ? <>Sir Dallas &<br />Mary Jane</> : family.names}</strong>
+                        </span>
+                      </span>
+                      <span className="family-flip-face family-card-back" aria-hidden={!isFlipped}>
+                        <img loading="lazy" decoding="async" className="family-card-image" src={family.backImage} alt={`${family.names} back photocard`} />
                       </span>
                     </span>
-                    <span className="family-flip-face family-card-back" aria-hidden={!isFlipped}>
-                      <img loading="lazy" decoding="async" className="family-card-image" src={family.backImage} alt={`${family.names} back photocard`} />
-                    </span>
-                  </span>
+                  </button>
+                  {/* A sibling of the flip button, not inside it: a link inside a button is invalid and unreachable for some screen readers. */}
+                  <a className="family-social family-social-link" href={family.socialUrl} target="_blank" rel="noreferrer">{family.note}</a>
                 </article>
               );
             })}
