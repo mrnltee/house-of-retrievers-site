@@ -81,3 +81,39 @@ export async function resizeImage(file) {
   const { dataUrl, bytes } = await encodeJpeg(canvas);
   return { dataUrl, bytes, width, height };
 }
+
+/**
+ * Encode a canvas as a JPEG no larger than `maxBytes`: first by lowering the
+ * quality, then by shrinking the picture. Detailed phone photos (grass,
+ * water, fur) can be several times larger than plain ones at the same size,
+ * and the admin's save has a hard request ceiling.
+ * @param {HTMLCanvasElement} canvas
+ * @param {number} maxBytes
+ * @returns {Promise<{dataUrl: string, bytes: number, width: number, height: number}>}
+ */
+export async function encodeJpegWithin(canvas, maxBytes) {
+  let source = canvas;
+  for (let round = 0; round < 4; round += 1) {
+    for (const quality of [QUALITY, 0.74, 0.66]) {
+      const blob = await new Promise((resolve) => source.toBlob(resolve, "image/jpeg", quality));
+      if (!blob) throw new Error("We could not read that photo. Try another one?");
+      if (blob.size <= maxBytes || (round === 3 && quality === 0.66)) {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("We could not read that photo. Try another one?"));
+          reader.readAsDataURL(blob);
+        });
+        return { dataUrl, bytes: blob.size, width: source.width, height: source.height };
+      }
+    }
+    const smaller = document.createElement("canvas");
+    smaller.width = Math.round(source.width * 0.8);
+    smaller.height = Math.round(source.height * 0.8);
+    const context = smaller.getContext("2d");
+    context.imageSmoothingQuality = "high";
+    context.drawImage(source, 0, 0, smaller.width, smaller.height);
+    source = smaller;
+  }
+  throw new Error("We could not make that photo small enough. Try another one?");
+}

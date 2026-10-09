@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { encodeJpeg, loadBitmap } from "../../../lib/resizeImage";
+import { encodeJpegWithin, loadBitmap } from "../../../lib/resizeImage";
 import { describePhoto } from "../../eventTools";
 import PhotoCropper, { CROP_RATIO, clampCrop, cropSize, drawCrop, initialCrop } from "./PhotoCropper";
 
@@ -9,6 +9,13 @@ import PhotoCropper, { CROP_RATIO, clampCrop, cropSize, drawCrop, initialCrop } 
 const OUTPUT_WIDTH = 1600;
 /** The uncropped original is kept at this longest side, so re-framing later has room to zoom. */
 const SOURCE_EDGE = 2400;
+/**
+ * Size ceilings for the two pictures one save sends. Together, as base64,
+ * they stay well under the 4 MB server-action limit (and Vercel's 4.5 MB
+ * request cap), whatever the phone.
+ */
+const MAX_COVER_BYTES = 700 * 1024;
+const MAX_ORIGINAL_BYTES = 1200 * 1024;
 /** Below this many source pixels across, the card will look soft. */
 const SOFT_WIDTH = 800;
 
@@ -35,8 +42,11 @@ async function prepareOriginal(file) {
   canvas.height = Math.round(decoded.height * scale);
   canvas.getContext("2d").drawImage(decoded, 0, 0, canvas.width, canvas.height);
   decoded.close?.();
-  const { dataUrl } = await encodeJpeg(canvas);
-  return { bitmap: await createImageBitmap(canvas), dataUrl };
+  // The original may come back smaller than SOURCE_EDGE if the photo is very
+  // detailed; re-framing then works from that smaller copy.
+  const encoded = await encodeJpegWithin(canvas, MAX_ORIGINAL_BYTES);
+  const bitmap = encoded.width === canvas.width ? await createImageBitmap(canvas) : await createImageBitmap(await (await fetch(encoded.dataUrl)).blob());
+  return { bitmap, dataUrl: encoded.dataUrl };
 }
 
 /**
@@ -71,18 +81,34 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  // Last check before the form goes: never send more than the server accepts.
+  useEffect(() => {
+    const formEl = altRef.current?.form;
+    if (!formEl) return undefined;
+    const onSubmit = (event) => {
+      const size = ["imageData", "imageSourceData"].reduce((sum, name) => sum + (formEl.elements[name]?.value.length || 0), 0);
+      if (size > 3.6 * 1024 * 1024) {
+        event.preventDefault();
+        event.stopPropagation();
+        setMessage("This photo is still too large to save. Pick a different photo, or remove it and save the rest.");
+      }
+    };
+    formEl.addEventListener("submit", onSubmit, true);
+    return () => formEl.removeEventListener("submit", onSubmit, true);
+  }, []);
+
   const exportCrop = useCallback(async (from, frame) => {
     const run = generation.current;
     const { w } = cropSize(from, frame.zoom);
     const canvas = document.createElement("canvas");
     drawCrop(canvas, from, frame, Math.min(OUTPUT_WIDTH, Math.round(w)));
-    const { dataUrl, bytes } = await encodeJpeg(canvas);
+    const { dataUrl, bytes, width: outW, height: outH } = await encodeJpegWithin(canvas, MAX_COVER_BYTES);
     if (run !== generation.current) return;
     setData(dataUrl);
     setPreview(dataUrl);
     setRemoved(false);
     const soft = w < SOFT_WIDTH ? " This photo is small, so it may look soft on the card; zooming out helps." : "";
-    setMessage(`Ready: ${canvas.width} × ${canvas.height}, ${Math.round(bytes / 1024)} KB. It's saved when you save the event.${soft}`);
+    setMessage(`Ready: ${outW} × ${outH}, ${Math.round(bytes / 1024)} KB. It's saved when you save the event.${soft}`);
     return dataUrl;
   }, []);
 
