@@ -350,6 +350,9 @@ footer { background: var(--taupe); color: var(--ink); padding: 34px clamp(24px, 
 .footer-brand .brand-logo-frame { width: clamp(280px, 26vw, 340px); height: 104px; box-shadow: none; }
 .footer-brand .brand-logo { filter: none; }
 .social-links { display: flex; align-items: center; gap: 10px; }
+.footer-legal { flex: 1; display: grid; gap: 4px; justify-items: center; text-align: center; line-height: 1.5; }
+.footer-legal p { margin: 0; }
+.footer-org { font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .social-button { display: inline-flex; align-items: center; gap: 9px; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit; padding: 10px 15px 10px 10px; transition: color .2s, background .2s, transform .2s; }
 .social-button:hover, .social-button:focus-visible { color: var(--ink); background: var(--gold); transform: translateY(-2px); }
 .social-mark { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; background: transparent; color: inherit; font-family: Arial, sans-serif; font-size: 18px; font-weight: 700; line-height: 1; }
@@ -495,6 +498,8 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
   .footer-brand .brand-logo { position: static; width: min(78vw, 340px); height: auto; }
   .social-links { width: 100%; max-width: 100%; margin-left: 0; padding: 0; flex-direction: column; align-items: center; gap: 12px; }
   .social-button { width: 100%; justify-content: center; }
+  /* Phones: logo, then the social buttons, then the legal lines last. */
+  .footer-legal { order: 3; padding-top: 8px; }
   .interest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .social-row { grid-template-columns: 1fr; }
   .social-platforms label { min-width: 0; flex: 1; padding: 12px; }
