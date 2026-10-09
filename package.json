@@ -10,8 +10,12 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
+    "jsqr": "^1.4.0",
     "lucide-react": "^1.34.0",
-    "next": "15.5.24",
+    "next": "^15.5.27",
+    "next-auth": "^4.24.15",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   }

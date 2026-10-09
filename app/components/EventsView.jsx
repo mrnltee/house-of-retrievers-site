@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Icon from "./Icon";
 import Footer from "./Footer";
 import JoinModal from "./JoinModal";
+import RsvpModal from "./RsvpModal";
 import { HOME_URL, SOCIAL_PROFILES } from "../lib/siteSeo.mjs";
 
 const STATUS_LABELS = {
@@ -30,7 +31,7 @@ function formatDate(isoDate) {
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-function EventCard({ event, past = false }) {
+function EventCard({ event, past = false, onRsvp }) {
   const time = [event.startTime, event.endTime].filter(Boolean).join("–");
   const status = past ? "past" : event.status;
 
@@ -64,6 +65,11 @@ function EventCard({ event, past = false }) {
           )}
         </dl>
         {event.summary && <p className="event-summary">{event.summary}</p>}
+        {!past && event.rsvp && ["open", "few-left", "full"].includes(event.status) && (
+          <button type="button" className="button primary event-rsvp" onClick={() => onRsvp(event)}>
+            {event.status === "full" ? "Join the waitlist" : "RSVP"} <Icon name="arrow" size={16} />
+          </button>
+        )}
       </div>
     </li>
   );
@@ -73,13 +79,14 @@ export default function EventsView({ upcoming, past }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [interest, setInterest] = useState("Member");
+  const [rsvpEvent, setRsvpEvent] = useState(null);
 
   useEffect(() => {
-    document.body.style.overflow = joinOpen ? "hidden" : "";
+    document.body.style.overflow = joinOpen || rsvpEvent ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [joinOpen]);
+  }, [joinOpen, rsvpEvent]);
 
   useEffect(() => {
     if (!joinOpen) return;
@@ -131,7 +138,7 @@ export default function EventsView({ upcoming, past }) {
           <h2 id="upcoming-title">Coming up</h2>
           {upcoming.length > 0 ? (
             <ul className="event-grid">
-              {upcoming.map((event) => <EventCard key={event.slug} event={event} />)}
+              {upcoming.map((event) => <EventCard key={event.slug} event={event} onRsvp={setRsvpEvent} />)}
             </ul>
           ) : (
             <div className="events-empty">
@@ -165,6 +172,7 @@ export default function EventsView({ upcoming, past }) {
 
       <Footer />
 
+      {rsvpEvent && <RsvpModal event={rsvpEvent} onClose={() => setRsvpEvent(null)} />}
       {joinOpen && <JoinModal interest={interest} setInterest={setInterest} onClose={() => setJoinOpen(false)} />}
     </>
   );

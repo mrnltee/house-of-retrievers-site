@@ -20,7 +20,7 @@ Refactor and continue the House of Retrievers concept site without changing its 
 - Page composition lives in `app/page.jsx`; sections are components in `app/components/`
 - Editable content lives in `app/content/` (`activities.js`, `families.js`, `join.js`)
 - Styling lives in `app/globals.css`
-- Server routes in `app/api/`: `instagram` (feed proxy) and `join` (form intake)
+- Server routes in `app/api/`: `instagram` (feed proxy), `join` (form intake), `rsvp`, `support-details`, and `auth` (admin sign-in)
 - Secrets stay server-side and are managed in Vercel. Pull them locally with `npx vercel env pull .env.local`. Never expose them via `NEXT_PUBLIC_`.
 
 ## Refactor status
@@ -44,6 +44,21 @@ Refactor and continue the House of Retrievers concept site without changing its 
 - Local check: `npm run build && npm start`, then open `http://events.localhost:3000`.
 - Go-live order: add `events.houseofretrieversph.org` in Vercel → Project → Settings → Domains first (DNS is on Vercel, so the record and certificate are automatic), then merge. Merging first would send the header's Events link to an address that does not resolve yet.
 - Search Console: use a Domain property for `houseofretrieversph.org` so the subdomain is covered and the cross-host sitemap entry is accepted.
+
+## Admin module (Phase 1)
+
+`admin.houseofretrieversph.org` is served by this project from `app/admin/`, routed like the events subdomain (`app/lib/adminHost.mjs`). On previews and localhost it lives at `/admin`. The plan is the "Admin module plan" tab of the HOR audit doc; screens are on the "Admin module (Oct 2026)" page of the HOR Figma file.
+
+- **Database:** Neon Postgres (free), added through Vercel, sets `DATABASE_URL`. Schema in `db/migrations/*.sql`, applied with `DATABASE_URL=… node scripts/migrate.mjs` (each file once, recorded in `schema_migrations`). `app/lib/db.js` keeps DATE columns as `YYYY-MM-DD` strings on purpose; a JS Date shifts the day by the server's UTC offset.
+- **Without `DATABASE_URL` the public site behaves exactly as before:** events come from `app/content/events.js`, the Support panel shows its built-in preview, RSVPs are off. Don't break that fallback.
+- **Sign-in:** next-auth v4, Google only, JWT sessions (`NEXTAUTH_SECRET`, `NEXTAUTH_URL` = the admin URL in production). Only active rows in `admins` or emails in `ADMIN_OWNER_EMAILS` get in; env Owners are upserted with the Owner role on sign-in. While the Google app is in Testing, every admin must also be a Google "test user".
+- **Roles** live in `app/lib/admin/roles.mjs` and are re-read from the database on every page and action (`app/lib/admin/guard.js`). Never trust roles from the cookie or the form.
+- **Payment details** change only through `payment_change_requests`: a different Owner approves, after a sign-in in the last 10 minutes, with the "checked against HOR's records" box ticked. Switching a method off is immediate. The database also refuses a self-approval and a second pending request per method.
+- **Activity log** (`activity_log`) is append-only. Add a label to `app/lib/admin/activity.mjs` for any new action.
+- **Server actions** are in `app/admin/actions.js`. Give each submit button its own action (`formAction`); the clicked button's name/value is not reliably sent.
+- **Public pieces:** `/api/rsvp` (spam guard, row lock for the last slot), `/r/[code]` on the events host (check-in pass and QR), `/api/support-details` (approved methods only), and the Join form also files people into `people` (best effort; the sheet stays the record).
+- **Local testing:** run a Postgres, migrate, then `ADMIN_DEV_LOGIN=1 ADMIN_OWNER_EMAILS=you@example.test DATABASE_URL=… NEXTAUTH_SECRET=… NEXTAUTH_URL=http://localhost:3000 npx next dev`. The dev login only exists in `next dev` off Vercel.
+- **Not built yet (later phases):** gallery, forms builder, content editing, donations and spending, privacy requests, email alerts (`RESEND_API_KEY` + `ADMIN_ALERT_FROM` switch on `app/lib/admin/notify.js`), online checkout.
 
 ## Instagram feed and its token
 
