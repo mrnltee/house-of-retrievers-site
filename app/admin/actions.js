@@ -13,6 +13,9 @@ import { checkInOutcome, normalizeCode } from "../lib/admin/registrations.mjs";
 import { PEOPLE_STATUSES } from "../lib/admin/people.mjs";
 
 
+/** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
+const MAX_EVENT_PHOTO_BYTES = 2 * 1024 * 1024;
+
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
   const value = data.get(key);
@@ -40,6 +43,30 @@ export async function saveEvent(data) {
     const input = Object.fromEntries([...data.entries()].filter(([, v]) => typeof v === "string"));
     input.rsvpOpen = data.get("rsvpOpen") === "on";
     input.feeRequired = data.get("feeRequired") === "on";
+    delete input.imageData;
+
+    // Cover photo: a new upload, a removal, or (by default) whatever the event already has.
+    const upload = form(data, "imageData");
+    if (upload) {
+      const match = upload.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) await backWith(back, "error", "That photo didn't come through. Try another one.");
+      const bytes = Buffer.from(match[2], "base64");
+      if (bytes.length > MAX_EVENT_PHOTO_BYTES) await backWith(back, "error", "That photo is too large even after resizing. Try another one.");
+      const [saved] = await sql(
+        "INSERT INTO event_images (mime, data, bytes, created_by) VALUES ($1, $2, $3, $4) RETURNING id",
+        [match[1], bytes, bytes.length, admin.email],
+      );
+      input.image = `/api/event-image/${saved.id}`;
+    } else if (form(data, "imageRemove")) {
+      input.image = "";
+    } else if (isUuid(id)) {
+      const [current] = await sql("SELECT image FROM events WHERE id=$1", [id]);
+      input.image = current?.image || "";
+    } else {
+      input.image = "";
+    }
+    if (!input.image) input.imageAlt = "";
+
     // Validate as a draft first, so a failed Publish still saves what was typed.
     const { value, error, missing } = validateEvent(input);
     if (error) await backWith(back, "error", error);

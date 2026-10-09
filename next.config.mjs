@@ -13,6 +13,8 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // Admin forms carry a resized event photo or a QR image (under ~2 MB).
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   async headers() {
     // The admin's event-day check-in scans QR codes with the phone camera.
     // Later rules win for the same header, so this only loosens the admin.

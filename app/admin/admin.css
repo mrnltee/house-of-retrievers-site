@@ -148,3 +148,6 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .admin input[type="file"] { padding: 8px 0; border: 0; background: transparent; font-size: 13px; }
 .admin details summary { list-style: none; }
 .admin details summary::-webkit-details-marker { display: none; }
+
+.event-photo-preview { aspect-ratio: 16 / 10; border: 1px dashed var(--a-field); border-radius: 12px; background: var(--a-sand); display: grid; place-items: center; overflow: hidden; color: var(--a-muted); font-size: 13px; }
+.event-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }

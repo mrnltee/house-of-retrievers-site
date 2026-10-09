@@ -1,6 +1,7 @@
 import { cancelEvent, publishEvent, saveEvent, unpublishEvent } from "../../actions";
 import { CATEGORIES, validateEvent } from "../../../lib/admin/events.mjs";
 import { isoDate } from "../ui";
+import EventPhoto from "./EventPhoto";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
 export default function EventForm({ event }) {
@@ -40,10 +41,7 @@ export default function EventForm({ event }) {
           <label className="field"><span>Supports <small>The beneficiary, named up front</small></span><input type="text" name="supports" maxLength={160} defaultValue={v("supports")} /></label>
         </div>
         <label className="field"><span>Summary <small>One or two plain sentences</small></span><textarea name="summary" maxLength={600} defaultValue={v("summary")} /></label>
-        <div className="row-2">
-          <label className="field"><span>Photo <small>An approved HOR photo path, e.g. /4-events/run.jpg</small></span><input type="text" name="image" maxLength={300} defaultValue={v("image")} /></label>
-          <label className="field"><span>Photo description <small>What is actually in the frame</small></span><input type="text" name="imageAlt" maxLength={200} defaultValue={v("image_alt")} /></label>
-        </div>
+        <EventPhoto current={event?.image || ""} currentAlt={event?.image_alt || ""} />
       </section>
 
       <section className="card">
