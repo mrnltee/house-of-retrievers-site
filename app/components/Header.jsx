@@ -1,4 +1,5 @@
 import Icon from "./Icon";
+import { EVENTS_URL } from "../lib/eventsHost.mjs";
 
 export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
   return (
@@ -16,6 +17,7 @@ export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
       <nav className={menuOpen ? "nav open" : "nav"} aria-label="Primary navigation">
         <a href="#mission" onClick={() => setMenuOpen(false)}>Our purpose</a>
         <a href="#pack" onClick={() => setMenuOpen(false)}>The pack</a>
+        <a href={EVENTS_URL}>Events</a>
         <button className="nav-support" onClick={onSupport}>Support the pack</button>
         <button className="nav-cta" onClick={() => onJoin()}>Join the pack <Icon name="arrow" size={16} /></button>
       </nav>
