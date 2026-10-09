@@ -672,17 +672,6 @@ main:focus { outline: none; }
 .event-summary-full { font-size: 17px; line-height: 1.65; color: #3d3b35; margin-top: 8px; }
 .event-map { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; margin-top: 16px; }
 
-/* Animated logo (AnimatedLogo.jsx). The static image is what shows; the
-   WebGL copy sits exactly on top, hidden, and the two swap in one frame. */
-.logo-fun { position: relative; display: block; }
-.logo-fun-flat { display: block; width: 100%; height: auto; }
-.logo-fun-stage { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
-.logo-fun-stage canvas, .logo-fun-stage .logo-fun-words { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; }
-.logo-fun-heart { position: absolute; left: 0; top: 0; opacity: 0; overflow: visible; will-change: transform, opacity; }
-.logo-fun-reverse .logo-fun-heart { color: #f5f1e6; }
-.logo-fun-original .logo-fun-heart { color: #0d0d0d; }
-@media (prefers-reduced-motion: reduce) { .logo-fun-stage { display: none; } }
-
 /* Logo moments — app/components/LogoMoments.jsx.
    The wordmark stays the supplied artwork; the two dogs are an inline SVG
    traced from it, so at rest the pair sits exactly where the static logo had

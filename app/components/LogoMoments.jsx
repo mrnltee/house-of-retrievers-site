@@ -69,15 +69,19 @@ function prefersDark() {
  * The House of Retrievers logo with the two dogs alive. At rest it is the
  * static logo; every few seconds one dog (or both) has a short moment.
  *
- * @param {{ tone?: "light" | "dark" | "auto", priority?: boolean, className?: string }} props
+ * @param {{ tone?: "light" | "dark" | "auto", scheme?: "light" | "dark", priority?: boolean, className?: string }} props
  * `tone` is the surface the logo sits on: "dark" uses the white Labrador and
  * wordmark, "light" the near-black ones, "auto" follows the colour scheme.
- * Which moments play follows the visitor's colour scheme, whatever the tone.
+ * Which moments play follows the visitor's colour scheme, whatever the tone,
+ * unless `scheme` pins it: a page with its own light/dark switch (the
+ * countdown) passes the theme it is showing.
  */
-export default function LogoMoments({ tone = "auto", priority = false, className = "" }) {
+export default function LogoMoments({ tone = "auto", scheme, priority = false, className = "" }) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const rootRef = useRef(null);
   const [moment, setMoment] = useState(null);
+  const schemeRef = useRef(scheme);
+  schemeRef.current = scheme;
 
   useEffect(() => {
     const root = rootRef.current;
@@ -95,7 +99,7 @@ export default function LogoMoments({ tone = "auto", priority = false, className
 
     const play = () => {
       if (!canPlay()) return false;
-      const next = pickMoment(momentSetFor(prefersDark() ? "dark" : "light"), previousId);
+      const next = pickMoment(momentSetFor(schemeRef.current ?? (prefersDark() ? "dark" : "light")), previousId);
       playing = next;
       previousId = next.id;
       setMoment(next);
