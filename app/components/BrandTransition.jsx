@@ -33,12 +33,23 @@ export default function BrandTransition({ interactionId, onInteractionComplete }
       return undefined;
     }
 
-    const timer = window.setTimeout(
-      () => setVisible(false),
-      reducedMotion ? motionDurations.reduced : motionDurations.intro,
-    );
+    // A visitor who taps, clicks, presses a key or scrolls is ready for the
+    // page: end the intro rather than make them wait it out. The listeners go
+    // away with the intro so they can never cut short a later Join transition.
+    const skipEvents = ["pointerdown", "keydown", "wheel", "touchmove"];
+    let timer;
+    const end = () => {
+      window.clearTimeout(timer);
+      skipEvents.forEach((type) => window.removeEventListener(type, end));
+      setVisible(false);
+    };
+    timer = window.setTimeout(end, reducedMotion ? motionDurations.reduced : motionDurations.intro);
+    skipEvents.forEach((type) => window.addEventListener(type, end, { passive: true }));
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      skipEvents.forEach((type) => window.removeEventListener(type, end));
+    };
   }, []);
 
   useEffect(() => {
