@@ -25,20 +25,48 @@ export const MAX_INPUT_BYTES = 25 * 1024 * 1024;
  */
 
 /**
- * @param {File} file
- * @returns {Promise<ResizedImage>}
+ * Decode a picked file with the EXIF rotation applied, so photos taken
+ * sideways on a phone do not arrive lying down.
+ * @param {Blob} file
+ * @returns {Promise<ImageBitmap>}
  */
-export async function resizeImage(file) {
+export async function loadBitmap(file) {
   if (!file.type.startsWith("image/")) {
     throw new Error("That file is not an image.");
   }
   if (file.size > MAX_INPUT_BYTES) {
     throw new Error("That photo is too large. Try one under 25MB.");
   }
+  try {
+    return await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    throw new Error("We could not read that photo. Try another one?");
+  }
+}
 
-  // from-image applies the EXIF rotation, so photos taken sideways on a phone
-  // do not arrive lying down.
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+/**
+ * Encode a canvas as a JPEG data URL.
+ * @param {HTMLCanvasElement} canvas
+ * @returns {Promise<{dataUrl: string, bytes: number}>}
+ */
+export async function encodeJpeg(canvas) {
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", QUALITY));
+  if (!blob) throw new Error("We could not read that photo. Try another one?");
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("We could not read that photo. Try another one?"));
+    reader.readAsDataURL(blob);
+  });
+  return { dataUrl, bytes: blob.size };
+}
+
+/**
+ * @param {File} file
+ * @returns {Promise<ResizedImage>}
+ */
+export async function resizeImage(file) {
+  const bitmap = await loadBitmap(file);
 
   const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
@@ -47,19 +75,9 @@ export async function resizeImage(file) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const context = canvas.getContext("2d");
-  context.drawImage(bitmap, 0, 0, width, height);
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
   bitmap.close?.();
 
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", QUALITY));
-  if (!blob) throw new Error("We could not read that photo. Try another one?");
-
-  const dataUrl = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("We could not read that photo. Try another one?"));
-    reader.readAsDataURL(blob);
-  });
-
-  return { dataUrl, bytes: blob.size, width, height };
+  const { dataUrl, bytes } = await encodeJpeg(canvas);
+  return { dataUrl, bytes, width, height };
 }

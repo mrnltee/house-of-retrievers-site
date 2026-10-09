@@ -151,3 +151,14 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 
 .event-photo-preview { aspect-ratio: 16 / 10; border: 1px dashed var(--a-field); border-radius: 12px; background: var(--a-sand); display: grid; place-items: center; overflow: hidden; color: var(--a-muted); font-size: 13px; }
 .event-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Cover photo framing: the box is the event card's 16:10 crop. */
+.photo-crop { position: relative; aspect-ratio: 16 / 10; border-radius: 12px; overflow: hidden; background: var(--a-sand); cursor: grab; touch-action: none; user-select: none; }
+.photo-crop:active { cursor: grabbing; }
+.photo-crop canvas { display: block; width: 100%; height: 100%; }
+.photo-crop-grid { position: absolute; inset: 0; pointer-events: none; border: 2px solid var(--a-gold); border-radius: 12px;
+  background:
+    linear-gradient(to right, transparent calc(33.333% - .5px), rgba(255,255,255,.55) calc(33.333% - .5px), rgba(255,255,255,.55) calc(33.333% + .5px), transparent calc(33.333% + .5px), transparent calc(66.666% - .5px), rgba(255,255,255,.55) calc(66.666% - .5px), rgba(255,255,255,.55) calc(66.666% + .5px), transparent calc(66.666% + .5px)),
+    linear-gradient(to bottom, transparent calc(33.333% - .5px), rgba(255,255,255,.55) calc(33.333% - .5px), rgba(255,255,255,.55) calc(33.333% + .5px), transparent calc(33.333% + .5px), transparent calc(66.666% - .5px), rgba(255,255,255,.55) calc(66.666% - .5px), rgba(255,255,255,.55) calc(66.666% + .5px), transparent calc(66.666% + .5px)); }
+.photo-zoom { grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+.admin .photo-zoom input[type="range"] { width: 100%; accent-color: var(--a-gold-ink); min-height: 44px; }

@@ -41,7 +41,7 @@ export default function EventForm({ event }) {
           <label className="field"><span>Supports <small>The beneficiary, named up front</small></span><input type="text" name="supports" maxLength={160} defaultValue={v("supports")} /></label>
         </div>
         <label className="field"><span>Summary <small>One or two plain sentences</small></span><textarea name="summary" maxLength={600} defaultValue={v("summary")} /></label>
-        <EventPhoto current={event?.image || ""} currentAlt={event?.image_alt || ""} />
+        <EventPhoto key={event?.image || "none"} current={event?.image || ""} currentAlt={event?.image_alt || ""} currentSource={event?.image_source || ""} currentCrop={event?.image_crop || null} />
       </section>
 
       <section className="card">

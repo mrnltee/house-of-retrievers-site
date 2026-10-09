@@ -34,6 +34,30 @@ async function guarded(path, work) {
 
 // ---------- Events ----------
 
+/** Stores a browser-made photo (a data URL) and returns its id. */
+async function storeEventImage(dataUrl, email, back) {
+  const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) await backWith(back, "error", "That photo didn't come through. Try another one.");
+  const bytes = Buffer.from(match[2], "base64");
+  if (bytes.length > MAX_EVENT_PHOTO_BYTES) await backWith(back, "error", "That photo is too large even after resizing. Try another one.");
+  const [saved] = await sql(
+    "INSERT INTO event_images (mime, data, bytes, created_by) VALUES ($1, $2, $3, $4) RETURNING id",
+    [match[1], bytes, bytes.length, email],
+  );
+  return saved.id;
+}
+
+/** The framing sent by the editor, checked and rounded, or null. */
+function parseCrop(raw) {
+  try {
+    const { zoom, x, y } = JSON.parse(raw || "null") || {};
+    const ok = [zoom, x, y].every(Number.isFinite) && zoom >= 1 && zoom <= 4 && x >= 0 && x <= 1 && y >= 0 && y <= 1;
+    return ok ? { zoom: +zoom.toFixed(4), x: +x.toFixed(4), y: +y.toFixed(4) } : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveEvent(data) {
   const id = form(data, "id");
   const intent = form(data, "intent");
@@ -44,21 +68,32 @@ export async function saveEvent(data) {
     input.rsvpOpen = data.get("rsvpOpen") === "on";
     input.feeRequired = data.get("feeRequired") === "on";
     delete input.imageData;
+    delete input.imageSourceData;
+    delete input.imageCrop;
+    delete input.imageSource;
 
-    // Cover photo: a new upload, a removal, or (by default) whatever the event already has.
+    // Cover photo: a new crop, a removal, or (by default) whatever the event already has.
+    // Alongside a new crop may come the uncropped original and the framing used.
+    let photo = null; // { source, crop } to store when there is a new crop
     const upload = form(data, "imageData");
     if (upload) {
-      const match = upload.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
-      if (!match) await backWith(back, "error", "That photo didn't come through. Try another one.");
-      const bytes = Buffer.from(match[2], "base64");
-      if (bytes.length > MAX_EVENT_PHOTO_BYTES) await backWith(back, "error", "That photo is too large even after resizing. Try another one.");
-      const [saved] = await sql(
-        "INSERT INTO event_images (mime, data, bytes, created_by) VALUES ($1, $2, $3, $4) RETURNING id",
-        [match[1], bytes, bytes.length, admin.email],
-      );
-      input.image = `/api/event-image/${saved.id}`;
+      const saved = await storeEventImage(upload, admin.email, back);
+      input.image = `/api/event-image/${saved}`;
+      let source = null;
+      const original = form(data, "imageSourceData");
+      if (original) {
+        source = `/api/event-image/${await storeEventImage(original, admin.email, back)}`;
+      } else if (isUuid(id)) {
+        // Re-framed from a photo the event already had: its original, or (for
+        // photos saved before originals were kept) its previous cover.
+        const reused = form(data, "imageSource");
+        const [current] = await sql("SELECT image, image_source FROM events WHERE id=$1", [id]);
+        if (current && reused && (reused === current.image_source || reused === current.image)) source = reused;
+      }
+      photo = { source, crop: source ? parseCrop(form(data, "imageCrop")) : null };
     } else if (form(data, "imageRemove")) {
       input.image = "";
+      photo = { source: null, crop: null };
     } else if (isUuid(id)) {
       const [current] = await sql("SELECT image FROM events WHERE id=$1", [id]);
       input.image = current?.image || "";
@@ -108,6 +143,9 @@ export async function saveEvent(data) {
         [...fields, status, slug],
       );
       eventId = rows[0].id;
+    }
+    if (photo) {
+      await sql("UPDATE events SET image_source=$1, image_crop=$2 WHERE id=$3", [photo.source, photo.crop && JSON.stringify(photo.crop), eventId]);
     }
     await logActivity(admin.email, status ? `event.${intent}` : "event.save", value.title, { eventId });
     revalidatePath("/events");
