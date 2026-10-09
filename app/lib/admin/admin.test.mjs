@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { can, canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "./roles.mjs";
 import { diffChange, formatMobile, needsApproval, normalizeMobile, publicMethods, validateChange } from "./payments.mjs";
-import { publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
+import { cleanMapUrl, directionsUrl, parseHashtags, publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
 import { checkInOutcome, newCheckInCode, normalizeCode, statusForNewRegistration, validateRsvp } from "./registrations.mjs";
 
 const PNG = "data:image/png;base64,iVBORw0KGgo=";
@@ -124,4 +124,36 @@ test("check-in codes are readable, unique enough, and checked against the event"
 test("a QR Ph change can keep the QR already approved", () => {
   assert.match(validateChange("qrph", { enabled: true, details: { accountName: "HOR" } }).error, /QR image/);
   assert.ok(validateChange("qrph", { enabled: true, details: { accountName: "HOR" }, hasQr: true }).value);
+});
+
+test("hashtags are split, cleaned, de-duplicated and capped", () => {
+  assert.deepEqual(parseHashtags("#PawsForAPurpose, #HORph run #horph ##x-y"), ["PawsForAPurpose", "HORph", "run", "xy"]);
+  assert.equal(parseHashtags("a b c d e f g h").length, 6);
+  assert.deepEqual(parseHashtags(""), []);
+});
+
+test("only Google Maps links are accepted as map links", () => {
+  assert.equal(cleanMapUrl(""), null);
+  assert.ok(cleanMapUrl("https://maps.app.goo.gl/abc123"));
+  assert.ok(cleanMapUrl("https://www.google.com/maps/place/BGC"));
+  assert.equal(cleanMapUrl("https://www.google.com/search?q=x"), undefined);
+  assert.equal(cleanMapUrl("https://evil.example/maps"), undefined);
+  assert.equal(cleanMapUrl("http://maps.app.goo.gl/abc"), undefined);
+});
+
+test("directions prefer the pasted link, then the pin, then a search", () => {
+  assert.equal(directionsUrl({ mapUrl: "https://maps.app.goo.gl/x", venueLat: 1, venueLng: 2 }), "https://maps.app.goo.gl/x");
+  assert.equal(directionsUrl({ venueLat: 14.55, venueLng: 121.05 }), "https://www.google.com/maps/search/?api=1&query=14.55,121.05");
+  assert.match(directionsUrl({ venue: "Track 30th", city: "Taguig" }), /query=Track%2030th%2C%20Taguig$/);
+});
+
+test("the beneficiary is kept only for charity events, and required there", () => {
+  const base = { title: "Run", date: "2026-12-01", category: "Fundraisers", venue: "Park", city: "Taguig", summary: "Hi" };
+  assert.equal(validateEvent({ ...base, supports: "PAWS" }).value.supports, null);
+  const charity = validateEvent({ ...base, isCharity: "on" });
+  assert.deepEqual(charity.missing, ["Beneficiary"]);
+  assert.equal(validateEvent({ ...base, isCharity: "on", supports: "PAWS" }).value.supports, "PAWS");
+  assert.deepEqual(validateEvent({ ...base, image: "/x.jpg" }).missing, [], "photo description is optional");
+  assert.equal(validateEvent({ ...base, purpose: "Purpose to Nap" }).error, "Pick a purpose from the list.");
+  assert.equal(validateEvent({ ...base, summary: "a\r\n\r\n\r\nb" }).value.summary, "a\n\nb");
 });

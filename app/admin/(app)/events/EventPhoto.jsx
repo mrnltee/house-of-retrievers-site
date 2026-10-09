@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { encodeJpeg, loadBitmap } from "../../../lib/resizeImage";
+import { describePhoto } from "../../eventTools";
 import PhotoCropper, { CROP_RATIO, clampCrop, cropSize, drawCrop, initialCrop } from "./PhotoCropper";
 
 /** Saved width of the cropped cover. 1600 × 1000 stays sharp on a retina card. */
@@ -14,6 +15,16 @@ const SOFT_WIDTH = 800;
 const toStored = (bitmap, c) => ({ zoom: c.zoom, x: c.cx / bitmap.width, y: c.cy / bitmap.height });
 const fromStored = (bitmap, s) =>
   s && Number.isFinite(s.zoom) ? clampCrop(bitmap, { zoom: s.zoom, cx: s.x * bitmap.width, cy: s.y * bitmap.height }) : initialCrop(bitmap);
+
+async function toDataUrl(path) {
+  const blob = await (await fetch(path)).blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 /** Decode a picked file and shrink it to the size kept as the original. */
 async function prepareOriginal(file) {
@@ -35,7 +46,7 @@ async function prepareOriginal(file) {
  * original and the framing, so it can be re-framed later without losing
  * sharpness. The description is required whenever there is a photo.
  */
-export default function EventPhoto({ current, currentAlt, currentSource, currentCrop }) {
+export default function EventPhoto({ current, currentAlt, currentSource, currentCrop, autoDescribe = false }) {
   const [preview, setPreview] = useState(current || "");
   const [data, setData] = useState("");
   const [removed, setRemoved] = useState(false);
@@ -46,6 +57,12 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
   const [crop, setCrop] = useState(null);
   /** A newly picked original (data URL), or the saved photo it was re-framed from (a path). */
   const [source, setSource] = useState({ data: "", path: "" });
+  const [alt, setAlt] = useState(currentAlt || "");
+  /** True while the description is the suggested one, so a new photo may replace it. */
+  const [altIsSuggested, setAltIsSuggested] = useState(false);
+  const [describing, setDescribing] = useState(false);
+  const [altNote, setAltNote] = useState("");
+  const altRef = useRef(null);
   /** What to go back to if framing is cancelled. */
   const before = useRef(null);
   const timer = useRef(null);
@@ -66,7 +83,36 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
     setRemoved(false);
     const soft = w < SOFT_WIDTH ? " This photo is small, so it may look soft on the card; zooming out helps." : "";
     setMessage(`Ready: ${canvas.width} × ${canvas.height}, ${Math.round(bytes / 1024)} KB. It's saved when you save the event.${soft}`);
+    return dataUrl;
   }, []);
+
+  /** Ask for a suggested description of what is in the frame. */
+  async function suggest(photo, { replace = false } = {}) {
+    if (!autoDescribe || !photo) return;
+    setDescribing(true);
+    setAltNote("");
+    try {
+      // A saved cover is a path; the service needs the picture itself.
+      const image = photo.startsWith("data:") ? photo : await toDataUrl(photo);
+      const title = altRef.current?.form?.elements?.title?.value || "";
+      const result = await describePhoto(image, title);
+      const typed = altRef.current?.value || "";
+      if (!result.alt) {
+        setAltNote(result.error || "No suggestion this time.");
+      } else if (!replace && typed && !altIsSuggested) {
+        // Never overwrite what someone wrote; offer the suggestion instead.
+        setAltNote(`Suggestion: "${result.alt}"`);
+      } else {
+        setAlt(result.alt);
+        setAltIsSuggested(true);
+        setAltNote("Suggested from the photo. Check it and edit anything that's off.");
+      }
+    } catch {
+      setAltNote("The description service didn't answer. Write a short one instead.");
+    } finally {
+      setDescribing(false);
+    }
+  }
 
   // Re-make the cover a moment after the framing stops changing, so saving
   // the event mid-adjustment still sends what is in the box.
@@ -97,7 +143,8 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
       setBitmap(original.bitmap);
       setCrop(frame);
       setSource({ data: original.dataUrl, path: "" });
-      await exportCrop(original.bitmap, frame);
+      const photo = await exportCrop(original.bitmap, frame);
+      suggest(photo);
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -170,6 +217,7 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
     setSource({ data: "", path: "" });
     setEditing(false);
     setMessage("The photo will be removed when you save.");
+    if (altIsSuggested) setAlt("");
   }
 
   const hasPhoto = Boolean(preview);
@@ -212,10 +260,31 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
         <input type="hidden" name="imageCrop" value={stored} />
         <input type="hidden" name="imageRemove" value={removed ? "1" : ""} />
       </div>
-      <label className="field">
-        <span>Photo description <small>What is actually in the frame, for people using screen readers</small></span>
-        <textarea name="imageAlt" maxLength={200} defaultValue={currentAlt || ""} required={hasPhoto} placeholder="e.g. Six golden retrievers in bandanas waiting at the start line" />
-      </label>
+      <div className="form" style={{ gap: 8 }}>
+        <label className="field">
+          <span>Photo description <small>Optional. What is actually in the frame, read aloud to people using screen readers{autoDescribe ? "; filled in for you from the photo" : ""}</small></span>
+          <textarea
+            ref={altRef}
+            name="imageAlt"
+            maxLength={200}
+            value={alt}
+            onChange={(e) => {
+              setAlt(e.target.value);
+              setAltIsSuggested(false);
+            }}
+            placeholder={describing ? "Looking at the photo…" : "e.g. Six golden retrievers in bandanas waiting at the start line"}
+            aria-busy={describing}
+          />
+        </label>
+        {autoDescribe && hasPhoto && (
+          <div className="actions">
+            <button type="button" className="btn ghost small" disabled={describing} onClick={() => suggest(data || preview, { replace: true })}>
+              {describing ? "Describing…" : alt ? "Suggest again" : "Suggest a description"}
+            </button>
+          </div>
+        )}
+        {altNote && <p className="small muted" role="status">{altNote}</p>}
+      </div>
     </div>
   );
 }

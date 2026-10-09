@@ -10,7 +10,7 @@ export default async function NewEventPage({ searchParams }) {
     <>
       <PageHead title="Create event" lead="Save a draft any time. Publish when every fact is confirmed by HOR." />
       <Flash params={params} />
-      <EventForm event={null} />
+      <EventForm event={null} autoDescribe={Boolean(process.env.GEMINI_API_KEY)} />
     </>
   );
 }

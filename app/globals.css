@@ -602,7 +602,7 @@ main:focus { outline: none; }
 .copy-button { min-height: 32px; padding: 4px 12px; border: 1px solid rgba(17,17,17,.3); border-radius: 999px; background: white; font-size: 12px; font-weight: 700; color: var(--ink); }
 .live-updated { margin-top: 10px !important; grid-column: auto !important; }
 .live-empty { grid-template-columns: 1fr; }
-.event-rsvp { margin-top: 16px; align-self: flex-start; }
+.event-rsvp { align-self: flex-start; }
 
 /* RSVP confirmation pass */
 .rsvp-pass { min-height: 100vh; background: var(--paper); display: grid; justify-items: center; align-content: start; gap: 24px; padding: 32px 16px 64px; }
@@ -618,3 +618,41 @@ main:focus { outline: none; }
 .rsvp-pass-fee h2 { margin: 0; font: 400 24px "DM Serif Display", serif; }
 .rsvp-pass-fee ul { margin: 0; padding-left: 18px; }
 .rsvp-pass-note { font-size: var(--text-caption); color: var(--muted-on-light); }
+
+/* Event card extras and the single-event page */
+.event-card-body { flex: 1; align-content: start; }
+.event-title-link { color: inherit; text-decoration: none; }
+.event-title-link:hover, .event-title-link:focus-visible { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.event-purpose { border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; border: 1px solid var(--gold-on-light); color: var(--gold-on-light); background: white; }
+.event-summary { white-space: pre-line; }
+.event-summary-clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.event-more { font-weight: 700; font-size: 14px; color: var(--gold-on-light); justify-self: start; }
+.event-directions { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 13px; color: var(--gold-on-light); white-space: nowrap; }
+.event-tags { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.event-tags li { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--paper); color: var(--ink); }
+.event-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
+
+.share { position: relative; }
+.share-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 18px; border-radius: 999px; border: 1px solid rgba(17,17,17,.35); background: white; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.share-panel { position: absolute; z-index: 20; left: 0; bottom: calc(100% + 8px); width: 240px; background: white; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(17,17,17,.16); padding: 8px; }
+.share-inline .share-panel { position: static; width: auto; box-shadow: none; border: 0; padding: 0; }
+.share-options { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.share-inline .share-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-options a, .share-options button { display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: none; cursor: pointer; }
+.share-options a:hover, .share-options button:hover { background: var(--paper); }
+.share-inline .share-options a, .share-inline .share-options button { width: auto; border: 1px solid rgba(17,17,17,.35); border-radius: 999px; padding: 8px 14px; min-height: 40px; }
+.share-note { margin: 6px 4px 2px; font-size: 13px; color: var(--muted-on-light); }
+.share-note:empty { display: none; }
+
+/* The header floats over a dark band, as it does over the events hero. */
+.event-detail-wrap { background: linear-gradient(var(--ink) 0 clamp(300px, 34vw, 420px), transparent 0); padding: 120px 0 64px; }
+.event-detail { width: min(880px, calc(100% - 32px)); margin: 0 auto; display: grid; gap: 20px; }
+.event-back { color: var(--gold) !important; }
+.event-back { font-weight: 700; color: var(--gold-on-light); justify-self: start; }
+.event-detail-photo { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 20px; display: block; }
+.event-detail-body { display: grid; gap: 12px; }
+.event-detail h1 { font: 400 clamp(36px, 6vw, 56px)/1.05 "DM Serif Display", serif; margin: 0; }
+.event-detail .event-meta { font-size: 16px; }
+.event-detail .event-meta div { grid-template-columns: 64px 1fr; }
+.event-summary-full { font-size: 17px; line-height: 1.65; color: #3d3b35; margin-top: 8px; }
+.event-map { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; margin-top: 16px; }

@@ -144,11 +144,15 @@ export async function saveEvent(data) {
       );
       eventId = rows[0].id;
     }
+    await sql(
+      "UPDATE events SET is_charity=$1, purpose=$2, hashtags=$3, venue_lat=$4, venue_lng=$5, map_url=$6 WHERE id=$7",
+      [value.isCharity, value.purpose, value.hashtags, value.venueLat, value.venueLng, value.mapUrl, eventId],
+    );
     if (photo) {
       await sql("UPDATE events SET image_source=$1, image_crop=$2 WHERE id=$3", [photo.source, photo.crop && JSON.stringify(photo.crop), eventId]);
     }
     await logActivity(admin.email, status ? `event.${intent}` : "event.save", value.title, { eventId });
-    revalidatePath("/events");
+    revalidatePath("/events", "layout");
     if (unpublished) await backWith(`/events/${eventId}`, "error", `Saved and moved back to draft, because it's missing: ${missing.join(", ")}.`);
     if (blockedPublish) await backWith(`/events/${eventId}`, "error", `Saved as a draft. Fill these before publishing: ${missing.join(", ")}.`);
     await backWith(`/events/${eventId}`, "ok", status === "published" ? "Published. It's on the events page now." : "Saved.");
@@ -192,7 +196,7 @@ export async function changeRegistration(data) {
     if (op === "cancel") {
       await sql("UPDATE registrations SET status='cancelled' WHERE id=$1", [regId]);
       await logActivity(admin.email, "registration.cancel", reg.title, { registrationId: regId });
-      revalidatePath("/events");
+      revalidatePath("/events", "layout");
       await backWith(back, "ok", "Cancelled. Offer the slot to the first person on the waitlist if there is one.");
     }
     if (op === "confirm") {
@@ -211,7 +215,7 @@ export async function changeRegistration(data) {
       });
       if (!moved) await backWith(back, "error", "The event is full. Cancel someone or raise the capacity first.");
       await logActivity(admin.email, "registration.confirm", reg.title, { registrationId: regId });
-      revalidatePath("/events");
+      revalidatePath("/events", "layout");
       await backWith(back, "ok", "Moved from the waitlist to confirmed. Let them know.");
     }
     await backWith(back, "error", "Unknown action.");
