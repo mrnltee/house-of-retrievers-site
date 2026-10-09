@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BrandTransition from "./components/BrandTransition";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
@@ -40,15 +40,30 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
-    if (view === "impact" || view === "families") setPackView(view);
+    if (view === "families") setPackView(view);
+    // Old shared links carry ?view=impact (the default): tidy it away.
+    if (view === "impact") {
+      params.delete("view");
+      const query = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+    }
   }, []);
 
+  // Keep the address clean: only write ?view= after a visitor switches tabs,
+  // and only for the non-default tab, so shared links stay
+  // houseofretrieversph.org/ unless they point at the founding families.
+  const viewChanged = useRef(false);
   useEffect(() => {
+    if (!viewChanged.current) {
+      viewChanged.current = true;
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
-    params.set("view", packView);
+    if (packView === "impact") params.delete("view");
+    else params.set("view", packView);
     params.delete("story");
     const query = params.toString();
-    window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
   }, [packView]);
 
   const openJoin = (nextInterest = "Member") => {
