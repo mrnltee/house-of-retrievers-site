@@ -1,5 +1,5 @@
 export const motionDurations = Object.freeze({
-  intro: 4200,
+  intro: 3000,
   interaction: 560,
   reduced: 180,
 });
