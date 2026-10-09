@@ -14,7 +14,18 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    // The admin's event-day check-in scans QR codes with the phone camera.
+    // Later rules win for the same header, so this only loosens the admin.
+    const adminCamera = [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=()" }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      {
+        source: "/(.*)",
+        has: [{ type: "host", value: "admin.houseofretrieversph.org" }],
+        headers: [...adminCamera, { key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      { source: "/admin/:path*", headers: adminCamera },
+    ];
   },
 };
 

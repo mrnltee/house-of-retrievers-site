@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
+import { routeAdminRequest } from "./app/lib/adminHost.mjs";
 import { routeEventsRequest } from "./app/lib/eventsHost.mjs";
 
-/** Serve events.houseofretrieversph.org from the `/events` routes. See app/lib/eventsHost.mjs. */
+/**
+ * Serve events.houseofretrieversph.org from `/events` and
+ * admin.houseofretrieversph.org from `/admin`.
+ * See app/lib/eventsHost.mjs and app/lib/adminHost.mjs.
+ */
 export function middleware(request) {
   const { pathname, search } = request.nextUrl;
-  const decision = routeEventsRequest(request.headers.get("host"), pathname, search);
+  const host = request.headers.get("host");
+  let decision = routeAdminRequest(host, pathname, search);
+  if (decision.type === "next") decision = routeEventsRequest(host, pathname, search);
 
   if (decision.type === "rewrite") {
     const url = request.nextUrl.clone();

@@ -1,0 +1,150 @@
+/* Admin module. Tokens follow the HOR Figma file ("HOR tokens"). */
+.admin {
+  --a-ink: #0d0d0d;
+  --a-gold: #a78440;
+  --a-gold-ink: #7a5c1f;
+  --a-ivory: #f5f1e6;
+  --a-sand: #ede7d8;
+  --a-line: #cfc8b6;
+  --a-field: #7d7869;
+  --a-muted: #5c5a52;
+  --a-on-dark-muted: #c9c3b3;
+  --a-success: #2f5d3a;
+  --a-alert: #7a2e1f;
+  min-height: 100vh;
+  background: var(--a-ivory);
+  color: var(--a-ink);
+  font-size: 15px;
+}
+.admin :focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
+.admin h1, .admin h2, .admin h3.serif { font-family: "DM Serif Display", serif; font-weight: 400; margin: 0; }
+.admin h1 { font-size: clamp(2rem, 3vw, 2.5rem); line-height: 1.1; }
+.admin h2 { font-size: 1.6rem; line-height: 1.2; }
+.admin p { margin: 0; }
+.admin .muted { color: var(--a-muted); }
+.admin .small { font-size: 13px; }
+
+.admin-shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+.admin-side { background: var(--a-ink); color: white; padding: 28px 20px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.admin-side .logo img { width: 168px; height: auto; display: block; }
+.admin-side .tag { color: var(--a-gold); font-size: 11px; font-weight: 700; letter-spacing: .14em; margin: 8px 0 12px; }
+.admin-side .group { color: var(--a-on-dark-muted); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 16px 12px 6px; }
+.admin-side a.admin-link { display: block; padding: 10px 12px; border-radius: 8px; color: white; font-weight: 500; font-size: 14px; }
+.admin-side a.admin-link:hover { background: rgba(255, 255, 255, .08); }
+.admin-side a.admin-link[aria-current="page"] { background: var(--a-ivory); color: var(--a-ink); font-weight: 700; }
+.admin-side .soon { display: block; padding: 10px 12px; color: var(--a-on-dark-muted); font-size: 14px; }
+.admin-side .soon small { font-size: 11px; }
+.admin-side .me { margin-top: auto; padding: 16px 12px 0; font-size: 12px; color: var(--a-on-dark-muted); display: grid; gap: 2px; }
+.admin-side .me strong { color: white; font-weight: 500; word-break: break-all; }
+.admin-side .me button { background: none; border: 0; color: var(--a-on-dark-muted); text-decoration: underline; padding: 0; text-align: left; font-size: 12px; }
+
+.admin-main { padding: 40px 48px 64px; display: grid; gap: 24px; align-content: start; min-width: 0; }
+.page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.page-head .lead { color: var(--a-muted); max-width: 640px; margin-top: 6px; font-size: 16px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; border: 1px solid transparent; background: var(--a-ink); color: white; cursor: pointer; }
+.btn.gold { background: var(--a-gold); color: var(--a-ink); }
+.btn.ghost { background: transparent; color: var(--a-ink); border-color: var(--a-field); }
+.btn.danger { background: transparent; color: var(--a-alert); border-color: var(--a-alert); }
+.btn.small { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.linkish { background: none; border: 0; padding: 0; color: var(--a-gold-ink); font-weight: 700; cursor: pointer; font-size: 14px; }
+
+.card { background: white; border: 1px solid var(--a-line); border-radius: 16px; padding: 24px; display: grid; gap: 16px; }
+.card.alert { border: 2px solid var(--a-alert); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; align-items: start; }
+.stat { background: white; border: 1px solid var(--a-line); border-radius: 16px; padding: 20px; display: grid; gap: 6px; }
+.stat .label { font-size: 13px; font-weight: 600; color: var(--a-muted); }
+.stat .value { font-family: "DM Serif Display", serif; font-size: 36px; line-height: 1.1; }
+
+.banner { border-radius: 16px; padding: 16px 20px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.banner.alert { background: rgba(122, 46, 31, .08); border: 1px solid var(--a-alert); }
+.banner.alert strong { color: var(--a-alert); }
+.banner.ok { background: rgba(47, 93, 58, .1); border: 1px solid var(--a-success); }
+.banner.note { background: var(--a-sand); }
+
+.chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--a-sand); color: var(--a-ink); white-space: nowrap; }
+.chip.good { background: var(--a-success); color: white; }
+.chip.warn { background: var(--a-gold); color: var(--a-ink); }
+.chip.alert { background: var(--a-alert); color: white; }
+.chip.dark { background: var(--a-ink); color: white; }
+
+.table-wrap { background: white; border: 1px solid var(--a-line); border-radius: 16px; overflow-x: auto; }
+.admin table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin th { text-align: left; background: var(--a-sand); color: var(--a-muted); font-size: 12px; font-weight: 700; padding: 12px 16px; white-space: nowrap; }
+.admin td { padding: 14px 16px; border-top: 1px solid var(--a-line); vertical-align: middle; }
+.admin td.strong { font-weight: 600; }
+.admin .empty { padding: 24px 16px; color: var(--a-muted); }
+
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs a { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--a-line); background: white; font-size: 13px; font-weight: 600; }
+.tabs a[aria-current="page"] { background: var(--a-ink); color: white; border-color: var(--a-ink); }
+
+.form { display: grid; gap: 16px; }
+.field { display: grid; gap: 6px; }
+.field > span { font-size: 13px; font-weight: 700; }
+.field small { color: var(--a-muted); font-size: 12px; }
+.admin input[type="text"], .admin input[type="email"], .admin input[type="date"], .admin input[type="time"], .admin input[type="number"], .admin input[type="search"], .admin select, .admin textarea {
+  width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--a-field); border-radius: 8px; background: var(--a-ivory); color: var(--a-ink); font: inherit; font-size: 15px;
+}
+.admin textarea { min-height: 96px; resize: vertical; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.check input { width: 20px; height: 20px; margin: 0; accent-color: var(--a-ink); flex: none; }
+.row-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+fieldset.plain { border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
+fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bottom: 4px; }
+
+.qr-slot { width: 140px; aspect-ratio: 1; border: 1px dashed var(--a-field); border-radius: 12px; background: var(--a-sand); display: grid; place-items: center; text-align: center; font-size: 12px; color: var(--a-muted); padding: 8px; overflow: hidden; }
+.qr-slot img { width: 100%; height: 100%; object-fit: contain; background: white; }
+
+.task { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--a-line); }
+.task > div:not(.datebox) { flex: 1; min-width: 0; }
+.task strong { display: block; }
+.datebox { background: var(--a-ink); color: white; border-radius: 12px; padding: 8px 12px; text-align: center; min-width: 56px; }
+.datebox small { color: var(--a-gold); font-weight: 700; font-size: 11px; display: block; }
+.datebox span { font-family: "DM Serif Display", serif; font-size: 24px; }
+
+/* Sign in */
+.admin-signin { min-height: 100vh; background: var(--a-ink); display: grid; place-items: center; padding: 24px; }
+.admin-signin .card { width: min(440px, 100%); text-align: center; background: var(--a-ivory); border: 0; padding: 40px; justify-items: center; }
+.admin-signin img { width: 200px; height: auto; }
+
+/* Check-in (phone first) */
+.checkin { max-width: 480px; margin: 0 auto; min-height: 100vh; display: grid; align-content: start; }
+.checkin-top { background: var(--a-ink); color: white; padding: 20px; display: grid; gap: 4px; }
+.checkin-top .tag { color: var(--a-gold); font-size: 11px; font-weight: 700; letter-spacing: .14em; }
+.checkin-top .muted { color: var(--a-on-dark-muted); }
+.checkin-body { padding: 20px; display: grid; gap: 16px; }
+.viewfinder { position: relative; border-radius: 16px; overflow: hidden; background: #3a3833; aspect-ratio: 4 / 3; display: grid; place-items: center; color: white; text-align: center; padding: 16px; }
+.viewfinder video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.viewfinder .frame { position: relative; width: 55%; aspect-ratio: 1; border: 3px solid var(--a-gold); border-radius: 12px; }
+
+@media (max-width: 1100px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  .admin-shell { grid-template-columns: 1fr; }
+  /* Phones: one scrollable row of links, so the page itself starts at the top. */
+  .admin-side { position: sticky; z-index: 5; height: auto; flex-direction: row; flex-wrap: nowrap; align-items: center; overflow-x: auto; gap: 6px; padding: 10px 16px; }
+  .admin-side .logo, .admin-side .tag, .admin-side .group, .admin-side .soon, .admin-side .me span, .admin-side .me strong { display: none; }
+  .admin-side a.admin-link { flex: none; white-space: nowrap; padding: 8px 12px; }
+  .admin-side .me { flex: none; margin: 0 0 0 8px; padding: 0; }
+  .admin-side .me button { min-height: 36px; white-space: nowrap; }
+  .admin-main { padding: 24px 16px 48px; }
+  .grid-2, .row-2, .row-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) { .grid-4 { grid-template-columns: 1fr; } }
+
+/* The public site styles bare label/input elements for its Join form; reset them here. */
+.admin label { display: revert; color: inherit; font-size: inherit; font-weight: inherit; text-transform: none; letter-spacing: normal; gap: 0; }
+.admin label.field { display: grid; gap: 6px; }
+.admin label.check { display: flex; gap: 10px; }
+.admin input[type="checkbox"], .admin input[type="radio"] { width: 20px; height: 20px; padding: 0; border-radius: 4px; accent-color: var(--a-ink); }
+.admin input[type="file"] { padding: 8px 0; border: 0; background: transparent; font-size: 13px; }
+.admin details summary { list-style: none; }
+.admin details summary::-webkit-details-marker { display: none; }

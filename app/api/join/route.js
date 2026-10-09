@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseSocialProfile } from "../../lib/socialProfile";
+import { hasDatabase, sql } from "../../lib/db";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 
 // Module scope so it lives as long as the server instance. See spamGuard.mjs.
@@ -152,6 +153,21 @@ export async function POST(request) {
         { error: "We couldn’t save that just now. Mind trying again?" },
         { status: 502, headers: noStore },
       );
+    }
+
+    // Also file the person in the admin's People list. Best effort: the sheet
+    // already has them, so a database hiccup must not fail the visitor.
+    if (hasDatabase()) {
+      const s = payload.submission;
+      try {
+        await sql(
+          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null],
+        );
+      } catch (error) {
+        console.error("join: could not add to People", error?.code || error?.message);
+      }
     }
 
     return NextResponse.json({ ok: true }, { headers: noStore });
