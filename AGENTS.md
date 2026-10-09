@@ -32,6 +32,19 @@ Refactor and continue the House of Retrievers concept site without changing its 
 5. Done — the join form posts to `app/api/join/route.js`, which forwards to Google Apps Script with `JOIN_FORM_SECRET` in the request body so the secret never reaches the browser. Verified end to end in production. The field names are a contract with `scripts/apps-script/Code.gs`: the payload nests under `submission` and uses `joinType`, `socialProfile`, `socialUrl`, and `furbabyName`. `socialUrl` is what makes the sheet cell a clickable link. Rename in one place and submissions are silently rejected, so change both together and redeploy the script.
 6. Retired — the ChatGPT Sites packaging scripts were removed after the deployment moved to Vercel.
 
+## Events subdomain
+
+`events.houseofretrieversph.org` is served by this same project, not a second app.
+
+- `middleware.js` calls `routeEventsRequest()` in `app/lib/eventsHost.mjs`. On the events host every page path is rewritten to the `/events` routes, so `events.…/` renders `app/events/page.jsx` and the address bar keeps the subdomain.
+- One address per page: `events.…/events/x` redirects to `events.…/x`, and `www.…/events/x` (or the apex) redirects to the subdomain. Preview deployments and localhost are left alone so `/events` can be reviewed before the domain is live.
+- API routes, `/_next` and any path with a file extension are not rewritten, so the join form, images and `robots.txt` work on both hosts.
+- Links from the events pages back to the main site must be absolute (`HOME_URL`). The main header links to `EVENTS_URL`.
+- Event data lives in `app/content/events.js`. Add an event only when HOR has confirmed every field. Events dated before today (Manila) move to "Where we have been"; the page revalidates hourly.
+- Local check: `npm run build && npm start`, then open `http://events.localhost:3000`.
+- Go-live order: add `events.houseofretrieversph.org` in Vercel → Project → Settings → Domains first (DNS is on Vercel, so the record and certificate are automatic), then merge. Merging first would send the header's Events link to an address that does not resolve yet.
+- Search Console: use a Domain property for `houseofretrieversph.org` so the subdomain is covered and the cross-host sitemap entry is accepted.
+
 ## Instagram feed and its token
 
 The feed at `app/api/instagram/route.js` needs a long-lived Instagram token,

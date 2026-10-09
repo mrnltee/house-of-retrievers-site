@@ -514,3 +514,47 @@ textarea:focus-visible,
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .brand-transition-mark, .brand-transition-head { opacity: 1; transform: none; animation: none !important; }
 }
+
+/* Events — served at events.houseofretrieversph.org (see app/lib/eventsHost.mjs) */
+.nav .nav-current { opacity: 1; color: var(--gold); border-bottom: 2px solid var(--gold); padding-bottom: 4px; }
+a.nav-support { display: inline-flex; align-items: center; opacity: 1; }
+.events-hero { background: var(--ink); color: white; padding: 168px clamp(24px, 6vw, 84px) 72px; }
+.events-hero h1 { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(44px, 6vw, 76px); line-height: 1.02; margin: 16px 0 20px; max-width: 15ch; }
+.events-hero h1 em { color: var(--gold); }
+.events-hero > p:last-child { color: rgba(255,255,255,.8); max-width: 58ch; font-size: 18px; line-height: 1.55; margin: 0; }
+.events-list { background: var(--paper); color: var(--ink); padding: 56px clamp(24px, 6vw, 84px); }
+.events-past { padding-top: 0; }
+.events-list h2, .events-partner h2 { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(30px, 3.4vw, 40px); line-height: 1.1; margin: 0 0 28px; }
+.event-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 24px; }
+.event-card { background: white; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.event-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.event-card-body { padding: 24px; display: grid; gap: 10px; }
+.event-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.event-status, .event-cost { border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 700; }
+.event-status { background: #2f5d3a; color: white; }
+.event-status.status-few-left { background: var(--gold); color: var(--ink); }
+.event-status.status-full, .event-status.status-cancelled { background: #7a2e1f; color: white; }
+.event-status.status-no-rsvp { background: var(--ink); color: white; }
+.event-status.status-closed, .event-status.status-past { background: var(--taupe); color: var(--ink); }
+.event-cost { background: var(--paper); color: var(--ink); }
+.event-category { margin: 0; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 700; color: var(--gold-on-light); }
+.event-card h3 { font-family: "DM Serif Display", serif; font-weight: 400; font-size: 26px; line-height: 1.15; margin: 0; }
+.event-meta { margin: 0; display: grid; gap: 6px; font-size: 14px; }
+.event-meta div { display: grid; grid-template-columns: 56px 1fr; gap: 10px; }
+.event-meta dt { text-transform: uppercase; letter-spacing: .1em; font-size: 11px; font-weight: 700; color: var(--gold-on-light); padding-top: 2px; }
+.event-meta dd { margin: 0; }
+.event-summary { margin: 4px 0 0; color: #5c5a52; font-size: 15px; line-height: 1.5; }
+.events-empty { background: white; border: 1px solid var(--line); border-radius: 24px; padding: clamp(32px, 5vw, 64px) clamp(20px, 4vw, 48px); text-align: center; display: grid; justify-items: center; gap: 12px; }
+.events-empty h3 { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.1; margin: 0; }
+.events-empty p { margin: 0; color: #5c5a52; font-size: 17px; line-height: 1.5; }
+.events-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
+.button.events-button-outline { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+.button.events-button-dark { background: var(--ink); color: white; }
+.events-partner { background: #ede7d8; color: var(--ink); padding: 40px clamp(24px, 6vw, 84px); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.events-partner h2 { margin-bottom: 6px; }
+.events-partner p { margin: 0; }
+@media (max-width: 680px) {
+  .events-hero { padding-top: 132px; }
+  .events-partner { flex-direction: column; align-items: stretch; }
+  .events-partner .button, .events-empty-actions .button { width: 100%; }
+}
