@@ -12,7 +12,7 @@ Refactor and continue the House of Retrievers concept site without changing its 
 - The Golden Retriever stays in the original brand gold.
 - Primary palette: near-black `#0D0D0D`, retriever gold `#A78440`, white, warm ivory, and restrained taupe.
 - Maintain accessible contrast and respect `prefers-reduced-motion`.
-- The header and countdown logo play a small trick every 15–25 minutes (`app/components/AnimatedLogo.jsx`: dogs swap places, bark a heart, wag, hop). The dogs are the logo's own pixels cut into `public/logo-parts/` and only moved or tilted, never redrawn; the wordmark is never animated. `?logo-fun` in the URL plays them back to back for review. New poses (standing, yawning) would need approved artwork.
+- The header and countdown logo play a small trick every 15–25 minutes (`app/components/AnimatedLogo.jsx`: dogs swap places, bark a heart, wag, hop). The static logo always shows at rest; a hidden animation copy (the same image clipped to the lettering plus full-size dog layers in `public/logo-parts/`, pixel-identical when stacked, with the original's ICC profile on the light-logo layers) swaps in for the length of a trick in a single frame. The dogs are only moved, tilted or turned, never redrawn; the wordmark is never animated. `?logo-fun` in the URL plays them back to back for review. New poses (standing, yawning) would need approved artwork.
 
 ## Current implementation
 
