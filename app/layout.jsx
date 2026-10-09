@@ -69,12 +69,10 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap"
-        />
+        {/* Fonts are self-hosted (see the top of globals.css). Preload the three the first screen uses. */}
+        <link rel="preload" href="/fonts/dm-serif-display-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/dm-serif-display-latin-400-italic.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/dm-sans-latin-opsz-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
       <body>{children}</body>
       <Script

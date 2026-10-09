@@ -1,8 +1,12 @@
 import { Heart } from "lucide-react";
 import Icon from "./Icon";
+import { preload } from "react-dom";
 import BackgroundVideo from "./BackgroundVideo";
 
 export default function Hero({ onJoin }) {
+  // The hero still (a frame from the video) paints first and stays as the
+  // fallback when the video is skipped, so fetch it before anything else.
+  preload("/house-of-retrievers-hero-poster.jpg", { as: "image", fetchPriority: "high" });
   return (
     <section className="hero" id="top">
       <BackgroundVideo className="hero-photo" src="/house-of-retrievers-hero-1080p.mp4" poster="/house-of-retrievers-hero-poster.jpg" aria-hidden="true" controlLabel="hero video" controlClassName="video-toggle-hero" />
