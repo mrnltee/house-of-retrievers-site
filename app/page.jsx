@@ -77,23 +77,25 @@ export default function Home() {
   }, []);
 
   return (
-    <main>
-      <a href="#top" className="skip-link">Skip to content</a>
+    <>
+      <a href="#main" className="skip-link">Skip to content</a>
       <ScrollProgress />
       <BrandTransition interactionId={joinTransitionId} onInteractionComplete={finishJoinTransition} />
 
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} onSupport={() => { setMenuOpen(false); setSupportOpen(true); }} />
+      <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
       <PurposeStories />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
       <FinalCta onJoin={openJoin} />
+      </main>
       <Footer />
 
       {modalOpen && (
         <JoinModal interest={interest} setInterest={setInterest} onClose={() => setModalOpen(false)} />
       )}
       {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} onJoin={() => { setSupportOpen(false); openJoin("Sponsor"); }} />}
-    </main>
+    </>
   );
 }

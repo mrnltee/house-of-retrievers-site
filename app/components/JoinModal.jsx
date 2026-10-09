@@ -21,6 +21,8 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const [submitError, setSubmitError] = useState("");
 
   const fieldCopy = joinFieldCopy[interest] || joinFieldCopy.Member;
+  // Sponsors and partners join as organizations, so no furbaby questions.
+  const asksAboutFurbaby = interest === "Member" || interest === "Volunteer";
 
   useEffect(() => {
     const opener = document.activeElement;
@@ -66,9 +68,9 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           organization: formData.get("organization"),
           profile: social,
           socialPlatform,
-          furbabyName: formData.get("furbabyName"),
-          photo: photo ? photo.dataUrl : "",
-          photoName: photo ? photo.name : "",
+          furbabyName: asksAboutFurbaby ? formData.get("furbabyName") : "",
+          photo: asksAboutFurbaby && photo ? photo.dataUrl : "",
+          photoName: asksAboutFurbaby && photo ? photo.name : "",
           message: formData.get("message"),
           [HONEYPOT_FIELD]: formData.get(HONEYPOT_FIELD) || "",
           elapsedMs: Date.now() - openedAt.current,
@@ -150,9 +152,9 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                 </div>
               </div>
               {profileHelpOpen ? <div className="profile-help" role="dialog" aria-label={`Finding your ${socialPlatform} profile URL`}><div><strong>Find your {socialPlatform} profile link</strong><button type="button" onClick={() => setProfileHelpOpen(false)} aria-label="Close profile link help"><Icon name="close" size={16} /></button></div><ol><li>Open {socialPlatform} and go to your profile.</li><li>Use the <b>Share</b> or <b>···</b> menu.</li><li>Choose <b>Copy profile link</b>, then paste it here.</li></ol><p>Example: <code>{socialPlatform === "Facebook" ? "facebook.com/yourname" : "instagram.com/yourname"}</code></p></div> : null}
-              <fieldset className="furbaby-question"><legend>Do you have a furbaby?</legend><p className="furbaby-hint">Tell us who you’ll be bringing along.</p><div className="furbaby-options"><label className={hasFurbaby === "yes" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="yes" checked={hasFurbaby === "yes"} onChange={() => setHasFurbaby("yes")} /> <span>Yes, I do</span></label><label className={hasFurbaby === "no" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="no" checked={hasFurbaby === "no"} onChange={() => { setHasFurbaby("no"); setPhoto(null); }} /> <span>Not yet</span></label></div></fieldset>
-              {hasFurbaby === "yes" ? <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label> : null}
-              {hasFurbaby === "yes" ? <div className="photo-field">
+              {asksAboutFurbaby ? <fieldset className="furbaby-question"><legend>Do you have a furbaby?</legend><p className="furbaby-hint">Tell us who you’ll be bringing along.</p><div className="furbaby-options"><label className={hasFurbaby === "yes" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="yes" checked={hasFurbaby === "yes"} onChange={() => setHasFurbaby("yes")} /> <span>Yes, I do</span></label><label className={hasFurbaby === "no" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="no" checked={hasFurbaby === "no"} onChange={() => { setHasFurbaby("no"); setPhoto(null); }} /> <span>Not yet</span></label></div></fieldset> : null}
+              {asksAboutFurbaby && hasFurbaby === "yes" ? <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label> : null}
+              {asksAboutFurbaby && hasFurbaby === "yes" ? <div className="photo-field">
                 <label htmlFor="join-photo">Furbaby photo (optional)</label>
                 {photo ? (
                   <div className="photo-preview">
