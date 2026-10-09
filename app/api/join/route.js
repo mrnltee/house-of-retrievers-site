@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { parseSocialProfile } from "../../lib/socialProfile";
+import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
+
+// Module scope so it lives as long as the server instance. See spamGuard.mjs.
+const limiter = createRateLimiter(RATE_LIMIT);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,11 +30,33 @@ export async function POST(request) {
     );
   }
 
+  const rate = limiter.hit(clientIp(request.headers));
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "You’ve sent a few of these already. Please wait a few minutes and try again." },
+      { status: 429, headers: { ...noStore, "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
+
   let body;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Something went wrong with that request." }, { status: 400, headers: noStore });
+  }
+
+  // Bots: answer as if it worked, forward nothing.
+  const fillTime = checkFillTime(body?.elapsedMs);
+  if (isHoneypotTripped(body?.[HONEYPOT_FIELD]) || fillTime === "too-fast") {
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+  // A page loaded before this check shipped sends no timing. Tell a person
+  // what to do rather than silently dropping their details.
+  if (fillTime === "missing") {
+    return NextResponse.json(
+      { error: "Please refresh the page and send the form again." },
+      { status: 400, headers: noStore },
+    );
   }
 
   const name = clean(body?.name, LIMITS.name);

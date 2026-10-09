@@ -558,3 +558,6 @@ a.nav-support { display: inline-flex; align-items: center; opacity: 1; }
   .events-partner { flex-direction: column; align-items: stretch; }
   .events-partner .button, .events-empty-actions .button { width: 100%; }
 }
+
+/* Join form spam trap — off-screen rather than display:none, which some bots skip. */
+.join-trap { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }

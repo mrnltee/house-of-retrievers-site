@@ -3,9 +3,12 @@ import Icon from "./Icon";
 import { interests, joinFieldCopy } from "../content/join";
 import { socialPlatforms } from "../lib/socialProfile";
 import { resizeImage } from "../lib/resizeImage";
+import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 
 export default function JoinModal({ interest, setInterest, onClose }) {
   const dialog = useRef(null);
+  // When the form opened, so the server can tell a person from a script.
+  const openedAt = useRef(Date.now());
   const [sent, setSent] = useState(false);
   const [social, setSocial] = useState("");
   const [socialPlatform, setSocialPlatform] = useState("");
@@ -67,6 +70,8 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           photo: photo ? photo.dataUrl : "",
           photoName: photo ? photo.name : "",
           message: formData.get("message"),
+          [HONEYPOT_FIELD]: formData.get(HONEYPOT_FIELD) || "",
+          elapsedMs: Date.now() - openedAt.current,
         }),
       });
 
@@ -102,6 +107,10 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               ))}
             </div>
             <form onSubmit={submit}>
+              {/* Spam trap: hidden from people and assistive tech, filled only by bots. */}
+              <div className="join-trap" aria-hidden="true">
+                <label>Website<input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" defaultValue="" /></label>
+              </div>
               <label>{interest === "Sponsor" ? "Contact person" : "Name"}<input required name="name" autoComplete="name" placeholder="e.g. Jane Doe" /></label>
               <label>Email<input required type="email" name="email" autoComplete="email" spellCheck={false} placeholder="e.g. jane@email.com" /></label>
               <label>{fieldCopy.organizationLabel}<input name="organization" type="text" placeholder={fieldCopy.organizationPlaceholder} /></label>
