@@ -179,7 +179,11 @@ export const journey = [
     id: "retriever-romp",
     month: "2026-11",
     title: "Retriever Romp",
+    theme: "Retrievers’ casual meet-up",
     place: "Parklinks Pet Park, Pasig",
+    photos: [
+      { src: "/journey/retriever-romp/1.jpg", fit: "contain", alt: "Retriever Romp poster: a retrievers’ casual meet-up on November 8, 2026, 2:00 to 7:00 PM at Parklinks Pet Park. Three golden retrievers on the grass beside their owner" },
+    ],
   },
   {
     id: "a-golden-beginning",
