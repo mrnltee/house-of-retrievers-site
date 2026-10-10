@@ -9,6 +9,7 @@ import RsvpModal from "./RsvpModal";
 import ShareMenu from "./ShareMenu";
 import { HOME_URL, SOCIAL_PROFILES } from "../lib/siteSeo.mjs";
 import { formatWhen } from "../lib/share.mjs";
+import { formatPeso } from "../lib/prices.mjs";
 
 const STATUS_LABELS = {
   open: "RSVP open",
@@ -47,7 +48,7 @@ function Hashtags({ tags }) {
   );
 }
 
-function Meta({ event, past = false }) {
+function Meta({ event, past = false, detail = false }) {
   return (
     <dl className="event-meta">
       <div>
@@ -82,6 +83,18 @@ function Meta({ event, past = false }) {
           <dd>{event.supports}</dd>
         </div>
       )}
+      {detail && !past && event.priceTiers && (
+        <div>
+          <dt>Price</dt>
+          <dd>
+            <ul className="event-tiers">
+              {event.priceTiers.map((tier, i) => (
+                <li key={i}><span>{tier.label || "Ticket"}</span> <strong>{tier.amount === 0 ? "Free" : formatPeso(tier.amount)}</strong></li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      )}
     </dl>
   );
 }
@@ -91,8 +104,21 @@ function Badges({ event, past }) {
   return (
     <p className="event-badges">
       <span className={`event-status status-${status}`}>{past ? "Past event" : STATUS_LABELS[event.status]}</span>
-      {!past && event.cost && <span className="event-cost">{event.cost}</span>}
       {event.purpose && <span className="event-purpose">{event.purpose}</span>}
+    </p>
+  );
+}
+
+/**
+ * The price sits with the RSVP button, where people decide, not among the
+ * labels. Cards show the range; the event page also lists every tier.
+ */
+function Price({ event, past }) {
+  if (past || !event.cost) return null;
+  return (
+    <p className="event-price">
+      <span className="event-price-label">Price</span>
+      <span className="event-price-value">{event.cost}</span>
     </p>
   );
 }
@@ -121,7 +147,8 @@ function EventCard({ event, past = false, onRsvp, base }) {
           <a className="event-more" href={href}>Read more<span className="visually-hidden"> about {event.title}</span></a>
         )}
         <Hashtags tags={event.hashtags} />
-        <div className="event-actions">
+        <div className="event-actions event-card-footer">
+          <Price event={event} past={past} />
           <RsvpButton event={event} past={past} onRsvp={onRsvp} />
           {!past && <ShareMenu event={event} />}
         </div>
@@ -191,22 +218,72 @@ function EventAlbum({ photos, title }) {
   );
 }
 
+/**
+ * The event's pictures, each shown whole (posters keep their text) on a
+ * blurred copy of itself. Two or more: arrows, dots and swipe.
+ */
+function EventMedia({ media, title }) {
+  const [index, setIndex] = useState(0);
+  const touch = useRef(null);
+  const count = media.length;
+  const step = (d) => setIndex((i) => (i + d + count) % count);
+  const current = media[index];
+  return (
+    <section
+      className="event-media"
+      aria-roledescription={count > 1 ? "carousel" : undefined}
+      aria-label={count > 1 ? `${title} photos` : undefined}
+      onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => {
+        const dx = e.changedTouches[0].clientX - (touch.current ?? 0);
+        if (count > 1 && Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+      }}
+    >
+      <img className="event-media-backdrop" src={current.src} alt="" aria-hidden="true" />
+      {media.map((item, i) => (
+        <img
+          key={item.src}
+          className={`event-media-photo${i === index ? " is-active" : ""}`}
+          src={item.src}
+          alt={i === index ? item.alt || "" : ""}
+          aria-hidden={i !== index}
+          loading={i === 0 ? "eager" : "lazy"}
+          decoding="async"
+        />
+      ))}
+      {count > 1 && (
+        <>
+          <button type="button" className="event-media-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="arrow" size={18} /></button>
+          <button type="button" className="event-media-next" onClick={() => step(1)} aria-label="Next photo"><Icon name="arrow" size={18} /></button>
+          <div className="event-media-dots">
+            {media.map((item, i) => (
+              <button key={item.src} type="button" className={i === index ? "active" : undefined} aria-label={`Photo ${i + 1} of ${count}`} aria-current={i === index} onClick={() => setIndex(i)} />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 function EventDetail({ event, past, onRsvp, base, photos = [] }) {
+  const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
   return (
     <article className="event-detail" aria-labelledby="event-title">
       <a className="event-back" href={base ? `${base}` : "/"}>← All events</a>
-      {event.image && <img className="event-detail-photo" src={event.image} alt={event.imageAlt || ""} />}
+      {media.length > 0 && <EventMedia media={media} title={event.title} />}
       <div className="event-detail-body">
         <Badges event={event} past={past} />
         <p className="event-category">{event.category}</p>
         <h1 id="event-title">{event.title}</h1>
-        <Meta event={event} past={past} />
-        {event.summary && <div className="event-summary event-summary-full">{event.summary}</div>}
-        <Hashtags tags={event.hashtags} />
-        <div className="event-actions">
+        <Meta event={event} past={past} detail />
+        <div className="event-actions event-detail-actions">
+          <Price event={event} past={past} />
           <RsvpButton event={event} past={past} onRsvp={onRsvp} />
           {!past && <ShareMenu event={event} />}
         </div>
+        {event.summary && <div className="event-summary event-summary-full">{event.summary}</div>}
+        <Hashtags tags={event.hashtags} />
         {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
         {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
           <iframe
@@ -278,6 +355,11 @@ export default function EventsView({ upcoming, past, focus = null }) {
       <main id="main">
         {focus ? (
           <div className="event-detail-wrap">
+            {(focus.event.media?.[0]?.src || focus.event.image) && (
+              <div className="event-detail-backdrop" aria-hidden="true">
+                <img src={focus.event.media?.[0]?.src || focus.event.image} alt="" />
+              </div>
+            )}
             <EventDetail event={focus.event} past={focus.past} photos={focus.photos} onRsvp={setRsvpEvent} base={base} />
           </div>
         ) : (

@@ -68,6 +68,7 @@ export async function saveEvent(data) {
     const input = Object.fromEntries([...data.entries()].filter(([, v]) => typeof v === "string"));
     input.rsvpOpen = data.get("rsvpOpen") === "on";
     input.feeRequired = data.get("feeRequired") === "on";
+    input.photoUploads = data.getAll("photoUploads").filter((v) => typeof v === "string");
     delete input.imageData;
     delete input.imageSourceData;
     delete input.imageCrop;
@@ -177,6 +178,10 @@ export async function saveEvent(data) {
       "UPDATE events SET is_charity=$1, purpose=$2, hashtags=$3, venue_lat=$4, venue_lng=$5, map_url=$6 WHERE id=$7",
       [value.isCharity, value.purpose, value.hashtags, value.venueLat, value.venueLng, value.mapUrl, eventId],
     );
+    // Sent only by editors that have these fields, so an older open tab can't blank them.
+    if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
+    if (data.has("gallery")) await sql("UPDATE events SET gallery=$1 WHERE id=$2", [JSON.stringify(value.gallery), eventId]);
+    if (data.has("photoUploadsSent")) await sql("UPDATE events SET photo_uploads=$1 WHERE id=$2", [value.photoUploads, eventId]);
     if (photo) {
       await sql("UPDATE events SET image_source=$1, image_crop=$2 WHERE id=$3", [photo.source, photo.crop && JSON.stringify(photo.crop), eventId]);
     }
@@ -462,13 +467,13 @@ export async function deleteEvent(data) {
     const admin = await actionAdmin("events:delete");
     if (!isUuid(id)) await backWith("/events", "error", "That event no longer exists.");
     if (form(data, "confirm") !== "on") await backWith(back, "error", "Tick the box to confirm you want to delete this event for good.");
-    const [event] = await sql("SELECT id, title, slug, date, image, image_source FROM events WHERE id=$1", [id]);
+    const [event] = await sql("SELECT id, title, slug, date, image, image_source, gallery FROM events WHERE id=$1", [id]);
     if (!event) await backWith("/events", "error", "That event no longer exists.");
     const [{ count }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1", [id]);
     if (count > 0) {
       await backWith(back, "error", `${count} ${count === 1 ? "person has" : "people have"} registered for this event, so it can't be deleted. Use "Cancel event" instead; their records stay.`);
     }
-    const photoIds = [event.image, event.image_source]
+    const photoIds = [event.image, event.image_source, ...(Array.isArray(event.gallery) ? event.gallery.map((g) => g?.src) : [])]
       .map((path) => String(path || "").match(/^\/api\/event-image\/([0-9a-f-]{36})$/i)?.[1])
       .filter(Boolean);
     const album = await sql("SELECT public_id FROM event_photos WHERE event_id=$1", [id]);
@@ -478,7 +483,8 @@ export async function deleteEvent(data) {
         // Only photos no other event uses.
         await tx.sql(
           `DELETE FROM event_images i WHERE i.id = ANY($1::uuid[])
-             AND NOT EXISTS (SELECT 1 FROM events e WHERE e.image = '/api/event-image/' || i.id OR e.image_source = '/api/event-image/' || i.id)`,
+             AND NOT EXISTS (SELECT 1 FROM events e WHERE e.image = '/api/event-image/' || i.id OR e.image_source = '/api/event-image/' || i.id
+                OR e.gallery @> jsonb_build_array(jsonb_build_object('src', '/api/event-image/' || i.id)))`,
           [photoIds],
         );
       }

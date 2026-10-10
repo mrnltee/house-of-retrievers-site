@@ -191,3 +191,32 @@ export async function describePhoto(dataUrl, title = "") {
   }
   return { error: "The description model isn't available. Set GEMINI_MODEL in Vercel to a current Gemini model name." };
 }
+
+// ---------- Extra event photos ----------
+
+const MAX_EXTRA_PHOTO_BYTES = 1.5 * 1024 * 1024;
+
+/**
+ * Stores one extra photo the moment it's picked, so a save never carries
+ * several photos at once (server actions cap a request at a few MB).
+ * Returns its public path; the event points at it once the form is saved.
+ */
+export async function uploadEventPhoto(dataUrl) {
+  let admin;
+  try {
+    admin = await actionAdmin("events:edit");
+  } catch (error) {
+    if (error instanceof Forbidden) return { error: error.message };
+    throw error;
+  }
+  const match = String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return { error: "That photo didn't come through. Try another one." };
+  const bytes = Buffer.from(match[2], "base64");
+  if (bytes.length > MAX_EXTRA_PHOTO_BYTES) return { error: "That photo is too large even after resizing. Try another one." };
+  const { sql } = await import("../lib/db");
+  const [saved] = await sql(
+    "INSERT INTO event_images (mime, data, bytes, created_by) VALUES ($1, $2, $3, $4) RETURNING id",
+    [match[1], bytes, bytes.length, admin.email],
+  );
+  return { src: `/api/event-image/${saved.id}`, bytes: bytes.length };
+}

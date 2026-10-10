@@ -3,6 +3,8 @@
  * events page reads (the HorEvent typedef in app/content/events.js).
  */
 
+import { cleanTiers, priceSummary, tiersFromCost } from "../prices.mjs";
+
 export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
 
 export const PURPOSES = ["Purpose to Give Back", "Purpose to Care", "Purpose to Connect", "Purpose to Learn", "Purpose to Celebrate"];
@@ -10,6 +12,42 @@ export const PURPOSES = ["Purpose to Give Back", "Purpose to Care", "Purpose to 
 /** Longest summary the editor accepts. The card shows the start; the event page shows all of it. */
 export const SUMMARY_MAX = 3000;
 export const MAX_HASHTAGS = 6;
+/** Photos beside the cover, shown whole on the event page: four pictures in all. */
+export const MAX_GALLERY = 3;
+/** Who may add photos to an album once the member portal exists. */
+export const PHOTO_UPLOADERS = [
+  ["attendees", "Attendees"],
+  ["members", "Members"],
+  ["volunteers", "Volunteers"],
+  ["partners", "Partners"],
+  ["sponsors", "Sponsors"],
+];
+const IMAGE_PATH = /^\/api\/event-image\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The extra photos as sent by the editor → [{ src, alt }], or { error }. */
+export function cleanGallery(input) {
+  let rows = input;
+  if (typeof input === "string") {
+    try {
+      rows = JSON.parse(input || "[]");
+    } catch {
+      return { error: "The extra photos didn't come through. Add them again." };
+    }
+  }
+  if (!Array.isArray(rows)) return { gallery: [] };
+  const gallery = rows
+    .filter((row) => IMAGE_PATH.test(String(row?.src || "")))
+    .map((row) => ({ src: row.src, alt: String(row.alt || "").trim().replace(/\s+/g, " ").slice(0, 200) }));
+  if (gallery.length > MAX_GALLERY) return { error: `Up to ${MAX_GALLERY + 1} photos per event, cover included.` };
+  return { gallery };
+}
+
+/** Checked boxes (an array or "a,b") → the known uploader groups. */
+export function cleanUploaders(input) {
+  const list = Array.isArray(input) ? input : String(input || "").split(",");
+  const known = PHOTO_UPLOADERS.map(([key]) => key);
+  return known.filter((key) => list.includes(key));
+}
 
 /** Paths the events site already uses, which an event's address must not take. */
 const RESERVED_SLUGS = ["r", "share", "new", "api", "admin", "events", "sitemap", "robots"];
@@ -145,6 +183,9 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     venue: clean(input?.venue, 160),
     city: clean(input?.city, 80),
     cost: clean(input?.cost, 60) || null,
+    priceTiers: [],
+    gallery: [],
+    photoUploads: cleanUploaders(input?.photoUploads),
     isCharity: input?.isCharity === true || input?.isCharity === "on" || input?.isCharity === "true",
     supports: clean(input?.supports, 160) || null,
     purpose: clean(input?.purpose, 40) || null,
@@ -164,6 +205,21 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
   // The beneficiary belongs to charity events only.
   if (!value.isCharity) value.supports = null;
   if (value.venueLat == null || value.venueLng == null) value.venueLat = value.venueLng = null;
+
+  // Prices: tiers from the editor decide the cost line; without them the typed cost stays.
+  if (input?.priceTiers !== undefined) {
+    const { tiers, error } = cleanTiers(input.priceTiers);
+    if (error) return { error };
+    value.priceTiers = tiers;
+    value.cost = priceSummary(tiers) || value.cost;
+  }
+  // Nothing to pay, nothing to track.
+  if (!value.priceTiers.some((t) => t.amount > 0) && input?.priceTiers !== undefined) value.feeRequired = false;
+  if (input?.gallery !== undefined) {
+    const { gallery, error } = cleanGallery(input.gallery);
+    if (error) return { error };
+    value.gallery = gallery;
+  }
 
   if (!value.title) return { error: "Give the event a title." };
   if (value.purpose && !PURPOSES.includes(value.purpose)) return { error: "Pick a purpose from the list." };
@@ -216,8 +272,21 @@ export function publicStatus(row, confirmed = 0) {
 
 const toDateString = (value) => (value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10));
 
+/** An event's price tiers: saved tiers, else read from its older cost text. */
+export function eventTiers(row) {
+  if (Array.isArray(row.price_tiers) && row.price_tiers.length) return row.price_tiers;
+  return tiersFromCost(row.cost) || [];
+}
+
 /** DB row (+ confirmed count) → HorEvent for EventsView. */
 export function toPublicEvent(row, confirmed = 0) {
+  const tiers = eventTiers(row);
+  const gallery = Array.isArray(row.gallery) ? row.gallery : [];
+  // On the event page every picture is shown whole: the cover as uploaded (before
+  // it was framed for the card), then the extra photos.
+  const media = row.image
+    ? [{ src: row.image_source || row.image, alt: row.image_alt || "" }, ...gallery]
+    : gallery;
   return {
     slug: row.slug,
     title: row.title,
@@ -227,7 +296,8 @@ export function toPublicEvent(row, confirmed = 0) {
     endTime: row.end_time || undefined,
     venue: row.venue,
     city: row.city,
-    cost: row.cost || undefined,
+    cost: priceSummary(tiers) || row.cost || undefined,
+    priceTiers: tiers.length > 1 || tiers.some((t) => t.label) ? tiers : undefined,
     supports: (row.is_charity && row.supports) || undefined,
     purpose: row.purpose || undefined,
     summary: row.summary || undefined,
@@ -239,6 +309,7 @@ export function toPublicEvent(row, confirmed = 0) {
     status: publicStatus(row, confirmed),
     image: row.image || undefined,
     imageAlt: row.image_alt || undefined,
+    media: media.length ? media : undefined,
     rsvp: row.registration === "required",
     feeRequired: row.fee_required,
   };
