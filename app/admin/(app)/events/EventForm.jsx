@@ -28,7 +28,7 @@ export default function EventForm({ event, autoDescribe = false }) {
           <label className="field"><span>Starts</span><input type="time" name="startTime" defaultValue={v("start_time")} /></label>
           <label className="field"><span>Ends</span><input type="time" name="endTime" defaultValue={v("end_time")} /></label>
         </div>
-        <VenueField venue={event?.venue} city={event?.city} lat={event?.venue_lat} lng={event?.venue_lng} mapUrl={event?.map_url} />
+        <VenueField venue={event?.venue} city={event?.city} address={event?.venue_address} lat={event?.venue_lat} lng={event?.venue_lng} mapUrl={event?.map_url} />
       </section>
 
       <section className="card">
@@ -56,6 +56,9 @@ export default function EventForm({ event, autoDescribe = false }) {
             </select>
           </label>
         </div>
+        <label className="field"><span>What's included <small>Optional. One per line, up to 10, e.g. what a pass or ticket gets you. Shown as a checklist, so it's readable even when it's also on the poster.</small></span>
+          <textarea name="included" rows={4} maxLength={900} defaultValue={(event?.included || []).join("\n")} placeholder={"Bedazzling kit\n1 drink\nFurbaby treat"} />
+        </label>
         <CharityField isCharity={event?.is_charity} supports={event?.supports} />
         <HashtagField hashtags={event?.hashtags} />
       </section>

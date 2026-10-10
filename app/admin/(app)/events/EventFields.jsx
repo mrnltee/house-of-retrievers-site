@@ -15,7 +15,7 @@ export function CharityField({ isCharity, supports }) {
       </label>
       {on && (
         <label className="field">
-          <span>Beneficiary <small>Who the event supports, named up front, e.g. a shelter or a rescue group</small></span>
+          <span>Beneficiary <small>Who the event supports, named up front, e.g. a shelter or a rescue group. Not confirmed yet? Leave the box unticked for now.</small></span>
           <input type="text" name="supports" maxLength={160} defaultValue={supports || ""} required autoFocus={!isCharity} />
         </label>
       )}
@@ -110,8 +110,8 @@ function osmEmbed(lat, lng) {
  * still editable) and pins the spot. Typing it in by hand and the Google Maps
  * link are a click away rather than three more boxes up front.
  */
-export function VenueField({ venue, city, lat, lng, mapUrl }) {
-  const [values, setValues] = useState({ venue: venue || "", city: city || "" });
+export function VenueField({ venue, city, address, lat, lng, mapUrl }) {
+  const [values, setValues] = useState({ venue: venue || "", city: city || "", address: address || "" });
   const [pin, setPin] = useState(Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null);
   const [manual, setManual] = useState(Boolean(venue || city));
   const [query, setQuery] = useState("");
@@ -138,7 +138,9 @@ export function VenueField({ venue, city, lat, lng, mapUrl }) {
   }
 
   function choose(place) {
-    setValues({ venue: place.name, city: place.city || values.city });
+    // The name people know goes in Venue; the rest of the address on its own line.
+    const rest = String(place.address || "").split(",").map((p) => p.trim()).filter((p) => p && p !== place.name).slice(0, 3).join(", ");
+    setValues({ venue: place.name, city: place.city || values.city, address: rest });
     setPin({ lat: place.lat, lng: place.lng });
     setManual(true);
     setResults(null);
@@ -188,10 +190,20 @@ export function VenueField({ venue, city, lat, lng, mapUrl }) {
             <input type="text" name="city" maxLength={80} value={values.city} onChange={(e) => setValues({ ...values, city: e.target.value })} />
           </label>
         </div>
-      ) : (
+      ) : null}
+      {manual && (
+        <label className="field"><span>Address <small>Optional. Street and area, shown smaller under the venue name</small></span>
+          <input type="text" name="venueAddress" maxLength={200} value={values.address} onChange={(e) => setValues({ ...values, address: e.target.value })} placeholder="e.g. Diosdado Macapagal Blvd" />
+        </label>
+      )}
+      {manual && values.city && values.venue.toLowerCase().includes(values.city.toLowerCase()) && (
+        <p className="small muted" role="status">The city shows on its own; you can leave "{values.city}" out of the venue name.</p>
+      )}
+      {!manual && (
         <>
           <input type="hidden" name="venue" value={values.venue} />
           <input type="hidden" name="city" value={values.city} />
+          <input type="hidden" name="venueAddress" value={values.address} />
           <p className="small"><button type="button" className="linkish" onClick={() => setManual(true)}>Type the venue in instead</button></p>
         </>
       )}

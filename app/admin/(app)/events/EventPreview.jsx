@@ -38,6 +38,8 @@ function draftEvent(form, saved) {
     end_time: get("endTime"),
     venue: get("venue") || "Venue to be announced",
     city: get("city"),
+    venue_address: get("venueAddress"),
+    included: get("included").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 10),
     cost: get("cost"),
     price_tiers: tiers,
     is_charity: f.get("isCharity") === "on",

@@ -23,6 +23,19 @@ export const IMAGE_FITS = [
 const FIT_KEYS = IMAGE_FITS.map(([key]) => key);
 export const cleanFit = (value) => (FIT_KEYS.includes(value) ? value : "fit");
 
+/** Up to this many "What's included" lines. */
+export const MAX_INCLUDED = 10;
+
+/** "TBA", "To be named" and the like: not a beneficiary, so never shown or published. */
+export const isPlaceholder = (text) =>
+  /^(t\.?b\.?[adc]\.?|to be (named|announced|confirmed|decided|followed)|to follow|n\/?a|none|pending|-+|\?+)$/i.test(String(text || "").trim());
+
+/** One item per line (or an array) → up to MAX_INCLUDED short lines. */
+export function cleanIncluded(input) {
+  const list = Array.isArray(input) ? input : String(input || "").split(/\r?\n/);
+  return list.map((line) => String(line).replace(/^[\s•\-*✓]+/, "").trim().replace(/\s+/g, " ").slice(0, 80)).filter(Boolean).slice(0, MAX_INCLUDED);
+}
+
 /** Who may add photos to an album once the member portal exists. */
 export const PHOTO_UPLOADERS = [
   ["attendees", "Attendees"],
@@ -191,6 +204,8 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     endTime: clean(input?.endTime, 5) || null,
     venue: clean(input?.venue, 160),
     city: clean(input?.city, 80),
+    venueAddress: clean(input?.venueAddress, 200) || null,
+    included: cleanIncluded(input?.included),
     cost: clean(input?.cost, 60) || null,
     priceTiers: [],
     gallery: [],
@@ -212,8 +227,8 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     feeRequired: input?.feeRequired === true || input?.feeRequired === "on" || input?.feeRequired === "true",
   };
 
-  // The beneficiary belongs to charity events only.
-  if (!value.isCharity) value.supports = null;
+  // The beneficiary belongs to charity events only, and a placeholder isn't one.
+  if (!value.isCharity || isPlaceholder(value.supports)) value.supports = null;
   if (value.venueLat == null || value.venueLng == null) value.venueLat = value.venueLng = null;
 
   // Prices: tiers from the editor decide the cost line; without them the typed cost stays.
@@ -309,8 +324,11 @@ export function toPublicEvent(row, confirmed = 0) {
     venue: row.venue,
     city: row.city,
     cost: priceSummary(tiers) || row.cost || undefined,
-    priceTiers: tiers.length > 1 || tiers.some((t) => t.label) ? tiers : undefined,
-    supports: (row.is_charity && row.supports) || undefined,
+    // Listed lowest first, the order people compare them in.
+    priceTiers: tiers.length > 1 || tiers.some((t) => t.label) ? [...tiers].sort((a, b) => a.amount - b.amount) : undefined,
+    supports: (row.is_charity && row.supports && !isPlaceholder(row.supports) && row.supports) || undefined,
+    venueAddress: row.venue_address || undefined,
+    included: row.included?.length ? row.included : undefined,
     purpose: row.purpose || undefined,
     summary: row.summary || undefined,
     hashtags: row.hashtags?.length ? row.hashtags : undefined,

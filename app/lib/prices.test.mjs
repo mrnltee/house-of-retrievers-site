@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { cleanTiers, formatPeso, parsePeso, priceSummary, tiersFromCost } from "./prices.mjs";
-import { cleanGallery, cleanUploaders, toPublicEvent, validateEvent } from "./admin/events.mjs";
+import { cleanGallery, cleanIncluded, cleanUploaders, isPlaceholder, toPublicEvent, validateEvent } from "./admin/events.mjs";
 
 test("pesos read and print the way people type them", () => {
   assert.equal(parsePeso("₱1,200"), 1200);
@@ -64,4 +64,23 @@ test("a cover set to Fill uses the framed crop; Fit and Tile the original", () =
   assert.equal(toPublicEvent({ ...row, image_fit: "fill" }).media[0].src, "/crop");
   assert.equal(toPublicEvent({ ...row, image_fit: "tile" }).media[0].src, "/full");
   assert.equal(toPublicEvent({ ...row, image_fit: "bogus" }).media[0].fit, "fit");
+});
+
+test("tiers show lowest first on the event page", () => {
+  const row = { slug: "a", date: "2026-12-01", registration: "none", status: "published", price_tiers: [{ label: "Regular", amount: 795 }, { label: "Early bird", amount: 695 }] };
+  assert.deepEqual(toPublicEvent(row).priceTiers.map((t) => t.label), ["Early bird", "Regular"]);
+});
+
+test("a placeholder beneficiary is never shown and doesn't count as filled in", () => {
+  for (const text of ["To be named", "TBA", "t.b.d.", "N/A", "-"]) assert.ok(isPlaceholder(text), text);
+  assert.equal(isPlaceholder("MBY Pet Rescue"), false);
+  const row = { slug: "a", date: "2026-12-01", registration: "none", status: "published", is_charity: true, supports: "To be named" };
+  assert.equal(toPublicEvent(row).supports, undefined);
+  const { missing } = validateEvent({ title: "Run", date: "2026-12-01", isCharity: "on", supports: "TBA", category: "Fundraisers", venue: "Park", city: "Pasig", summary: "Hi" });
+  assert.deepEqual(missing, ["Beneficiary"]);
+});
+
+test("what's included: one per line, bullets trimmed, ten at most", () => {
+  assert.deepEqual(cleanIncluded("• Bedazzling kit\n- 1 drink\n\n✓ Furbaby treat"), ["Bedazzling kit", "1 drink", "Furbaby treat"]);
+  assert.equal(cleanIncluded(Array.from({ length: 12 }, (_, i) => `Item ${i}`)).length, 10);
 });

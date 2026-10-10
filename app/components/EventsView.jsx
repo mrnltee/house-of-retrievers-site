@@ -8,7 +8,8 @@ import JoinModal from "./JoinModal";
 import RsvpModal from "./RsvpModal";
 import ShareMenu from "./ShareMenu";
 import { HOME_URL, SOCIAL_PROFILES } from "../lib/siteSeo.mjs";
-import { formatWhen } from "../lib/share.mjs";
+import { eventUrl, formatWhen } from "../lib/share.mjs";
+import { googleCalendarUrl, icsFile } from "../lib/calendar.mjs";
 import { formatPeso } from "../lib/prices.mjs";
 
 const STATUS_LABELS = {
@@ -48,7 +49,7 @@ function Hashtags({ tags }) {
   );
 }
 
-function Meta({ event, past = false, detail = false }) {
+function Meta({ event, past = false }) {
   return (
     <dl className="event-meta">
       <div>
@@ -83,18 +84,6 @@ function Meta({ event, past = false, detail = false }) {
           <dd>{event.supports}</dd>
         </div>
       )}
-      {detail && !past && event.priceTiers && (
-        <div>
-          <dt>Price</dt>
-          <dd>
-            <ul className="event-tiers">
-              {event.priceTiers.map((tier, i) => (
-                <li key={i}><span>{tier.label || "Ticket"}</span> <strong>{tier.amount === 0 ? "Free" : formatPeso(tier.amount)}</strong></li>
-              ))}
-            </ul>
-          </dd>
-        </div>
-      )}
     </dl>
   );
 }
@@ -104,7 +93,6 @@ function Badges({ event, past }) {
   return (
     <p className="event-badges">
       <span className={`event-status status-${status}`}>{past ? "Past event" : STATUS_LABELS[event.status]}</span>
-      {event.purpose && <span className="event-purpose">{event.purpose}</span>}
     </p>
   );
 }
@@ -139,7 +127,7 @@ export function EventCard({ event, past = false, onRsvp, base }) {
       {event.image && <img src={event.image} alt={event.imageAlt || ""} loading="lazy" />}
       <div className="event-card-body">
         <Badges event={event} past={past} />
-        <p className="event-category">{event.category}</p>
+        <p className="event-category">{[event.category, event.purpose].filter(Boolean).join("  ·  ")}</p>
         <h3><a className="event-title-link" href={href}>{event.title}</a></h3>
         <Meta event={event} past={past} />
         {event.summary && <p className="event-summary event-summary-clamp">{event.summary}</p>}
@@ -150,7 +138,7 @@ export function EventCard({ event, past = false, onRsvp, base }) {
         <div className="event-actions event-card-footer">
           <Price event={event} past={past} />
           <RsvpButton event={event} past={past} onRsvp={onRsvp} />
-          {!past && <ShareMenu event={event} />}
+          {!past && <ShareMenu event={event} compact />}
         </div>
       </div>
     </li>
@@ -219,93 +207,247 @@ function EventAlbum({ photos, title }) {
 }
 
 /**
- * The event's pictures, each shown whole (posters keep their text) on a
- * blurred copy of itself. Two or more: arrows, dots and swipe.
+ * The event's pictures in one 4:5 frame, each as its fill says: whole (Fit),
+ * filling the frame (Fill) or repeated (Tile). Wide screens get arrows and
+ * thumbnails, narrow ones dots and swipe; arrow keys work once it has focus.
  */
 function EventMedia({ media, title }) {
   const [index, setIndex] = useState(0);
   const touch = useRef(null);
   const count = media.length;
   const step = (d) => setIndex((i) => (i + d + count) % count);
-  const current = media[index];
   return (
     <section
-      className="event-media"
+      className="event-media-wrap"
       aria-roledescription={count > 1 ? "carousel" : undefined}
       aria-label={count > 1 ? `${title} photos` : undefined}
-      onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
-      onTouchEnd={(e) => {
-        const dx = e.changedTouches[0].clientX - (touch.current ?? 0);
-        if (count > 1 && Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
-      }}
     >
-      {(current.fit || "fit") === "fit" && <img className="event-media-backdrop" src={current.src} alt="" aria-hidden="true" />}
-      {media.map((item, i) =>
-        item.fit === "tile" ? (
-          <div
-            key={item.src}
-            className={`event-media-photo is-tile${i === index ? " is-active" : ""}`}
-            style={{ backgroundImage: `url("${item.src}")` }}
-            role="img"
-            aria-label={i === index ? item.alt || "" : undefined}
-            aria-hidden={i !== index}
-          />
-        ) : (
-          <img
-            key={item.src}
-            className={`event-media-photo${item.fit === "fill" ? " is-fill" : ""}${i === index ? " is-active" : ""}`}
-            src={item.src}
-            alt={i === index ? item.alt || "" : ""}
-            aria-hidden={i !== index}
-            loading={i === 0 ? "eager" : "lazy"}
-            decoding="async"
-          />
-        ),
-      )}
+      <div
+        className="event-media"
+        tabIndex={count > 1 ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (count < 2) return;
+          if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
+          if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
+        }}
+        onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - (touch.current ?? 0);
+          if (count > 1 && Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+        }}
+      >
+        {media.map((item, i) =>
+          item.fit === "tile" ? (
+            <div
+              key={item.src}
+              className={`event-media-photo is-tile${i === index ? " is-active" : ""}`}
+              style={{ backgroundImage: `url("${item.src}")` }}
+              role="img"
+              aria-label={i === index ? item.alt || "" : undefined}
+              aria-hidden={i !== index}
+            />
+          ) : (
+            <img
+              key={item.src}
+              className={`event-media-photo${item.fit === "fill" ? " is-fill" : ""}${i === index ? " is-active" : ""}`}
+              src={item.src}
+              alt={i === index ? item.alt || "" : ""}
+              aria-hidden={i !== index}
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+            />
+          ),
+        )}
+        {count > 1 && (
+          <>
+            <button type="button" className="event-media-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="arrow" size={18} /></button>
+            <button type="button" className="event-media-next" onClick={() => step(1)} aria-label="Next photo"><Icon name="arrow" size={18} /></button>
+            <div className="event-media-dots" aria-hidden="true">
+              {media.map((item, i) => <span key={item.src} className={i === index ? "active" : undefined} />)}
+            </div>
+          </>
+        )}
+      </div>
       {count > 1 && (
-        <>
-          <button type="button" className="event-media-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="arrow" size={18} /></button>
-          <button type="button" className="event-media-next" onClick={() => step(1)} aria-label="Next photo"><Icon name="arrow" size={18} /></button>
-          <div className="event-media-dots">
-            {media.map((item, i) => (
-              <button key={item.src} type="button" className={i === index ? "active" : undefined} aria-label={`Photo ${i + 1} of ${count}`} aria-current={i === index} onClick={() => setIndex(i)} />
-            ))}
-          </div>
-        </>
+        <div className="event-media-thumbs">
+          {media.map((item, i) => (
+            <button key={item.src} type="button" className={i === index ? "active" : undefined} aria-label={`Photo ${i + 1} of ${count}`} aria-current={i === index} onClick={() => setIndex(i)}>
+              <img src={item.src} alt="" loading="lazy" decoding="async" />
+            </button>
+          ))}
+          <span className="event-media-count" aria-live="polite">{index + 1} / {count}</span>
+        </div>
       )}
     </section>
   );
 }
 
+/** Google Calendar, or a calendar file for Apple Calendar, Outlook and most phones. */
+function AddToCalendar({ event }) {
+  const url = eventUrl(event.slug);
+  const menu = useRef(null);
+  // Closes like any menu: Escape, or a tap anywhere else.
+  useEffect(() => {
+    const close = (e) => {
+      const el = menu.current;
+      if (!el?.open) return;
+      if (e.type === "keydown" ? e.key === "Escape" : !el.contains(e.target)) {
+        el.open = false;
+        if (e.type === "keydown") el.querySelector("summary")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, []);
+  function download() {
+    const blob = new Blob([icsFile(event, url)], { type: "text/calendar;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${event.slug}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+  return (
+    <details className="event-calendar" ref={menu}>
+      <summary className="event-chip"><Icon name="calendar" size={16} /> Add to calendar</summary>
+      <div className="event-calendar-menu">
+        <a href={googleCalendarUrl(event, url)} target="_blank" rel="noopener noreferrer">Google Calendar</a>
+        <button type="button" onClick={() => { download(); if (menu.current) menu.current.open = false; }}>Apple, Outlook or other (.ics file)</button>
+      </div>
+    </details>
+  );
+}
+
+/** When, where, who it's for and the price tiers, each fact on its own line. */
+function DetailFacts({ event, past }) {
+  const cityShown = event.city && !event.venue?.toLowerCase().includes(event.city.toLowerCase());
+  const placeLine = [event.venueAddress, cityShown ? event.city : ""].filter(Boolean).join(", ");
+  return (
+    <dl className="event-facts">
+      <div>
+        <dt>When</dt>
+        <dd>
+          <time dateTime={event.date} className="event-fact-main">{formatWhen(event)}</time>
+          {!past && <AddToCalendar event={event} />}
+        </dd>
+      </div>
+      <div>
+        <dt>Where</dt>
+        <dd>
+          <span className="event-fact-main">{event.venue}</span>
+          {placeLine && <span className="event-fact-sub">{placeLine}</span>}
+          {event.directions && (
+            <span className="event-chips">
+              <a className="event-chip" href={event.directions} target="_blank" rel="noopener noreferrer">
+                <Icon name="pin" size={16} /> Get directions<span className="visually-hidden"> to {event.venue} (opens Google Maps)</span>
+              </a>
+              {!past && event.parking && (
+                <a className="event-chip" href={event.parking} target="_blank" rel="noopener noreferrer">
+                  <Icon name="parking" size={16} /> Parking nearby<span className="visually-hidden"> around {event.venue} (opens Google Maps)</span>
+                </a>
+              )}
+            </span>
+          )}
+        </dd>
+      </div>
+      {event.supports && (
+        <div>
+          <dt>For</dt>
+          <dd><span className="event-fact-main">{event.supports}</span></dd>
+        </div>
+      )}
+      {!past && event.priceTiers && (
+        <div>
+          <dt>Price</dt>
+          <dd>
+            <ul className="event-tier-table">
+              {event.priceTiers.map((tier, i) => (
+                <li key={i}><span>{tier.label || "Ticket"}</span><strong>{tier.amount === 0 ? "Free" : formatPeso(tier.amount)}</strong></li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      )}
+    </dl>
+  );
+}
+
 export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
   const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
+  const card = useRef(null);
+  const [cardInView, setCardInView] = useState(true);
+  const canRsvp = !past && event.rsvp && ["open", "few-left", "full"].includes(event.status);
+
+  // The phone's bottom bar steps aside while the main RSVP card is on screen.
+  useEffect(() => {
+    if (!canRsvp || !card.current) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setCardInView(entry.isIntersecting), { threshold: 0.2 });
+    observer.observe(card.current);
+    return () => observer.disconnect();
+  }, [canRsvp]);
+
+  const labels = [event.category, event.purpose].filter(Boolean).join("  ·  ");
   return (
     <article className="event-detail" aria-labelledby="event-title">
       <a className="event-back" href={base ? `${base}` : "/"}>← All events</a>
-      {media.length > 0 && <EventMedia media={media} title={event.title} />}
-      <div className="event-detail-body">
-        <Badges event={event} past={past} />
-        <p className="event-category">{event.category}</p>
-        <h1 id="event-title">{event.title}</h1>
-        <Meta event={event} past={past} detail />
-        <div className="event-actions event-detail-actions">
+      <div className="event-detail-grid">
+        <div className="event-detail-media">
+          {media.length > 0 && <EventMedia media={media} title={event.title} />}
+        </div>
+        <div className="event-detail-body">
+          <p className="event-badges">
+            <span className={`event-status status-${past ? "past" : event.status}`}>{past ? "Past event" : STATUS_LABELS[event.status]}</span>
+          </p>
+          {labels && <p className="event-category">{labels}</p>}
+          <h1 id="event-title">{event.title}</h1>
+          <DetailFacts event={event} past={past} />
+          {!past && (event.cost || canRsvp) && (
+            <div className="event-action-card" ref={card}>
+              <Price event={event} past={past} />
+              <RsvpButton event={event} past={past} onRsvp={onRsvp} />
+              <ShareMenu event={event} compact />
+            </div>
+          )}
+          {!past && !event.cost && !canRsvp && <div className="event-actions"><ShareMenu event={event} /></div>}
+          {event.summary && (
+            <section className="event-about" aria-labelledby="about-title">
+              <h2 id="about-title">About</h2>
+              <div className="event-summary event-summary-full">{event.summary}</div>
+            </section>
+          )}
+          {event.included && (
+            <section className="event-included" aria-labelledby="included-title">
+              <h3 id="included-title">What's included</h3>
+              <ul>
+                {event.included.map((item) => <li key={item}><Icon name="check" size={14} /> {item}</li>)}
+              </ul>
+            </section>
+          )}
+          {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
+          {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
+            <iframe
+              className="event-map"
+              title={`Map of ${event.venue}`}
+              src={mapEmbed(event.venueLat, event.venueLng)}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          )}
+          <Hashtags tags={event.hashtags} />
+        </div>
+      </div>
+      {canRsvp && (
+        <div className={`event-rsvp-bar${cardInView ? " is-hidden" : ""}`} inert={cardInView}>
           <Price event={event} past={past} />
           <RsvpButton event={event} past={past} onRsvp={onRsvp} />
-          {!past && <ShareMenu event={event} />}
         </div>
-        {event.summary && <div className="event-summary event-summary-full">{event.summary}</div>}
-        <Hashtags tags={event.hashtags} />
-        {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
-        {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
-          <iframe
-            className="event-map"
-            title={`Map of ${event.venue}`}
-            src={mapEmbed(event.venueLat, event.venueLng)}
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        )}
-      </div>
+      )}
     </article>
   );
 }

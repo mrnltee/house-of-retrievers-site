@@ -21,6 +21,8 @@ const LABELS = {
   hashtags: "Hashtags",
   venue: "Venue",
   city: "City",
+  venueAddress: "Address",
+  included: "What's included",
   venueLat: "Map pin",
   venueLng: "Map pin",
   mapUrl: "Google Maps link",

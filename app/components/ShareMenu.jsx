@@ -17,9 +17,10 @@ async function copyText(text) {
  * "Share" for one event. On phones the system share sheet comes first (it
  * reaches Instagram, Messenger and Viber directly); every device also gets
  * Facebook, X and Threads links, a caption to paste into Instagram, and the link.
- * `inline` shows the options without the toggle (used in the admin).
+ * `inline` shows the options without the toggle (used in the admin);
+ * `compact` makes the toggle an icon button with a hidden label.
  */
-export default function ShareMenu({ event, inline = false, className = "" }) {
+export default function ShareMenu({ event, inline = false, compact = false, className = "" }) {
   const [open, setOpen] = useState(inline);
   const [note, setNote] = useState("");
   const [canNativeShare, setCanNativeShare] = useState(false);
@@ -58,8 +59,8 @@ export default function ShareMenu({ event, inline = false, className = "" }) {
   return (
     <div className={`share ${inline ? "share-inline" : ""} ${className}`} ref={wrapRef}>
       {!inline && (
-        <button type="button" className="share-toggle" aria-expanded={open} aria-controls={listId} onClick={() => setOpen(!open)}>
-          <Icon name="share" size={16} /> Share
+        <button type="button" className={`share-toggle${compact ? " is-compact" : ""}`} aria-expanded={open} aria-controls={listId} onClick={() => setOpen(!open)}>
+          <Icon name="share" size={compact ? 18 : 16} /> <span className={compact ? "visually-hidden" : undefined}>Share{compact ? ` ${event.title}` : ""}</span>
         </button>
       )}
       {open && (
