@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { can, canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "./roles.mjs";
 import { diffChange, formatMobile, needsApproval, normalizeMobile, publicMethods, validateChange } from "./payments.mjs";
-import { cleanMapUrl, directionsUrl, parkingUrl, isPastDate, manilaDate, parseHashtags, publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
+import { cleanMapUrl, cleanSlug, directionsUrl, parkingUrl, isPastDate, manilaDate, parseHashtags, publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
 import { checkInOutcome, newCheckInCode, normalizeCode, statusForNewRegistration, validateRsvp } from "./registrations.mjs";
 
 const PNG = "data:image/png;base64,iVBORw0KGgo=";
@@ -185,4 +185,12 @@ test("parking nearby searches around the pin, else the venue", () => {
   assert.equal(parkingUrl({ venueLat: 14.5547, venueLng: 121.0244 }), "https://www.google.com/maps/search/parking/@14.5547,121.0244,17z");
   assert.equal(parkingUrl({ venue: "Parklinks Pet Park", city: "Pasig" }), "https://www.google.com/maps/search/?api=1&query=parking%20near%20Parklinks%20Pet%20Park%2C%20Pasig");
   assert.equal(parkingUrl({}), null);
+});
+
+test("an event's web address is cleaned to a safe slug", () => {
+  assert.deepEqual(cleanSlug("Free Hugs Day 2026!"), { slug: "free-hugs-day-2026" });
+  assert.deepEqual(cleanSlug("  Pawres de Mayo — Parklinks  "), { slug: "pawres-de-mayo-parklinks" });
+  assert.deepEqual(cleanSlug("Café Barkdate"), { slug: "cafe-barkdate" });
+  assert.match(cleanSlug("ab").error, /three/);
+  assert.match(cleanSlug("share").error, /events site/);
 });

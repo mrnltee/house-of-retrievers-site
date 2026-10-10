@@ -11,6 +11,28 @@ export const PURPOSES = ["Purpose to Give Back", "Purpose to Care", "Purpose to 
 export const SUMMARY_MAX = 3000;
 export const MAX_HASHTAGS = 6;
 
+/** Paths the events site already uses, which an event's address must not take. */
+const RESERVED_SLUGS = ["r", "share", "new", "api", "admin", "events", "sitemap", "robots"];
+
+/**
+ * An event's web address as typed in the editor → the slug to save.
+ * "Free Hugs Day 2026!" → "free-hugs-day-2026".
+ * @returns {{ slug?: string, error?: string }}
+ */
+export function cleanSlug(input) {
+  const slug = String(input || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80)
+    .replace(/-+$/, "");
+  if (slug.length < 3) return { error: "The web address needs at least three letters or numbers." };
+  if (RESERVED_SLUGS.includes(slug)) return { error: `"${slug}" is used by the events site itself. Pick another web address.` };
+  return { slug };
+}
+
 /** Today's date in Manila, "YYYY-MM-DD". */
 export function manilaDate(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);

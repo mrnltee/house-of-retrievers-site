@@ -34,3 +34,17 @@ export async function loadEvent(slug) {
     return null;
   }
 }
+
+/** The current slug for an event's old web address, or null. */
+export async function currentSlugFor(oldSlug) {
+  if (!hasDatabase() || !/^[a-z0-9-]{1,120}$/.test(String(oldSlug || ""))) return null;
+  try {
+    const [row] = await sql(
+      "SELECT e.slug FROM event_slug_redirects r JOIN events e ON e.id = r.event_id WHERE r.old_slug = $1 AND e.status <> 'draft'",
+      [oldSlug],
+    );
+    return row?.slug || null;
+  } catch {
+    return null;
+  }
+}
