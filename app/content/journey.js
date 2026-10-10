@@ -64,7 +64,8 @@ export const journey = [
     id: "basic-embroidery-class",
     month: "2026-08",
     title: "Basic Embroidery Class",
-    story: "A hands-on embroidery class with Pawfect Blooms, and the start of Purpose to Learn.",
+    place: "QC",
+    story: "An afternoon embroidery class with our partner Pawfect Blooms, and the start of Purpose to Learn.",
     tag: "Purpose to Learn",
     photos: [
       { src: "/2-better/better5.jpg", alt: "The chalkboard sign for the House of Retrievers private embroidery class" },
