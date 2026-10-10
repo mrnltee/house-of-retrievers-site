@@ -64,8 +64,7 @@ export const journey = [
     id: "basic-embroidery-class",
     month: "2026-08",
     title: "Basic Embroidery Class",
-    place: "With Pawfect Blooms",
-    story: "A hands-on afternoon of needle and thread, and the start of Purpose to Learn.",
+    story: "A hands-on embroidery class with Pawfect Blooms, and the start of Purpose to Learn.",
     tag: "Purpose to Learn",
     photos: [
       { src: "/2-better/better5.jpg", alt: "The chalkboard sign for the House of Retrievers private embroidery class" },
@@ -89,7 +88,7 @@ export const journey = [
     id: "sec-registration",
     month: "2026-09",
     title: "Registered with the SEC",
-    story: "House of Retrievers is now an officially registered organization[ as {org}]",
+    story: "We’re now officially registered[ as {org}]",
     tag: "Milestone",
     mark: "milestone",
   },

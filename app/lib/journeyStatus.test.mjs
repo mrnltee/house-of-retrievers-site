@@ -23,9 +23,9 @@ test("labels", () => {
 });
 
 test("the registered name is left out until released, and the sentence ends once", () => {
-  const story = "House of Retrievers is now an officially registered organization[ as {org}]";
-  assert.equal(withOrg(story, null), "House of Retrievers is now an officially registered organization.");
-  assert.equal(withOrg(story, "The House of Retrievers Society Inc."), "House of Retrievers is now an officially registered organization as The House of Retrievers Society Inc.");
+  const story = "We’re now officially registered[ as {org}]";
+  assert.equal(withOrg(story, null), "We’re now officially registered.");
+  assert.equal(withOrg(story, "The House of Retrievers Society Inc."), "We’re now officially registered as The House of Retrievers Society Inc.");
 });
 
 test("the timeline is in date order with unique ids", () => {
