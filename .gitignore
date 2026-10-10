@@ -26,3 +26,6 @@ public/3-giveback/*
 
 # Browser-tool artifacts
 .playwright-mcp
+
+# Camera originals for the timeline; only the compressed copies in public/journey/ ship.
+public/timeline images/
