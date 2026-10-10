@@ -87,7 +87,7 @@ export default function Home() {
       <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
       <PurposeStories />
-      <Journey />
+      <Journey onJoin={openJoin} />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
       <FinalCta onJoin={openJoin} />
