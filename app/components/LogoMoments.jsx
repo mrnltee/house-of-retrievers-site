@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { GOLDEN_PATH, LAB_PATH, LOGO_VIEWBOX, logoRig } from "../lib/logoMomentsRig.mjs";
 import { logoTiming, momentSetFor, nextGap, pickMoment } from "../lib/logoMoments.mjs";
 
-const ALT = "House of Retrievers — Paws for a Purpose";
+const ALT = "The House of Retrievers Society Inc. — Paws for a Purpose";
 const WORDMARK = {
   light: "/house-of-retrievers-wordmark-original.png",
   dark: "/house-of-retrievers-wordmark-reverse.png",

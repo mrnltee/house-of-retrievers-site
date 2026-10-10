@@ -50,13 +50,13 @@ a { color: inherit; text-decoration: none; }
 .brand-transition-layer { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
 .brand-transition-cover, .brand-transition-head { position: absolute; inset: 0; display: block; }
 .brand-transition-cover { background: var(--brand-black); }
-.brand-transition-cover-gold { clip-path: polygon(3.4% 11%, 15.8% 11%, 15.8% 29%, 14.1% 35%, 11.8% 37%, 5% 34%, 3.4% 25%); }
-.brand-transition-head-gold { clip-path: polygon(3.4% 11%, 15.8% 11%, 15.8% 30%, 14.3% 40%, 11.4% 43%, 5% 39%, 3.4% 25%); }
-.brand-transition-cover-companion { clip-path: polygon(29.7% 10%, 42% 10%, 42% 29%, 39.6% 36%, 35.2% 38%, 30.2% 34%); }
-.brand-transition-head-companion { clip-path: polygon(29.7% 10%, 42% 10%, 42% 31%, 39.7% 41%, 35.1% 43%, 30.2% 39%); }
+.brand-transition-cover-gold { clip-path: polygon(-0.7% 0.6%, 14.2% 0.6%, 14.2% 22.3%, 12.2% 29.5%, 9.4% 31.9%, 1.2% 28.3%, -0.7% 17.5%); }
+.brand-transition-head-gold { clip-path: polygon(-0.7% 0.6%, 14.2% 0.6%, 14.2% 23.5%, 12.4% 35.5%, 8.9% 39.1%, 1.2% 34.3%, -0.7% 17.5%); }
+.brand-transition-cover-companion { clip-path: polygon(26.5% 0.3%, 41.1% 0.3%, 41.1% 23%, 38.3% 31.3%, 33% 33.7%, 27.1% 28.9%); }
+.brand-transition-head-companion { clip-path: polygon(26.5% 0.3%, 41.1% 0.3%, 41.1% 25.4%, 38.4% 37.3%, 32.9% 39.7%, 27.1% 34.9%); }
 .brand-transition-head { transform: translateZ(0); }
-.brand-transition-head-gold { transform-origin: 12.2% 39%; animation: brand-gold-nod 3s cubic-bezier(.45, 0, .2, 1) both; }
-.brand-transition-head-companion { transform-origin: 34.1% 40%; animation: brand-companion-nod 3s cubic-bezier(.45, 0, .2, 1) both; }
+.brand-transition-head-gold { transform-origin: 9.9% 34.3%; animation: brand-gold-nod 3s cubic-bezier(.45, 0, .2, 1) both; }
+.brand-transition-head-companion { transform-origin: 31.7% 36.1%; animation: brand-companion-nod 3s cubic-bezier(.45, 0, .2, 1) both; }
 .brand-transition-interaction { animation: brand-overlay-interaction .56s ease both; }
 .brand-transition-interaction .brand-transition-mark { animation: brand-mark-interaction .56s ease both; }
 .brand-transition-interaction .brand-transition-head-gold { animation: brand-gold-nod-short .56s ease-in-out both; }
@@ -680,10 +680,10 @@ main:focus { outline: none; }
    app/lib/logoMoments.mjs through --hor-moment-duration.
    Rotation signs: the Golden faces left, so a positive turn lifts her muzzle;
    the Labrador faces right, so a negative turn lifts his. */
-.hor-logo { --hor-gold: #A78440; --hor-lab: #0D0D0D; display: grid; aspect-ratio: 1396 / 564; }
-.hor-logo[data-tone="dark"] { --hor-lab: #FFFFFF; }
+.hor-logo { --hor-gold: #AD8330; --hor-lab: #0D0D0D; display: grid; aspect-ratio: 1396 / 564; }
+.hor-logo[data-tone="dark"] { --hor-lab: #F2F2F2; }
 @media (prefers-color-scheme: dark) {
-  .hor-logo[data-tone="auto"] { --hor-lab: #FFFFFF; }
+  .hor-logo[data-tone="auto"] { --hor-lab: #F2F2F2; }
 }
 .hor-logo > * { grid-area: 1 / 1; }
 .hor-logo picture, .hor-logo-wordmark, .hor-logo-dogs { display: block; width: 100%; height: 100%; }

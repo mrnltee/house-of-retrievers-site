@@ -18,7 +18,7 @@ How the layers are separated
 - The Golden sits in front. The Labrador path is extended a few pixels under
   her, and under her tail, so the shared edge has no seam and a tail wag
   uncovers Labrador instead of a hole.
-- The wordmark starts at x=578 and the dogs end at x=572, so the wordmark PNGs
+- The wordmark starts at x=595 and the dogs end at x=556, so the wordmark PNGs
   are the supplied PNGs with everything left of x=576 cleared.
 """
 
@@ -35,8 +35,8 @@ from skimage.draw import polygon as draw_polygon
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC = ROOT / "public"
 RIG = ROOT / "app" / "lib" / "logoMomentsRig.mjs"
-GOLD = np.array([167, 132, 64.0])  # #A78440
-WHITE = np.array([255, 255, 255.0])
+GOLD = np.array([173, 131, 48.0])  # #AD8330, the supplied artwork's gold
+WHITE = np.array([242, 242, 242.0])  # #F2F2F2, the reverse artwork's Labrador
 WORDMARK_START_X = 576
 
 
@@ -62,11 +62,11 @@ def keep_largest(cov):
 def complete_lab(gold, lab):
     gold_inside = ndi.binary_erosion(gold > 0.5, iterations=1)
     under_golden = ndi.binary_dilation(lab > 0.5, iterations=6) & gold_inside
-    rows, cols = draw_polygon([460, 460, 490, 490], [334, 404, 404, 334], gold.shape)
+    rows, cols = draw_polygon([483, 483, 519, 519], [335, 419, 419, 335], gold.shape)
     under_tail = np.zeros_like(gold_inside)
     under_tail[rows, cols] = True
     under_tail &= ndi.binary_dilation(gold > 0.3, iterations=2)
-    under_tail[489:] = False  # stay above the ground line
+    under_tail[518:] = False  # stay above the ground line
     return np.maximum(lab, (under_golden | under_tail).astype(float))
 
 

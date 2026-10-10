@@ -46,7 +46,7 @@ export default async function RsvpPass({ params }) {
   return (
     <main className="rsvp-pass">
       <a className="rsvp-pass-logo" href={EVENTS_URL}>
-        <img src="/house-of-retrievers-logo-original.png" alt="House of Retrievers — events" width="1396" height="564" />
+        <img src="/house-of-retrievers-logo-original.png" alt="The House of Retrievers Society Inc. — events" width="1396" height="564" />
       </a>
       <section className="rsvp-pass-card">
         <p className="eyebrow">

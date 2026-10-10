@@ -22,7 +22,7 @@ export default async function SignInPage({ searchParams }) {
   return (
     <main className="admin-signin">
       <div className="card">
-        <img src="/house-of-retrievers-logo-original.png" alt="House of Retrievers — Paws for a Purpose" width="1396" height="564" />
+        <img src="/house-of-retrievers-logo-original.png" alt="The House of Retrievers Society Inc. — Paws for a Purpose" width="1396" height="564" />
         <h1>Admin</h1>
         <p className="muted">
           {params?.reauth ? "Sign in again to approve payment details." : "For HOR volunteers who run events, sign-ups and donations."}
