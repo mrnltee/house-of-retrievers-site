@@ -51,7 +51,7 @@ function JourneyMedia({ stop, status, index, playing }) {
     const kind = stop.mark === "milestone" ? "milestone" : status;
     const Icon = kind === "milestone" ? BadgeCheck : kind === "upcoming" ? CalendarHeart : Camera;
     const note = kind === "milestone" ? "Officially registered" : kind === "upcoming" ? "Save the date" : "Photos coming soon";
-    const [month] = monthLabel(stop.month).split(" ");
+    const month = stop.month ? monthLabel(stop.month).split(" ")[0] : "TBA";
     return (
       <div className={`journey-media journey-placeholder is-${kind}`} ref={frame} aria-hidden="true">
         <span className="journey-placeholder-month">{month.slice(0, 3)}</span>
@@ -172,7 +172,7 @@ export default function Journey({ onJoin }) {
       <ol className={`journey-list${ready ? " is-ready" : ""}`} ref={list}>
         {stops.map((stop, index) => {
           const side = index % 2 ? "left" : "right";
-          const [month, year] = monthLabel(stop.month).split(" ");
+          const [month, year] = stop.month ? monthLabel(stop.month).split(" ") : ["Soon", "Date to be announced"];
           const href = stop.event ? `${EVENTS_URL}/${stop.event}` : null;
           return (
             <Fragment key={stop.id}>
@@ -181,7 +181,9 @@ export default function Journey({ onJoin }) {
               )}
               <li className={`journey-stop is-${stop.status} is-${side}${stop.mark ? ` is-${stop.mark}` : ""}${href ? " is-linked" : ""}`}>
                 <p className="journey-when">
-                  <time dateTime={stop.month}><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></time>
+                  {stop.month
+                    ? <time dateTime={stop.month}><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></time>
+                    : <><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></>}
                   {stop.status === "upcoming" && <span className="visually-hidden">, upcoming</span>}
                 </p>
                 <span className="journey-dot" aria-hidden="true" />

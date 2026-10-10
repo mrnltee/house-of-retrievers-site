@@ -15,6 +15,7 @@ export function manilaMonth(now = new Date()) {
 
 /** @returns {"past" | "upcoming"} */
 export function stopStatus(stop, current = manilaMonth()) {
+  if (!stop.month) return "upcoming";
   if (stop.month < current) return "past";
   if (stop.month > current) return "upcoming";
   return stop.upcoming ? "upcoming" : "past";

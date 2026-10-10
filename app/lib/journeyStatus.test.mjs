@@ -18,6 +18,10 @@ test("the month turns over at Manila midnight, not UTC", () => {
   assert.equal(manilaMonth(new Date("2026-10-31T15:30:00Z")), "2026-10");
 });
 
+test("a stop without a date yet is upcoming", () => {
+  assert.equal(stopStatus({}, "2026-10"), "upcoming");
+});
+
 test("labels", () => {
   assert.equal(monthLabel("2026-05"), "May 2026");
 });
@@ -29,8 +33,10 @@ test("the registered name is left out until released, and the sentence ends once
 });
 
 test("the timeline is in date order with unique ids", () => {
-  const months = journey.map((stop) => stop.month);
-  assert.deepEqual(months, [...months].sort());
+  const dated = journey.filter((stop) => stop.month).map((stop) => stop.month);
+  assert.deepEqual(dated, [...dated].sort());
+  const firstUndated = journey.findIndex((stop) => !stop.month);
+  if (firstUndated >= 0) assert.ok(journey.slice(firstUndated).every((stop) => !stop.month), "undated stops go last");
   assert.equal(new Set(journey.map((stop) => stop.id)).size, journey.length);
   for (const stop of journey) for (const photo of stop.photos ?? []) assert.ok(photo.alt, `${stop.id} photo needs alt text`);
 });

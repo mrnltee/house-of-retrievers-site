@@ -26,7 +26,8 @@
  *
  * @typedef {Object} JourneyStop
  * @property {string} id        Unique, URL-safe. Also the photo folder name.
- * @property {string} month     "YYYY-MM".
+ * @property {string} [month]   "YYYY-MM". Leave out while the date is not set: the stop
+ *                              shows "Soon" and counts as upcoming. Keep undated stops last.
  * @property {string} title     The event, as people know it.
  * @property {string} [theme]   The event's own theme or subtitle, shown in italics under the title.
  * @property {string} [place]   Venue and city.
@@ -77,6 +78,13 @@ export const journey = [
     ],
   },
   {
+    id: "milagros-elderly-shelter",
+    month: "2026-08",
+    title: "Visit to Milagros Elderly Shelter",
+    story: "A week after the embroidery class, we visited the residents of Milagros Elderly Shelter.",
+    tag: "Community outreach",
+  },
+  {
     id: "beagle-buddies-pack-walk",
     month: "2026-08",
     title: "Pack walk with Beagle Buddies PH",
@@ -119,7 +127,11 @@ export const journey = [
     id: "retriever-romp",
     month: "2026-11",
     title: "Retriever Romp",
-    theme: "A Golden Beginning: Paws & Purpose",
     place: "Parklinks Pet Park, Pasig",
+  },
+  {
+    id: "a-golden-beginning",
+    title: "A Golden Beginning: Paws & Purpose",
+    story: "Details to be announced soon.",
   },
 ];
