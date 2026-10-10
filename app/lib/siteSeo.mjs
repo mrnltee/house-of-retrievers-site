@@ -26,6 +26,7 @@ export const structuredData = {
       "@type": "Organization",
       "@id": `${HOME_URL}#organization`,
       name: SITE_NAME,
+      legalName: "The House of Retrievers Society Inc.",
       alternateName: "HOR",
       url: HOME_URL,
       description: SITE_DESCRIPTION,
