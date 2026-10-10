@@ -73,6 +73,18 @@ export function directionsUrl({ mapUrl, venueLat, venueLng, venue, city }) {
   return place ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}` : null;
 }
 
+/**
+ * "Parking nearby": Google Maps' parking search around the pin, else around
+ * the venue's name. Opens the Maps app on phones, like "Get directions".
+ */
+export function parkingUrl({ venueLat, venueLng, venue, city }) {
+  if (Number.isFinite(venueLat) && Number.isFinite(venueLng)) {
+    return `https://www.google.com/maps/search/parking/@${venueLat},${venueLng},17z`;
+  }
+  const place = [venue, city].filter(Boolean).join(", ");
+  return place ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`parking near ${place}`)}` : null;
+}
+
 const clean = (value, max = 200) => (typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, max) : "");
 // Keeps paragraphs: line breaks survive, runs of blank lines collapse to one.
 const cleanText = (value, max = 600) =>
@@ -199,6 +211,7 @@ export function toPublicEvent(row, confirmed = 0) {
     summary: row.summary || undefined,
     hashtags: row.hashtags?.length ? row.hashtags : undefined,
     directions: directionsUrl({ mapUrl: row.map_url, venueLat: row.venue_lat, venueLng: row.venue_lng, venue: row.venue, city: row.city }) || undefined,
+    parking: parkingUrl({ venueLat: row.venue_lat, venueLng: row.venue_lng, venue: row.venue, city: row.city }) || undefined,
     venueLat: row.venue_lat ?? undefined,
     venueLng: row.venue_lng ?? undefined,
     status: publicStatus(row, confirmed),

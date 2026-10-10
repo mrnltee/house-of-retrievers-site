@@ -27,6 +27,12 @@ const paths = {
       <circle cx="12" cy="9.5" r="2.5" />
     </>
   ),
+  parking: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="3.5" />
+      <path d="M10 16.5v-9h3a2.8 2.8 0 0 1 0 5.6h-3" />
+    </>
+  ),
 };
 
 export const Icon = ({ name, size = 20 }) => (

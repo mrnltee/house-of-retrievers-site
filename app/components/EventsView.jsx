@@ -47,7 +47,7 @@ function Hashtags({ tags }) {
   );
 }
 
-function Meta({ event }) {
+function Meta({ event, past = false }) {
   return (
     <dl className="event-meta">
       <div>
@@ -64,6 +64,14 @@ function Meta({ event }) {
               <a className="event-directions" href={event.directions} target="_blank" rel="noopener noreferrer">
                 <Icon name="pin" size={14} /> Get directions<span className="visually-hidden"> to {event.venue} (opens Google Maps)</span>
               </a>
+              {!past && event.parking && (
+                <>
+                  {" "}
+                  <a className="event-directions" href={event.parking} target="_blank" rel="noopener noreferrer">
+                    <Icon name="parking" size={14} /> Parking nearby<span className="visually-hidden"> around {event.venue} (opens Google Maps)</span>
+                  </a>
+                </>
+              )}
             </>
           )}
         </dd>
@@ -107,7 +115,7 @@ function EventCard({ event, past = false, onRsvp, base }) {
         <Badges event={event} past={past} />
         <p className="event-category">{event.category}</p>
         <h3><a className="event-title-link" href={href}>{event.title}</a></h3>
-        <Meta event={event} />
+        <Meta event={event} past={past} />
         {event.summary && <p className="event-summary event-summary-clamp">{event.summary}</p>}
         {event.summary && isLong(event.summary) && (
           <a className="event-more" href={href}>Read more<span className="visually-hidden"> about {event.title}</span></a>
@@ -137,7 +145,7 @@ function EventDetail({ event, past, onRsvp, base }) {
         <Badges event={event} past={past} />
         <p className="event-category">{event.category}</p>
         <h1 id="event-title">{event.title}</h1>
-        <Meta event={event} />
+        <Meta event={event} past={past} />
         {event.summary && <div className="event-summary event-summary-full">{event.summary}</div>}
         <Hashtags tags={event.hashtags} />
         <div className="event-actions">
