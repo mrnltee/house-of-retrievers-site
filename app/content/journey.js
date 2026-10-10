@@ -10,8 +10,10 @@
  * site files them under "Where we have been"), then copy its slug into
  * `event` here.
  *
- * Photos: put them in `public/journey/<id>/` (1.jpg, 2.jpg, …, longest side
- * about 1200 px) and list them in `photos`, in the order they happened. One
+ * Photos: put them in `public/journey/<id>/` (1.jpg, 2.jpg, …) and list them
+ * in `photos`, in the order they happened. Longest side about 1000 px, JPEG
+ * around quality 76 (roughly 100 KB each); landscape suits the card best, and
+ * six per stop is plenty, since every photo adds page weight. One
  * photo shows still; two or more fade and pan into each other. With no
  * photos the card shows a designed placeholder, so an entry can go live
  * before its pictures are chosen. `alt` says what is actually in the frame.
@@ -52,6 +54,14 @@ export const journey = [
     story: "Our first Purpose to Celebrate: a day at the park for the benefit of MBY Pet Rescue.",
     tag: "Purpose to Celebrate",
     mark: "first",
+    photos: [
+      { src: "/journey/pawres-de-mayo/1.jpg", alt: "A host on stage with a baby in a carrier and a golden retriever in a cream dress" },
+      { src: "/journey/pawres-de-mayo/2.jpg", alt: "Two golden retrievers in party dresses grinning at the camera" },
+      { src: "/journey/pawres-de-mayo/3.jpg", alt: "Members and their golden retrievers gathered on the lawn for a group photo" },
+      { src: "/journey/pawres-de-mayo/4.jpg", alt: "Two members lifting their golden retrievers up in front of the Parklinks fence" },
+      { src: "/journey/pawres-de-mayo/5.jpg", alt: "The pack lined up under the tents with their dogs in costume" },
+      { src: "/journey/pawres-de-mayo/6.jpg", alt: "A member kneeling with his golden retriever in a gown, holding up a certificate" },
+    ],
   },
   {
     id: "international-free-hugs-day",
@@ -83,6 +93,14 @@ export const journey = [
     title: "Visit to Milagros Elderly Shelter",
     story: "A week after the embroidery class, we visited the residents of Milagros Elderly Shelter.",
     tag: "Community outreach",
+    photos: [
+      { src: "/journey/milagros-elderly-shelter/1.jpg", alt: "House of Retrievers receiving a certificate of appreciation under the Milagros welcome screen" },
+      { src: "/journey/milagros-elderly-shelter/2.jpg", alt: "Staff, members and golden retrievers together for a group photo at Milagros" },
+      { src: "/journey/milagros-elderly-shelter/3.jpg", alt: "Golden retrievers in red bandanas greeting residents seated in wheelchairs" },
+      { src: "/journey/milagros-elderly-shelter/4.jpg", alt: "A resident in a wheelchair reaching down to pet a golden retriever" },
+      { src: "/journey/milagros-elderly-shelter/5.jpg", alt: "A caregiver kneeling beside a resident as a golden retriever rests its head on his lap" },
+      { src: "/journey/milagros-elderly-shelter/6.jpg", alt: "Several hands petting a golden retriever in a blue bandana" },
+    ],
   },
   {
     id: "beagle-buddies-pack-walk",
@@ -92,6 +110,14 @@ export const journey = [
     story: "Two dog communities, one walk: our first collaboration with another group.",
     tag: "First collaboration",
     mark: "first",
+    photos: [
+      { src: "/journey/beagle-buddies-pack-walk/1.jpg", alt: "Walkers and their dogs filling the road at Ayala Avenue" },
+      { src: "/journey/beagle-buddies-pack-walk/2.jpg", alt: "A golden retriever in a sequined bandana walking beside its owner" },
+      { src: "/journey/beagle-buddies-pack-walk/3.jpg", alt: "Beagles and their owners in matching shirts leading part of the walk" },
+      { src: "/journey/beagle-buddies-pack-walk/4.jpg", alt: "A golden retriever in a pink cap walking ahead of the House of Retrievers banner" },
+      { src: "/journey/beagle-buddies-pack-walk/5.jpg", alt: "Walkers carrying the Beagle Buddies PH flag with beagles on leash" },
+      { src: "/journey/beagle-buddies-pack-walk/6.jpg", alt: "Beagles and their owners meeting on the sidewalk after the walk" },
+    ],
   },
   {
     id: "sec-registration",
@@ -108,6 +134,14 @@ export const journey = [
     place: "BGC, Taguig",
     story: "Back at BGC for another round of free hugs.",
     tag: "Purpose to Care",
+    photos: [
+      { src: "/journey/freehugs-bgc/1.jpg", alt: "Two visitors crouching on the grass to hug a golden retriever" },
+      { src: "/journey/freehugs-bgc/2.jpg", alt: "A woman in pink kneeling to greet a golden retriever and two small white dogs" },
+      { src: "/journey/freehugs-bgc/3.jpg", alt: "A golden retriever with a Free Hugs sign resting on a bench as a boy pets it" },
+      { src: "/journey/freehugs-bgc/4.jpg", alt: "A golden retriever lying on the grass with its eyes half closed" },
+      { src: "/journey/freehugs-bgc/5.jpg", alt: "A child reaching out to a happy golden retriever" },
+      { src: "/journey/freehugs-bgc/6.jpg", alt: "A visitor kneeling beside a golden retriever wearing a Free Hugs sign" },
+    ],
   },
   {
     id: "weekend-social-run",
