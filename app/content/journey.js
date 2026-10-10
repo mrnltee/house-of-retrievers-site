@@ -70,6 +70,13 @@ export const journey = [
     place: "BGC, Taguig",
     story: "Our first free hugs event with the furbabies front and center. Purpose to Care began here.",
     tag: "Purpose to Care",
+    photos: [
+      { src: "/journey/international-free-hugs-day/1.jpg", alt: "Members and their golden retrievers sitting in a circle on the lawn at BGC with Free Hugs signs" },
+      { src: "/journey/international-free-hugs-day/2.jpg", alt: "Visitors photographing the circle of golden retrievers on the grass" },
+      { src: "/journey/international-free-hugs-day/3.jpg", alt: "A golden retriever in a blue dress and bandana resting on the grass beside its owner" },
+      { src: "/journey/international-free-hugs-day/4.jpg", alt: "Members and their golden retrievers gathered on the lawn in the late afternoon" },
+      { src: "/journey/international-free-hugs-day/5.jpg", alt: "A woman cupping a smiling golden retriever's face in her hands" },
+    ],
   },
   {
     id: "basic-embroidery-class",
