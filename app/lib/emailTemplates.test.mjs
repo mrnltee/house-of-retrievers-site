@@ -17,6 +17,18 @@ test("application received: per kind, and a plain-text twin", () => {
   assert.equal(applicationReceived({ name: "Chris", kind: "Member", again: true }).subject, "We got your update");
 });
 
+test("a new member gets HOR's welcome; a repeat gets the short note", () => {
+  const first = applicationReceived({ name: "Sheryl Luteria", kind: "Member" });
+  assert.equal(first.subject, "Welcome to the House, Sheryl! 🤎");
+  assert.match(first.text, /^Hi Sheryl,/);
+  assert.match(first.text, /every paw has a purpose/);
+  assert.match(first.text, /With love and purpose,/);
+  assert.match(first.html, /email\/header-center\.png/);
+  assert.match(first.html, /email\/badge\.png/);
+  assert.doesNotMatch(first.text, /<[a-z]/);
+  assert.doesNotMatch(applicationReceived({ name: "Sheryl", kind: "Member", again: true }).html, /badge\.png/);
+});
+
 test("welcome carries the member number; RSVP the pass link and the event", () => {
   assert.match(welcomeMember({ name: "Loren", memberNo: "HOR-0007" }).html, /HOR-0007/);
   const rsvp = rsvpConfirmed({ name: "Ana", status: "confirmed", passUrl: "https://events.houseofretrieversph.org/r/ABC", event: { title: "Bedazzle Barkdate", date: "2026-10-17", startTime: "13:00", endTime: "16:00", venue: "Wiltlover Café", city: "Pasay" } });

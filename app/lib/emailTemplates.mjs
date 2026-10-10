@@ -18,6 +18,9 @@ const ORG = "The House of Retrievers Society Inc.";
  * and hide the white Labrador and wordmark; a baked band can't.
  */
 const HEADER = `${HOME_URL}/email/header.png`;
+/** Same band with the logo centered, and a small logo badge for the sign-off. */
+const HEADER_CENTER = `${HOME_URL}/email/header-center.png`;
+const BADGE = `${HOME_URL}/email/badge.png`;
 
 /**
  * Dark mode for the apps that ask (Apple Mail, Outlook.com, iOS Mail). Gmail
@@ -40,8 +43,20 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * The shared frame. Tables and inline styles, because email apps ignore most
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
-function frame({ preheader, heading, paragraphs, button, after = [], footnote }) {
+function frame({ preheader, greeting, heading, paragraphs, button, after = [], signoff, footnote, centered = false }) {
   const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${text}</p>`;
+  const sign = signoff
+    ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${signoff.join("<br>")}</p>`
+    : "";
+  // The centered layout closes with the small logo badge and the org's full name.
+  const foot = centered
+    ? `<tr><td class="em-foot" align="center" style="padding:24px 28px 28px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960;text-align:center">
+      <img src="${BADGE}" width="174" height="85" alt="${ORG}" style="display:block;margin:0 auto 12px;border:0">
+      THORSI · ${ORG}${footnote ? `<br><br>${footnote}` : ""}
+    </td></tr>`
+    : `<tr><td class="em-foot" style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
+      ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
+    </td></tr>`;
   const cta = button
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px"><tr><td style="border-radius:999px;background:#A78440">
          <a href="${esc(button.href)}" style="display:inline-block;padding:14px 26px;font:700 15px Helvetica,Arial,sans-serif;color:#0D0D0D;text-decoration:none;border-radius:999px">${esc(button.label)}</a>
@@ -52,25 +67,36 @@ function frame({ preheader, heading, paragraphs, button, after = [], footnote })
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-bg" style="background:#F5F1E6"><tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-card" style="max-width:560px;background:#ffffff;border-radius:18px;overflow:hidden">
-    <tr><td style="background:#0D0D0D;padding:0;line-height:0"><img src="${HEADER}" width="560" alt="${ORG}" style="display:block;border:0;width:100%;max-width:560px;height:auto"></td></tr>
+    <tr><td style="background:#0D0D0D;padding:0;line-height:0"><img src="${centered ? HEADER_CENTER : HEADER}" width="560" alt="${ORG}" style="display:block;border:0;width:100%;max-width:560px;height:auto"></td></tr>
     <tr><td style="padding:32px 28px 12px">
+      ${greeting ? p(esc(greeting)) : ""}
       <h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D">${esc(heading)}</h1>
       ${paragraphs.map(p).join("\n      ")}
       ${cta}
       ${after.map(p).join("\n      ")}
+      ${sign}
     </td></tr>
-    <tr><td class="em-foot" style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
-      ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
-    </td></tr>
+    ${foot}
   </table>
 </td></tr></table>
 </body></html>`;
 }
 
 /** The plain-text twin every email needs (some apps show only this; spam filters check for it). */
-function plain({ heading, paragraphs, button, after = [], footnote }) {
+function plain({ greeting, heading, paragraphs, button, after = [], signoff, footnote, centered = false }) {
   const strip = (html) => String(html).replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-  return [heading, "", ...paragraphs.map(strip).flatMap((x) => [x, ""]), ...(button ? [`${button.label}: ${button.href}`, ""] : []), ...after.map(strip).flatMap((x) => [x, ""]), footnote ? strip(footnote) : "", `${ORG} · ${HOME_URL}`, "Reply to this email to reach the team."].join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  const ending = centered
+    ? [`THORSI · ${ORG}`, footnote ? strip(footnote) : ""]
+    : [footnote ? strip(footnote) : "", `${ORG} · ${HOME_URL}`, "Reply to this email to reach the team."];
+  return [
+    ...(greeting ? [greeting, ""] : []),
+    heading, "",
+    ...paragraphs.map(strip).flatMap((x) => [x, ""]),
+    ...(button ? [`${button.label}: ${button.href}`, ""] : []),
+    ...after.map(strip).flatMap((x) => [x, ""]),
+    ...(signoff ? [signoff.map(strip).join("\n"), ""] : []),
+    ...ending,
+  ].join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function build(parts) {
@@ -84,8 +110,39 @@ const NEXT_STEP = {
   Sponsor: "Someone from the team will get in touch to talk about the events and causes you'd like to support.",
 };
 
+/**
+ * A new member's first email, in HOR's own words (supplied 11 Oct 2026):
+ * centered logo, warm welcome, signed by the Society. Repeat submissions
+ * and the other kinds keep the shorter note below.
+ */
+function memberRegistered({ name }) {
+  return build({
+    centered: true,
+    subject: `Welcome to the House, ${firstName(name)}! 🤎`,
+    preheader: "We've received your membership registration.",
+    greeting: `Hi ${firstName(name)},`,
+    heading: "Welcome to the House! ⚡️",
+    paragraphs: [
+      "Thank you for registering with The House of Retrievers Society Inc. We’ve successfully received your membership registration.",
+      "What started as a shared love for dogs has grown into a community built on friendship, kindness, and a genuine desire to give back.",
+      "We’re happy you’ve chosen to be part of this journey.",
+      "Here at the House, we believe that every paw has a purpose. Whether it’s making new friends, sharing meaningful experiences, or lending a helping paw, there’s so much we can do together.",
+      "We look forward to creating more memories and making a difference with you.",
+      "<strong>Welcome home! 🤎</strong>",
+    ],
+    signoff: [
+      "With love and purpose,",
+      `<strong>${ORG}</strong>`,
+      "<em>Paws for a Purpose</em>",
+      `<a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">www.houseofretrieversph.org</a>`,
+    ],
+    footnote: "You're getting this because this email address was entered on the Join form. If that wasn't you, just reply and we'll remove it.",
+  });
+}
+
 /** Sent straight away when someone sends the Join form. */
 export function applicationReceived({ name, kind, again = false }) {
+  if (kind === "Member" && !again) return memberRegistered({ name });
   const role = { Member: "member", Volunteer: "volunteer", Partner: "partner", Sponsor: "sponsor" }[kind] || "member";
   return build({
     subject: again ? "We got your update" : `Thanks for joining House of Retrievers, ${firstName(name)}`,
