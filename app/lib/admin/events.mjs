@@ -11,6 +11,19 @@ export const PURPOSES = ["Purpose to Give Back", "Purpose to Care", "Purpose to 
 export const SUMMARY_MAX = 3000;
 export const MAX_HASHTAGS = 6;
 
+/** Today's date in Manila, "YYYY-MM-DD". */
+export function manilaDate(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/**
+ * A past event is a record of something that happened: details and photos,
+ * never sign-ups. True when the date is before today in Manila.
+ */
+export function isPastDate(date, today = manilaDate()) {
+  return isIsoDate(date) && date < today;
+}
+
 /**
  * "#PawsForAPurpose, #HORph run" → ["PawsForAPurpose", "HORph", "run"].
  * Split on spaces, commas and #; kept as typed (letters, numbers,
@@ -88,7 +101,7 @@ const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
  * fact the public page shows.
  * @returns {{ value?: object, error?: string, missing?: string[] }}
  */
-export function validateEvent(input, { publish = false } = {}) {
+export function validateEvent(input, { publish = false, today = manilaDate() } = {}) {
   const value = {
     title: clean(input?.title, 120),
     category: clean(input?.category, 40),
@@ -130,6 +143,14 @@ export function validateEvent(input, { publish = false } = {}) {
     return { error: "Capacity should be a whole number, or empty for no limit." };
   }
   if (value.image && !value.image.startsWith("/") && !value.image.startsWith("https://")) return { error: "The photo must be a site path like /4-events/run.jpg or an https link." };
+
+  // An event that has already happened takes no sign-ups, whatever the form says.
+  if (isPastDate(value.date, today)) {
+    value.registration = "none";
+    value.capacity = null;
+    value.rsvpOpen = false;
+    value.feeRequired = false;
+  }
 
   const missing = [];
   if (!value.category) missing.push("Category");

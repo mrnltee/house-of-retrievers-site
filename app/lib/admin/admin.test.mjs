@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { can, canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "./roles.mjs";
 import { diffChange, formatMobile, needsApproval, normalizeMobile, publicMethods, validateChange } from "./payments.mjs";
-import { cleanMapUrl, directionsUrl, parseHashtags, publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
+import { cleanMapUrl, directionsUrl, isPastDate, manilaDate, parseHashtags, publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
 import { checkInOutcome, newCheckInCode, normalizeCode, statusForNewRegistration, validateRsvp } from "./registrations.mjs";
 
 const PNG = "data:image/png;base64,iVBORw0KGgo=";
@@ -156,4 +156,27 @@ test("the beneficiary is kept only for charity events, and required there", () =
   assert.deepEqual(validateEvent({ ...base, image: "/x.jpg" }).missing, [], "photo description is optional");
   assert.equal(validateEvent({ ...base, purpose: "Purpose to Nap" }).error, "Pick a purpose from the list.");
   assert.equal(validateEvent({ ...base, summary: "a\r\n\r\n\r\nb" }).value.summary, "a\n\nb");
+});
+
+test("a past event is saved without sign-ups", () => {
+  const { value } = validateEvent(
+    { title: "Pawres de Mayo", date: "2026-05-17", registration: "required", capacity: "40", rsvpOpen: "on", feeRequired: "on" },
+    { today: "2026-10-10" },
+  );
+  assert.equal(value.registration, "none");
+  assert.equal(value.capacity, null);
+  assert.equal(value.rsvpOpen, false);
+  assert.equal(value.feeRequired, false);
+});
+
+test("an upcoming event keeps its sign-up settings", () => {
+  const { value } = validateEvent({ title: "Retriever Romp", date: "2026-11-15", registration: "required", capacity: "40" }, { today: "2026-10-10" });
+  assert.equal(value.registration, "required");
+  assert.equal(value.capacity, 40);
+});
+
+test("past means before today in Manila", () => {
+  assert.equal(isPastDate("2026-10-09", "2026-10-10"), true);
+  assert.equal(isPastDate("2026-10-10", "2026-10-10"), false);
+  assert.equal(manilaDate(new Date("2026-10-09T16:30:00Z")), "2026-10-10");
 });
