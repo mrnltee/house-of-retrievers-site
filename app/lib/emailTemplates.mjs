@@ -11,7 +11,27 @@ import { EVENTS_URL } from "./eventsHost.mjs";
 import { formatWhen } from "./share.mjs";
 
 const ORG = "The House of Retrievers Society Inc.";
-const LOGO = `${HOME_URL}/house-of-retrievers-logo-reverse.png`;
+/**
+ * The header is one image: the reverse logo already on its ink band
+ * (public/email/header.png, 1120×238, shown at 560 wide). Gmail's dark mode
+ * recolours backgrounds but never images, so a CSS band would flip to light
+ * and hide the white Labrador and wordmark; a baked band can't.
+ */
+const HEADER = `${HOME_URL}/email/header.png`;
+
+/**
+ * Dark mode for the apps that ask (Apple Mail, Outlook.com, iOS Mail). Gmail
+ * ignores this and inverts colours itself; the layout is built to survive that.
+ */
+const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light dark}
+@media (prefers-color-scheme:dark){
+  .em-bg{background:#26231e!important}
+  .em-card{background:#161512!important}
+  .em-h1{color:#F5F1E6!important}
+  .em-p{color:#e4dfd2!important}
+  .em-foot{color:#b3ad9f!important;border-top-color:#2e2b25!important}
+  .em-link{color:#D9B66A!important}
+}`;
 
 const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || "there";
@@ -21,26 +41,26 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
 function frame({ preheader, heading, paragraphs, button, after = [], footnote }) {
-  const p = (text) => `<p style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${text}</p>`;
+  const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${text}</p>`;
   const cta = button
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px"><tr><td style="border-radius:999px;background:#A78440">
          <a href="${esc(button.href)}" style="display:inline-block;padding:14px 26px;font:700 15px Helvetica,Arial,sans-serif;color:#0D0D0D;text-decoration:none;border-radius:999px">${esc(button.label)}</a>
        </td></tr></table>`
     : "";
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(heading)}</title></head>
-<body style="margin:0;padding:0;background:#F5F1E6">
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${esc(heading)}</title><style>${DARK_CSS}</style></head>
+<body class="em-bg" style="margin:0;padding:0;background:#F5F1E6">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</span>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F1E6"><tr><td align="center" style="padding:24px 12px">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:18px;overflow:hidden">
-    <tr><td style="background:#0D0D0D;padding:22px 28px"><img src="${LOGO}" width="186" height="75" alt="${ORG}" style="display:block;border:0"></td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-bg" style="background:#F5F1E6"><tr><td align="center" style="padding:24px 12px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-card" style="max-width:560px;background:#ffffff;border-radius:18px;overflow:hidden">
+    <tr><td style="background:#0D0D0D;padding:0;line-height:0"><img src="${HEADER}" width="560" alt="${ORG}" style="display:block;border:0;width:100%;max-width:560px;height:auto"></td></tr>
     <tr><td style="padding:32px 28px 12px">
-      <h1 style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D">${esc(heading)}</h1>
+      <h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D">${esc(heading)}</h1>
       ${paragraphs.map(p).join("\n      ")}
       ${cta}
       ${after.map(p).join("\n      ")}
     </td></tr>
-    <tr><td style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
-      ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
+    <tr><td class="em-foot" style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
+      ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
     </td></tr>
   </table>
 </td></tr></table>
