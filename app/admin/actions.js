@@ -322,12 +322,13 @@ export async function updateMembership(data) {
     if (!isUuid(id) || !MEMBERSHIP_KEYS.includes(membership)) await backWith(back, "error", "Pick a membership status from the list.");
     const [before] = await sql("SELECT name, email, kind, membership, member_no FROM people WHERE id=$1", [id]);
     if (!before || before.kind !== "Member") await backWith(back, "error", "Membership applies to Members only.");
-    // First activation takes the next number in this year (HOR-YY-NNNN). The
-    // lock makes two admins activating at once get different numbers.
+    // First activation takes the next number in the year they registered
+    // (HOR-YY-NNNN, YY = Join form year, Manila). The lock makes two admins
+    // activating at once get different numbers.
     const after = await transaction(async (tx) => {
       await tx.sql("SELECT pg_advisory_xact_lock(727010)");
       const [row] = await tx.sql(
-        `WITH yr AS (SELECT extract(year FROM now() AT TIME ZONE 'Asia/Manila')::smallint AS y)
+        `WITH yr AS (SELECT extract(year FROM created_at AT TIME ZONE 'Asia/Manila')::smallint AS y FROM people WHERE id = $2)
          UPDATE people SET membership=$1,
            member_year = CASE WHEN $1 = 'active' AND member_no IS NULL THEN (SELECT y FROM yr) ELSE member_year END,
            member_no = CASE WHEN $1 = 'active' AND member_no IS NULL
