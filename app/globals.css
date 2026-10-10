@@ -821,3 +821,37 @@ main:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) {
   .hor-logo-dogs .hor-dog, .hor-logo-dogs .hor-part { animation: none !important; }
 }
+
+/* Our journey — app/components/Journey.jsx, content in app/content/journey.js.
+   Vertical by default (phones and tablets); a single horizontal row from 1100px,
+   where seven columns still leave a comfortable line length. */
+.journey { padding-top: clamp(40px, 6vw, 80px); padding-bottom: clamp(90px, 11vw, 150px); }
+.journey .eyebrow { color: var(--gold-on-light); font-weight: 500; letter-spacing: .18em; }
+.journey h2 { font-size: clamp(40px, 4.6vw, 64px); line-height: 1.02; margin: 22px 0 clamp(48px, 6vw, 84px); }
+.journey-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.journey-stop { position: relative; padding: 0 0 40px 40px; }
+.journey-stop:last-child { padding-bottom: 0; }
+/* The rail: runs from this dot to the next one. */
+.journey-stop::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: -8px; width: 2px; background: var(--taupe); }
+.journey-stop:last-child::before { display: none; }
+.journey-dot { position: absolute; left: 0; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px var(--paper); }
+.journey-stop.is-highlight .journey-dot { background: var(--gold); }
+.journey-stop.is-upcoming .journey-dot { background: var(--taupe); }
+.journey-when { margin: 0 0 12px; color: var(--gold-on-light); font-size: var(--text-small); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.journey-title, .journey-note { margin: 0; font-size: 17px; line-height: 1.5; }
+.journey-title strong, .journey-note strong { font-weight: 700; }
+.journey-note { margin-top: 14px; }
+.journey-stop.is-upcoming .journey-when,
+.journey-stop.is-upcoming .journey-title,
+.journey-stop.is-upcoming .journey-note { color: var(--muted-on-light); }
+
+@media (min-width: 1100px) {
+  .journey-list { grid-template-columns: repeat(var(--journey-count, 7), minmax(0, 1fr)); column-gap: 28px; }
+  .journey-stop { padding: 40px 0 0; display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0; }
+  /* The rail runs across the top, through the gap, to the next dot. */
+  .journey-stop::before { left: 8px; right: -36px; top: 7px; bottom: auto; width: auto; height: 2px; }
+  .journey-stop:last-child::before { display: block; right: 0; }
+  .journey-dot { top: 0; }
+  .journey-title { align-self: start; }
+  .journey-note { margin-top: 0; padding-top: 40px; align-self: start; }
+}

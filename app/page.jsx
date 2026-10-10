@@ -5,6 +5,7 @@ import BrandTransition from "./components/BrandTransition";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import PurposeStories from "./components/PurposeStories";
+import Journey from "./components/Journey";
 import InstagramFeed from "./components/InstagramFeed";
 import Pack from "./components/Pack";
 import FinalCta from "./components/FinalCta";
@@ -86,6 +87,7 @@ export default function Home() {
       <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
       <PurposeStories />
+      <Journey />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
       <FinalCta onJoin={openJoin} />
