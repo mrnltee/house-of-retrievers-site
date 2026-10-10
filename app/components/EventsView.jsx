@@ -132,7 +132,7 @@ function RsvpButton({ event, past, onRsvp }) {
   );
 }
 
-function EventCard({ event, past = false, onRsvp, base }) {
+export function EventCard({ event, past = false, onRsvp, base }) {
   const href = `${base}/${event.slug}`;
   return (
     <li className="event-card">
@@ -239,18 +239,29 @@ function EventMedia({ media, title }) {
         if (count > 1 && Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
       }}
     >
-      <img className="event-media-backdrop" src={current.src} alt="" aria-hidden="true" />
-      {media.map((item, i) => (
-        <img
-          key={item.src}
-          className={`event-media-photo${i === index ? " is-active" : ""}`}
-          src={item.src}
-          alt={i === index ? item.alt || "" : ""}
-          aria-hidden={i !== index}
-          loading={i === 0 ? "eager" : "lazy"}
-          decoding="async"
-        />
-      ))}
+      {(current.fit || "fit") === "fit" && <img className="event-media-backdrop" src={current.src} alt="" aria-hidden="true" />}
+      {media.map((item, i) =>
+        item.fit === "tile" ? (
+          <div
+            key={item.src}
+            className={`event-media-photo is-tile${i === index ? " is-active" : ""}`}
+            style={{ backgroundImage: `url("${item.src}")` }}
+            role="img"
+            aria-label={i === index ? item.alt || "" : undefined}
+            aria-hidden={i !== index}
+          />
+        ) : (
+          <img
+            key={item.src}
+            className={`event-media-photo${item.fit === "fill" ? " is-fill" : ""}${i === index ? " is-active" : ""}`}
+            src={item.src}
+            alt={i === index ? item.alt || "" : ""}
+            aria-hidden={i !== index}
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+          />
+        ),
+      )}
       {count > 1 && (
         <>
           <button type="button" className="event-media-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="arrow" size={18} /></button>
@@ -266,7 +277,7 @@ function EventMedia({ media, title }) {
   );
 }
 
-function EventDetail({ event, past, onRsvp, base, photos = [] }) {
+export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
   const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
   return (
     <article className="event-detail" aria-labelledby="event-title">
@@ -296,6 +307,21 @@ function EventDetail({ event, past, onRsvp, base, photos = [] }) {
         )}
       </div>
     </article>
+  );
+}
+
+/** The event page body: its blurred cover band behind the header, then the details. */
+export function EventDetailPage({ event, past, photos, onRsvp, base }) {
+  const band = event.media?.[0]?.src || event.image;
+  return (
+    <div className="event-detail-wrap">
+      {band && (
+        <div className="event-detail-backdrop" aria-hidden="true">
+          <img src={band} alt="" />
+        </div>
+      )}
+      <EventDetail event={event} past={past} photos={photos} onRsvp={onRsvp} base={base} />
+    </div>
   );
 }
 
@@ -354,14 +380,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
 
       <main id="main">
         {focus ? (
-          <div className="event-detail-wrap">
-            {(focus.event.media?.[0]?.src || focus.event.image) && (
-              <div className="event-detail-backdrop" aria-hidden="true">
-                <img src={focus.event.media?.[0]?.src || focus.event.image} alt="" />
-              </div>
-            )}
-            <EventDetail event={focus.event} past={focus.past} photos={focus.photos} onRsvp={setRsvpEvent} base={base} />
-          </div>
+          <EventDetailPage event={focus.event} past={focus.past} photos={focus.photos} onRsvp={setRsvpEvent} base={base} />
         ) : (
           <>
         <section className="events-hero" aria-labelledby="events-title">

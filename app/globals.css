@@ -1068,3 +1068,5 @@ main:focus { outline: none; }
 .event-tiers li { display: flex; gap: 8px; }
 .event-tiers li span::after { content: " ·"; color: var(--muted-on-light); }
 .event-card-footer .event-price { flex-basis: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.event-media-photo.is-fill { object-fit: cover; }
+.event-media-photo.is-tile { background-repeat: repeat; background-size: auto 50%; background-position: center; }

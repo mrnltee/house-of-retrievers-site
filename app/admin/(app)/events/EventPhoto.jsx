@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { encodeJpegWithin, loadBitmap } from "../../../lib/resizeImage";
 import { describePhoto } from "../../eventTools";
+import FitPicker from "./FitPicker";
 import PhotoCropper, { CROP_RATIO, clampCrop, cropSize, drawCrop, initialCrop } from "./PhotoCropper";
 
 /** Saved width of the cropped cover. 1600 × 1000 stays sharp on a retina card. */
@@ -56,7 +57,8 @@ async function prepareOriginal(file) {
  * original and the framing, so it can be re-framed later without losing
  * sharpness. The description is required whenever there is a photo.
  */
-export default function EventPhoto({ current, currentAlt, currentSource, currentCrop, autoDescribe = false }) {
+export default function EventPhoto({ current, currentAlt, currentSource, currentCrop, currentFit = "fit", autoDescribe = false }) {
+  const [fit, setFit] = useState(currentFit || "fit");
   const [preview, setPreview] = useState(current || "");
   const [data, setData] = useState("");
   const [removed, setRemoved] = useState(false);
@@ -252,7 +254,7 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
     <div className="row-2" style={{ alignItems: "start" }}>
       <div className="form" style={{ gap: 8 }}>
         <span className="field">
-          <span>Cover photo <small>A JPG or PNG, straight from your phone is fine. The box shows exactly what the event card will show.</small></span>
+          <span>Cover photo <small>A JPG or PNG, straight from your phone is fine. The box shows what the event card will show; the event page shows it as set below.</small></span>
         </span>
         {editing && bitmap && crop ? (
           <>
@@ -280,6 +282,8 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
           </>
         )}
         {message && <p className="small" role="status">{message}</p>}
+        {hasPhoto && !editing && <FitPicker value={fit} onChange={setFit} name="imageFit" />}
+        {!hasPhoto && <input type="hidden" name="imageFit" value={fit} />}
         <input type="hidden" name="imageData" value={data} />
         <input type="hidden" name="imageSourceData" value={data ? source.data : ""} />
         <input type="hidden" name="imageSource" value={data ? source.path : ""} />

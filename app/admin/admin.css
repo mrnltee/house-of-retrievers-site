@@ -292,3 +292,39 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .admin .peso-input { border-radius: 8px; }
 /* Four buttons wrap to two rows on a phone; pinned there, they would cover the form. */
 @media (max-width: 640px) { .form-actions-sticky { position: static; background: none; } }
+
+/* Fit / Fill / Tile */
+.fit-picker { gap: 6px; }
+.fit-picker p { margin: 0; }
+.admin .segmented.small label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; }
+.fit-icon { position: relative; width: 18px; height: 14px; border: 1.5px solid currentColor; border-radius: 3px; overflow: hidden; flex: none; }
+.fit-icon i { display: none; }
+.fit-fit::after { content: ""; position: absolute; inset: 2px 4px; background: currentColor; border-radius: 1px; }
+.fit-fill::after { content: ""; position: absolute; inset: -2px; background: currentColor; opacity: .85; }
+.fit-tile { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px; padding: 1.5px; }
+.fit-tile i { display: block; background: currentColor; border-radius: 1px; }
+
+/* Preview: the public page, drawn by the public components, in a full-screen sheet. */
+.preview-dialog { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: #d9d4c7; }
+.preview-dialog::backdrop { background: rgba(13,13,13,.6); }
+.preview-dialog[open] { display: flex; flex-direction: column; }
+.preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 20px; background: var(--a-ink); color: white; }
+.preview-bar .segmented { background: rgba(255,255,255,.12); }
+.preview-bar .segmented button { border: 0; background: transparent; color: white; padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.preview-bar .segmented button.is-on { background: white; color: var(--a-ink); }
+.preview-bar .btn { margin-left: auto; background: var(--a-gold); color: var(--a-ink); }
+.preview-note { color: var(--a-on-dark-muted); }
+.preview-stage { flex: 1; overflow: auto; padding: 24px 16px 48px; }
+.preview-canvas { margin: 0 auto; background: var(--paper, #f5f1e6); border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px -40px rgba(0,0,0,.6); transition: width .25s; }
+.preview-canvas.is-desktop { width: min(1200px, 100%); }
+.preview-canvas.is-phone { width: 390px; max-width: 100%; }
+.preview-canvas .event-detail-wrap { padding-top: 48px; }
+.preview-canvas.is-card { background: transparent; box-shadow: none; padding: 0; }
+.preview-canvas.is-card.is-desktop { width: 400px; }
+.preview-card { list-style: none; margin: 0; padding: 0; display: block; }
+/* Phone width inside a desktop window: repeat the rules the site applies by screen size. */
+.preview-canvas.is-phone .event-media { aspect-ratio: 4 / 5; border-radius: 16px; }
+.preview-canvas.is-phone .event-detail { width: calc(100% - 32px); }
+/* Undo the admin's broad label and button rules inside the public markup. */
+.admin .preview-canvas label { display: revert; }
+@media (max-width: 640px) { .preview-note { display: none; } }

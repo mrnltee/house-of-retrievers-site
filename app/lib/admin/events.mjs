@@ -14,6 +14,15 @@ export const SUMMARY_MAX = 3000;
 export const MAX_HASHTAGS = 6;
 /** Photos beside the cover, shown whole on the event page: four pictures in all. */
 export const MAX_GALLERY = 3;
+/** How a picture sits in the event page's frame. */
+export const IMAGE_FITS = [
+  ["fit", "Fit", "Whole picture, nothing cut off"],
+  ["fill", "Fill", "Fills the frame; edges may be cropped"],
+  ["tile", "Tile", "Repeated as a pattern"],
+];
+const FIT_KEYS = IMAGE_FITS.map(([key]) => key);
+export const cleanFit = (value) => (FIT_KEYS.includes(value) ? value : "fit");
+
 /** Who may add photos to an album once the member portal exists. */
 export const PHOTO_UPLOADERS = [
   ["attendees", "Attendees"],
@@ -37,7 +46,7 @@ export function cleanGallery(input) {
   if (!Array.isArray(rows)) return { gallery: [] };
   const gallery = rows
     .filter((row) => IMAGE_PATH.test(String(row?.src || "")))
-    .map((row) => ({ src: row.src, alt: String(row.alt || "").trim().replace(/\s+/g, " ").slice(0, 200) }));
+    .map((row) => ({ src: row.src, alt: String(row.alt || "").trim().replace(/\s+/g, " ").slice(0, 200), fit: cleanFit(row.fit) }));
   if (gallery.length > MAX_GALLERY) return { error: `Up to ${MAX_GALLERY + 1} photos per event, cover included.` };
   return { gallery };
 }
@@ -196,6 +205,7 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     mapUrl: cleanMapUrl(input?.mapUrl),
     image: clean(input?.image, 300) || null,
     imageAlt: clean(input?.imageAlt, 200) || null,
+    imageFit: cleanFit(input?.imageFit),
     registration: input?.registration === "required" ? "required" : "none",
     capacity: input?.capacity === "" || input?.capacity == null ? null : Number(input.capacity),
     rsvpOpen: input?.rsvpOpen === undefined ? true : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
@@ -284,9 +294,11 @@ export function toPublicEvent(row, confirmed = 0) {
   const gallery = Array.isArray(row.gallery) ? row.gallery : [];
   // On the event page every picture is shown whole: the cover as uploaded (before
   // it was framed for the card), then the extra photos.
+  // "Fill" uses the crop framed in the editor; "fit" and "tile" the photo as uploaded.
+  const coverFit = cleanFit(row.image_fit);
   const media = row.image
-    ? [{ src: row.image_source || row.image, alt: row.image_alt || "" }, ...gallery]
-    : gallery;
+    ? [{ src: coverFit === "fill" ? row.image : row.image_source || row.image, alt: row.image_alt || "", fit: coverFit }, ...gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }))]
+    : gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }));
   return {
     slug: row.slug,
     title: row.title,

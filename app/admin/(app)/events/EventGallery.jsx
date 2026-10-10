@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { encodeJpegWithin, loadBitmap } from "../../../lib/resizeImage";
 import { MAX_GALLERY } from "../../../lib/admin/events.mjs";
 import { describePhoto, uploadEventPhoto } from "../../eventTools";
+import FitPicker from "./FitPicker";
 
 /** Longest side kept. The event page shows these whole, at most about 900 px wide. */
 const EDGE = 1600;
@@ -51,7 +52,7 @@ export default function EventGallery({ initial = [], autoDescribe = false }) {
         const saved = await uploadEventPhoto(dataUrl);
         if (saved.error) throw new Error(saved.error);
         const key = saved.src;
-        setItems((list) => [...list, { key, src: saved.src, alt: "", describing: autoDescribe }]);
+        setItems((list) => [...list, { key, src: saved.src, alt: "", fit: "fit", describing: autoDescribe }]);
         if (autoDescribe) {
           describePhoto(dataUrl, title)
             .then((result) => {
@@ -101,6 +102,7 @@ export default function EventGallery({ initial = [], autoDescribe = false }) {
               />
             </label>
             {item.suggested && <p className="small muted">Suggested from the photo. Edit anything that's off.</p>}
+            <FitPicker value={item.fit || "fit"} onChange={(fit) => update(item.key, { fit })} label="Shown as" />
             {items.length > 1 && (
               <div className="gallery-order">
                 <button type="button" className="linkish" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move photo ${i + 2} earlier`}>←</button>
@@ -122,7 +124,7 @@ export default function EventGallery({ initial = [], autoDescribe = false }) {
         )}
       </ul>
       {message && <p className="small" role="status">{message}</p>}
-      <input type="hidden" name="gallery" value={JSON.stringify(items.map(({ src, alt }) => ({ src, alt })))} />
+      <input type="hidden" name="gallery" value={JSON.stringify(items.map(({ src, alt, fit }) => ({ src, alt, fit: fit || "fit" })))} />
     </div>
   );
 }

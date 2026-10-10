@@ -42,7 +42,7 @@ test("a free event never tracks a fee", () => {
 
 test("extra photos must be the site's own uploads, three at most", () => {
   const id = "/api/event-image/0d6a3b0c-1111-4222-8333-944455556666";
-  assert.deepEqual(cleanGallery(JSON.stringify([{ src: id, alt: " A poster " }, { src: "https://evil.example/x.jpg" }])).gallery, [{ src: id, alt: "A poster" }]);
+  assert.deepEqual(cleanGallery(JSON.stringify([{ src: id, alt: " A poster " }, { src: "https://evil.example/x.jpg" }])).gallery, [{ src: id, alt: "A poster", fit: "fit" }]);
   assert.match(cleanGallery(JSON.stringify([1, 2, 3, 4].map(() => ({ src: id })))).error, /Up to 4 photos/);
 });
 
@@ -57,4 +57,11 @@ test("the event page shows the uncropped cover first, then the extras", () => {
     gallery: [{ src: "/api/event-image/two", alt: "Venue" }],
   });
   assert.deepEqual(event.media.map((m) => m.src), ["/api/event-image/full", "/api/event-image/two"]);
+});
+
+test("a cover set to Fill uses the framed crop; Fit and Tile the original", () => {
+  const row = { slug: "a", date: "2026-12-01", registration: "none", status: "published", image: "/crop", image_source: "/full" };
+  assert.equal(toPublicEvent({ ...row, image_fit: "fill" }).media[0].src, "/crop");
+  assert.equal(toPublicEvent({ ...row, image_fit: "tile" }).media[0].src, "/full");
+  assert.equal(toPublicEvent({ ...row, image_fit: "bogus" }).media[0].fit, "fit");
 });

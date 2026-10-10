@@ -180,6 +180,7 @@ export async function saveEvent(data) {
     );
     // Sent only by editors that have these fields, so an older open tab can't blank them.
     if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
+    if (data.has("imageFit")) await sql("UPDATE events SET image_fit=$1 WHERE id=$2", [value.imageFit, eventId]);
     if (data.has("gallery")) await sql("UPDATE events SET gallery=$1 WHERE id=$2", [JSON.stringify(value.gallery), eventId]);
     if (data.has("photoUploadsSent")) await sql("UPDATE events SET photo_uploads=$1 WHERE id=$2", [value.photoUploads, eventId]);
     if (photo) {

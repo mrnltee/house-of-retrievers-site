@@ -30,6 +30,7 @@ const LABELS = {
   imageCrop: "Cover photo framing",
   imageRemove: "Cover photo",
   imageAlt: "Photo description",
+  imageFit: "Cover fill",
   registration: "Registration",
   capacity: "Capacity",
   rsvpOpen: "RSVPs open",

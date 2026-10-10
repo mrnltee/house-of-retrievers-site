@@ -4,6 +4,7 @@ import { isoDate } from "../ui";
 import ConfirmSave from "./ConfirmSave";
 import EventGallery from "./EventGallery";
 import EventPhoto from "./EventPhoto";
+import EventPreview from "./EventPreview";
 import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, VenueField } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
@@ -32,7 +33,7 @@ export default function EventForm({ event, autoDescribe = false }) {
 
       <section className="card">
         <h2>Photos</h2>
-        <EventPhoto key={event?.image || "none"} current={event?.image || ""} currentAlt={event?.image_alt || ""} currentSource={event?.image_source || ""} currentCrop={event?.image_crop || null} autoDescribe={autoDescribe} />
+        <EventPhoto key={event?.image || "none"} current={event?.image || ""} currentAlt={event?.image_alt || ""} currentSource={event?.image_source || ""} currentCrop={event?.image_crop || null} currentFit={event?.image_fit || "fit"} autoDescribe={autoDescribe} />
         <EventGallery initial={Array.isArray(event?.gallery) ? event.gallery : []} autoDescribe={autoDescribe} />
       </section>
 
@@ -75,6 +76,7 @@ export default function EventForm({ event, autoDescribe = false }) {
 
       {missing.length > 0 && <p className="banner note small">Needed before publishing: {missing.join(", ")}.</p>}
       <div className="actions form-actions-sticky">
+        <EventPreview image={event?.image || ""} imageSource={event?.image_source || ""} slug={event?.slug || ""} />
         <button className="btn ghost">Save draft</button>
         {event?.status !== "published" && <button className="btn gold" formAction={publishEvent} data-confirm="publish">Publish</button>}
         {event?.status === "published" && <button className="btn gold" data-confirm="save">Save changes</button>}
