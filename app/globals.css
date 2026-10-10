@@ -859,7 +859,7 @@ main:focus { outline: none; }
 .journey-when { display: grid; gap: 6px; margin: 0; padding-inline: 28px; }
 .journey-when time { display: contents; }
 .journey-when-month { font: 400 clamp(36px, 3.6vw, 52px)/1 "DM Serif Display", serif; letter-spacing: -.03em; color: var(--gold-on-light); }
-.journey-when-year { color: var(--muted-on-light); font-size: 13px; font-weight: 600; letter-spacing: .18em; }
+.journey-when-year { color: var(--muted-on-light); font-size: 13px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
 .journey-stop.is-upcoming .journey-when-month { color: #8b8574; }
 
 .journey-divider { display: flex; justify-content: center; }
