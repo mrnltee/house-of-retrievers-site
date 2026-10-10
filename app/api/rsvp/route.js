@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { hasDatabase, transaction } from "../../lib/db";
 import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../lib/admin/registrations.mjs";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
+import { sendEmail } from "../../lib/email";
+import { rsvpConfirmed } from "../../lib/emailTemplates.mjs";
+import { EVENTS_URL } from "../../lib/eventsHost.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +42,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, venue, city, fee_required FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -55,11 +58,21 @@ export async function POST(request) {
            CASE WHEN $8 = 'confirmed' AND (SELECT fee_required FROM events WHERE id = $1) THEN 'waiting' ELSE 'not_due' END, $9)`,
         [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, code],
       );
-      return { status, code };
+      return { status, code, event };
     });
     if (result.error) return fail(result.error, result.status);
+    // Their pass by email too, so it isn't lost when the tab closes.
+    const { event } = result;
+    const mail = rsvpConfirmed({
+      name: value.name,
+      status: result.status,
+      feeRequired: event.fee_required,
+      passUrl: `${EVENTS_URL}/r/${result.code}`,
+      event: { title: event.title, date: String(event.date).slice(0, 10), startTime: event.start_time || undefined, endTime: event.end_time || undefined, venue: event.venue, city: event.city },
+    });
+    await sendEmail({ to: value.email, ...mail, idempotencyKey: `rsvp/${result.code}` }).catch(() => null);
     revalidatePath("/events");
-    return NextResponse.json(result, { headers: noStore });
+    return NextResponse.json({ status: result.status, code: result.code }, { headers: noStore });
   } catch (dbError) {
     if (dbError?.code === "23505") return fail("That email is already registered for this event. Check your confirmation link, or message us to change it.", 409);
     return fail("We couldn't save that just now. Please try again.", 502);

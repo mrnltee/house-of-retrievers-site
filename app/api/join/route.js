@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { parseSocialProfile } from "../../lib/socialProfile";
 import { hasDatabase, sql } from "../../lib/db";
+import { logActivity } from "../../lib/admin/log";
+import { savePersonPhoto } from "../../lib/personPhotos";
+import { sendEmail } from "../../lib/email";
+import { applicationReceived } from "../../lib/emailTemplates.mjs";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 
 // Module scope so it lives as long as the server instance. See spamGuard.mjs.
@@ -157,18 +161,45 @@ export async function POST(request) {
 
     // Also file the person in the admin's People list. Best effort: the sheet
     // already has them, so a database hiccup must not fail the visitor.
+    let joined = null;
     if (hasDatabase()) {
       const s = payload.submission;
       try {
-        await sql(
-          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        // One record per person and kind: joining again updates it, keeps the
+        // follow-up status and adds the new message under the old one.
+        const [person] = await sql(
+          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 = 'Member' THEN 'applicant' END)
+           ON CONFLICT (kind, lower(email)) DO UPDATE SET
+             name = EXCLUDED.name,
+             social_profile = COALESCE(EXCLUDED.social_profile, people.social_profile),
+             social_url = COALESCE(EXCLUDED.social_url, people.social_url),
+             organization = COALESCE(EXCLUDED.organization, people.organization),
+             furbaby_name = COALESCE(EXCLUDED.furbaby_name, people.furbaby_name),
+             message = CASE WHEN EXCLUDED.message IS NULL THEN people.message
+                            WHEN people.message IS NULL THEN EXCLUDED.message
+                            ELSE people.message || E'\n\n' || EXCLUDED.message END,
+             joined_count = people.joined_count + 1,
+             last_joined_at = now(),
+             updated_at = now()
+           RETURNING id, joined_count`,
           [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null],
         );
+        joined = person;
+        await logActivity("Join form", person.joined_count > 1 ? "person.rejoin" : "person.join", s.name, { personId: person.id, kind: s.joinType });
+        if (s.photo) await savePersonPhoto(person.id, s.photo).catch(() => null);
       } catch (error) {
         console.error("join: could not add to People", error?.code || error?.message);
       }
     }
+
+    // "We got your application", straight away. Best effort: no email setup, no email.
+    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again: (joined?.joined_count || 1) > 1 });
+    await sendEmail({
+      to: payload.submission.email,
+      ...mail,
+      idempotencyKey: joined ? `join/${joined.id}/${joined.joined_count}` : undefined,
+    }).catch(() => null);
 
     return NextResponse.json({ ok: true }, { headers: noStore });
   } catch {

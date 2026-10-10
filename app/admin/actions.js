@@ -11,7 +11,10 @@ import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin
 import { cleanSlug, slugify, validateEvent } from "../lib/admin/events.mjs";
 import { destroyPhoto } from "../lib/cloudinary.mjs";
 import { checkInOutcome, normalizeCode } from "../lib/admin/registrations.mjs";
-import { PEOPLE_STATUSES } from "../lib/admin/people.mjs";
+import { MEMBERSHIP_KEYS, PEOPLE_STATUSES, memberNumber, membershipLabel } from "../lib/admin/people.mjs";
+import { readSheet } from "../lib/admin/peopleImport.mjs";
+import { sendEmail } from "../lib/email";
+import { welcomeMember } from "../lib/emailTemplates.mjs";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -291,17 +294,111 @@ export async function checkInByCode(eventId, rawCode) {
 export async function updatePerson(data) {
   const id = form(data, "id");
   const kind = form(data, "kind");
-  const back = `/people?kind=${encodeURIComponent(kind || "Member")}`;
+  const back = form(data, "back") === "profile" && isUuid(id) ? `/people/${id}` : `/people?kind=${encodeURIComponent(kind || "Member")}`;
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
     if (!isUuid(id) || !PEOPLE_STATUSES[kind]) await backWith(back, "error", "That person no longer exists.");
     const status = form(data, "status");
     if (!PEOPLE_STATUSES[kind].includes(status)) await backWith(back, "error", "Pick a status from the list.");
-    const notes = form(data, "notes").trim().slice(0, 500) || null;
+    const notes = form(data, "notes").trim().slice(0, 2000) || null;
     const rows = await sql("UPDATE people SET status=$1, notes=$2, updated_at=now() WHERE id=$3 AND kind=$4 RETURNING name", [status, notes, id, kind]);
     if (!rows.length) await backWith(back, "error", "That person no longer exists.");
     await logActivity(admin.email, "person.update", kind, { personId: id, status });
     await backWith(back, "ok", `Saved ${rows[0].name}.`);
+  });
+}
+
+/**
+ * Membership for a Member: applicant → active → inactive / left. The first
+ * time someone becomes active they get a member number and "member since",
+ * and (if email is set up and the box is ticked) the welcome email.
+ */
+export async function updateMembership(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/people/${id}` : "/people";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const membership = form(data, "membership");
+    if (!isUuid(id) || !MEMBERSHIP_KEYS.includes(membership)) await backWith(back, "error", "Pick a membership status from the list.");
+    const [before] = await sql("SELECT name, email, kind, membership, member_no FROM people WHERE id=$1", [id]);
+    if (!before || before.kind !== "Member") await backWith(back, "error", "Membership applies to Members only.");
+    const [after] = await sql(
+      `UPDATE people SET membership=$1,
+         member_no = CASE WHEN $1 = 'active' AND member_no IS NULL THEN nextval('people_member_no') ELSE member_no END,
+         member_since = CASE WHEN $1 = 'active' AND member_since IS NULL THEN (now() AT TIME ZONE 'Asia/Manila')::date ELSE member_since END,
+         updated_at = now()
+       WHERE id=$2 RETURNING member_no`,
+      [membership, id],
+    );
+    await logActivity(admin.email, "person.membership", before.name, { personId: id, from: before.membership, to: membership });
+    let note = `${before.name} is now ${membershipLabel(membership).toLowerCase()}.`;
+    const firstActivation = membership === "active" && before.member_no == null;
+    if (firstActivation && data.get("sendWelcome") === "on") {
+      const mail = welcomeMember({ name: before.name, memberNo: memberNumber(after.member_no) });
+      const sent = await sendEmail({ to: before.email, ...mail, idempotencyKey: `welcome/${id}` });
+      if (sent.ok) {
+        await logActivity(admin.email, "person.email", before.name, { personId: id, template: "welcome" });
+        note += " Welcome email sent.";
+      } else {
+        note += sent.skipped ? " Email isn't set up yet, so no welcome email went out." : " The welcome email didn't go through; try Resend welcome.";
+      }
+    }
+    await backWith(back, "ok", note);
+  });
+}
+
+/** Sends (again) the welcome email to an active member. */
+export async function resendWelcome(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/people/${id}` : "/people";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no FROM people WHERE id=$1", [id]) : [];
+    if (!person || person.kind !== "Member" || person.membership !== "active") await backWith(back, "error", "Only active members get the welcome email.");
+    const mail = welcomeMember({ name: person.name, memberNo: memberNumber(person.member_no) });
+    const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `welcome/${id}/${Date.now()}` });
+    if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");
+    await logActivity(admin.email, "person.email", person.name, { personId: id, template: "welcome" });
+    await backWith(back, "ok", `Welcome email sent to ${person.email}.`);
+  });
+}
+
+/**
+ * Imports the Join sheet (downloaded as CSV). New people are added; people
+ * already here keep their details, gaining only what was blank, and the
+ * earlier join date.
+ */
+export async function importPeople(data) {
+  const back = "/people/import";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const file = data.get("file");
+    if (!file || typeof file === "string" || !file.size) await backWith(back, "error", "Choose the CSV file downloaded from the sheet.");
+    if (file.size > 5 * 1024 * 1024) await backWith(back, "error", "That file is larger than a Join sheet should be (5 MB). Check it's the right one.");
+    const { people, skipped, columns } = readSheet(await file.text());
+    if (!columns.includes("email") || !columns.includes("kind")) await backWith(back, "error", "That file doesn't look like the Join sheet: no Email or Join type column.");
+    let added = 0;
+    let matched = 0;
+    for (const p of people) {
+      const [row] = await sql(
+        `INSERT INTO people (kind, name, email, social_profile, organization, furbaby_name, message, status, notes, created_at, membership)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, now()), CASE WHEN $1 = 'Member' THEN 'applicant' END)
+         ON CONFLICT (kind, lower(email)) DO UPDATE SET
+           social_profile = COALESCE(people.social_profile, EXCLUDED.social_profile),
+           organization = COALESCE(people.organization, EXCLUDED.organization),
+           furbaby_name = COALESCE(people.furbaby_name, EXCLUDED.furbaby_name),
+           message = COALESCE(people.message, EXCLUDED.message),
+           notes = COALESCE(people.notes, EXCLUDED.notes),
+           created_at = LEAST(people.created_at, EXCLUDED.created_at)
+         RETURNING (xmax = 0) AS inserted`,
+        [p.kind, p.name, p.email, p.socialProfile, p.organization, p.furbabyName, p.message, p.status, p.notes, p.createdAt],
+      );
+      if (row.inserted) added += 1;
+      else matched += 1;
+    }
+    await logActivity(admin.email, "people.import", `${added} added`, { added, matched, skipped: skipped.length });
+    const skippedNote = skipped.length ? ` Skipped ${skipped.length}: ${skipped.slice(0, 5).map((s) => `row ${s.row} (${s.reason})`).join(", ")}${skipped.length > 5 ? "…" : ""}.` : "";
+    await backWith(back, "ok", `Imported. ${added} added, ${matched} already here.${skippedNote}`);
   });
 }
 
