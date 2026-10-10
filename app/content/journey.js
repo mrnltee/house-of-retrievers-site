@@ -53,7 +53,6 @@ export const journey = [
   {
     when: "November 2026",
     title: "Retriever Romp at Parklinks Pet Park, Pasig",
-    note: "A Golden Beginning: Paws, Purpose & Christmas",
     upcoming: true,
   },
 ];
