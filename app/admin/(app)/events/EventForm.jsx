@@ -1,6 +1,7 @@
 import { cancelEvent, publishEvent, saveEvent, unpublishEvent } from "../../actions";
 import { CATEGORIES, PURPOSES, SUMMARY_MAX, validateEvent } from "../../../lib/admin/events.mjs";
 import { isoDate } from "../ui";
+import ConfirmSave from "./ConfirmSave";
 import EventPhoto from "./EventPhoto";
 import { CharityField, HashtagField, RegistrationCard, VenueField } from "./EventFields";
 
@@ -77,11 +78,12 @@ export default function EventForm({ event, autoDescribe = false }) {
       {missing.length > 0 && <p className="banner note small">Needed before publishing: {missing.join(", ")}.</p>}
       <div className="actions">
         <button className="btn ghost">Save draft</button>
-        {event?.status !== "published" && <button className="btn gold" formAction={publishEvent}>Publish</button>}
-        {event?.status === "published" && <button className="btn gold">Save changes</button>}
-        {event?.status === "published" && <button className="btn ghost" formAction={unpublishEvent}>Move back to draft</button>}
-        {event && event.status !== "cancelled" && <button className="btn danger" formAction={cancelEvent}>Cancel event</button>}
+        {event?.status !== "published" && <button className="btn gold" formAction={publishEvent} data-confirm="publish">Publish</button>}
+        {event?.status === "published" && <button className="btn gold" data-confirm="save">Save changes</button>}
+        {event?.status === "published" && <button className="btn ghost" formAction={unpublishEvent} data-confirm="unpublish">Move back to draft</button>}
+        {event && event.status !== "cancelled" && <button className="btn danger" formAction={cancelEvent} data-confirm="cancel">Cancel event</button>}
       </div>
+      <ConfirmSave />
     </form>
   );
 }
