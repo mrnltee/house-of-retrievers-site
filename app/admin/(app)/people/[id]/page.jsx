@@ -47,7 +47,7 @@ export default async function PersonPage({ params, searchParams }) {
       <div className="person-head">
         <PersonAvatar person={person} base={base} size={96} />
         <div>
-          <PageHead title={person.name} lead={[person.kind, member && person.member_no ? memberNumber(person.member_no) : "", member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} />
+          <PageHead title={person.name} lead={[person.kind, member && person.member_no ? memberNumber(person) : "", member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} />
         </div>
       </div>
       <Flash params={query} />
@@ -78,7 +78,7 @@ export default async function PersonPage({ params, searchParams }) {
               <h2>Membership</h2>
               <dl className="facts">
                 <div><dt>Status</dt><dd><span className={`chip membership-${person.membership}`}>{membershipLabel(person.membership)}</span></dd></div>
-                {person.member_no && <div><dt>Number</dt><dd>{memberNumber(person.member_no)}</dd></div>}
+                {person.member_no && <div><dt>Number</dt><dd>{memberNumber(person)}</dd></div>}
                 {person.member_since && <div><dt>Since</dt><dd>{isoDate(person.member_since)}</dd></div>}
               </dl>
               {canEdit && (

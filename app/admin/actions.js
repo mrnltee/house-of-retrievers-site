@@ -322,19 +322,29 @@ export async function updateMembership(data) {
     if (!isUuid(id) || !MEMBERSHIP_KEYS.includes(membership)) await backWith(back, "error", "Pick a membership status from the list.");
     const [before] = await sql("SELECT name, email, kind, membership, member_no FROM people WHERE id=$1", [id]);
     if (!before || before.kind !== "Member") await backWith(back, "error", "Membership applies to Members only.");
-    const [after] = await sql(
-      `UPDATE people SET membership=$1,
-         member_no = CASE WHEN $1 = 'active' AND member_no IS NULL THEN nextval('people_member_no') ELSE member_no END,
-         member_since = CASE WHEN $1 = 'active' AND member_since IS NULL THEN (now() AT TIME ZONE 'Asia/Manila')::date ELSE member_since END,
-         updated_at = now()
-       WHERE id=$2 RETURNING member_no`,
-      [membership, id],
-    );
+    // First activation takes the next number in this year (HOR-YY-NNNN). The
+    // lock makes two admins activating at once get different numbers.
+    const after = await transaction(async (tx) => {
+      await tx.sql("SELECT pg_advisory_xact_lock(727010)");
+      const [row] = await tx.sql(
+        `WITH yr AS (SELECT extract(year FROM now() AT TIME ZONE 'Asia/Manila')::smallint AS y)
+         UPDATE people SET membership=$1,
+           member_year = CASE WHEN $1 = 'active' AND member_no IS NULL THEN (SELECT y FROM yr) ELSE member_year END,
+           member_no = CASE WHEN $1 = 'active' AND member_no IS NULL
+             THEN (SELECT coalesce(max(member_no), 0) + 1 FROM people WHERE member_year = (SELECT y FROM yr))
+             ELSE member_no END,
+           member_since = CASE WHEN $1 = 'active' AND member_since IS NULL THEN (now() AT TIME ZONE 'Asia/Manila')::date ELSE member_since END,
+           updated_at = now()
+         WHERE id=$2 RETURNING member_no, member_year`,
+        [membership, id],
+      );
+      return row;
+    });
     await logActivity(admin.email, "person.membership", before.name, { personId: id, from: before.membership, to: membership });
     let note = `${before.name} is now ${membershipLabel(membership).toLowerCase()}.`;
     const firstActivation = membership === "active" && before.member_no == null;
     if (firstActivation && data.get("sendWelcome") === "on") {
-      const mail = welcomeMember({ name: before.name, memberNo: memberNumber(after.member_no) });
+      const mail = welcomeMember({ name: before.name, memberNo: memberNumber(after) });
       const sent = await sendEmail({ to: before.email, ...mail, idempotencyKey: `welcome/${id}` });
       if (sent.ok) {
         await logActivity(admin.email, "person.email", before.name, { personId: id, template: "welcome" });
@@ -353,9 +363,9 @@ export async function resendWelcome(data) {
   const back = isUuid(id) ? `/people/${id}` : "/people";
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
-    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no FROM people WHERE id=$1", [id]) : [];
+    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year FROM people WHERE id=$1", [id]) : [];
     if (!person || person.kind !== "Member" || person.membership !== "active") await backWith(back, "error", "Only active members get the welcome email.");
-    const mail = welcomeMember({ name: person.name, memberNo: memberNumber(person.member_no) });
+    const mail = welcomeMember({ name: person.name, memberNo: memberNumber(person) });
     const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `welcome/${id}/${Date.now()}` });
     if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");
     await logActivity(admin.email, "person.email", person.name, { personId: id, template: "welcome" });

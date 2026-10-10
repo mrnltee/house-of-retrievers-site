@@ -19,4 +19,13 @@ export const MEMBERSHIP_KEYS = MEMBERSHIP.map(([key]) => key);
 export const membershipLabel = (key) => MEMBERSHIP.find(([k]) => k === key)?.[1] || "";
 
 /** 7 → "HOR-0007". */
-export const memberNumber = (n) => (Number.isInteger(n) ? `HOR-${String(n).padStart(4, "0")}` : "");
+/**
+ * "HOR-26-0001": the year they became a member (last two digits) and their
+ * place in that year. Takes the person row ({ member_no, member_year }).
+ */
+export const memberNumber = (person) => {
+  const n = Number(person?.member_no);
+  const year = Number(person?.member_year);
+  if (!Number.isInteger(n) || n < 1 || !Number.isInteger(year)) return "";
+  return `HOR-${String(year % 100).padStart(2, "0")}-${String(n).padStart(4, "0")}`;
+};

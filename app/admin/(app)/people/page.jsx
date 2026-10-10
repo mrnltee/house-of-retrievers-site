@@ -115,7 +115,7 @@ export default async function PeoplePage({ searchParams }) {
                 {members && (
                   <td>
                     <span className={`chip membership-${p.membership}`}>{membershipLabel(p.membership) || "—"}</span>
-                    {p.member_no && <><br /><span className="small muted">{memberNumber(p.member_no)}</span></>}
+                    {p.member_no && <><br /><span className="small muted">{memberNumber(p)}</span></>}
                   </td>
                 )}
                 <td>{formatWhen(p.created_at)}</td>
