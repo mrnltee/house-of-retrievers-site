@@ -18,6 +18,7 @@ const PERMISSIONS = {
   "dashboard:view": ["owner", "events", "treasurer", "content"],
   "events:view": ["owner", "events", "treasurer", "content"],
   "events:edit": ["owner", "events"],
+  "events:delete": ["owner", "events"],
   "registrations:view": ["owner", "events", "treasurer"],
   "registrations:edit": ["owner", "events"],
   "registrations:fees": ["owner", "events", "treasurer"],

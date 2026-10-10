@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import EventsView from "../../components/EventsView";
-import { loadEvent, manilaToday } from "../../lib/publicEvents";
+import { currentSlugFor, loadEvent, manilaToday } from "../../lib/publicEvents";
 import { EVENTS_URL } from "../../lib/eventsHost.mjs";
 import { SITE_NAME, SITE_URL } from "../../lib/siteSeo.mjs";
 import { eventUrl, formatWhen } from "../../lib/share.mjs";
@@ -62,7 +62,13 @@ function structuredData(event) {
 export default async function EventPage({ params }) {
   const { slug } = await params;
   const event = await loadEvent(slug);
-  if (!event) notFound();
+  if (!event) {
+    // An address the event used before it was renamed: send people on.
+    // On the events host the middleware then trims /events/ from the path.
+    const current = await currentSlugFor(slug);
+    if (current) redirect(`/events/${current}`);
+    notFound();
+  }
   const past = event.date < manilaToday();
   return (
     <>

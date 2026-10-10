@@ -3,6 +3,7 @@ import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import EventForm from "../EventForm";
+import { deleteEvent } from "../../../actions";
 import ShareMenu from "../../../../components/ShareMenu";
 import { toPublicEvent } from "../../../../lib/admin/events.mjs";
 import { eventUrl, shareCaption } from "../../../../lib/share.mjs";
@@ -16,6 +17,7 @@ export default async function EditEventPage({ params, searchParams }) {
   const [event] = await sql("SELECT * FROM events WHERE id = $1", [id]);
   if (!event) notFound();
   const base = await adminBase();
+  const [{ count: registrations }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1", [id]);
 
   return (
     <>
@@ -26,6 +28,7 @@ export default async function EditEventPage({ params, searchParams }) {
       <Flash params={query} />
       {event.status === "published" && <ShareCard event={event} />}
       <EventForm event={event} autoDescribe={Boolean(process.env.GEMINI_API_KEY)} />
+      <DeleteEventCard event={event} registrations={registrations} />
     </>
   );
 }
@@ -48,6 +51,30 @@ function ShareCard({ event }) {
         <p className="small muted">
           Instagram posts need the picture too: <a className="linkish" href={event.image} download={`${event.slug}.jpg`}>download the cover photo</a>.
         </p>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Delete for good, set apart from the editor. A ticked box stands in for a
+ * confirmation dialog. Blocked once anyone has registered: cancel instead.
+ */
+function DeleteEventCard({ event, registrations }) {
+  return (
+    <section className="card danger-zone">
+      <h2>Delete this event</h2>
+      {registrations > 0 ? (
+        <p className="small">
+          {registrations} {registrations === 1 ? "person has" : "people have"} registered, so this event can't be deleted. Use <strong>Cancel event</strong> above instead: it comes off the events page and their records stay.
+        </p>
+      ) : (
+        <form action={deleteEvent} className="form">
+          <input type="hidden" name="id" value={event.id} />
+          <p className="small">Removes the event, its page and its cover photo for good. This can't be undone. Links to it will show "not found".</p>
+          <label className="check"><input type="checkbox" name="confirm" required /> I want to delete "{event.title}" for good</label>
+          <div className="actions"><button className="btn danger">Delete event</button></div>
+        </form>
       )}
     </section>
   );

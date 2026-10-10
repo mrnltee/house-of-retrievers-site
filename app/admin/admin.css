@@ -173,3 +173,11 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .venue-pin { display: grid; gap: 6px; justify-items: start; }
 .venue-pin iframe { width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border: 1px solid var(--a-line); border-radius: 12px; }
 @media (max-width: 860px) { .venue-search { flex-direction: column; align-items: stretch; } }
+
+/* Event web address: the fixed start of the link, then the editable part. */
+.slug-field { display: flex; align-items: stretch; border: 1px solid var(--a-line); border-radius: 10px; overflow: hidden; background: white; }
+.slug-prefix { display: flex; align-items: center; padding: 0 10px; background: var(--a-sand); color: inherit; font-size: 13px; opacity: .8; white-space: nowrap; }
+.slug-field input { flex: 1; min-width: 0; border: 0; border-radius: 0; }
+@media (max-width: 560px) { .slug-field { flex-direction: column; } .slug-prefix { padding: 6px 10px; } }
+.danger-zone { border-color: var(--a-alert); }
+.danger-zone h2 { color: var(--a-alert); }

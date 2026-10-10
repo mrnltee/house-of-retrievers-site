@@ -20,6 +20,15 @@ export default function EventForm({ event, autoDescribe = false }) {
       <section className="card">
         <h2>Event details</h2>
         <label className="field"><span>Title</span><input type="text" name="title" required maxLength={120} defaultValue={v("title")} /></label>
+        {event && (
+          <label className="field"><span>Web address <small>The end of this event's link. You can change it; the old link keeps working and goes to the new one.</small></span>
+            <span className="slug-field">
+              <span className="slug-prefix" aria-hidden="true">events.houseofretrieversph.org/</span>
+              <input type="text" name="slug" required minLength={3} maxLength={80} defaultValue={event.slug} spellCheck={false} autoCapitalize="none" aria-describedby="slug-help" />
+            </span>
+            <small id="slug-help" className="muted">Lowercase letters, numbers and dashes. Spaces become dashes when you save.</small>
+          </label>
+        )}
         <div className="row-2">
           <label className="field"><span>Category</span>
             <select name="category" defaultValue={v("category")}>

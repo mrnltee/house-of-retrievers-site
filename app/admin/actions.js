@@ -8,7 +8,7 @@ import { logActivity } from "../lib/admin/log";
 import { alertAdmins } from "../lib/admin/notify";
 import { canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "../lib/admin/roles.mjs";
 import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin/payments.mjs";
-import { slugify, validateEvent } from "../lib/admin/events.mjs";
+import { cleanSlug, slugify, validateEvent } from "../lib/admin/events.mjs";
 import { checkInOutcome, normalizeCode } from "../lib/admin/registrations.mjs";
 import { PEOPLE_STATUSES } from "../lib/admin/people.mjs";
 
@@ -123,6 +123,21 @@ export async function saveEvent(data) {
         unpublished = true;
       }
     }
+    // A new web address: check it first, so a clash saves nothing.
+    let newSlug = null;
+    let oldSlug = null;
+    if (isUuid(id) && data.has("slug")) {
+      const [current] = await sql("SELECT slug FROM events WHERE id=$1", [id]);
+      const wanted = cleanSlug(form(data, "slug"));
+      if (wanted.error) await backWith(back, "error", wanted.error);
+      if (current && wanted.slug !== current.slug) {
+        const [clash] = await sql("SELECT 1 FROM events WHERE slug=$1 AND id<>$2", [wanted.slug, id]);
+        if (clash) await backWith(back, "error", `Another event already uses "${wanted.slug}". Pick a different web address.`);
+        newSlug = wanted.slug;
+        oldSlug = current.slug;
+      }
+    }
+
     if (isUuid(id)) {
       const rows = await sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
@@ -143,6 +158,19 @@ export async function saveEvent(data) {
         [...fields, status, slug],
       );
       eventId = rows[0].id;
+    }
+    if (newSlug) {
+      // The old address keeps working: it forwards to the new one.
+      await transaction(async (tx) => {
+        await tx.sql(
+          `INSERT INTO event_slug_redirects (old_slug, event_id) VALUES ($1, $2)
+             ON CONFLICT (old_slug) DO UPDATE SET event_id = EXCLUDED.event_id`,
+          [oldSlug, eventId],
+        );
+        await tx.sql("DELETE FROM event_slug_redirects WHERE old_slug=$1", [newSlug]);
+        await tx.sql("UPDATE events SET slug=$1 WHERE id=$2", [newSlug, eventId]);
+      });
+      await logActivity(admin.email, "event.address", value.title, { eventId, from: oldSlug, to: newSlug });
     }
     await sql(
       "UPDATE events SET is_charity=$1, purpose=$2, hashtags=$3, venue_lat=$4, venue_lng=$5, map_url=$6 WHERE id=$7",
@@ -421,6 +449,44 @@ export async function updateAdmin(data) {
 
 // A form's submit buttons can't be told apart reliably (the clicked button's
 // name/value is dropped on some submit paths), so each button gets its own action.
+/**
+ * Deletes an event for good, with its cover photo. Only when nobody has
+ * registered: an event with sign-ups is cancelled instead, so those records
+ * stay. The activity log keeps a note of what was deleted.
+ */
+export async function deleteEvent(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/events/${id}` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("events:delete");
+    if (!isUuid(id)) await backWith("/events", "error", "That event no longer exists.");
+    if (form(data, "confirm") !== "on") await backWith(back, "error", "Tick the box to confirm you want to delete this event for good.");
+    const [event] = await sql("SELECT id, title, slug, date, image, image_source FROM events WHERE id=$1", [id]);
+    if (!event) await backWith("/events", "error", "That event no longer exists.");
+    const [{ count }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1", [id]);
+    if (count > 0) {
+      await backWith(back, "error", `${count} ${count === 1 ? "person has" : "people have"} registered for this event, so it can't be deleted. Use "Cancel event" instead; their records stay.`);
+    }
+    const photoIds = [event.image, event.image_source]
+      .map((path) => String(path || "").match(/^\/api\/event-image\/([0-9a-f-]{36})$/i)?.[1])
+      .filter(Boolean);
+    await transaction(async (tx) => {
+      await tx.sql("DELETE FROM events WHERE id=$1", [id]);
+      if (photoIds.length) {
+        // Only photos no other event uses.
+        await tx.sql(
+          `DELETE FROM event_images i WHERE i.id = ANY($1::uuid[])
+             AND NOT EXISTS (SELECT 1 FROM events e WHERE e.image = '/api/event-image/' || i.id OR e.image_source = '/api/event-image/' || i.id)`,
+          [photoIds],
+        );
+      }
+    });
+    await logActivity(admin.email, "event.delete", event.title, { slug: event.slug, date: String(event.date).slice(0, 10) });
+    revalidatePath("/events", "layout");
+    await backWith("/events", "ok", `Deleted "${event.title}".`);
+  });
+}
+
 export async function publishEvent(data) { data.set("intent", "publish"); return saveEvent(data); }
 export async function unpublishEvent(data) { data.set("intent", "unpublish"); return saveEvent(data); }
 export async function cancelEvent(data) { data.set("intent", "cancel"); return saveEvent(data); }
