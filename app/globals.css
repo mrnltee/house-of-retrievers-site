@@ -898,6 +898,11 @@ main:focus { outline: none; }
 .journey-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease; }
 .journey-media img.is-active { opacity: 1; animation: journey-pan 7s ease-out both; }
 @keyframes journey-pan { from { transform: scale(1.12) translateX(var(--pan, 0)); } to { transform: scale(1.02) translateX(0); } }
+/* Posters and documents: shown whole, on a soft blurred copy of themselves. */
+.journey-media img.is-contained { z-index: 1; object-fit: contain; padding: 14px; filter: drop-shadow(0 10px 18px rgba(13,13,13,.28)); }
+.journey-media img.is-contained.is-active { animation: none; }
+.journey-media .journey-media-backdrop { opacity: .55; object-fit: cover; filter: blur(18px) saturate(1.1); transform: scale(1.2); animation: none; }
+.journey-media .journey-dots { z-index: 2; }
 .journey-dots { position: absolute; left: 12px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 2px; max-width: calc(100% - 24px); padding: 2px 6px; border-radius: 999px; background: rgba(13,13,13,.45); backdrop-filter: blur(6px); }
 .journey-dots button { position: relative; width: 22px; height: 22px; padding: 0; border: 0; background: transparent; }
 .journey-dots button::before { content: ""; position: absolute; inset: 8px; border-radius: 999px; background: rgba(255,255,255,.65); transition: inset .25s, background .25s; }

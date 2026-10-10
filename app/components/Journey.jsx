@@ -62,10 +62,13 @@ function JourneyMedia({ stop, status, index, playing }) {
 
   return (
     <div className="journey-media" ref={frame}>
+      {photos[active]?.fit === "contain" && (
+        <img className="journey-media-backdrop" src={photos[active].src} alt="" aria-hidden="true" />
+      )}
       {photos.map((photo, i) => (
         <img
           key={photo.src}
-          className={i === active ? "is-active" : undefined}
+          className={[i === active && "is-active", photo.fit === "contain" && "is-contained"].filter(Boolean).join(" ") || undefined}
           style={{ "--pan": i % 2 ? "2.5%" : "-2.5%" }}
           src={photo.src}
           alt={i === active ? photo.alt : ""}

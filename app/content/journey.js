@@ -25,6 +25,8 @@
  * @typedef {Object} JourneyPhoto
  * @property {string} src  Path under public/, e.g. "/journey/pawres-de-mayo/1.jpg".
  * @property {string} alt  What is in the frame.
+ * @property {"contain"} [fit] For a poster or document: shown whole on a blurred
+ *                             copy of itself instead of cropped to fill the frame.
  *
  * @typedef {Object} JourneyStop
  * @property {string} id        Unique, URL-safe. Also the photo folder name.
@@ -133,6 +135,9 @@ export const journey = [
     story: "We’re now officially registered[ as {org}]",
     tag: "Milestone",
     mark: "milestone",
+    photos: [
+      { src: "/journey/sec-registration/1.jpg", fit: "contain", alt: "The top of the society’s BIR Certificate of Registration, dated September 21, 2026" },
+    ],
   },
   {
     id: "freehugs-bgc",
@@ -156,13 +161,19 @@ export const journey = [
     title: "Weekend Social Run",
     place: "Filinvest City, Alabang",
     upcoming: true,
+    photos: [
+      { src: "/journey/weekend-social-run/1.jpg", fit: "contain", alt: "Weekend Social Run poster: run, walk, socialize. Sunday, 11 October 2026, 6:00 AM, Filinvest City, Alabang" },
+    ],
   },
   {
     id: "bedazzle-barkdate",
     month: "2026-10",
     title: "Bedazzle Barkdate",
-    place: "Wiltlover Cafe, Pasay City",
+    place: "Wiltlover Café, MetLive Mall, Pasay",
     upcoming: true,
+    photos: [
+      { src: "/journey/bedazzle-barkdate/1.jpg", fit: "contain", alt: "Bedazzle Barkdate poster: October 17, 2026, 1:00 to 4:00 PM at Wiltlover Café, MetLive Mall, Pasay. The pass includes a bedazzling kit, a drink, a pastry and a furbaby treat" },
+    ],
   },
   {
     id: "retriever-romp",
