@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import LogoMoments from "./LogoMoments";
 import Footer from "./Footer";
@@ -136,7 +136,62 @@ function mapEmbed(lat, lng) {
   return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
 }
 
-function EventDetail({ event, past, onRsvp, base }) {
+/**
+ * A past event's album: a grid, and a full-screen viewer with arrow keys,
+ * swipe and Esc. Built on <dialog>, so focus stays inside while it's open.
+ */
+function EventAlbum({ photos, title }) {
+  const dialog = useRef(null);
+  const [index, setIndex] = useState(0);
+  const touch = useRef(null);
+  const open = (i) => {
+    setIndex(i);
+    dialog.current?.showModal();
+  };
+  const step = (d) => setIndex((i) => (i + d + photos.length) % photos.length);
+  const photo = photos[index];
+  return (
+    <section className="event-album" aria-labelledby="album-title">
+      <h2 id="album-title">Photos <span>{photos.length}</span></h2>
+      <ul className="event-album-grid">
+        {photos.map((p, i) => (
+          <li key={p.thumb}>
+            <button type="button" onClick={() => open(i)} aria-label={`Open photo ${i + 1} of ${photos.length}${p.alt ? `: ${p.alt}` : ""}`}>
+              <img src={p.thumb} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <dialog
+        ref={dialog}
+        className="event-lightbox"
+        aria-label={`${title} photos`}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") step(1);
+          if (e.key === "ArrowLeft") step(-1);
+        }}
+        onClick={(e) => { if (e.target === dialog.current) dialog.current.close(); }}
+        onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - (touch.current ?? 0);
+          if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+        }}
+      >
+        {photo && <img src={photo.full} alt={photo.alt} />}
+        <p className="event-lightbox-count" aria-live="polite">{index + 1} / {photos.length}</p>
+        {photos.length > 1 && (
+          <>
+            <button type="button" className="event-lightbox-prev" onClick={() => step(-1)} aria-label="Previous photo">‹</button>
+            <button type="button" className="event-lightbox-next" onClick={() => step(1)} aria-label="Next photo">›</button>
+          </>
+        )}
+        <button type="button" className="event-lightbox-close" onClick={() => dialog.current.close()} aria-label="Close photos"><Icon name="close" size={20} /></button>
+      </dialog>
+    </section>
+  );
+}
+
+function EventDetail({ event, past, onRsvp, base, photos = [] }) {
   return (
     <article className="event-detail" aria-labelledby="event-title">
       <a className="event-back" href={base ? `${base}` : "/"}>← All events</a>
@@ -152,6 +207,7 @@ function EventDetail({ event, past, onRsvp, base }) {
           <RsvpButton event={event} past={past} onRsvp={onRsvp} />
           {!past && <ShareMenu event={event} />}
         </div>
+        {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
         {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
           <iframe
             className="event-map"
@@ -222,7 +278,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
       <main id="main">
         {focus ? (
           <div className="event-detail-wrap">
-            <EventDetail event={focus.event} past={focus.past} onRsvp={setRsvpEvent} base={base} />
+            <EventDetail event={focus.event} past={focus.past} photos={focus.photos} onRsvp={setRsvpEvent} base={base} />
           </div>
         ) : (
           <>

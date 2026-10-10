@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
-import { Flash, NotAllowed, PageHead } from "../../ui";
+import { Flash, NotAllowed, PageHead, isoDate } from "../../ui";
 import EventForm from "../EventForm";
 import { deleteEvent } from "../../../actions";
+import EventAlbum from "../EventAlbum";
+import { isPastDate } from "../../../../lib/admin/events.mjs";
+import { cloudinaryConfig, photoUrl } from "../../../../lib/cloudinary.mjs";
 import ShareMenu from "../../../../components/ShareMenu";
 import { toPublicEvent } from "../../../../lib/admin/events.mjs";
 import { eventUrl, shareCaption } from "../../../../lib/share.mjs";
@@ -28,6 +31,7 @@ export default async function EditEventPage({ params, searchParams }) {
       <Flash params={query} />
       {event.status === "published" && <ShareCard event={event} />}
       <EventForm event={event} autoDescribe={Boolean(process.env.GEMINI_API_KEY)} />
+      <AlbumCard event={event} />
       <DeleteEventCard event={event} registrations={registrations} />
     </>
   );
@@ -71,11 +75,35 @@ function DeleteEventCard({ event, registrations }) {
       ) : (
         <form action={deleteEvent} className="form">
           <input type="hidden" name="id" value={event.id} />
-          <p className="small">Removes the event, its page and its cover photo for good. This can't be undone. Links to it will show "not found".</p>
+          <p className="small">Removes the event, its page, its cover photo and its album photos for good. This can't be undone. Links to it will show "not found".</p>
           <label className="check"><input type="checkbox" name="confirm" required /> I want to delete "{event.title}" for good</label>
           <div className="actions"><button className="btn danger">Delete event</button></div>
         </form>
       )}
     </section>
   );
+}
+
+/** Past events get an album. Before the day, a note says when it opens. */
+async function AlbumCard({ event }) {
+  if (!isPastDate(isoDate(event.date))) {
+    return (
+      <section className="card">
+        <h2>Album</h2>
+        <p className="small muted">Photos can be added here once the event date has passed.</p>
+      </section>
+    );
+  }
+  const config = cloudinaryConfig();
+  if (!config) {
+    return (
+      <section className="card">
+        <h2>Album</h2>
+        <p className="small">Photo storage isn't connected: add the three Cloudinary keys in Vercel, then redeploy.</p>
+      </section>
+    );
+  }
+  const rows = await sql("SELECT * FROM event_photos WHERE event_id = $1 AND status = 'approved' ORDER BY position, created_at", [event.id]);
+  const photos = rows.map((row) => ({ id: row.id, alt: row.alt || "", width: row.width, height: row.height, bytes: row.bytes, thumb: photoUrl(config.cloudName, row.public_id, 480) }));
+  return <EventAlbum eventId={event.id} initialPhotos={photos} />;
 }

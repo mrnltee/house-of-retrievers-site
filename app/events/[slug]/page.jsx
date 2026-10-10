@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import EventsView from "../../components/EventsView";
-import { currentSlugFor, loadEvent, manilaToday } from "../../lib/publicEvents";
+import { currentSlugFor, loadEvent, loadEventPhotos, manilaToday } from "../../lib/publicEvents";
 import { EVENTS_URL } from "../../lib/eventsHost.mjs";
 import { SITE_NAME, SITE_URL } from "../../lib/siteSeo.mjs";
 import { eventUrl, formatWhen } from "../../lib/share.mjs";
@@ -70,10 +70,11 @@ export default async function EventPage({ params }) {
     notFound();
   }
   const past = event.date < manilaToday();
+  const photos = past ? await loadEventPhotos(slug) : [];
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(event)).replace(/</g, "\\u003c") }} />
-      <EventsView upcoming={[]} past={[]} focus={{ event, past }} />
+      <EventsView upcoming={[]} past={[]} focus={{ event, past, photos }} />
     </>
   );
 }

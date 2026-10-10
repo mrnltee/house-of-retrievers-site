@@ -1005,3 +1005,24 @@ main:focus { outline: none; }
   .journey-list.is-ready .journey-stop:not(.is-in) .journey-card,
   .journey-list.is-ready .journey-stop:not(.is-in) .journey-when { opacity: 1; transform: none; }
 }
+
+/* Event album (past events) — EventAlbum in app/components/EventsView.jsx */
+.event-album { display: grid; gap: 14px; margin-top: 12px; }
+.event-album h2 { display: flex; align-items: baseline; gap: 10px; margin: 0; font: 400 clamp(28px, 4vw, 36px)/1.1 "DM Serif Display", serif; letter-spacing: -.02em; }
+.event-album h2 span { color: var(--muted-on-light); font: 600 14px "DM Sans", sans-serif; letter-spacing: .08em; }
+.event-album-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.event-album-grid button { display: block; width: 100%; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: #e7e0cf; cursor: zoom-in; }
+.event-album-grid img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; transition: transform .4s ease; }
+.event-album-grid button:hover img { transform: scale(1.04); }
+.event-album-grid button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.event-lightbox { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgba(13,13,13,.94); color: white; }
+.event-lightbox[open] { display: grid; place-items: center; }
+.event-lightbox::backdrop { background: rgba(13,13,13,.6); }
+.event-lightbox img { max-width: min(94vw, 1800px); max-height: 84dvh; object-fit: contain; border-radius: 6px; }
+.event-lightbox-count { position: absolute; left: 50%; bottom: 18px; margin: 0; transform: translateX(-50%); font-size: 13px; letter-spacing: .08em; color: rgba(255,255,255,.8); }
+.event-lightbox button { position: absolute; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(13,13,13,.5); color: white; font-size: 28px; line-height: 1; cursor: pointer; }
+.event-lightbox button:hover, .event-lightbox button:focus-visible { background: var(--gold); color: var(--ink); outline: none; }
+.event-lightbox-prev { left: 16px; top: 50%; transform: translateY(-50%); }
+.event-lightbox-next { right: 16px; top: 50%; transform: translateY(-50%); }
+.event-lightbox-close { top: 16px; right: 16px; }
+@media (prefers-reduced-motion: reduce) { .event-album-grid img { transition: none; } }
