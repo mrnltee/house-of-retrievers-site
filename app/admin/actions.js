@@ -9,6 +9,7 @@ import { alertAdmins } from "../lib/admin/notify";
 import { canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "../lib/admin/roles.mjs";
 import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin/payments.mjs";
 import { cleanSlug, slugify, validateEvent } from "../lib/admin/events.mjs";
+import { destroyPhoto } from "../lib/cloudinary.mjs";
 import { checkInOutcome, normalizeCode } from "../lib/admin/registrations.mjs";
 import { PEOPLE_STATUSES } from "../lib/admin/people.mjs";
 
@@ -470,6 +471,7 @@ export async function deleteEvent(data) {
     const photoIds = [event.image, event.image_source]
       .map((path) => String(path || "").match(/^\/api\/event-image\/([0-9a-f-]{36})$/i)?.[1])
       .filter(Boolean);
+    const album = await sql("SELECT public_id FROM event_photos WHERE event_id=$1", [id]);
     await transaction(async (tx) => {
       await tx.sql("DELETE FROM events WHERE id=$1", [id]);
       if (photoIds.length) {
@@ -481,6 +483,10 @@ export async function deleteEvent(data) {
         );
       }
     });
+    // Album photos live in Cloudinary: remove them there too (best effort).
+    for (const { public_id: publicId } of album) {
+      if (!(await destroyPhoto(publicId))) console.warn("Cloudinary photo not removed; delete it in the Media Library", publicId);
+    }
     await logActivity(admin.email, "event.delete", event.title, { slug: event.slug, date: String(event.date).slice(0, 10) });
     revalidatePath("/events", "layout");
     await backWith("/events", "ok", `Deleted "${event.title}".`);
