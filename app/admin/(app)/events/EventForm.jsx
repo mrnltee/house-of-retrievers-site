@@ -2,7 +2,7 @@ import { cancelEvent, publishEvent, saveEvent, unpublishEvent } from "../../acti
 import { CATEGORIES, PURPOSES, SUMMARY_MAX, validateEvent } from "../../../lib/admin/events.mjs";
 import { isoDate } from "../ui";
 import EventPhoto from "./EventPhoto";
-import { CharityField, HashtagField, VenueField } from "./EventFields";
+import { CharityField, HashtagField, RegistrationCard, VenueField } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
 export default function EventForm({ event, autoDescribe = false }) {
@@ -57,21 +57,13 @@ export default function EventForm({ event, autoDescribe = false }) {
         <EventPhoto key={event?.image || "none"} current={event?.image || ""} currentAlt={event?.image_alt || ""} currentSource={event?.image_source || ""} currentCrop={event?.image_crop || null} autoDescribe={autoDescribe} />
       </section>
 
-      <section className="card">
-        <h2>Registration</h2>
-        <fieldset className="plain">
-          <legend>Do people sign up?</legend>
-          <label className="check"><input type="radio" name="registration" value="none" defaultChecked={v("registration", "none") === "none"} /> No, anyone can come along</label>
-          <label className="check"><input type="radio" name="registration" value="required" defaultChecked={v("registration") === "required"} /> Yes, they RSVP on the events page</label>
-        </fieldset>
-        <div className="row-2">
-          <label className="field"><span>Capacity <small>Empty for no limit. When full, new sign-ups join the waitlist.</small></span><input type="number" name="capacity" min={1} max={5000} defaultValue={v("capacity", "")} /></label>
-          <div className="form">
-            <label className="check"><input type="checkbox" name="rsvpOpen" defaultChecked={event ? event.rsvp_open : true} /> RSVPs are open</label>
-            <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(event?.fee_required)} /> A fee is paid by QR before the day (track it per person)</label>
-          </div>
-        </div>
-      </section>
+      <RegistrationCard
+        registration={event?.registration}
+        capacity={event?.capacity}
+        rsvpOpen={event ? event.rsvp_open : true}
+        feeRequired={event?.fee_required}
+        date={event ? isoDate(event.date) : ""}
+      />
 
       {missing.length > 0 && <p className="banner note small">Needed before publishing: {missing.join(", ")}.</p>}
       <div className="actions">

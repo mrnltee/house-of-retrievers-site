@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
-import { MAX_HASHTAGS, parseHashtags } from "../../../lib/admin/events.mjs";
+import { MAX_HASHTAGS, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
 
 /** "This is a charity event" reveals the beneficiary field. */
 export function CharityField({ isCharity, supports }) {
@@ -59,7 +59,7 @@ export function VenueField({ venue, city, lat, lng, mapUrl }) {
 
   async function search() {
     const q = query.trim() || [values.venue, values.city].filter(Boolean).join(", ");
-    if (!q) return setMessage("Type the venue's name first.");
+    if (!q) return setMessage("Type the venue's name or its plus code first.");
     setBusy(true);
     setMessage("");
     setResults(null);
@@ -95,7 +95,7 @@ export function VenueField({ venue, city, lat, lng, mapUrl }) {
       </div>
       <div className="venue-search">
         <label className="field" style={{ flex: 1 }}>
-          <span>Find it on the map <small>Search by place name; picking one fills Venue and City and pins the spot</small></span>
+          <span>Find it on the map <small>A place name, a plus code from Google Maps (e.g. H4XX+2V Makati) or coordinates. Picking a result fills Venue and City and pins the spot; edit the Venue name if it isn't the one people know.</small></span>
           <input
             type="search"
             value={query}
@@ -106,7 +106,7 @@ export function VenueField({ venue, city, lat, lng, mapUrl }) {
                 search();
               }
             }}
-            placeholder="e.g. Bonifacio High Street"
+            placeholder="e.g. Bonifacio High Street, or H4XX+2V Makati"
           />
         </label>
         <button type="button" className="btn ghost small" onClick={search} disabled={busy}>{busy ? "Searching…" : "Search"}</button>
@@ -137,5 +137,54 @@ export function VenueField({ venue, city, lat, lng, mapUrl }) {
         <input type="text" inputMode="url" name="mapUrl" maxLength={500} defaultValue={mapUrl || ""} placeholder="https://maps.app.goo.gl/…" />
       </label>
     </div>
+  );
+}
+
+/**
+ * Sign-up settings. They follow the Date field in the same form: an event
+ * dated before today is a record of what happened (details and photos), so
+ * the settings give way to a note. The server enforces the same rule.
+ */
+export function RegistrationCard({ registration, capacity, rsvpOpen, feeRequired, date }) {
+  const ref = useRef(null);
+  const [past, setPast] = useState(isPastDate(date || ""));
+
+  useEffect(() => {
+    const input = ref.current?.closest("form")?.querySelector('input[name="date"]');
+    if (!input) return undefined;
+    const update = () => setPast(isPastDate(input.value, manilaDate()));
+    update();
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+    return () => {
+      input.removeEventListener("input", update);
+      input.removeEventListener("change", update);
+    };
+  }, []);
+
+  return (
+    <section className="card" ref={ref}>
+      <h2>Registration</h2>
+      {past ? (
+        <p className="banner note small" role="status">
+          This date has passed, so this is a past event: no RSVPs or sign-ups. Once published it appears under "Where we have been" on the events page, with its details and photos.
+        </p>
+      ) : (
+        <>
+          <fieldset className="plain">
+            <legend>Do people sign up?</legend>
+            <label className="check"><input type="radio" name="registration" value="none" defaultChecked={(registration || "none") === "none"} /> No, anyone can come along</label>
+            <label className="check"><input type="radio" name="registration" value="required" defaultChecked={registration === "required"} /> Yes, they RSVP on the events page</label>
+          </fieldset>
+          <div className="row-2">
+            <label className="field"><span>Capacity <small>Empty for no limit. When full, new sign-ups join the waitlist.</small></span><input type="number" name="capacity" min={1} max={5000} defaultValue={capacity ?? ""} /></label>
+            <div className="form">
+              <label className="check"><input type="checkbox" name="rsvpOpen" defaultChecked={rsvpOpen ?? true} /> RSVPs are open</label>
+              <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> A fee is paid by QR before the day (track it per person)</label>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
   );
 }

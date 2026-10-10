@@ -1,6 +1,7 @@
 "use server";
 
 import { actionAdmin, Forbidden } from "../lib/admin/guard";
+import { decode, findPlusCode, isFullCode, isShortCode, parseCoordinates, recoverNearest } from "../lib/plusCode.mjs";
 
 /*
  * Helpers the event editor calls while you type. They return data instead of
@@ -16,10 +17,72 @@ const USER_AGENT = "HouseOfRetrieversAdmin/1.0 (+https://www.houseofretrieversph
 const placeCache = new Map();
 let lastSearchAt = 0;
 
+const NOMINATIM_REVERSE = process.env.NOMINATIM_REVERSE_URL || NOMINATIM.replace(/\/search$/, "/reverse");
+const SEARCH_FAILED = "The map search didn't answer. Try again in a moment, or paste a Google Maps link instead.";
+
+/** One Nominatim request, at most one a second (their free-use rule). */
+async function nominatim(base, params) {
+  const wait = 1100 - (Date.now() - lastSearchAt);
+  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+  lastSearchAt = Date.now();
+  const response = await fetch(`${base}?${new URLSearchParams({ format: "jsonv2", addressdetails: "1", ...params })}`, {
+    headers: { "User-Agent": USER_AGENT, "Accept-Language": "en" },
+    signal: AbortSignal.timeout(8000),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(String(response.status));
+  return response.json();
+}
+
+function toPlace(row, point) {
+  const a = row?.address || {};
+  const city = a.city || a.town || a.municipality || a.village || a.county || a.state || "";
+  const name = row?.name || String(row?.display_name || "").split(",")[0];
+  return {
+    name: String(name || "").slice(0, 160),
+    city: city.slice(0, 80),
+    address: String(row?.display_name || "").slice(0, 240),
+    lat: point ? point.lat : Number(row?.lat),
+    lng: point ? point.lng : Number(row?.lon),
+  };
+}
+
 /**
- * Up to six places in the Philippines matching `query`. Nominatim's free
- * service asks for at most one request a second and no search-as-you-type,
- * so the editor searches on a button press and results are cached.
+ * The exact spot for a plus code ("7Q63H4XX+2V", or "H4XX+2V Makati") or
+ * pasted coordinates ("14.5547, 121.0244"), with the address OpenStreetMap
+ * has there. A short code needs the area after it, which is looked up first.
+ * @returns {Promise<{ places?: object[], error?: string } | null>} null when the query is neither.
+ */
+async function searchExactSpot(query) {
+  let point = parseCoordinates(query);
+  let label = point ? `${point.lat}, ${point.lng}` : "";
+  if (!point) {
+    const found = findPlusCode(query);
+    if (!found) return null;
+    label = found.code;
+    if (isFullCode(found.code)) {
+      point = decode(found.code);
+    } else if (isShortCode(found.code)) {
+      if (!found.rest) return { error: `Add the area after the code, the way Google Maps shows it, e.g. "${found.code} Makati".` };
+      const areas = await nominatim(NOMINATIM, { q: found.rest, limit: "1", countrycodes: "ph" });
+      if (!Array.isArray(areas) || !areas.length) return { error: `Couldn't find "${found.rest}". Try the city name, e.g. "${found.code} Quezon City".` };
+      point = recoverNearest(found.code, Number(areas[0].lat), Number(areas[0].lon));
+    } else {
+      return { error: "That plus code doesn't look complete. Copy it from Google Maps, e.g. \"H4XX+2V Makati\"." };
+    }
+  }
+  const row = await nominatim(NOMINATIM_REVERSE, { lat: String(point.lat), lon: String(point.lng), zoom: "18" }).catch(() => null);
+  const place = toPlace(row && !row.error ? row : null, point);
+  if (!place.name) place.name = label;
+  if (!place.address) place.address = `${point.lat}, ${point.lng}`;
+  return { places: [place] };
+}
+
+/**
+ * Up to six places in the Philippines matching `query`, or the exact spot
+ * for a plus code or coordinates. Nominatim's free service asks for at most
+ * one request a second and no search-as-you-type, so the editor searches on
+ * a button press and results are cached.
  * @returns {Promise<{ places?: {name: string, city: string, address: string, lat: number, lng: number}[], error?: string }>}
  */
 export async function searchPlaces(rawQuery) {
@@ -30,40 +93,24 @@ export async function searchPlaces(rawQuery) {
     throw error;
   }
   const query = String(rawQuery || "").trim().replace(/\s+/g, " ").slice(0, 120);
-  if (query.length < 3) return { error: "Type at least three letters of the venue's name." };
+  if (query.length < 3) return { error: "Type at least three letters of the venue's name, or a plus code." };
   const key = query.toLowerCase();
   if (placeCache.has(key)) return { places: placeCache.get(key) };
 
-  const wait = 1100 - (Date.now() - lastSearchAt);
-  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
-  lastSearchAt = Date.now();
-
-  const url = `${NOMINATIM}?${new URLSearchParams({ q: query, format: "jsonv2", addressdetails: "1", limit: "6", countrycodes: "ph" })}`;
-  let rows;
+  let places;
   try {
-    const response = await fetch(url, {
-      headers: { "User-Agent": USER_AGENT, "Accept-Language": "en" },
-      signal: AbortSignal.timeout(8000),
-      cache: "no-store",
-    });
-    if (!response.ok) throw new Error(String(response.status));
-    rows = await response.json();
+    const exact = await searchExactSpot(query);
+    if (exact?.error) return exact;
+    if (exact) places = exact.places;
+    else {
+      const rows = await nominatim(NOMINATIM, { q: query, limit: "6", countrycodes: "ph" });
+      places = (Array.isArray(rows) ? rows : []).map((row) => toPlace(row));
+    }
   } catch (error) {
     console.warn("venue search failed", error.message);
-    return { error: "The map search didn't answer. Try again in a moment, or paste a Google Maps link instead." };
+    return { error: SEARCH_FAILED };
   }
-  const places = (Array.isArray(rows) ? rows : []).map((row) => {
-    const a = row.address || {};
-    const city = a.city || a.town || a.municipality || a.village || a.county || a.state || "";
-    const name = row.name || String(row.display_name || "").split(",")[0];
-    return {
-      name: name.slice(0, 160),
-      city: city.slice(0, 80),
-      address: String(row.display_name || "").slice(0, 240),
-      lat: Number(row.lat),
-      lng: Number(row.lon),
-    };
-  }).filter((p) => p.name && Number.isFinite(p.lat) && Number.isFinite(p.lng));
+  places = places.filter((p) => p.name && Number.isFinite(p.lat) && Number.isFinite(p.lng));
   placeCache.set(key, places);
   if (placeCache.size > 200) placeCache.delete(placeCache.keys().next().value);
   return { places };
