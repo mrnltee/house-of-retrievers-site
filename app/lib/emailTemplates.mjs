@@ -43,7 +43,7 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * The shared frame. Tables and inline styles, because email apps ignore most
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
-function frame({ preheader, greeting, heading, paragraphs, button, after = [], signoff, footnote, centered = false }) {
+function frame({ preheader, greeting, heading, paragraphs, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
   const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${text}</p>`;
   const sign = signoff
     ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${signoff.join("<br>")}</p>`
@@ -52,7 +52,7 @@ function frame({ preheader, greeting, heading, paragraphs, button, after = [], s
   const foot = centered
     ? `<tr><td class="em-foot" align="center" style="padding:24px 28px 28px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960;text-align:center">
       <img src="${BADGE}" width="174" height="85" alt="${ORG}" style="display:block;margin:0 auto 12px;border:0">
-      THORSI · ${ORG}${footnote ? `<br><br>${footnote}` : ""}
+      THORSI · ${ORG}<br>Reply to this email to reach the team.${footnote ? `<br><br>${footnote}` : ""}
     </td></tr>`
     : `<tr><td class="em-foot" style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
       ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
@@ -83,10 +83,10 @@ function frame({ preheader, greeting, heading, paragraphs, button, after = [], s
 }
 
 /** The plain-text twin every email needs (some apps show only this; spam filters check for it). */
-function plain({ greeting, heading, paragraphs, button, after = [], signoff, footnote, centered = false }) {
+function plain({ greeting, heading, paragraphs, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
   const strip = (html) => String(html).replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   const ending = centered
-    ? [`THORSI · ${ORG}`, footnote ? strip(footnote) : ""]
+    ? [`THORSI · ${ORG}`, "Reply to this email to reach the team.", "", footnote ? strip(footnote) : ""]
     : [footnote ? strip(footnote) : "", `${ORG} · ${HOME_URL}`, "Reply to this email to reach the team."];
   return [
     ...(greeting ? [greeting, ""] : []),
@@ -110,6 +110,14 @@ const NEXT_STEP = {
   Sponsor: "Someone from the team will get in touch to talk about the events and causes you'd like to support.",
 };
 
+/** HOR's sign-off, used on every email (from the registrant welcome HOR supplied). */
+const SIGNOFF = [
+  "With love and purpose,",
+  `<strong>${ORG}</strong>`,
+  "<em>Paws for a Purpose</em>",
+  `<a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">www.houseofretrieversph.org</a>`,
+];
+
 /**
  * A new member's first email, in HOR's own words (supplied 11 Oct 2026):
  * centered logo, warm welcome, signed by the Society. Repeat submissions
@@ -117,7 +125,6 @@ const NEXT_STEP = {
  */
 function memberRegistered({ name }) {
   return build({
-    centered: true,
     subject: `Welcome to the House, ${firstName(name)}! 🤎`,
     preheader: "We've received your membership registration.",
     greeting: `Hi ${firstName(name)},`,
@@ -129,12 +136,6 @@ function memberRegistered({ name }) {
       "Here at the House, we believe that every paw has a purpose. Whether it’s making new friends, sharing meaningful experiences, or lending a helping paw, there’s so much we can do together.",
       "We look forward to creating more memories and making a difference with you.",
       "<strong>Welcome home! 🤎</strong>",
-    ],
-    signoff: [
-      "With love and purpose,",
-      `<strong>${ORG}</strong>`,
-      "<em>Paws for a Purpose</em>",
-      `<a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">www.houseofretrieversph.org</a>`,
     ],
     footnote: "You're getting this because this email address was entered on the Join form. If that wasn't you, just reply and we'll remove it.",
   });
@@ -166,7 +167,7 @@ export function welcomeMember({ name, memberNo }) {
     preheader: memberNo ? `You're member ${memberNo}.` : "You're in.",
     heading: `Welcome to the pack, ${firstName(name)}.`,
     paragraphs: [
-      `You're now a member of House of Retrievers${memberNo ? `. Your member number is <strong>${esc(memberNo)}</strong>` : ""}.`,
+      `You're now a member of House of Retrievers${memberNo ? `. Your member number is <strong style="white-space:nowrap">${esc(memberNo)}</strong>` : ""}.`,
       "Events are where it all happens: runs, care visits, workshops and fundraisers. RSVP on the events page with this email address and you'll get your pass straight away.",
     ],
     button: { label: "See upcoming events", href: EVENTS_URL },

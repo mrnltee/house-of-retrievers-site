@@ -26,7 +26,15 @@ test("a new member gets HOR's welcome; a repeat gets the short note", () => {
   assert.match(first.html, /email\/header-center\.png/);
   assert.match(first.html, /email\/badge\.png/);
   assert.doesNotMatch(first.text, /<[a-z]/);
-  assert.doesNotMatch(applicationReceived({ name: "Sheryl", kind: "Member", again: true }).html, /badge\.png/);
+  assert.doesNotMatch(applicationReceived({ name: "Sheryl", kind: "Member", again: true }).text, /every paw has a purpose/);
+});
+
+test("every email uses the house style: centered logo and HOR's sign-off", () => {
+  for (const mail of [welcomeMember({ name: "Loren" }), applicationReceived({ name: "Chris", kind: "Volunteer" })]) {
+    assert.match(mail.html, /email\/header-center\.png/);
+    assert.match(mail.text, /With love and purpose,/);
+    assert.match(mail.text, /Reply to this email to reach the team/);
+  }
 });
 
 test("welcome carries the member number; RSVP the pass link and the event", () => {
