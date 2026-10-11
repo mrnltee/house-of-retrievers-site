@@ -9,6 +9,7 @@ import Journey from "./components/Journey";
 import InstagramFeed from "./components/InstagramFeed";
 import Pack from "./components/Pack";
 import FinalCta from "./components/FinalCta";
+import Supporters from "./components/Supporters";
 import Footer from "./components/Footer";
 import JoinModal from "./components/JoinModal";
 import SupportModal from "./components/SupportModal";
@@ -90,6 +91,7 @@ export default function Home() {
       <Journey onJoin={openJoin} />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
+      <Supporters onJoin={openJoin} />
       <FinalCta onJoin={openJoin} />
       </main>
       <Footer />

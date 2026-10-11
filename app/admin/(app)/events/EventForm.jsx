@@ -12,7 +12,14 @@ import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, Supp
 /** Names to suggest: confirmed-or-not Partners and Sponsors from People (organisation first). */
 async function supporterNames(kind) {
   try {
-    const rows = await sql("SELECT DISTINCT coalesce(nullif(organization, ''), name) AS n FROM people WHERE kind=$1 ORDER BY 1 LIMIT 200", [kind]);
+    // Sponsor and partner records first (their names link the event to the record), then People not yet recorded.
+    const rows = await sql(
+      `SELECT n FROM (
+         SELECT name AS n, 0 AS o FROM supporters WHERE kind = $1 AND status <> 'ended'
+         UNION SELECT coalesce(nullif(organization, ''), name), 1 FROM people WHERE kind = $1
+       ) x GROUP BY n ORDER BY min(o), n LIMIT 200`,
+      [kind],
+    );
     return rows.map((r) => r.n).filter(Boolean);
   } catch {
     return [];

@@ -3,7 +3,7 @@ import { can, ROLE_LABELS } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 
 const GROUPS = [
-  ["Run", [["Dashboard", "/", "dashboard:view"], ["Events", "/events", "events:view"], ["Registrations", "/registrations", "registrations:view"], ["Check-in", "/checkin", "checkin"], ["People", "/people", "people:view"]]],
+  ["Run", [["Dashboard", "/", "dashboard:view"], ["Events", "/events", "events:view"], ["Registrations", "/registrations", "registrations:view"], ["Check-in", "/checkin", "checkin"], ["People", "/people", "people:view"], ["Sponsors & partners", "/supporters", "people:view"]]],
   ["Publish", [["Gallery", null], ["Forms", null], ["Content", null]]],
   ["Money", [["Payment settings", "/payments", "payments:view"], ["Donations & spending", null]]],
   ["Settings", [["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],

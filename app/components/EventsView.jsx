@@ -378,6 +378,20 @@ function DetailFacts({ event, past }) {
   );
 }
 
+/** A partner or sponsor on the event page: with a public record, its logo and a link to its panel on the home page. */
+function SupporterChip({ name, link }) {
+  if (!link) return <li>{name}</li>;
+  return (
+    <li className="has-logo">
+      <a href={`${HOME_URL}/?supporter=${link.slug}#partners`}>
+        <img src={link.logo} alt="" width={28} height={28} />
+        {name}
+        <Icon name="arrow" size={13} />
+      </a>
+    </li>
+  );
+}
+
 export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
   const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
   const card = useRef(null);
@@ -435,13 +449,13 @@ export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
               {event.partners && (
                 <div>
                   <p className="event-supporters-role">In partnership with</p>
-                  <ul>{event.partners.map((n) => <li key={n}>{n}</li>)}</ul>
+                  <ul>{event.partners.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} />)}</ul>
                 </div>
               )}
               {event.sponsors && (
                 <div>
                   <p className="event-supporters-role">Sponsored by</p>
-                  <ul>{event.sponsors.map((n) => <li key={n}>{n}</li>)}</ul>
+                  <ul>{event.sponsors.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} />)}</ul>
                 </div>
               )}
             </section>

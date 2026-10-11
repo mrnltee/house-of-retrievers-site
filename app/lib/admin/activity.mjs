@@ -18,6 +18,8 @@ export const ACTION_LABELS = {
   "person.membership": "Changed membership",
   "person.email": "Sent an email",
   "people.import": "Imported people from the sheet",
+  "supporter.create": "Added a sponsor or partner",
+  "supporter.save": "Updated a sponsor or partner",
   "people.export": "Exported people",
   "payment.request": "Requested a payment change",
   "payment.cancel": "Cancelled a payment change",

@@ -6,6 +6,7 @@ import { actionLabel } from "../../../../lib/admin/activity.mjs";
 import { MEMBERSHIP, PEOPLE_STATUSES, memberNumber, membershipLabel } from "../../../../lib/admin/people.mjs";
 import { emailReady } from "../../../../lib/email";
 import { resendWelcome, updateMembership, updatePerson } from "../../../actions";
+import { supporterFromPerson } from "../../../supporterActions";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import PersonAvatar from "../PersonAvatar";
 
@@ -35,6 +36,9 @@ export default async function PersonPage({ params, searchParams }) {
     sql("SELECT at, actor_email, action, details FROM activity_log WHERE details->>'personId' = $1 ORDER BY at DESC LIMIT 50", [id]),
     sql("SELECT id, kind FROM people WHERE lower(email) = lower($1) AND id <> $2", [person.email, id]),
   ]);
+  const supporter = ["Sponsor", "Partner"].includes(person.kind)
+    ? (await sql("SELECT id, name FROM supporters WHERE person_id = $1 OR lower(name) = lower($2) LIMIT 1", [id, (person.organization || person.name || "").trim()]))[0] || null
+    : null;
   const canEdit = can(admin.roles, "people:edit");
   const member = person.kind === "Member";
   const attended = events.filter((e) => e.checked_in_at).length;
@@ -104,6 +108,23 @@ export default async function PersonPage({ params, searchParams }) {
                   <input type="hidden" name="id" value={person.id} />
                   <button className="linkish">Send the welcome email again</button>
                 </form>
+              )}
+            </section>
+          )}
+
+          {["Sponsor", "Partner"].includes(person.kind) && (
+            <section className="card">
+              <h2>Sponsor & partner record</h2>
+              {supporter ? (
+                <p><a href={`${base}/supporters/${supporter.id}`}>Open “{supporter.name}” →</a></p>
+              ) : canEdit ? (
+                <form action={supporterFromPerson}>
+                  <input type="hidden" name="personId" value={person.id} />
+                  <p className="small muted">Make a record for logo, tier, amounts and the events they back. It appears on the website only once it's confirmed and switched on.</p>
+                  <button className="btn ghost">Make a {person.kind.toLowerCase()} record</button>
+                </form>
+              ) : (
+                <p className="small muted">No record yet.</p>
               )}
             </section>
           )}

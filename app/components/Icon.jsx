@@ -17,6 +17,7 @@ const paths = {
     </>
   ),
   close: <path d="M6 6l12 12M18 6 6 18" />,
+  external: <path d="M7 17 17 7M9 7h8v8" />,
   check: <path d="m5 12 4 4L19 6" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   share: (

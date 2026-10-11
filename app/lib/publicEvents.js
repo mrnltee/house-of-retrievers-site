@@ -2,6 +2,7 @@ import { events as contentEvents } from "../content/events";
 import { hasDatabase, sql } from "./db";
 import { toPublicEvent } from "./admin/events.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
+import { supporterLinks } from "./publicSupporters";
 
 export function manilaToday() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
@@ -30,7 +31,12 @@ export async function loadEvent(slug) {
   if (!hasDatabase()) return contentEvents.find((event) => event.slug === slug) || null;
   try {
     const [row] = await sql(`${PUBLIC_EVENTS} AND e.slug = $1`, [slug]);
-    return row ? toPublicEvent(row, row.confirmed) : null;
+    if (!row) return null;
+    const event = toPublicEvent(row, row.confirmed);
+    // Partners and sponsors with a public record get their logo and a link.
+    const links = await supporterLinks([...(event.partners || []), ...(event.sponsors || [])]);
+    if (Object.keys(links).length) event.supporterLinks = links;
+    return event;
   } catch {
     return null;
   }
