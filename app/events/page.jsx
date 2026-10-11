@@ -1,11 +1,12 @@
 import EventsView from "../components/EventsView";
-import { loadEvents, manilaToday } from "../lib/publicEvents";
+import { loadEvents } from "../lib/publicEvents";
+import { hasEnded } from "../lib/eventTime.mjs";
 import { EVENTS_URL } from "../lib/eventsHost.mjs";
 import { SITE_NAME } from "../lib/siteSeo.mjs";
 
-// Re-sort upcoming and past at least hourly, so a finished event moves to
-// "Where we have been" without a redeploy.
-export const revalidate = 3600;
+// Re-sort every five minutes, so an event moves to "Where we have been"
+// shortly after it ends, without a redeploy.
+export const revalidate = 300;
 
 const TITLE = `Events | ${SITE_NAME}`;
 const DESCRIPTION =
@@ -40,10 +41,10 @@ export const metadata = {
 
 export default async function EventsPage() {
   const events = await loadEvents();
-  const today = manilaToday();
-  const byDate = [...events].sort((a, b) => a.date.localeCompare(b.date));
-  const upcoming = byDate.filter((event) => event.date >= today);
-  const past = byDate.filter((event) => event.date < today).reverse();
+  const now = Date.now();
+  const byDate = [...events].sort((a, b) => a.date.localeCompare(b.date) || (a.startTime || "").localeCompare(b.startTime || ""));
+  const upcoming = byDate.filter((event) => !hasEnded(event, now));
+  const past = byDate.filter((event) => hasEnded(event, now)).reverse();
 
   return <EventsView upcoming={upcoming} past={past} />;
 }

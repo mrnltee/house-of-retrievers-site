@@ -22,7 +22,7 @@ function nextDay(date) {
 }
 
 function span(event) {
-  if (!event.startTime) return { allDay: true, start: compactDate(event.date), end: nextDay(event.date) };
+  if (event.allDay || !event.startTime) return { allDay: true, start: compactDate(event.date), end: nextDay(event.date) };
   const end = event.endTime && event.endTime > event.startTime ? event.endTime : laterBy(event.startTime, 2);
   return { allDay: false, start: `${compactDate(event.date)}T${compactTime(event.startTime)}`, end: `${compactDate(event.date)}T${compactTime(end)}` };
 }

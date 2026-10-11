@@ -187,6 +187,32 @@ export function slugify(title, date) {
   return [base || "event", (date || "").slice(0, 7)].filter(Boolean).join("-");
 }
 
+/** Partners and sponsors listed on one event. */
+export const MAX_SUPPORTERS = 8;
+
+/** Names typed or picked in the editor: trimmed, de-duplicated ignoring case, at most 8. */
+export function cleanNames(input) {
+  let list = input;
+  if (typeof list === "string") {
+    try {
+      list = JSON.parse(list);
+    } catch {
+      list = list.split(/\r?\n/);
+    }
+  }
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const item of list) {
+    const name = String(item ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    out.push(name);
+    if (out.length >= MAX_SUPPORTERS) break;
+  }
+  return out;
+}
+
 const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
 const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 
@@ -200,8 +226,11 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     title: clean(input?.title, 120),
     category: clean(input?.category, 40),
     date: clean(input?.date, 10),
+    allDay: input?.allDay === true || input?.allDay === "on" || input?.allDay === "true",
     startTime: clean(input?.startTime, 5) || null,
     endTime: clean(input?.endTime, 5) || null,
+    partners: cleanNames(input?.partners),
+    sponsors: cleanNames(input?.sponsors),
     venue: clean(input?.venue, 160),
     city: clean(input?.city, 80),
     venueAddress: clean(input?.venueAddress, 200) || null,
@@ -226,6 +255,9 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     rsvpOpen: input?.rsvpOpen === undefined ? true : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
     feeRequired: input?.feeRequired === true || input?.feeRequired === "on" || input?.feeRequired === "true",
   };
+
+  // An all-day event has no times.
+  if (value.allDay) value.startTime = value.endTime = null;
 
   // The beneficiary belongs to charity events only, and a placeholder isn't one.
   if (!value.isCharity || isPlaceholder(value.supports)) value.supports = null;
@@ -319,8 +351,11 @@ export function toPublicEvent(row, confirmed = 0) {
     title: row.title,
     category: row.category,
     date: toDateString(row.date),
-    startTime: row.start_time || undefined,
-    endTime: row.end_time || undefined,
+    allDay: row.all_day || undefined,
+    startTime: (!row.all_day && row.start_time) || undefined,
+    endTime: (!row.all_day && row.end_time) || undefined,
+    partners: row.partners?.length ? row.partners : undefined,
+    sponsors: row.sponsors?.length ? row.sponsors : undefined,
     venue: row.venue,
     city: row.city,
     cost: priceSummary(tiers) || row.cost || undefined,

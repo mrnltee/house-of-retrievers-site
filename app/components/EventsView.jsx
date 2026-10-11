@@ -429,6 +429,23 @@ export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
               </ul>
             </section>
           )}
+          {(event.partners || event.sponsors) && (
+            <section className="event-supporters" aria-labelledby="supporters-title">
+              <h3 id="supporters-title">With thanks to</h3>
+              {event.partners && (
+                <div>
+                  <p className="event-supporters-role">In partnership with</p>
+                  <ul>{event.partners.map((n) => <li key={n}>{n}</li>)}</ul>
+                </div>
+              )}
+              {event.sponsors && (
+                <div>
+                  <p className="event-supporters-role">Sponsored by</p>
+                  <ul>{event.sponsors.map((n) => <li key={n}>{n}</li>)}</ul>
+                </div>
+              )}
+            </section>
+          )}
           {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
           {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
             <iframe

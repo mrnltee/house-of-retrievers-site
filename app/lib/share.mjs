@@ -23,7 +23,7 @@ export function formatTime(value) {
 }
 
 export function formatWhen(event) {
-  const time = [event.startTime, event.endTime].filter(Boolean).map(formatTime).join("–");
+  const time = event.allDay ? "All day" : [event.startTime, event.endTime].filter(Boolean).map(formatTime).join("–");
   return [formatEventDate(event.date), time].filter(Boolean).join(" · ");
 }
 

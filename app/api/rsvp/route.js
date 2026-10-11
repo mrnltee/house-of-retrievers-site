@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { hasEnded } from "../../lib/eventTime.mjs";
 import { hasDatabase, transaction } from "../../lib/db";
 import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../lib/admin/registrations.mjs";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
@@ -42,13 +43,14 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, venue, city, fee_required FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
       if (!event.rsvp_open) return { error: "RSVPs for this event are closed.", status: 409 };
-      const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
-      if (String(event.date).slice(0, 10) < today) return { error: "This event has already happened.", status: 409 };
+      if (hasEnded({ date: String(event.date).slice(0, 10), startTime: event.start_time, endTime: event.end_time, allDay: event.all_day })) {
+        return { error: "This event has already happened.", status: 409 };
+      }
       const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed'", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
       const code = newCheckInCode();

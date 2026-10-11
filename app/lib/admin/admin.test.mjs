@@ -194,3 +194,19 @@ test("an event's web address is cleaned to a safe slug", () => {
   assert.match(cleanSlug("ab").error, /three/);
   assert.match(cleanSlug("share").error, /events site/);
 });
+
+test("all-day events keep no times; partners and sponsors are cleaned names", async () => {
+  const { cleanNames } = await import("./events.mjs");
+  const { value } = validateEvent({ title: "Vax drive", date: "2026-11-07", allDay: "on", startTime: "09:00", endTime: "17:00", partners: '["PetPals Vet","  petpals vet ", ""]', sponsors: "[]" });
+  assert.equal(value.allDay, true);
+  assert.equal(value.startTime, null);
+  assert.equal(value.endTime, null);
+  assert.deepEqual(value.partners, ["PetPals Vet"]);
+  assert.deepEqual(value.sponsors, []);
+  assert.equal(cleanNames(Array.from({ length: 12 }, (_, i) => `Brand ${i}`)).length, 8);
+  const pub = toPublicEvent({ slug: "x", title: "X", date: "2026-11-07", all_day: true, start_time: "09:00", partners: ["PetPals Vet"], sponsors: [] });
+  assert.equal(pub.allDay, true);
+  assert.equal(pub.startTime, undefined);
+  assert.deepEqual(pub.partners, ["PetPals Vet"]);
+  assert.equal(pub.sponsors, undefined);
+});

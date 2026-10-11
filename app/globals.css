@@ -1116,6 +1116,11 @@ main:focus { outline: none; }
 .event-included ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .event-included li { display: flex; align-items: center; gap: 10px; font-size: 16px; }
 .event-included svg { flex: none; width: 22px; height: 22px; padding: 4px; border-radius: 50%; background: var(--gold); color: var(--ink); stroke-width: 3; }
+.event-supporters { display: grid; gap: 12px; }
+.event-supporters h3 { font: 400 22px/1.2 "DM Serif Display", serif; margin: 0; }
+.event-supporters-role { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-on-light); }
+.event-supporters ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.event-supporters li { padding: 8px 14px; border: 1px solid rgba(13, 13, 13, .14); border-radius: 999px; font-size: 15px; font-weight: 600; background: #fff; }
 .event-map { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; margin-top: 8px; }
 .event-detail-body .event-tags li { background: transparent; padding: 0; color: var(--muted-on-light); }
 

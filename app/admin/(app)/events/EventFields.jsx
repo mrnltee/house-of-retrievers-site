@@ -2,8 +2,97 @@
 
 import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
-import { MAX_HASHTAGS, PHOTO_UPLOADERS, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
+import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
 import { MAX_TIERS, cleanTiers, priceSummary } from "../../../lib/prices.mjs";
+
+/**
+ * Date and times. "All day" hides the times (and saves none), for events
+ * like a vaccination drive or a weekend bazaar that run through the day.
+ */
+export function WhenFields({ date, allDay, startTime, endTime }) {
+  const [whole, setWhole] = useState(Boolean(allDay));
+  return (
+    <div className="form" style={{ gap: 10 }}>
+      <div className="row-3">
+        <label className="field"><span>Date</span><input type="date" name="date" required defaultValue={date} /></label>
+        {!whole && (
+          <>
+            <label className="field"><span>Starts</span><input type="time" name="startTime" defaultValue={startTime || ""} /></label>
+            <label className="field"><span>Ends</span><input type="time" name="endTime" defaultValue={endTime || ""} /></label>
+          </>
+        )}
+      </div>
+      <label className="check">
+        <input type="checkbox" name="allDay" checked={whole} onChange={(e) => setWhole(e.target.checked)} /> All-day event <span className="small muted">No start or end time; shown as "All day"</span>
+      </label>
+      <input type="hidden" name="allDaySent" value="1" />
+    </div>
+  );
+}
+
+/**
+ * Partners or sponsors as name badges. Pick from the Partners and Sponsors
+ * in People (suggested as you type) or type any name and press Enter.
+ */
+export function SupportersField({ name, label, hint, initial, suggestions = [] }) {
+  const [names, setNames] = useState(initial || []);
+  const [draft, setDraft] = useState("");
+  const input = useRef(null);
+  const full = names.length >= MAX_SUPPORTERS;
+  const listId = `${name}-suggestions`;
+
+  function add(text) {
+    setNames(cleanNames([...names, text]));
+    setDraft("");
+  }
+
+  return (
+    <div className="field">
+      <label htmlFor={`${name}-input`} className="field-head">{label} <small>{hint}</small></label>
+      <div className="tag-input" onClick={() => input.current?.focus()}>
+        {names.map((n) => (
+          <span key={n} className="tag-badge">
+            {n}
+            <button type="button" onClick={(e) => { e.stopPropagation(); setNames(names.filter((x) => x !== n)); input.current?.focus(); }} aria-label={`Remove ${n}`}>×</button>
+          </span>
+        ))}
+        {!full && (
+          <input
+            id={`${name}-input`}
+            ref={input}
+            type="text"
+            list={suggestions.length ? listId : undefined}
+            value={draft}
+            maxLength={80}
+            placeholder={names.length ? "Add another" : "Type a name"}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Picking from the list fills the whole name at once.
+              if (suggestions.includes(value)) add(value);
+              else setDraft(value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (draft.trim()) add(draft);
+              } else if (e.key === "Backspace" && !draft && names.length) {
+                setNames(names.slice(0, -1));
+              }
+            }}
+            onBlur={() => draft.trim() && add(draft)}
+          />
+        )}
+      </div>
+      {suggestions.length > 0 && (
+        <datalist id={listId}>
+          {suggestions.filter((sug) => !names.some((n) => n.toLowerCase() === sug.toLowerCase())).map((sug) => <option key={sug} value={sug} />)}
+        </datalist>
+      )}
+      <input type="hidden" name={name} value={JSON.stringify(names)} />
+      <p className="small muted">{full ? `That's the most an event can list (${MAX_SUPPORTERS}).` : "Press Enter after each name."}</p>
+    </div>
+  );
+}
 
 /** "This is a charity event" reveals the beneficiary field. */
 export function CharityField({ isCharity, supports }) {

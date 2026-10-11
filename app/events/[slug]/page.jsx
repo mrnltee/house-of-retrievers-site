@@ -1,12 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 import EventsView from "../../components/EventsView";
-import { currentSlugFor, loadEvent, loadEventPhotos, manilaToday } from "../../lib/publicEvents";
+import { currentSlugFor, loadEvent, loadEventPhotos } from "../../lib/publicEvents";
+import { hasEnded } from "../../lib/eventTime.mjs";
 import { EVENTS_URL } from "../../lib/eventsHost.mjs";
 import { SITE_NAME, SITE_URL } from "../../lib/siteSeo.mjs";
 import { eventUrl, formatWhen } from "../../lib/share.mjs";
 
 // Rendered on first visit and refreshed hourly, or straight away when an admin saves.
-export const revalidate = 3600;
+export const revalidate = 300;
 
 const absolute = (path) => (path?.startsWith("http") ? path : `${EVENTS_URL}${path}`);
 
@@ -36,8 +37,8 @@ export async function generateMetadata({ params }) {
 
 /** schema.org Event, so search engines can show the date and place. */
 function structuredData(event) {
-  const start = event.startTime ? `${event.date}T${event.startTime}:00+08:00` : event.date;
-  const end = event.endTime ? `${event.date}T${event.endTime}:00+08:00` : undefined;
+  const start = event.startTime && !event.allDay ? `${event.date}T${event.startTime}:00+08:00` : event.date;
+  const end = event.endTime && !event.allDay ? `${event.date}T${event.endTime}:00+08:00` : undefined;
   return {
     "@context": "https://schema.org",
     "@type": "Event",
@@ -69,7 +70,7 @@ export default async function EventPage({ params }) {
     if (current) redirect(`/events/${current}`);
     notFound();
   }
-  const past = event.date < manilaToday();
+  const past = hasEnded(event);
   const photos = past ? await loadEventPhotos(slug) : [];
   return (
     <>

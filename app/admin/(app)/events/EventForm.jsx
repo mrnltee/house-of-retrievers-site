@@ -5,10 +5,22 @@ import ConfirmSave from "./ConfirmSave";
 import EventGallery from "./EventGallery";
 import EventPhoto from "./EventPhoto";
 import EventPreview from "./EventPreview";
-import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, VenueField } from "./EventFields";
+import { sql } from "../../../lib/db";
+import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
-export default function EventForm({ event, autoDescribe = false }) {
+/** Names to suggest: confirmed-or-not Partners and Sponsors from People (organisation first). */
+async function supporterNames(kind) {
+  try {
+    const rows = await sql("SELECT DISTINCT coalesce(nullif(organization, ''), name) AS n FROM people WHERE kind=$1 ORDER BY 1 LIMIT 200", [kind]);
+    return rows.map((r) => r.n).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export default async function EventForm({ event, autoDescribe = false }) {
+  const [partnerNames, sponsorNames] = await Promise.all([supporterNames("Partner"), supporterNames("Sponsor")]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);
   const missing = event
     ? validateEvent({
@@ -23,11 +35,7 @@ export default function EventForm({ event, autoDescribe = false }) {
       <section className="card">
         <h2>The basics</h2>
         <label className="field"><span>Title</span><input type="text" name="title" required maxLength={120} defaultValue={v("title")} placeholder="e.g. Retriever Romp" /></label>
-        <div className="row-3">
-          <label className="field"><span>Date</span><input type="date" name="date" required defaultValue={event ? isoDate(event.date) : ""} /></label>
-          <label className="field"><span>Starts</span><input type="time" name="startTime" defaultValue={v("start_time")} /></label>
-          <label className="field"><span>Ends</span><input type="time" name="endTime" defaultValue={v("end_time")} /></label>
-        </div>
+        <WhenFields date={event ? isoDate(event.date) : ""} allDay={event?.all_day} startTime={event?.start_time} endTime={event?.end_time} />
         <VenueField venue={event?.venue} city={event?.city} address={event?.venue_address} lat={event?.venue_lat} lng={event?.venue_lng} mapUrl={event?.map_url} />
       </section>
 
@@ -61,6 +69,8 @@ export default function EventForm({ event, autoDescribe = false }) {
         </label>
         <CharityField isCharity={event?.is_charity} supports={event?.supports} />
         <HashtagField hashtags={event?.hashtags} />
+        <SupportersField name="partners" label="Partners" hint="Optional. Groups or businesses running this with HOR, e.g. a venue or a vet clinic" initial={event?.partners} suggestions={partnerNames} />
+        <SupportersField name="sponsors" label="Sponsors" hint="Optional. Who is giving money, products or prizes" initial={event?.sponsors} suggestions={sponsorNames} />
       </section>
 
       <section className="card">
