@@ -2,7 +2,7 @@
  * Host routing for the events subdomain.
  *
  * events.houseofretrieversph.org is served by this same Next.js project.
- * Middleware rewrites every page request on that host to the `/events`
+ * The proxy rewrites every page request on that host to the `/events`
  * routes, so `events.…/` renders `app/events/page.jsx` and the visitor's
  * address bar keeps the subdomain.
  *
@@ -41,7 +41,7 @@ function stripEventsPrefix(pathname) {
 }
 
 /**
- * Decide what middleware should do with a page request.
+ * Decide what the proxy should do with a page request.
  *
  * @param {string} host      The request's Host header.
  * @param {string} pathname  The request path, e.g. "/" or "/events/run".

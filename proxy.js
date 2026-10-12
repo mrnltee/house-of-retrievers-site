@@ -6,7 +6,7 @@ import { routePageRequest } from "./app/lib/hostRouting.mjs";
  * admin.houseofretrieversph.org from `/admin`. The retired countdown host
  * redirects to the main site until its Vercel domain is removed.
  */
-export function middleware(request) {
+export function proxy(request) {
   const { pathname, search } = request.nextUrl;
   const host = request.headers.get("host");
   const decision = routePageRequest(host, pathname, search);

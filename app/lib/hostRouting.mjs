@@ -1,5 +1,5 @@
 /**
- * Compose the page-host rules used by middleware.
+ * Compose the page-host rules used by the proxy.
  *
  * Admin and events keep their existing routing order. The retired countdown
  * hostname stays as a permanent redirect until its Vercel domain is removed,

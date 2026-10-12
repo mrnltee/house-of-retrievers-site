@@ -28,7 +28,7 @@ taking RSVPs and payments, and checking people in at the door.
 | Host | What it serves | Code |
 | --- | --- | --- |
 | `www.houseofretrieversph.org` (apex redirects) | Main one-page site | `app/page.jsx`, `app/components/` |
-| `events.houseofretrieversph.org` | Events list, event pages, passes | `app/events/`, rewritten by `middleware.js` → `app/lib/eventsHost.mjs` |
+| `events.houseofretrieversph.org` | Events list, event pages, passes | `app/events/`, rewritten by `proxy.js` → `app/lib/eventsHost.mjs` |
 | `admin.houseofretrieversph.org` | Admin module (Google sign-in) | `app/admin/`, routed by `app/lib/adminHost.mjs` |
 | `countdown.houseofretrieversph.org` | Retired pre-launch hostname; permanently redirects to www until the owner removes the Vercel domain | `app/lib/hostRouting.mjs` |
 
@@ -75,7 +75,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 113 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 114 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -115,7 +115,7 @@ then built. Plain, warm language matters as much as the code (see §7).
 
 ## 4. Stack
 
-- Next.js 15 App Router, React 19, **plain JSX/JS, no TypeScript** (ask the
+- Next.js 16 App Router, React 19, **plain JSX/JS, no TypeScript** (ask the
   owner before introducing it). Pure logic in `.mjs` with JSDoc.
 - Vercel (Next.js server app, not a static export). Daily cron in `vercel.json`.
 - Neon Postgres via `pg` (`app/lib/db.js`: `sql`, `transaction`,
@@ -131,7 +131,7 @@ then built. Plain, warm language matters as much as the code (see §7).
 ## 5. File map
 
 ```
-middleware.js            host routing: events / admin / retired-host redirect
+proxy.js                 host routing: events / admin / retired-host redirect
 app/page.jsx             main site composition
 app/components/          public UI: Header, Hero, PurposeStories, Journey, InstagramFeed, Pack,
                          Supporters, FinalCta, JoinModal, SupportModal, Footer, FooterLegal,

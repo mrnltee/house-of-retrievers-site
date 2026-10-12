@@ -65,7 +65,7 @@ export default async function EventPage({ params }) {
   const event = await loadEvent(slug);
   if (!event) {
     // An address the event used before it was renamed: send people on.
-    // On the events host the middleware then trims /events/ from the path.
+    // On the events host the proxy then trims /events/ from the path.
     const current = await currentSlugFor(slug);
     if (current) redirect(`/events/${current}`);
     notFound();

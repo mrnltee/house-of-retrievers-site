@@ -19,7 +19,7 @@ Refactor and continue the House of Retrievers concept site without changing its 
 
 ## Current implementation
 
-- Next.js 15 App Router with React 19
+- Next.js 16 App Router with React 19
 - Deployed on Vercel as a Next.js server app. The old static export to `dist/client` and its worker entrypoint were retired once server routes were needed.
 - Page composition lives in `app/page.jsx`; sections are components in `app/components/`
 - Editable content lives in `app/content/` (`activities.js`, `families.js`, `join.js`)
@@ -40,7 +40,7 @@ Refactor and continue the House of Retrievers concept site without changing its 
 
 `events.houseofretrieversph.org` is served by this same project, not a second app.
 
-- `middleware.js` calls `routeEventsRequest()` in `app/lib/eventsHost.mjs`. On the events host every page path is rewritten to the `/events` routes, so `events.…/` renders `app/events/page.jsx` and the address bar keeps the subdomain.
+- `proxy.js` calls `routeEventsRequest()` in `app/lib/eventsHost.mjs`. On the events host every page path is rewritten to the `/events` routes, so `events.…/` renders `app/events/page.jsx` and the address bar keeps the subdomain.
 - One address per page: `events.…/events/x` redirects to `events.…/x`, and `www.…/events/x` (or the apex) redirects to the subdomain. Preview deployments and localhost are left alone so `/events` can be reviewed before the domain is live.
 - API routes, `/_next` and any path with a file extension are not rewritten, so the join form, images and `robots.txt` work on both hosts.
 - Links from the events pages back to the main site must be absolute (`HOME_URL`). The main header links to `EVENTS_URL`.
@@ -51,7 +51,11 @@ Refactor and continue the House of Retrievers concept site without changing its 
 
 ## Retired countdown host (13 Oct 2026)
 
-The pre-launch countdown page, quotes, preview cookie/key and launch-time gate were removed after launch. `middleware.js` now composes only admin and events routing through `app/lib/hostRouting.mjs`. While `countdown.houseofretrieversph.org` remains attached in Vercel, that helper permanently redirects every path on it to `https://www.houseofretrieversph.org/`; this prevents a duplicate site or broken old links during the handover. The owner removes the countdown domain in Vercel after this reaches production. `/api/legal` now always returns the already-public registered name and SEC number with its normal cache.
+The pre-launch countdown page, quotes, preview cookie/key and launch-time gate were removed after launch. `proxy.js` now composes only admin and events routing through `app/lib/hostRouting.mjs`. While `countdown.houseofretrieversph.org` remains attached in Vercel, that helper permanently redirects every path on it to `https://www.houseofretrieversph.org/`; this prevents a duplicate site or broken old links during the handover. The owner removes the countdown domain in Vercel after this reaches production. `/api/legal` now always returns the already-public registered name and SEC number with its normal cache.
+
+## Next.js 16 platform update (13 Oct 2026)
+
+The app runs on Next.js 16.4.0. The former root `middleware.js` is now `proxy.js`, with the same host-routing decisions and matcher; this is the Next.js 16 file convention and does not change public URLs. The duplicate `app/favicon.ico` was removed because its embedded RGB PNG was rejected by Next.js 16's icon decoder. The existing approved `app/icon.png` and `app/apple-icon.png` remain the browser and Apple icons, so no logo artwork was redrawn or replaced. `app/lib/next16Migration.test.mjs` protects these migration requirements. There is no database migration for this update.
 
 ## Admin module (Phase 1)
 
