@@ -110,9 +110,6 @@ function useEventsBase() {
   return base;
 }
 
-/** Long summaries are cut on the card and shown in full on the event page. */
-const isLong = (summary = "") => summary.length > 220 || summary.includes("\n");
-
 function Hashtags({ tags }) {
   if (!tags?.length) return null;
   return (
@@ -132,54 +129,6 @@ function Linked({ text }) {
     ) : (
       <a key={i} href={part.href} className="event-link" target="_blank" rel="noopener noreferrer">{part.text}</a>
     ),
-  );
-}
-
-function Meta({ event, past = false }) {
-  return (
-    <dl className="event-meta">
-      <div>
-        <dt>When</dt>
-        <dd><time dateTime={event.date}>{formatWhen(event)}</time></dd>
-      </div>
-      <div>
-        <dt>Where</dt>
-        <dd>
-          {event.venue}, {event.city}
-          {event.directions && (
-            <>
-              {" "}
-              <a className="event-directions" href={event.directions} target="_blank" rel="noopener noreferrer">
-                <Icon name="pin" size={14} /> Get directions<span className="visually-hidden"> to {event.venue} (opens Google Maps)</span>
-              </a>
-              {!past && event.parking && (
-                <>
-                  {" "}
-                  <a className="event-directions" href={event.parking} target="_blank" rel="noopener noreferrer">
-                    <Icon name="parking" size={14} /> Parking nearby<span className="visually-hidden"> around {event.venue} (opens Google Maps)</span>
-                  </a>
-                </>
-              )}
-            </>
-          )}
-        </dd>
-      </div>
-      {event.supports && (
-        <div>
-          <dt>For</dt>
-          <dd>{event.supports}</dd>
-        </div>
-      )}
-    </dl>
-  );
-}
-
-function Badges({ event, past }) {
-  const status = past ? "past" : event.status;
-  return (
-    <p className="event-badges">
-      <span className={`event-status status-${status}`}>{past ? "Past event" : STATUS_LABELS[event.status]}</span>
-    </p>
   );
 }
 
@@ -207,27 +156,94 @@ function RsvpButton({ event, past, onRsvp, compact = false }) {
   );
 }
 
+/** "2026-10-17" → { day: "17", month: "Oct", weekday: "Sat" } (the date as written, no time zone shift). */
+function dateParts(iso) {
+  const [y, m, d] = String(iso || "").slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const part = (o) => new Intl.DateTimeFormat("en-US", { ...o, timeZone: "UTC" }).format(date);
+  return { day: String(d).padStart(2, "0"), month: part({ month: "short" }), weekday: part({ weekday: "short" }), year: y };
+}
+
+/** "1:00–4:00 PM", "All day", or "" */
+function timeLine(event) {
+  if (event.allDay) return "All day";
+  const when = formatWhen(event);
+  const dot = when.indexOf(" · ");
+  return dot >= 0 ? when.slice(dot + 3) : "";
+}
+
+/** RSVP opens later: a short, quiet countdown in the RSVP slot (minutes, then seconds in the last hour). */
+function OpensPill({ event }) {
+  const opensAt = Date.parse(event.rsvpOpensAt || "");
+  const [now, setNow] = useState(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+  const when = formatOpens(event.rsvpOpensAt);
+  const { days, hours, minutes, seconds } = countdownParts(now == null ? 0 : opensAt - now);
+  const short = now == null ? "Opens soon"
+    : days > 0 ? `Opens in ${days}d ${pad2(hours)}h`
+      : hours > 0 ? `Opens in ${hours}h ${pad2(minutes)}m`
+        : `Opens in ${minutes}m ${pad2(seconds)}s`;
+  return (
+    <span className="event-opens-pill" role="timer" aria-label={`RSVPs open ${when}, Manila time`}>
+      <span aria-hidden="true">{short}</span>
+    </span>
+  );
+}
+
+/**
+ * The compact card (Figma "Event card — compact", 12 Oct 2026): poster with
+ * the date tile and availability, event type, title, time, place and price,
+ * then View details and RSVP. Everything else is on the event page.
+ */
 export function EventCard({ event: given, past = false, onRsvp, base }) {
   const event = useLiveEvent(given);
   const href = `${base}/${event.slug}`;
+  const date = dateParts(event.date);
+  const time = timeLine(event);
+  const showRsvp = !past && event.rsvp && ["open", "few-left", "full"].includes(event.status);
   return (
-    <li className="event-card">
-      {event.image && <img src={event.image} alt={event.imageAlt || ""} loading="lazy" />}
-      <div className="event-card-body">
-        <Badges event={event} past={past} />
-        <p className="event-category">{[event.category, event.purpose].filter(Boolean).join("  ·  ")}</p>
-        <h3><a className="event-title-link" href={href}>{event.title}</a></h3>
-        <Meta event={event} past={past} />
-        {event.summary && <p className="event-summary event-summary-clamp"><Linked text={event.summary} /></p>}
-        {event.summary && isLong(event.summary) && (
-          <a className="event-more" href={href}>Read more<span className="visually-hidden"> about {event.title}</span></a>
+    <li className={`event-card is-compact${past ? " is-past" : ""}`}>
+      <a className={`event-card-media${event.image ? "" : " no-image"}`} href={href} tabIndex={-1} aria-hidden="true">
+        {event.image && <img src={event.image} alt="" loading="lazy" />}
+        {date && (
+          <span className="event-date-tile">
+            <strong>{date.day}</strong>
+            <span>{date.month}</span>
+            {past && <em>{date.year}</em>}
+          </span>
         )}
-        <Hashtags tags={event.hashtags} />
-        <div className="event-actions event-card-footer">
-          <Price event={event} past={past} />
-          <RsvpButton event={event} past={past} onRsvp={onRsvp} />
-          {!past && <ShareMenu event={event} compact />}
-        </div>
+        <span className={`event-status status-${past ? "past" : event.status}`}>{past ? "Past event" : STATUS_LABELS[event.status]}</span>
+      </a>
+      <div className="event-card-body">
+        {event.category && <p className="event-category">{event.category}</p>}
+        <h3><a className="event-title-link" href={href}>{event.title}</a></h3>
+        <ul className="event-card-facts">
+          <li>
+            <Icon name="calendar" size={14} />
+            <span>
+              <time dateTime={event.date}>{date ? <>{date.weekday}<span className="visually-hidden">, {date.month} {Number(date.day)}, {date.year}</span></> : event.date}</time>
+              {time ? ` · ${time}` : ""}
+            </span>
+          </li>
+          <li><Icon name="pin" size={14} /> <span>{[event.venue, event.city].filter(Boolean).join(", ")}</span></li>
+        </ul>
+        {past ? (
+          <a className="event-more" href={href}>See the recap<span className="visually-hidden"> of {event.title}</span> →</a>
+        ) : (
+          <div className="event-card-footer">
+            <Price event={event} past={past} />
+            <div className="event-card-actions">
+              <a className="button events-button-outline event-view" href={href}>View details<span className="visually-hidden"> of {event.title}</span></a>
+              {showRsvp && <RsvpButton event={event} past={past} onRsvp={onRsvp} />}
+              {!past && event.rsvp && event.status === "soon" && <OpensPill event={event} />}
+            </div>
+          </div>
+        )}
       </div>
     </li>
   );
@@ -648,7 +664,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
         <section className="events-hero" aria-labelledby="events-title">
           <p className="eyebrow light">Events</p>
           <h1 id="events-title">Days we show up <em>together.</em></h1>
-          <p>Runs, workshops, care visits and fundraisers. Each one lists the date, the place and who it supports before you come along.</p>
+          <p>Runs, workshops, care visits and fundraisers. Each one shows the date, the place and the price; open it for the full story, then RSVP.</p>
         </section>
 
         <section className="events-list" aria-labelledby="upcoming-title">
