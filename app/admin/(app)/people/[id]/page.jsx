@@ -3,9 +3,12 @@ import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { actionLabel } from "../../../../lib/admin/activity.mjs";
-import { MEMBERSHIP, PEOPLE_STATUSES, memberNumber, membershipLabel } from "../../../../lib/admin/people.mjs";
+import { MEMBERSHIP, NUMBER_PREFIX, PEOPLE_STATUSES, hasMembership, memberNumber, membershipFor, membershipLabel } from "../../../../lib/admin/people.mjs";
+import { supporterNumber } from "../../../../lib/supporters.mjs";
+import { listCustomTemplates } from "../../../../lib/emailSettings";
+import SendTemplate from "../SendTemplate";
 import { emailReady } from "../../../../lib/email";
-import { resendWelcome, updateMembership, updatePerson } from "../../../actions";
+import { resendWelcome, sendTemplateToPerson, updateMembership, updatePerson } from "../../../actions";
 import { supporterFromPerson } from "../../../supporterActions";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import PersonAvatar from "../PersonAvatar";
@@ -39,10 +42,13 @@ export default async function PersonPage({ params, searchParams }) {
     sql("SELECT id, kind FROM people WHERE lower(email) = lower($1) AND id <> $2", [person.email, id]),
   ]);
   const supporter = ["Sponsor", "Partner"].includes(person.kind)
-    ? (await sql("SELECT id, name FROM supporters WHERE person_id = $1 OR lower(name) = lower($2) LIMIT 1", [id, (person.organization || person.name || "").trim()]))[0] || null
+    ? (await sql("SELECT id, name, code, number_year, number_no FROM supporters WHERE person_id = $1 OR lower(name) = lower($2) LIMIT 1", [id, (person.organization || person.name || "").trim()]))[0] || null
     : null;
+  const acceptance = await listCustomTemplates("acceptance");
   const canEdit = can(admin.roles, "people:edit");
-  const member = person.kind === "Member";
+  const member = hasMembership(person.kind);
+  const noun = person.kind === "Volunteer" ? "volunteer" : "member";
+  const number = member ? memberNumber(person) : supporterNumber(supporter);
   const attended = events.filter((e) => e.checked_in_at).length;
   const lastSeen = events.find((e) => e.checked_in_at);
   const ready = emailReady();
@@ -54,7 +60,7 @@ export default async function PersonPage({ params, searchParams }) {
         <PersonAvatar person={person} base={base} size={96} />
         <div>
           {canEdit && <PersonPhotoField personId={person.id} current={Boolean(person.photo_id)} name={person.name} />}
-          <PageHead title={person.name} lead={[person.kind, member && person.member_no ? memberNumber(person) : "", member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} />
+          <PageHead title={person.name} lead={[person.kind, number, member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} />
         </div>
       </div>
       <Flash params={query} />
@@ -82,7 +88,7 @@ export default async function PersonPage({ params, searchParams }) {
         <div className="form" style={{ gap: 20 }}>
           {member && (
             <section className="card">
-              <h2>Membership</h2>
+              <h2>{person.kind === "Volunteer" ? "Volunteer status" : "Membership"}</h2>
               <dl className="facts">
                 <div><dt>Status</dt><dd><span className={`chip membership-${person.membership}`}>{membershipLabel(person.membership)}</span></dd></div>
                 {person.member_no && <div><dt>Number</dt><dd>{memberNumber(person)}</dd></div>}
@@ -98,17 +104,23 @@ export default async function PersonPage({ params, searchParams }) {
                     labels={Object.fromEntries(MEMBERSHIP.map(([k, l]) => [k, l]))}
                     hasNumber={Boolean(person.member_no)}
                     year={new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric" }).format(new Date(person.created_at))}
+                    prefix={NUMBER_PREFIX[person.kind]}
+                    noun={noun}
                   />
                   <fieldset className="plain">
                     <legend>Change to</legend>
-                    {MEMBERSHIP.map(([key, label, hint]) => (
+                    {membershipFor(person.kind).map(([key, label, hint]) => (
                       <label key={key} className="check"><input type="radio" name="membership" value={key} defaultChecked={person.membership === key} /> <span><strong>{label}</strong> <span className="small muted">{hint}</span></span></label>
                     ))}
                   </fieldset>
                   {!person.member_no && (
-                    <label className="check">
-                      <input type="checkbox" name="sendWelcome" defaultChecked={ready} disabled={!ready} />
-                      <span>Send the welcome email when they become Active{!ready && <span className="small muted"> (switches on once the Resend key is in Vercel)</span>}</span>
+                    <label className="field">
+                      <span>Email when they become Active {!ready && <small>Switches on once the Resend key is in Vercel</small>}</span>
+                      <select name="welcome" defaultValue={ready ? "standard" : "none"} disabled={!ready}>
+                        <option value="standard">Standard welcome ({person.kind === "Volunteer" ? "Welcome, volunteer" : "Welcome to the pack"})</option>
+                        {acceptance.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        <option value="none">Don't send an email</option>
+                      </select>
                     </label>
                   )}
                   <div className="actions"><button className="btn gold">Save membership</button></div>
@@ -127,7 +139,10 @@ export default async function PersonPage({ params, searchParams }) {
             <section className="card">
               <h2>Sponsor & partner record</h2>
               {supporter ? (
-                <p><a href={`${base}/supporters/${supporter.id}`}>Open “{supporter.name}” →</a></p>
+                <>
+                  {number ? <dl className="facts"><div><dt>Number</dt><dd>{number}</dd></div></dl> : <p className="small muted">Gets a number (HOR-{supporter.code || "XXX"}-YY-NNNN) once the record is Confirmed.</p>}
+                  <p><a href={`${base}/supporters/${supporter.id}`}>Open “{supporter.name}” →</a></p>
+                </>
               ) : canEdit ? (
                 <form action={supporterFromPerson}>
                   <input type="hidden" name="personId" value={person.id} />
@@ -136,6 +151,24 @@ export default async function PersonPage({ params, searchParams }) {
                 </form>
               ) : (
                 <p className="small muted">No record yet.</p>
+              )}
+            </section>
+          )}
+
+          {canEdit && (
+            <section className="card">
+              <h2>Send an email</h2>
+              {acceptance.length ? (
+                <SendTemplate
+                  action={sendTemplateToPerson}
+                  personId={person.id}
+                  email={person.email}
+                  ready={ready}
+                  templates={acceptance.map((t) => ({ id: t.id, name: t.name, subject: t.subject, greeting: t.greeting, heading: t.heading, message: t.message }))}
+                  person={{ name: person.name, furbaby: person.furbaby_name || "", organization: person.organization || "", kind: person.kind, memberNo: number }}
+                />
+              ) : (
+                <p className="small muted">Write an Acceptance template in <a href={`${base}/emails/new?kind=acceptance`}>Email templates</a> to send it from here, e.g. when you accept a volunteer, partner or sponsor.</p>
               )}
             </section>
           )}

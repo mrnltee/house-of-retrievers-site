@@ -4,7 +4,7 @@ import { hasDatabase, sql } from "../../lib/db";
 import { logActivity } from "../../lib/admin/log";
 import { savePersonPhoto } from "../../lib/personPhotos";
 import { sendEmail } from "../../lib/email";
-import { applicationReceived } from "../../lib/emailTemplates.mjs";
+import { applicationReceived, receivedKey } from "../../lib/emailTemplates.mjs";
 import { loadTemplate } from "../../lib/emailSettings";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 
@@ -170,7 +170,7 @@ export async function POST(request) {
         // follow-up status and adds the new message under the old one.
         const [person] = await sql(
           `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 = 'Member' THEN 'applicant' END)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END)
            ON CONFLICT (kind, lower(email)) DO UPDATE SET
              name = EXCLUDED.name,
              social_profile = COALESCE(EXCLUDED.social_profile, people.social_profile),
@@ -196,8 +196,8 @@ export async function POST(request) {
 
     // "We got your application", straight away. Best effort: no email setup, no email.
     const again = (joined?.joined_count || 1) > 1;
-    const custom = interest === "Member" && !again ? await loadTemplate("member-registered") : null;
-    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again, furbaby: payload.submission.furbabyName || "", custom });
+    const custom = again ? null : await loadTemplate(receivedKey(interest));
+    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again, furbaby: payload.submission.furbabyName || "", organization: payload.submission.organization || "", custom });
     await sendEmail({
       to: payload.submission.email,
       ...mail,

@@ -6,6 +6,7 @@ import EventGallery from "./EventGallery";
 import EventPhoto from "./EventPhoto";
 import EventPreview from "./EventPreview";
 import { sql } from "../../../lib/db";
+import { listCustomTemplates } from "../../../lib/emailSettings";
 import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
@@ -27,7 +28,7 @@ async function supporterNames(kind) {
 }
 
 export default async function EventForm({ event, autoDescribe = false }) {
-  const [partnerNames, sponsorNames] = await Promise.all([supporterNames("Partner"), supporterNames("Sponsor")]);
+  const [partnerNames, sponsorNames, emailTemplates] = await Promise.all([supporterNames("Partner"), supporterNames("Sponsor"), listCustomTemplates("event")]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);
   const missing = event
     ? validateEvent({
@@ -90,6 +91,12 @@ export default async function EventForm({ event, autoDescribe = false }) {
           feeRequired={event?.fee_required}
           date={event ? isoDate(event.date) : ""}
         />
+        <label className="field"><span>Confirmation email <small>What people get when they RSVP and have a spot. Write your own in Email templates (Event confirmation). The event's details and the pass button are always added.</small></span>
+          <select name="emailTemplateId" defaultValue={v("email_template_id") || ""}>
+            <option value="">Standard RSVP confirmation</option>
+            {emailTemplates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </label>
       </section>
 
       <MoreOptions slug={event?.slug} photoUploads={event?.photo_uploads} />

@@ -121,14 +121,46 @@ const SIGNOFF = [
 /**
  * Emails HOR can reword in the admin (Email templates). Each has a subject,
  * an optional greeting, a heading and a message; {{variables}} are filled in
- * per person. The frame (logo band, sign-off, footer) stays fixed. These
- * defaults are HOR's own wording, used until someone saves their own.
+ * per person. The frame (logo band, sign-off, footer) and any fixed parts
+ * (an event's details, the pass button) stay as they are. These defaults are
+ * HOR's own wording, used until someone saves their own.
  */
 export const TEMPLATE_VARIABLES = {
   first_name: "First name, e.g. Juan",
   full_name: "Full name, e.g. Juan dela Cruz",
   furbaby_name: "Their dog's name from the Join form (blank if none)",
-  member_no: "Member number, e.g. HOR-26-0001 (welcome email only)",
+  organization: "Their organisation from the Join form (blank if none)",
+  role: "member, volunteer, partner or sponsor",
+  member_no: "Their number, e.g. HOR-26-0001 for a member or HORV-26-0001 for a volunteer (once Active)",
+  event_title: "The event's name",
+  event_date: "Date and time, e.g. Sat, Oct 17, 2026 · 1:00 PM–4:00 PM",
+  event_venue: "Venue and city",
+};
+
+const RECEIVED_FOOTNOTE = "You're getting this because this email address was entered on the Join form at houseofretrieversph.org. If that wasn't you, reply and we'll remove it.";
+const EVENTS_BUTTON = { label: "See upcoming events", href: EVENTS_URL };
+
+const received = (kind, role, extraVar) => ({
+  title: `${kind} application received`,
+  when: `Sent straight away when someone sends the Join form as a ${kind} (first time only).`,
+  variables: ["first_name", "full_name", extraVar],
+  defaults: {
+    subject: "Thanks for joining House of Retrievers, {{first_name}}",
+    greeting: "",
+    heading: "Thanks, {{first_name}}. We have your application.",
+    message: [`You asked to join House of Retrievers as a ${role}. It's with the team now.`, NEXT_STEP[kind]].join("\n\n"),
+  },
+  preheader: `We have your ${role} application.`,
+  button: EVENTS_BUTTON,
+  footnote: RECEIVED_FOOTNOTE,
+});
+
+const EVENT_VARIABLES = ["first_name", "full_name", "event_title", "event_date", "event_venue"];
+const EVENT_DEFAULTS = {
+  subject: "You're going: {{event_title}}",
+  greeting: "",
+  heading: "See you there, {{first_name}}.",
+  message: "Show your pass at the door. It has a QR code the team scans to check you in.",
 };
 
 export const EDITABLE_TEMPLATES = {
@@ -152,9 +184,12 @@ export const EDITABLE_TEMPLATES = {
     preheader: "We've received your membership registration.",
     footnote: "You're getting this because this email address was entered on the Join form. If that wasn't you, just reply and we'll remove it.",
   },
+  "received-volunteer": received("Volunteer", "volunteer", "furbaby_name"),
+  "received-partner": received("Partner", "partner", "organization"),
+  "received-sponsor": received("Sponsor", "sponsor", "organization"),
   "member-welcome": {
     title: "Welcome to the pack (made Active)",
-    when: "Sent when an admin sets a Member to Active and ticks “Send the welcome email”, or uses “Send the welcome email again”.",
+    when: "The standard email when an admin sets a Member to Active, or uses “Send the welcome email again”. You can pick one of your own Acceptance templates instead.",
     variables: ["first_name", "full_name", "furbaby_name", "member_no"],
     defaults: {
       subject: "Welcome to House of Retrievers, {{first_name}}",
@@ -167,18 +202,74 @@ export const EDITABLE_TEMPLATES = {
       ].join("\n\n"),
     },
     preheader: "You're in.",
-    button: { label: "See upcoming events", href: EVENTS_URL },
+    button: EVENTS_BUTTON,
     footnote: "You're getting this because you joined House of Retrievers.",
   },
+  "volunteer-welcome": {
+    title: "Welcome, volunteer (made Active)",
+    when: "The standard email when an admin sets a Volunteer to Active, or uses “Send the welcome email again”. You can pick one of your own Acceptance templates instead.",
+    variables: ["first_name", "full_name", "furbaby_name", "member_no"],
+    defaults: {
+      subject: "Welcome to the team, {{first_name}}",
+      greeting: "",
+      heading: "Welcome to the team, {{first_name}}.",
+      message: [
+        "You're now a House of Retrievers volunteer. Your volunteer number is **{{member_no}}**.",
+        "Someone from the team will get in touch before the events where an extra pair of hands helps. You'll find them all on the events page.",
+        "Thank you for giving your time. It's what makes every event happen.",
+      ].join("\n\n"),
+    },
+    preheader: "You're on the team.",
+    button: EVENTS_BUTTON,
+    footnote: "You're getting this because you signed up to volunteer with House of Retrievers.",
+  },
+  "rsvp-confirmed": {
+    title: "RSVP confirmed (standard)",
+    when: "Sent when someone RSVPs and gets a spot, for events that don't pick one of your Event templates. The event's details, any fee note and the “Open my pass” button are added automatically.",
+    variables: EVENT_VARIABLES,
+    defaults: EVENT_DEFAULTS,
+    event: true,
+  },
 };
+
+/** Kinds of template HOR can add on the Email templates page. */
+export const CUSTOM_KINDS = {
+  acceptance: {
+    title: "Acceptance",
+    when: "Send it from a person's profile when you accept them (volunteer, partner, sponsor or member), or pick it when setting a member to Active.",
+    variables: ["first_name", "full_name", "furbaby_name", "organization", "role", "member_no"],
+    defaults: {
+      subject: "Welcome aboard, {{first_name}}!",
+      greeting: "Hi {{first_name}},",
+      heading: "You're in! 🤎",
+      message: "Thank you for joining House of Retrievers as a {{role}}. We're glad to have you with us.\n\nSomeone from the team will be in touch with the next steps.",
+    },
+    preheader: "Welcome to House of Retrievers.",
+    button: EVENTS_BUTTON,
+    footnote: "You're getting this because you joined House of Retrievers.",
+  },
+  event: {
+    title: "Event confirmation",
+    when: "Pick it in an event's “Price and sign-ups” section. Everyone who RSVPs to that event gets it. The event's details, any fee note and the pass button are added automatically.",
+    variables: EVENT_VARIABLES,
+    defaults: EVENT_DEFAULTS,
+    event: true,
+  },
+};
+
+/** A built-in key, or "custom:acceptance" / "custom:event". */
+export function templateDef(ref) {
+  if (String(ref).startsWith("custom:")) return CUSTOM_KINDS[String(ref).slice(7)] || null;
+  return EDITABLE_TEMPLATES[ref] || null;
+}
 
 export const TEMPLATE_LIMITS = { subject: 150, greeting: 120, heading: 150, message: 4000 };
 
 const VAR_RE = /\{\{\s*([a-z_]+)\s*\}\}/g;
 
-/** Variable names used in `text` that the template doesn't offer. */
-export function unknownVariables(key, fields) {
-  const allowed = new Set(EDITABLE_TEMPLATES[key]?.variables || []);
+/** Variable names used in `fields` that the template doesn't offer. */
+export function unknownVariables(ref, fields) {
+  const allowed = new Set(templateDef(ref)?.variables || []);
   const found = new Set();
   for (const value of Object.values(fields || {})) for (const [, name] of String(value || "").matchAll(VAR_RE)) if (!allowed.has(name)) found.add(name);
   return [...found];
@@ -208,73 +299,120 @@ function messageParagraphs(text, vars) {
     );
 }
 
-/** Builds one of the editable emails from saved (or default) wording. */
-export function renderTemplate(key, custom, person) {
-  const t = EDITABLE_TEMPLATES[key];
-  const fields = { ...t.defaults, ...Object.fromEntries(Object.entries(custom || {}).filter(([, v]) => typeof v === "string")) };
-  const vars = {
-    first_name: firstName(person?.name),
-    full_name: String(person?.name || "").trim() || "there",
-    furbaby_name: String(person?.furbaby || "").trim(),
-    member_no: person?.memberNo || "",
+const ROLES = { Member: "member", Volunteer: "volunteer", Partner: "partner", Sponsor: "sponsor" };
+
+/** Everything a template can mention about a person (and an event). */
+function variablesFor(person = {}) {
+  const event = person.event;
+  return {
+    first_name: firstName(person.name),
+    full_name: String(person.name || "").trim() || "there",
+    furbaby_name: String(person.furbaby || "").trim(),
+    organization: String(person.organization || "").trim(),
+    role: ROLES[person.kind] || "member",
+    member_no: person.memberNo || "",
+    event_title: event?.title || "",
+    event_date: event ? formatWhen(event) : "",
+    event_venue: event ? [event.venue, event.city].filter(Boolean).join(", ") : "",
   };
-  return build({
-    subject: fillPlain(fields.subject, vars).replace(/\s+/g, " ").trim() || fillPlain(t.defaults.subject, vars),
-    preheader: t.preheader,
-    greeting: fillPlain(fields.greeting, vars).trim() || undefined,
-    heading: fillPlain(fields.heading, vars).trim() || fillPlain(t.defaults.heading, vars),
-    paragraphs: messageParagraphs(fields.message, vars),
-    button: t.button,
-    footnote: t.footnote,
-  });
 }
 
-function memberRegistered({ name, furbaby, custom }) {
-  return renderTemplate("member-registered", custom, { name, furbaby });
+/** Sample person for previews and tests. */
+export const SAMPLE_PERSON = {
+  name: "Juan dela Cruz",
+  furbaby: "Mochi",
+  organization: "Pawsome Pet Shop",
+  kind: "Volunteer",
+  memberNo: "HOR-26-0001",
+  event: { title: "Bedazzle Barkdate", date: "2026-10-17", startTime: "13:00", endTime: "16:00", venue: "Wiltlover Café", city: "Pasay" },
+};
+
+/**
+ * Builds an editable email from saved (or default) wording. Event templates
+ * get the event box before the message, then `extras` (fee note, pass button).
+ */
+export function renderTemplate(ref, custom, person, extras = {}) {
+  const t = templateDef(ref);
+  const fields = { ...t.defaults, ...Object.fromEntries(Object.entries(custom || {}).filter(([, v]) => typeof v === "string")) };
+  const vars = variablesFor(person);
+  const eventBox = t.event && person?.event ? [`<strong>${esc(vars.event_title)}</strong><br>${esc(vars.event_date)}<br>${esc(vars.event_venue)}`] : [];
+  return build({
+    subject: fillPlain(fields.subject, vars).replace(/\s+/g, " ").trim() || fillPlain(t.defaults.subject, vars),
+    preheader: t.event ? `${vars.event_date} · ${vars.event_venue}` : t.preheader,
+    greeting: fillPlain(fields.greeting, vars).trim() || undefined,
+    heading: fillPlain(fields.heading, vars).trim() || fillPlain(t.defaults.heading, vars),
+    paragraphs: [...eventBox, ...messageParagraphs(fields.message, vars), ...(extras.paragraphs || [])],
+    button: extras.button || t.button,
+    after: extras.after,
+    footnote: extras.footnote || t.footnote,
+  });
 }
 
 /** Sent straight away when someone sends the Join form. */
-export function applicationReceived({ name, kind, again = false, furbaby = "", custom = null }) {
-  if (kind === "Member" && !again) return memberRegistered({ name, furbaby, custom });
-  const role = { Member: "member", Volunteer: "volunteer", Partner: "partner", Sponsor: "sponsor" }[kind] || "member";
+export function applicationReceived({ name, kind, again = false, furbaby = "", organization = "", custom = null }) {
+  const role = ROLES[kind] || "member";
+  if (!again) {
+    const key = kind === "Member" ? "member-registered" : `received-${role}`;
+    if (EDITABLE_TEMPLATES[key]) return renderTemplate(key, custom, { name, kind, furbaby, organization });
+  }
   return build({
-    subject: again ? "We got your update" : `Thanks for joining House of Retrievers, ${firstName(name)}`,
-    preheader: again ? "We've added it to what you sent before." : `We have your ${role} application.`,
-    heading: again ? `Got it, ${firstName(name)}.` : `Thanks, ${firstName(name)}. We have your application.`,
-    paragraphs: [
-      again
-        ? `You sent the Join form again, so we've added your new details to your ${role} application.`
-        : `You asked to join House of Retrievers as a ${role}. It's with the team now.`,
-      NEXT_STEP[kind] || NEXT_STEP.Member,
-    ],
-    button: { label: "See upcoming events", href: EVENTS_URL },
-    footnote: "You're getting this because this email address was entered on the Join form at houseofretrieversph.org. If that wasn't you, reply and we'll remove it.",
+    subject: "We got your update",
+    preheader: "We've added it to what you sent before.",
+    heading: `Got it, ${firstName(name)}.`,
+    paragraphs: [`You sent the Join form again, so we've added your new details to your ${role} application.`, NEXT_STEP[kind] || NEXT_STEP.Member],
+    button: EVENTS_BUTTON,
+    footnote: RECEIVED_FOOTNOTE,
   });
 }
 
-/** Sent when an admin confirms a member. */
-export function welcomeMember({ name, memberNo, furbaby = "", custom = null }) {
-  return renderTemplate("member-welcome", custom, { name, memberNo, furbaby });
+/** Template key for the Join email a kind gets (first time). */
+export const receivedKey = (kind) => (kind === "Member" ? "member-registered" : `received-${ROLES[kind] || "member"}`);
+
+/** The standard welcome for a kind made Active. */
+export const welcomeKey = (kind) => (kind === "Volunteer" ? "volunteer-welcome" : "member-welcome");
+
+/**
+ * Sent when an admin makes a member or volunteer Active: the standard welcome
+ * for their kind, or an Acceptance template (`ref` "custom:acceptance").
+ */
+export function welcomeMember({ name, memberNo, furbaby = "", organization = "", kind = "Member", custom = null, ref = welcomeKey(kind) }) {
+  return renderTemplate(ref, custom, { name, memberNo, furbaby, organization, kind });
 }
 
-/** Sent when someone RSVPs (or joins the waitlist) on the events page. */
-export function rsvpConfirmed({ name, event, status, passUrl, feeRequired }) {
+/** An Acceptance template sent to anyone in People. */
+export function acceptanceEmail({ person, custom }) {
+  return renderTemplate("custom:acceptance", custom, person);
+}
+
+/**
+ * Sent when someone RSVPs (or joins the waitlist) on the events page. A
+ * confirmed spot uses the event's chosen template, HOR's saved standard
+ * wording, or the default; the waitlist note is fixed.
+ */
+export function rsvpConfirmed({ name, event, status, passUrl, feeRequired, custom = null, ref = "rsvp-confirmed" }) {
   const waitlist = status === "waitlist";
+  const footnote = `You're getting this because this email address was used to RSVP at ${EVENTS_URL.replace("https://", "")}.`;
+  const after = ["Can't make it after all? Reply to this email so someone else can have the spot."];
+  if (!waitlist) {
+    return renderTemplate(ref, custom, { name, event }, {
+      paragraphs: feeRequired ? ["This event has a fee, paid by QR before the day. The team will confirm once it's in."] : [],
+      button: { label: "Open my pass", href: passUrl },
+      after,
+      footnote,
+    });
+  }
   const when = formatWhen(event);
   const where = [event.venue, event.city].filter(Boolean).join(", ");
   return build({
-    subject: waitlist ? `You're on the waitlist: ${event.title}` : `You're going: ${event.title}`,
+    subject: `You're on the waitlist: ${event.title}`,
     preheader: `${when} · ${where}`,
-    heading: waitlist ? `You're on the waitlist, ${firstName(name)}.` : `See you there, ${firstName(name)}.`,
+    heading: `You're on the waitlist, ${firstName(name)}.`,
     paragraphs: [
       `<strong>${esc(event.title)}</strong><br>${esc(when)}<br>${esc(where)}`,
-      waitlist
-        ? "The event is full right now. If a spot opens, we'll email you, and your pass below will show it."
-        : "Show your pass at the door. It has a QR code the team scans to check you in.",
-      ...(feeRequired && !waitlist ? ["This event has a fee, paid by QR before the day. The team will confirm once it's in."] : []),
+      "The event is full right now. If a spot opens, we'll email you, and your pass below will show it.",
     ],
-    button: { label: waitlist ? "Open my waitlist pass" : "Open my pass", href: passUrl },
-    after: ["Can't make it after all? Reply to this email so someone else can have the spot."],
-    footnote: `You're getting this because this email address was used to RSVP at ${EVENTS_URL.replace("https://", "")}.`,
+    button: { label: "Open my waitlist pass", href: passUrl },
+    after,
+    footnote,
   });
 }

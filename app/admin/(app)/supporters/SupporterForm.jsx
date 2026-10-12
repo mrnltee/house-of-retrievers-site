@@ -1,5 +1,5 @@
 import { saveSupporter } from "../../supporterActions";
-import { BLURB_MAX, GIVES, STATUSES, TIERS, isPublic } from "../../../lib/supporters.mjs";
+import { BLURB_MAX, GIVES, STATUSES, TIERS, isPublic, suggestCode, supporterNumber } from "../../../lib/supporters.mjs";
 import LogoField from "./LogoField";
 
 /** Sponsor or partner record (Figma S2). `row` is a DB row or null; `person` prefills a new one. */
@@ -35,6 +35,14 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
             <label className="field"><span>Tier <small>Sponsors only</small></span>
               <select name="tier" defaultValue={v("tier")}><option value="">No tier</option>{TIERS.map(([k, l]) => <option key={k} value={k}>★ {l}</option>)}</select>
             </label>
+          </div>
+          <div className="row-2">
+            <label className="field"><span>ID code <small>3 letters, needed to confirm. Their number reads HOR-{v("code") || "XXX"}-YY-NNNN</small></span>
+              <input type="text" name="code" maxLength={3} pattern="[A-Za-z]{3}" style={{ textTransform: "uppercase" }} defaultValue={v("code", row || person ? suggestCode(v("name", person?.organization || person?.name || "")) : "")} readOnly={Boolean(row?.number_no)} placeholder="e.g. PPS" />
+            </label>
+            <div className="field"><span>Number</span>
+              <p style={{ margin: "10px 0 0" }}>{supporterNumber(row) ? <strong>{supporterNumber(row)}</strong> : <span className="small muted">Given the first time the record is saved as Confirmed: the year they registered, then the next number for that year. The code can't change after that.</span>}</p>
+            </div>
           </div>
           <label className="check">
             <input type="checkbox" name="showOnSite" defaultChecked={row ? row.show_on_site : false} />

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
  * member number a first activation gets, and whether the welcome email goes
  * out. Only "Yes" sends the form.
  */
-export default function ConfirmMembership({ name, email, current, labels, hasNumber, year }) {
+export default function ConfirmMembership({ name, email, current, labels, hasNumber, year, prefix = "HOR", noun = "member" }) {
   const anchor = useRef(null);
   const dialog = useRef(null);
   const confirmed = useRef(false);
@@ -24,7 +24,10 @@ export default function ConfirmMembership({ name, email, current, labels, hasNum
       event.preventDefault();
       const data = new FormData(form);
       const next = data.get("membership");
-      setState({ next, welcome: data.get("sendWelcome") === "on" });
+      // The welcome picker: the chosen option's wording, or null for "Don't send".
+      const pick = form.elements.namedItem("welcome");
+      const welcome = pick && !pick.disabled && pick.value !== "none" ? pick.selectedOptions?.[0]?.textContent || "the welcome email" : null;
+      setState({ next, welcome });
       dialog.current?.showModal();
     }
     form.addEventListener("submit", onSubmit);
@@ -55,9 +58,9 @@ export default function ConfirmMembership({ name, email, current, labels, hasNum
                 <p className="confirm-label">What happens</p>
                 <ul className="confirm-list">
                   <li>Membership: {labels[current] || "None"} → <strong>{labels[state.next]}</strong></li>
-                  {activating && <li>They get the next member number for {year} (HOR-{yy}-…), and today becomes their “member since” date. Numbers are never reused.</li>}
-                  {activating && <li>{state.welcome ? <>The welcome email goes to <strong>{email}</strong>.</> : "No welcome email is sent (the box is unticked)."}</li>}
-                  {!activating && hasNumber && <li>Their member number stays the same.</li>}
+                  {activating && <li>They get the next {noun} number for {year} ({prefix}-{yy}-…), and today becomes their “member since” date. Numbers are never reused.</li>}
+                  {activating && <li>{state.welcome ? <>“{state.welcome}” goes to <strong>{email}</strong>.</> : "No welcome email is sent."}</li>}
+                  {!activating && hasNumber && <li>Their {noun} number stays the same.</li>}
                   {state.next === "left" && <li>They stay in People with their history; you can make them active again later.</li>}
                 </ul>
               </>

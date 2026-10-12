@@ -20,11 +20,11 @@ export async function GET(request) {
   const kind = new URL(request.url).searchParams.get("kind");
   if (!KINDS.includes(kind)) return new Response("Not found", { status: 404 });
   const rows = await sql(
-    "SELECT name, email, social_profile, social_url, organization, furbaby_name, message, status, notes, created_at, membership, member_no, member_year FROM people WHERE kind=$1 ORDER BY created_at",
+    "SELECT kind, name, email, social_profile, social_url, organization, furbaby_name, message, status, notes, created_at, membership, member_no, member_year FROM people WHERE kind=$1 ORDER BY created_at",
     [kind],
   );
-  const members = kind === "Member";
-  const head = ["Name", "Email", ...(members ? ["Member no.", "Membership"] : []), "Social profile", "Social link", "Organization", "Furbaby", "Message", "Status", "Notes", "Joined"];
+  const members = kind === "Member" || kind === "Volunteer";
+  const head = ["Name", "Email", ...(members ? [kind === "Volunteer" ? "Volunteer no." : "Member no.", "Membership"] : []), "Social profile", "Social link", "Organization", "Furbaby", "Message", "Status", "Notes", "Joined"];
   const lines = [head.map(cell).join(",")].concat(
     rows.map((r) => [r.name, r.email, ...(members ? [memberNumber(r), membershipLabel(r.membership)] : []), r.social_profile, r.social_url, r.organization, r.furbaby_name, r.message, r.status, r.notes, r.created_at.toISOString()].map(cell).join(",")),
   );

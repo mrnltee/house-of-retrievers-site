@@ -41,6 +41,7 @@ const LABELS = {
   capacity: "Capacity",
   rsvpOpen: "RSVPs open",
   feeRequired: "Fee required",
+  emailTemplateId: "Confirmation email",
 };
 
 /** The copy for each button that asks first, keyed by the button's data-confirm. */

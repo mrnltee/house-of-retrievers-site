@@ -3,7 +3,7 @@ import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { actionLabel } from "../../../../lib/admin/activity.mjs";
-import { isPublic, statusLabel, tierLabel } from "../../../../lib/supporters.mjs";
+import { isPublic, statusLabel, supporterNumber, tierLabel } from "../../../../lib/supporters.mjs";
 import { HOME_URL } from "../../../../lib/siteSeo.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import SupporterForm from "../SupporterForm";
@@ -27,7 +27,7 @@ export default async function SupporterPage({ params, searchParams }) {
   return (
     <>
       <p className="small"><a href={`${base}/supporters`}>← Sponsors & partners</a></p>
-      <PageHead title={row.name} lead={[row.kind, row.tier ? `★ ${tierLabel(row.tier)}` : "", statusLabel(row.status), shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
+      <PageHead title={row.name} lead={[row.kind, supporterNumber(row), row.tier ? `★ ${tierLabel(row.tier)}` : "", statusLabel(row.status), shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
         {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}
       </PageHead>
       <Flash params={query} />

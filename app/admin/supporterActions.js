@@ -1,9 +1,9 @@
 "use server";
 
-import { sql } from "../lib/db";
+import { sql, transaction } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
-import { supporterSlug, validateSupporter } from "../lib/supporters.mjs";
+import { supporterNumber, supporterSlug, validateSupporter } from "../lib/supporters.mjs";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -64,6 +64,12 @@ export async function saveSupporter(data) {
     const slug = await freeSlug(value.name, isUuid(id) ? id : null);
     const before = isUuid(id) ? (await sql("SELECT * FROM supporters WHERE id = $1", [id]))[0] : null;
     if (isUuid(id) && !before) await backWith("/supporters", "error", "That record no longer exists.");
+    // The code is part of their number, so it stays once a number is given.
+    if (before?.number_no) value.code = before.code;
+    if (value.code) {
+      const [taken] = await sql("SELECT name FROM supporters WHERE code = $1 AND id IS DISTINCT FROM $2", [value.code, before?.id || null]);
+      if (taken) await backWith(back, "error", `The code ${value.code} is already ${taken.name}'s. Pick another 3 letters.`);
+    }
 
     // "Told about public amounts": dated the first time it's ticked, cleared when unticked.
     const agreedAt = value.amountsAgreed ? before?.amounts_agreed_at || new Date().toISOString().slice(0, 10) : null;
@@ -79,26 +85,46 @@ export async function saveSupporter(data) {
       await sql(
         `UPDATE supporters SET kind=$1, name=$2, slug=$3, status=$4, tier=$5, logo=$6, website=$7, instagram=$8, blurb=$9, gives=$10,
            support_year=$11, cash_amount=$12, in_kind_value=$13, in_kind_note=$14, show_on_site=$15, amounts_agreed_at=$16, amounts_agreed_by=$17,
-           contact_name=$18, contact_email=$19, contact_phone=$20, notes=$21, updated_at=now()
+           contact_name=$18, contact_email=$19, contact_phone=$20, notes=$21, code=$23, updated_at=now()
          WHERE id=$22`,
-        [...fields, id],
+        [...fields, id, value.code],
       );
     } else {
       const [row] = await sql(
         `INSERT INTO supporters (kind, name, slug, status, tier, logo, website, instagram, blurb, gives, support_year, cash_amount, in_kind_value,
-           in_kind_note, show_on_site, amounts_agreed_at, amounts_agreed_by, contact_name, contact_email, contact_phone, notes, person_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING id`,
-        [...fields, isUuid(form(data, "personId")) ? form(data, "personId") : null],
+           in_kind_note, show_on_site, amounts_agreed_at, amounts_agreed_by, contact_name, contact_email, contact_phone, notes, person_id, code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING id`,
+        [...fields, isUuid(form(data, "personId")) ? form(data, "personId") : null, value.code],
       );
       recordId = row.id;
     }
 
+    // First time Confirmed: HOR-XXX-YY-NNNN, YY = the year they registered
+    // (the Join form if they came through it, else when the record was made).
+    let numbered = "";
+    if (value.status === "confirmed" && !before?.number_no) {
+      numbered = await transaction(async (tx) => {
+        await tx.sql("SELECT pg_advisory_xact_lock(727011)");
+        const [row] = await tx.sql(
+          `WITH me AS (
+             SELECT extract(year FROM coalesce(p.created_at, s.created_at) AT TIME ZONE 'Asia/Manila')::smallint AS y
+               FROM supporters s LEFT JOIN people p ON p.id = s.person_id WHERE s.id = $1)
+           UPDATE supporters SET number_year = (SELECT y FROM me),
+             number_no = (SELECT coalesce(max(number_no), 0) + 1 FROM supporters WHERE number_year = (SELECT y FROM me))
+           WHERE id = $1 AND number_no IS NULL RETURNING code, number_year, number_no`,
+          [recordId],
+        );
+        return supporterNumber(row);
+      });
+    }
+
     const details = { supporterId: recordId };
+    if (numbered) details.number = numbered;
     if (before && before.status !== value.status) details.status = value.status;
     if (before && before.show_on_site !== value.showOnSite) details.website = value.showOnSite ? "shown" : "hidden";
     if (!before?.amounts_agreed_at && agreedAt) details.amounts = "agreed";
     await logActivity(admin.email, before ? "supporter.save" : "supporter.create", value.name, details);
-    const message = ["Saved.", ...(notes || [])].join(" ");
+    const message = ["Saved.", numbered ? `Their number is ${numbered}.` : "", ...(notes || [])].filter(Boolean).join(" ");
     await backWith(`/supporters/${recordId}`, notes?.length ? "error" : "ok", message);
   });
 }

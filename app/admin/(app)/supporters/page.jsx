@@ -1,7 +1,7 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { STATUSES, givesLabel, isPublic, statusLabel, tierLabel } from "../../../lib/supporters.mjs";
+import { STATUSES, givesLabel, isPublic, statusLabel, supporterNumber, tierLabel } from "../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../ui";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
@@ -69,6 +69,7 @@ export default async function SupportersPage({ searchParams }) {
                     <span className="supporter-card-logo">{r.logo ? <img src={r.logo} alt="" /> : r.name.slice(0, 2).toUpperCase()}</span>
                     <span>
                       <strong>{r.name}</strong>
+                      {supporterNumber(r) && <span className="small muted" style={{ display: "block", marginBottom: 6 }}>{supporterNumber(r)}</span>}
                       <span className="chips">
                         <span className="chip">{r.kind}</span>
                         {r.tier && <span className={`chip tier-${r.tier}`}>★ {tierLabel(r.tier)}</span>}

@@ -8,4 +8,6 @@ test("member numbers read HOR-YY-NNNN", () => {
   assert.equal(memberNumber({ member_no: 3, member_year: 2105 }), "HOR-05-0003");
   assert.equal(memberNumber({ member_no: null, member_year: null }), "");
   assert.equal(memberNumber(null), "");
+  assert.equal(memberNumber({ kind: "Volunteer", member_no: 12, member_year: 2026 }), "HORV-26-0012");
+  assert.equal(memberNumber({ kind: "Member", member_no: 12, member_year: 2026 }), "HOR-26-0012");
 });

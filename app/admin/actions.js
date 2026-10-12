@@ -11,11 +11,12 @@ import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin
 import { cleanSlug, slugify, validateEvent } from "../lib/admin/events.mjs";
 import { destroyPhoto } from "../lib/cloudinary.mjs";
 import { checkInOutcome, normalizeCode } from "../lib/admin/registrations.mjs";
-import { MEMBERSHIP_KEYS, PEOPLE_STATUSES, memberNumber, membershipLabel } from "../lib/admin/people.mjs";
+import { MEMBERSHIP_KEYS, PEOPLE_STATUSES, hasMembership, memberNumber, membershipLabel } from "../lib/admin/people.mjs";
+import { supporterNumber } from "../lib/supporters.mjs";
 import { readSheet } from "../lib/admin/peopleImport.mjs";
 import { sendEmail } from "../lib/email";
-import { welcomeMember } from "../lib/emailTemplates.mjs";
-import { loadTemplate } from "../lib/emailSettings";
+import { acceptanceEmail, welcomeKey, welcomeMember } from "../lib/emailTemplates.mjs";
+import { loadCustomTemplate, loadTemplate } from "../lib/emailSettings";
 import { savePersonPhoto } from "../lib/personPhotos";
 
 
@@ -186,6 +187,10 @@ export async function saveEvent(data) {
     // Sent only by editors that have these fields, so an older open tab can't blank them.
     if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
     if (data.has("allDaySent")) await sql("UPDATE events SET all_day=$1 WHERE id=$2", [value.allDay, eventId]);
+    if (data.has("emailTemplateId")) {
+      const tid = form(data, "emailTemplateId");
+      await sql("UPDATE events SET email_template_id = (SELECT id FROM custom_email_templates WHERE id::text = $1 AND kind = 'event') WHERE id = $2", [tid, eventId]);
+    }
     if (data.has("partners")) await sql("UPDATE events SET partners=$1 WHERE id=$2", [value.partners, eventId]);
     if (data.has("sponsors")) await sql("UPDATE events SET sponsors=$1 WHERE id=$2", [value.sponsors, eventId]);
     if (data.has("venueAddress")) await sql("UPDATE events SET venue_address=$1 WHERE id=$2", [value.venueAddress, eventId]);
@@ -314,9 +319,22 @@ export async function updatePerson(data) {
 }
 
 /**
- * Membership for a Member: applicant → active → inactive / left. The first
- * time someone becomes active they get a member number and "member since",
- * and (if email is set up and the box is ticked) the welcome email.
+ * The welcome a member or volunteer gets: "standard" (HOR's welcome for their
+ * kind), an Acceptance template's id, or "none".
+ */
+async function welcomeFor(choice, person, number) {
+  const base = { name: person.name, memberNo: number, furbaby: person.furbaby_name || "", organization: person.organization || "", kind: person.kind };
+  if (choice === "standard") return { mail: welcomeMember({ ...base, custom: await loadTemplate(welcomeKey(person.kind)) }), template: "welcome" };
+  const own = isUuid(choice) ? await loadCustomTemplate(choice, "acceptance") : null;
+  if (own) return { mail: welcomeMember({ ...base, custom: own, ref: "custom:acceptance" }), template: own.name };
+  return null;
+}
+
+/**
+ * Membership for a Member or Volunteer: applicant → active → inactive / left.
+ * The first time someone becomes active they get a number (HOR-YY-NNNN for
+ * members, HORV-YY-NNNN for volunteers) and "member since", and (if email is
+ * set up) the welcome picked in the form.
  */
 export async function updateMembership(data) {
   const id = form(data, "id");
@@ -325,57 +343,89 @@ export async function updateMembership(data) {
     const admin = await actionAdmin("people:edit");
     const membership = form(data, "membership");
     if (!isUuid(id) || !MEMBERSHIP_KEYS.includes(membership)) await backWith(back, "error", "Pick a membership status from the list.");
-    const [before] = await sql("SELECT name, email, kind, membership, member_no, furbaby_name FROM people WHERE id=$1", [id]);
-    if (!before || before.kind !== "Member") await backWith(back, "error", "Membership applies to Members only.");
-    // First activation takes the next number in the year they registered
-    // (HOR-YY-NNNN, YY = Join form year, Manila). The lock makes two admins
+    const [before] = await sql("SELECT name, email, kind, membership, member_no, furbaby_name, organization FROM people WHERE id=$1", [id]);
+    if (!before || !hasMembership(before.kind)) await backWith(back, "error", "Membership applies to Members and Volunteers only.");
+    // First activation takes the next number for their kind in the year they
+    // registered (YY = Join form year, Manila). The lock makes two admins
     // activating at once get different numbers.
     const after = await transaction(async (tx) => {
       await tx.sql("SELECT pg_advisory_xact_lock(727010)");
       const [row] = await tx.sql(
-        `WITH yr AS (SELECT extract(year FROM created_at AT TIME ZONE 'Asia/Manila')::smallint AS y FROM people WHERE id = $2)
+        `WITH me AS (SELECT kind, extract(year FROM created_at AT TIME ZONE 'Asia/Manila')::smallint AS y FROM people WHERE id = $2)
          UPDATE people SET membership=$1,
-           member_year = CASE WHEN $1 = 'active' AND member_no IS NULL THEN (SELECT y FROM yr) ELSE member_year END,
+           member_year = CASE WHEN $1 = 'active' AND member_no IS NULL THEN (SELECT y FROM me) ELSE member_year END,
            member_no = CASE WHEN $1 = 'active' AND member_no IS NULL
-             THEN (SELECT coalesce(max(member_no), 0) + 1 FROM people WHERE member_year = (SELECT y FROM yr))
+             THEN (SELECT coalesce(max(p.member_no), 0) + 1 FROM people p WHERE p.kind = (SELECT kind FROM me) AND p.member_year = (SELECT y FROM me))
              ELSE member_no END,
            member_since = CASE WHEN $1 = 'active' AND member_since IS NULL THEN (now() AT TIME ZONE 'Asia/Manila')::date ELSE member_since END,
            updated_at = now()
-         WHERE id=$2 RETURNING member_no, member_year`,
+         WHERE id=$2 RETURNING kind, member_no, member_year`,
         [membership, id],
       );
       return row;
     });
     await logActivity(admin.email, "person.membership", before.name, { personId: id, from: before.membership, to: membership });
-    let note = `${before.name} is now ${membershipLabel(membership).toLowerCase()}.`;
+    const number = memberNumber(after);
+    let note = `${before.name} is now ${membershipLabel(membership).toLowerCase()}${membership === "active" && before.member_no == null && number ? `, ${number}` : ""}.`;
     const firstActivation = membership === "active" && before.member_no == null;
-    if (firstActivation && data.get("sendWelcome") === "on") {
-      const mail = welcomeMember({ name: before.name, memberNo: memberNumber(after), furbaby: before.furbaby_name || "", custom: await loadTemplate("member-welcome") });
-      const sent = await sendEmail({ to: before.email, ...mail, idempotencyKey: `welcome/${id}` });
-      if (sent.ok) {
-        await logActivity(admin.email, "person.email", before.name, { personId: id, template: "welcome" });
-        note += " Welcome email sent.";
-      } else {
-        note += sent.skipped ? " Email isn't set up yet, so no welcome email went out." : " The welcome email didn't go through; try Resend welcome.";
+    // Older forms sent a "sendWelcome" checkbox; treat it as the standard welcome.
+    const choice = form(data, "welcome") || (data.get("sendWelcome") === "on" ? "standard" : "none");
+    if (firstActivation && choice !== "none") {
+      const picked = await welcomeFor(choice, before, number);
+      if (picked) {
+        const sent = await sendEmail({ to: before.email, ...picked.mail, idempotencyKey: `welcome/${id}` });
+        if (sent.ok) {
+          await logActivity(admin.email, "person.email", before.name, { personId: id, template: picked.template });
+          note += " Welcome email sent.";
+        } else {
+          note += sent.skipped ? " Email isn't set up yet, so no welcome email went out." : " The welcome email didn't go through; use “Send an email” to try again.";
+        }
       }
     }
     await backWith(back, "ok", note);
   });
 }
 
-/** Sends (again) the welcome email to an active member. */
+/** Sends (again) the standard welcome email to an active member or volunteer. */
 export async function resendWelcome(data) {
   const id = form(data, "id");
   const back = isUuid(id) ? `/people/${id}` : "/people";
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
-    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year, furbaby_name FROM people WHERE id=$1", [id]) : [];
-    if (!person || person.kind !== "Member" || person.membership !== "active") await backWith(back, "error", "Only active members get the welcome email.");
-    const mail = welcomeMember({ name: person.name, memberNo: memberNumber(person), furbaby: person.furbaby_name || "", custom: await loadTemplate("member-welcome") });
+    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year, furbaby_name, organization FROM people WHERE id=$1", [id]) : [];
+    if (!person || !hasMembership(person.kind) || person.membership !== "active") await backWith(back, "error", "Only active members and volunteers get the welcome email.");
+    const { mail } = await welcomeFor("standard", person, memberNumber(person));
     const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `welcome/${id}/${Date.now()}` });
     if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");
     await logActivity(admin.email, "person.email", person.name, { personId: id, template: "welcome" });
     await backWith(back, "ok", `Welcome email sent to ${person.email}.`);
+  });
+}
+
+/**
+ * "Send an email" on a profile: one of HOR's Acceptance templates, filled in
+ * for this person. {{member_no}} is their number: HOR-/HORV- for members and
+ * volunteers, HOR-XXX- from the sponsor or partner record.
+ */
+export async function sendTemplateToPerson(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/people/${id}` : "/people";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const [person] = isUuid(id) ? await sql("SELECT id, name, email, kind, member_no, member_year, furbaby_name, organization FROM people WHERE id=$1", [id]) : [];
+    if (!person) await backWith("/people", "error", "That person is no longer in People.");
+    const template = await loadCustomTemplate(form(data, "templateId"), "acceptance");
+    if (!template) await backWith(back, "error", "Pick one of your Acceptance templates.");
+    let number = memberNumber(person);
+    if (["Sponsor", "Partner"].includes(person.kind)) {
+      const [rec] = await sql("SELECT code, number_year, number_no FROM supporters WHERE person_id = $1 OR lower(name) = lower($2) LIMIT 1", [id, (person.organization || person.name || "").trim()]);
+      number = supporterNumber(rec);
+    }
+    const mail = acceptanceEmail({ person: { name: person.name, furbaby: person.furbaby_name || "", organization: person.organization || "", kind: person.kind, memberNo: number }, custom: template });
+    const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `custom/${template.id}/${id}/${Date.now()}` });
+    if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");
+    await logActivity(admin.email, "person.email", person.name, { personId: id, template: template.name });
+    await backWith(back, "ok", `“${template.name}” sent to ${person.email}.`);
   });
 }
 
@@ -398,7 +448,7 @@ export async function importPeople(data) {
     for (const p of people) {
       const [row] = await sql(
         `INSERT INTO people (kind, name, email, social_profile, organization, furbaby_name, message, status, notes, created_at, membership)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, now()), CASE WHEN $1 = 'Member' THEN 'applicant' END)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, now()), CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END)
          ON CONFLICT (kind, lower(email)) DO UPDATE SET
            social_profile = COALESCE(people.social_profile, EXCLUDED.social_profile),
            organization = COALESCE(people.organization, EXCLUDED.organization),

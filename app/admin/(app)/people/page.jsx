@@ -2,7 +2,7 @@ import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { updatePerson } from "../../actions";
-import { MEMBERSHIP, PEOPLE_KINDS, PEOPLE_STATUSES, memberNumber, membershipLabel } from "../../../lib/admin/people.mjs";
+import { MEMBERSHIP, PEOPLE_KINDS, PEOPLE_STATUSES, hasMembership, memberNumber, membershipLabel } from "../../../lib/admin/people.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import PersonAvatar from "./PersonAvatar";
 
@@ -10,7 +10,7 @@ const KINDS = PEOPLE_KINDS;
 const STATUSES = PEOPLE_STATUSES;
 const HELP = {
   Member: "Contact them and add them to the group chat. Open someone to confirm their membership and send the welcome email.",
-  Volunteer: "Under 18s volunteer only with a parent or guardian. Check before marking Onboarded.",
+  Volunteer: "Under 18s volunteer only with a parent or guardian. Check before marking Onboarded. Open someone to make them Active: they get a volunteer number (HORV-YY-NNNN) and, if you like, a welcome email.",
   Sponsor: "Do the conflict-of-interest check before marking Confirmed.",
   Partner: "Agree the beneficiary before marking Confirmed.",
 };
@@ -46,7 +46,7 @@ export default async function PeoplePage({ searchParams }) {
   ]);
   const count = (k) => counts.find((row) => row.kind === k)?.count || 0;
   const canEdit = can(admin.roles, "people:edit");
-  const members = kind === "Member";
+  const members = hasMembership(kind);
   const link = (extra) => `${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(noPhoto ? { photo: "none" } : {}), ...extra })}`;
 
   return (
@@ -71,7 +71,7 @@ export default async function PeoplePage({ searchParams }) {
       </div>
 
       <dl className="people-stats">
-        {members && <div><dt>Active members</dt><dd>{stats.active}</dd></div>}
+        {members && <div><dt>Active {kind === "Volunteer" ? "volunteers" : "members"}</dt><dd>{stats.active}</dd></div>}
         {members && <div><dt>Applicants</dt><dd>{stats.applicants}</dd></div>}
         <div><dt>New this month</dt><dd>{stats.this_month}</dd></div>
         <div className={stats.waiting ? "is-warn" : undefined}><dt>Waiting over 7 days</dt><dd>{stats.waiting}</dd></div>
@@ -95,8 +95,8 @@ export default async function PeoplePage({ searchParams }) {
             <tr>
               <th>Person</th>
               <th>Contact</th>
-              <th>{members || kind === "Volunteer" ? "Furbaby" : "Organization"}</th>
-              {members && <th>Membership</th>}
+              <th>{members ? "Furbaby" : "Organization"}</th>
+              {members && <th>{kind === "Volunteer" ? "Status" : "Membership"}</th>}
               <th>Joined</th>
               <th>Follow-up</th>
             </tr>
@@ -119,7 +119,7 @@ export default async function PeoplePage({ searchParams }) {
                   <a href={`mailto:${p.email}`}>{p.email}</a>
                   {p.social_profile && <><br />{p.social_url ? <a href={p.social_url} target="_blank" rel="noreferrer">{p.social_profile}</a> : p.social_profile}</>}
                 </td>
-                <td>{(members || kind === "Volunteer" ? p.furbaby_name : p.organization) || "—"}</td>
+                <td>{(members ? p.furbaby_name : p.organization) || "—"}</td>
                 {members && (
                   <td>
                     <span className={`chip membership-${p.membership}`}>{membershipLabel(p.membership) || "—"}</span>

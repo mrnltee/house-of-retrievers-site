@@ -1,22 +1,27 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { renderTemplate, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
+import { renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
 import { resetEmailTemplate, saveEmailTemplate, sendTestEmail } from "../../../emailActions";
 
-const SAMPLE = { name: "Juan dela Cruz", furbaby: "Mochi", memberNo: "HOR-26-0001" };
+const PASS = { button: { label: "Open my pass", href: "#" } };
 
 /**
- * Edits one welcome email with a live preview. Clicking a variable inserts it
+ * Edits one email with a live preview: a built-in one (`templateKey`), or one
+ * of HOR's own (`customId`, or a new one of `kind`), which also has a name. Clicking a variable inserts it
  * where the cursor was in the last field used. The preview fills variables
  * with a sample person.
  */
-export default function TemplateEditor({ templateKey, initial, defaults, custom, variables }) {
+export default function TemplateEditor({ templateKey, customId, kind, name: initialName = "", initial, defaults, custom, variables }) {
+  const ref = templateKey || `custom:${kind}`;
+  const own = !templateKey;
+  const event = ref === "rsvp-confirmed" || ref === "custom:event";
+  const [name, setName] = useState(initialName);
   const [fields, setFields] = useState({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
   const [width, setWidth] = useState("phone");
   const last = useRef({ name: "message", el: null });
-  const mail = useMemo(() => renderTemplate(templateKey, fields, SAMPLE), [templateKey, fields]);
-  const changed = JSON.stringify(fields) !== JSON.stringify({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
+  const mail = useMemo(() => renderTemplate(ref, fields, SAMPLE_PERSON, event ? PASS : {}), [ref, event, fields]);
+  const changed = name !== initialName || JSON.stringify(fields) !== JSON.stringify({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
 
   const set = (name) => (e) => {
     last.current = { name, el: e.target };
@@ -52,7 +57,15 @@ export default function TemplateEditor({ templateKey, initial, defaults, custom,
   return (
     <div className="grid-2 template-grid">
       <form action={saveEmailTemplate} className="form card">
-        <input type="hidden" name="key" value={templateKey} />
+        {templateKey && <input type="hidden" name="key" value={templateKey} />}
+        {customId && <input type="hidden" name="id" value={customId} />}
+        {own && !customId && <input type="hidden" name="kind" value={kind} />}
+        {own && (
+          <label className="field">
+            <span>Template name <small>Only admins see this, e.g. “Volunteer accepted” or “Barkdate confirmation”</small></span>
+            <input type="text" name="name" maxLength={80} required value={name} onChange={(e) => setName(e.target.value)} />
+          </label>
+        )}
         {field("subject", "Subject", "The line people see in their inbox")}
         {field("greeting", "Greeting", "Optional, above the heading, e.g. Hi {{first_name}},")}
         {field("heading", "Heading", "The big serif line")}
@@ -68,16 +81,17 @@ export default function TemplateEditor({ templateKey, initial, defaults, custom,
         <div className="actions">
           <button className="btn gold" disabled={!changed && custom}>Save</button>
           <button className="btn ghost" formAction={sendTestEmail}>Send a test to me</button>
-          <button type="button" className="linkish" onClick={() => setFields({ ...defaults })}>Start from HOR's original wording</button>
-          {custom && <button className="linkish danger-text" formAction={resetEmailTemplate}>Delete my wording</button>}
+          {!own && <button type="button" className="linkish" onClick={() => setFields({ ...defaults })}>Start from HOR's original wording</button>}
+          {!own && custom && <button className="linkish danger-text" formAction={resetEmailTemplate}>Delete my wording</button>}
+          {customId && <button className="linkish danger-text" formAction={resetEmailTemplate} onClick={(e) => { if (!window.confirm(`Delete “${initialName}”?${kind === "event" ? " Events that use it will send the standard confirmation." : ""}`)) e.preventDefault(); }}>Delete this template</button>}
         </div>
-        <p className="small muted">{custom ? "This email uses your saved wording." : "This email uses HOR's original wording until you save."} The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
+        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The event's name, date and venue, any fee note and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
       </form>
 
       <section className="card template-preview">
         <div className="template-preview-head">
           <div>
-            <p className="small muted" style={{ margin: 0 }}>Preview, as Juan dela Cruz (dog: Mochi)</p>
+            <p className="small muted" style={{ margin: 0 }}>Preview, as {SAMPLE_PERSON.name} (dog: {SAMPLE_PERSON.furbaby}{event ? `, at ${SAMPLE_PERSON.event.title}` : ""})</p>
             <p className="template-subject"><strong>{mail.subject}</strong></p>
           </div>
           <div className="segmented" role="group" aria-label="Preview width">

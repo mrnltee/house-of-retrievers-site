@@ -6,6 +6,7 @@ import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../li
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 import { sendEmail } from "../../lib/email";
 import { rsvpConfirmed } from "../../lib/emailTemplates.mjs";
+import { loadCustomTemplate, loadTemplate } from "../../lib/emailSettings";
 import { EVENTS_URL } from "../../lib/eventsHost.mjs";
 
 export const runtime = "nodejs";
@@ -43,7 +44,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, email_template_id FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -65,12 +66,17 @@ export async function POST(request) {
     if (result.error) return fail(result.error, result.status);
     // Their pass by email too, so it isn't lost when the tab closes.
     const { event } = result;
+    // The event's own confirmation template, else HOR's standard wording, else the default.
+    const own = result.status === "confirmed" && event.email_template_id ? await loadCustomTemplate(event.email_template_id, "event") : null;
+    const custom = own || (result.status === "confirmed" ? await loadTemplate("rsvp-confirmed") : null);
     const mail = rsvpConfirmed({
+      custom,
+      ref: own ? "custom:event" : "rsvp-confirmed",
       name: value.name,
       status: result.status,
       feeRequired: event.fee_required,
       passUrl: `${EVENTS_URL}/r/${result.code}`,
-      event: { title: event.title, date: String(event.date).slice(0, 10), startTime: event.start_time || undefined, endTime: event.end_time || undefined, venue: event.venue, city: event.city },
+      event: { title: event.title, date: String(event.date).slice(0, 10), startTime: event.start_time || undefined, endTime: event.end_time || undefined, allDay: Boolean(event.all_day), venue: event.venue, city: event.city },
     });
     await sendEmail({ to: value.email, ...mail, idempotencyKey: `rsvp/${result.code}` }).catch(() => null);
     revalidatePath("/events");

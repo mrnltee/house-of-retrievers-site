@@ -102,6 +102,7 @@ export function validateSupporter(input) {
     contactPhone: clean(input?.contactPhone, 40) || null,
     notes: String(input?.notes ?? "").trim().slice(0, 2000) || null,
     logo: clean(input?.logo, 300) || null,
+    code: String(input?.code ?? "").trim().toUpperCase() || null,
   };
   if (!value.name) return { error: "Give the sponsor or partner a name." };
   if (!value.kind) return { error: "Pick Sponsor or Partner." };
@@ -111,6 +112,8 @@ export function validateSupporter(input) {
   if (value.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.contactEmail)) return { error: "The contact email doesn't look right." };
   if (value.supportYear != null && !(Number.isInteger(value.supportYear) && value.supportYear >= 2020 && value.supportYear <= 2100)) return { error: "Pick the year these amounts are for." };
   if (value.logo && !value.logo.startsWith("/api/event-image/")) value.logo = null;
+  if (value.code && !/^[A-Z]{3}$/.test(value.code)) return { error: "The ID code should be 3 letters, like PPS." };
+  if (value.status === "confirmed" && !value.code) return { error: "Give them a 3-letter ID code before confirming. It goes in their number, e.g. HOR-PPS-26-0001." };
   if (value.kind === "Partner") value.tier = null;
 
   const notes = [];
@@ -125,6 +128,34 @@ export function validateSupporter(input) {
     }
   }
   return { value, notes };
+}
+
+/**
+ * A 3-letter ID code to suggest from the name: the first letters of the first
+ * three words ("Pawsome Pet Shop" → PPS), or the first letters of a shorter name.
+ */
+export function suggestCode(name) {
+  const words = String(name || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/&/g, " ")
+    .split(/[^A-Z0-9]+/)
+    .filter((w) => w && !["THE", "AND", "OF", "INC", "CO", "CORP", "LTD"].includes(w));
+  const letters = words.length >= 3 ? words.slice(0, 3).map((w) => w[0]).join("") : (words.map((w) => w[0]).join("") + words.join("").slice(1)).replace(/[^A-Z]/g, "");
+  return letters.replace(/[^A-Z]/g, "").slice(0, 3).padEnd(3, "X");
+}
+
+/**
+ * "HOR-PPS-26-0001": the sponsor or partner's code, the year they registered
+ * (last two digits) and their place among sponsors and partners confirmed
+ * from that year. Set the first time a record is confirmed; never reused.
+ */
+export function supporterNumber(row) {
+  const n = Number(row?.number_no);
+  const year = Number(row?.number_year);
+  if (!row?.code || !Number.isInteger(n) || n < 1 || !Number.isInteger(year)) return "";
+  return `HOR-${row.code}-${String(year % 100).padStart(2, "0")}-${String(n).padStart(4, "0")}`;
 }
 
 /** Whether a DB row may appear on the website. */

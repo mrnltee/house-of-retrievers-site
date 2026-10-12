@@ -57,3 +57,23 @@ test("editable welcome emails: HOR's wording with variables, safely filled", asy
   const fallback = renderTemplate("member-registered", { heading: "  ", message: "Hello" }, { name: "Juan" });
   assert.equal(fallback.subject, "Welcome to the House, Juan! 🤎");
 });
+
+test("every kind's Join reply and welcome can be reworded; own templates fill person and event", async () => {
+  const { renderTemplate, receivedKey, welcomeKey, acceptanceEmail, EDITABLE_TEMPLATES, SAMPLE_PERSON, unknownVariables } = await import("./emailTemplates.mjs");
+  assert.deepEqual(["Member", "Volunteer", "Partner", "Sponsor"].map(receivedKey), ["member-registered", "received-volunteer", "received-partner", "received-sponsor"]);
+  for (const key of ["received-volunteer", "received-partner", "received-sponsor", "volunteer-welcome", "rsvp-confirmed"]) assert.ok(EDITABLE_TEMPLATES[key], key);
+  const partner = applicationReceived({ name: "Ana Reyes", kind: "Partner", organization: "Pawsome Pet Shop", custom: { subject: "Hello {{organization}}", heading: "Hi {{first_name}}", message: "We got it." } });
+  assert.equal(partner.subject, "Hello Pawsome Pet Shop");
+  assert.equal(welcomeKey("Volunteer"), "volunteer-welcome");
+  assert.match(welcomeMember({ name: "Ben", kind: "Volunteer", memberNo: "HORV-26-0003" }).text, /volunteer number is HORV-26-0003/);
+  const accepted = acceptanceEmail({ person: { name: "Ana Reyes", kind: "Sponsor", organization: "Pawsome", memberNo: "HOR-PPS-26-0001" }, custom: { subject: "Welcome, {{organization}}", heading: "Thanks, {{first_name}}", message: "You're a {{role}}: {{member_no}}" } });
+  assert.equal(accepted.subject, "Welcome, Pawsome");
+  assert.match(accepted.text, /You're a sponsor: HOR-PPS-26-0001/);
+  const ev = renderTemplate("custom:event", { subject: "Ready for {{event_title}}?", heading: "See you, {{first_name}}", message: "At {{event_venue}}" }, SAMPLE_PERSON, { button: { label: "Open my pass", href: "https://x.test/r/1" } });
+  assert.equal(ev.subject, "Ready for Bedazzle Barkdate?");
+  assert.match(ev.text, /At Wiltlover Café, Pasay/);
+  assert.match(ev.html, /x\.test\/r\/1/);
+  assert.deepEqual(unknownVariables("custom:event", { message: "{{member_no}}" }), ["member_no"]);
+  const own = rsvpConfirmed({ name: "Ana", status: "confirmed", passUrl: "p", ref: "custom:event", custom: { subject: "Own {{event_title}}", heading: "H", message: "M" }, event: SAMPLE_PERSON.event });
+  assert.equal(own.subject, "Own Bedazzle Barkdate");
+});
