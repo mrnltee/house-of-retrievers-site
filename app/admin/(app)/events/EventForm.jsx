@@ -7,6 +7,7 @@ import EventPhoto from "./EventPhoto";
 import EventPreview from "./EventPreview";
 import { sql } from "../../../lib/db";
 import { listCustomTemplates } from "../../../lib/emailSettings";
+import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
 import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
@@ -28,7 +29,10 @@ async function supporterNames(kind) {
 }
 
 export default async function EventForm({ event, autoDescribe = false }) {
-  const [partnerNames, sponsorNames, emailTemplates] = await Promise.all([supporterNames("Partner"), supporterNames("Sponsor"), listCustomTemplates("event")]);
+  const [partnerNames, sponsorNames, emailTemplates, ticketCounts] = await Promise.all([
+    supporterNames("Partner"), supporterNames("Sponsor"), listCustomTemplates("event"),
+    event ? sql(TICKET_COUNTS_SQL, [event.id]).then(countsFromRows).catch(() => ({})) : {},
+  ]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);
   const missing = event
     ? validateEvent({
@@ -83,7 +87,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
 
       <section className="card">
         <h2>Price and sign-ups</h2>
-        <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} />
+        <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} />
         <SignupFields
           registration={event?.registration}
           capacity={event?.capacity}

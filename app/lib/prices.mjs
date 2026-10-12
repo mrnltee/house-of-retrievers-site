@@ -25,8 +25,10 @@ export function parsePeso(text) {
  * Tiers as sent by the editor (a JSON string or an array) → a clean list.
  * Rows with no amount are dropped; labels are trimmed to 40 characters.
  * A tier can be on sale for a period (an early bird rate): optional `from`
- * and `until`, ISO instants the editor builds from Manila date + time.
- * @returns {{ tiers?: {label: string, amount: number, from?: string, until?: string}[], error?: string }}
+ * and `until`, ISO instants the editor builds from Manila date + time. It can
+ * also be limited to the first `limit` registrants (an early bird for the
+ * first 20); after that it isn't offered and people take the other tiers.
+ * @returns {{ tiers?: {label: string, amount: number, from?: string, until?: string, limit?: number}[], error?: string }}
  */
 export function cleanTiers(input) {
   let rows = input;
@@ -53,6 +55,11 @@ export function cleanTiers(input) {
       const ms = Date.parse(row[key]);
       if (!Number.isFinite(ms)) return { error: `The ${key === "from" ? "start" : "end"} date of ${label || "a price"} didn't come through. Pick it again.` };
       tier[key] = new Date(ms).toISOString();
+    }
+    if (row?.limit != null && row.limit !== "") {
+      const limit = Number(row.limit);
+      if (!Number.isInteger(limit) || limit < 1 || limit > 5000) return { error: `The limit for ${label || "a price"} should be a whole number of registrants, like 20.` };
+      tier.limit = limit;
     }
     if (tier.from && tier.until && Date.parse(tier.until) <= Date.parse(tier.from)) {
       return { error: `${label || "A price"} ends before it starts. Check its dates.` };
@@ -88,18 +95,31 @@ export function tiersFromCost(cost) {
   return amount == null ? null : [{ label: "", amount }];
 }
 
-/** Whether a tier is on sale at `now` (no dates = always). */
-export function tierAvailable(tier, now = Date.now()) {
+/**
+ * Registrations already holding a tier are counted by label and amount
+ * (what a registration stores). `counts` maps tierKey → number taken.
+ */
+export const tierKey = (tier) => `${tier?.label || ""}|${Number(tier?.amount ?? "")}`;
+
+/** How many are left of a limited tier (null when it has no limit). */
+export function tierLeft(tier, counts = {}) {
+  if (!tier?.limit) return null;
+  return Math.max(0, tier.limit - (counts[tierKey(tier)] || 0));
+}
+
+/** Whether a tier is on sale at `now`: inside its sale period and not sold out (no dates or limit = always). */
+export function tierAvailable(tier, now = Date.now(), counts = {}) {
   if (tier?.from && now < Date.parse(tier.from)) return false;
   if (tier?.until && now >= Date.parse(tier.until)) return false;
+  if (tier?.limit && tierLeft(tier, counts) <= 0) return false;
   return true;
 }
 
 /** The tiers on sale at `now`. */
-export const activeTiers = (tiers, now = Date.now()) => (tiers || []).filter((t) => tierAvailable(t, now));
+export const activeTiers = (tiers, now = Date.now(), counts = {}) => (tiers || []).filter((t) => tierAvailable(t, now, counts));
 
-/** Whether any tier has a sale period. */
-export const hasTierDates = (tiers) => (tiers || []).some((t) => t.from || t.until);
+/** Whether any tier has a sale period or a limit (so what's on sale changes over time). */
+export const hasTierDates = (tiers) => (tiers || []).some((t) => t.from || t.until || t.limit);
 
 const manila = (iso) => {
   const d = new Date(iso);

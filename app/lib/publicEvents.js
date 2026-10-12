@@ -1,3 +1,4 @@
+import { TICKET_COUNTS_COLUMN } from "./ticketCounts.mjs";
 import { events as contentEvents } from "../content/events";
 import { hasDatabase, sql } from "./db";
 import { toPublicEvent } from "./admin/events.mjs";
@@ -8,7 +9,8 @@ export function manilaToday() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 }
 
-const PUBLIC_EVENTS = `SELECT e.*, (SELECT count(*)::int FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed
+const PUBLIC_EVENTS = `SELECT e.*, (SELECT count(*)::int FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed,
+  ${TICKET_COUNTS_COLUMN}
   FROM events e WHERE e.status IN ('published', 'cancelled')`;
 
 /**

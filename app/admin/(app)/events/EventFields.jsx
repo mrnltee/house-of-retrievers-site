@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
 import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
-import { MAX_TIERS, activeTiers, cleanTiers, priceSummary, tierWindow } from "../../../lib/prices.mjs";
+import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 
 /**
@@ -325,14 +325,22 @@ function periodNote(tier) {
   return `${window ? `${window}. ` : ""}Outside its period it isn't offered on the RSVP; the card shows the prices on sale.`;
 }
 
-export function PriceField({ tiers, legacyCost }) {
+/** "12 of 20 taken so far. Cancelled registrations free their place." */
+function limitNote(row, counts = {}) {
+  const n = Number(row.limit);
+  if (!Number.isInteger(n) || n < 1) return "Type how many registrants get this price.";
+  const taken = counts[tierKey({ label: row.label.trim().replace(/\s+/g, " "), amount: parsePeso(row.amount) ?? NaN })] || 0;
+  return `${taken} of ${n} taken so far. Pending payments and the waitlist count; a cancelled registration frees its place. Once all ${n} are taken it isn't offered on the RSVP.`;
+}
+
+export function PriceField({ tiers, legacyCost, counts = {} }) {
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
-  const blank = { label: "", amount: "", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" } };
+  const blank = { label: "", amount: "", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
   const [rows, setRows] = useState(
     tiers?.length && initialMode === "paid"
-      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until) }))
+      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
       : [blank],
   );
   const toSend = (row) => ({
@@ -340,11 +348,12 @@ export function PriceField({ tiers, legacyCost }) {
     amount: row.amount,
     from: row.dated ? manilaInstant(row.from.date, row.from.time || "00:00") : null,
     until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null,
+    limit: row.limited && row.limit !== "" ? row.limit : null,
   });
   const sent = mode === "free" ? [{ label: "", amount: 0 }] : mode === "paid" ? rows.map(toSend) : [];
   const parsed = cleanTiers(sent);
-  const dated = parsed.tiers?.some((t) => t.from || t.until);
-  const summary = parsed.tiers ? priceSummary(dated ? activeTiers(parsed.tiers) : parsed.tiers) : null;
+  const dated = parsed.tiers?.some((t) => t.from || t.until || t.limit);
+  const summary = parsed.tiers ? priceSummary(dated ? activeTiers(parsed.tiers, Date.now(), counts) : parsed.tiers) : null;
   const update = (i, patch) => setRows(rows.map((row, j) => (j === i ? { ...row, ...patch } : row)));
 
   return (
@@ -402,6 +411,18 @@ export function PriceField({ tiers, legacyCost }) {
                       <p className="small muted tier-period-note">{periodNote(toSend(row))}</p>
                     </div>
                   )}
+                  <label className="check small">
+                    <input type="checkbox" checked={row.limited} onChange={(e) => update(i, { limited: e.target.checked })} />
+                    <span>Only for the first registrants <span className="muted">e.g. an early bird for the first 20; after that, people take the other prices</span></span>
+                  </label>
+                  {row.limited && (
+                    <div className="tier-period-fields">
+                      <label className="field"><span>How many</span>
+                        <input type="number" min={1} max={5000} value={row.limit} onChange={(e) => update(i, { limit: e.target.value })} placeholder="20" aria-label={`Tier ${i + 1}: number of registrants`} />
+                      </label>
+                      <p className="small muted tier-period-note">{limitNote(row, counts)}</p>
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
@@ -412,7 +433,7 @@ export function PriceField({ tiers, legacyCost }) {
         </>
       )}
       <p className="small muted" role="status">
-        {parsed.error ? parsed.error : summary ? <>Shown on the card as <strong>{summary}</strong>{dated ? " right now (prices outside their sale period drop off by themselves)" : ""}{parsed.tiers.length > 1 ? "; the event page lists every tier." : "."}</> : "No price shown until you choose."}
+        {parsed.error ? parsed.error : summary ? <>Shown on the card as <strong>{summary}</strong>{dated ? " right now (prices outside their sale period, or already taken, drop off by themselves)" : ""}{parsed.tiers.length > 1 ? "; the event page lists every tier." : "."}</> : "No price shown until you choose."}
       </p>
       <input type="hidden" name="priceTiers" value={JSON.stringify(sent)} />
       {/* An old free-text price stays until it's re-entered as tiers. */}

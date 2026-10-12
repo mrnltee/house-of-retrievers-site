@@ -67,21 +67,26 @@ export const referenceKey = (value) => String(value || "").toUpperCase().replace
  * The ticket someone picked. `tiers` are the event's price tiers
  * ([{label, amount, from?, until?}], see eventTiers); `index` points into
  * that full list. Only tiers on sale now count (an early bird rate ends at
- * its cutoff); with one on sale there is nothing to choose. An admin adding
+ * its cutoff, or once its first-N registrants are in: `counts`, see
+ * tierKey); with one on sale there is nothing to choose. An admin adding
  * someone by hand may pick any tier (`anyTier`), e.g. an early bird who paid
  * before the cutoff.
  * @returns {{ value?: {label: string|null, amount: number|null}, error?: string }}
  */
-export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false } = {}) {
+export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, counts = {} } = {}) {
   const list = Array.isArray(tiers) ? tiers : [];
   if (list.length === 0) return { value: { label: null, amount: null } };
   const pick = (t) => ({ value: { label: t.label || null, amount: t.amount ?? null } });
-  const onSale = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now));
+  const onSale = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now, counts));
   if (onSale.length === 0) return { error: "Tickets for this event aren't on sale right now." };
   const i = index === undefined || index === null || index === "" ? NaN : Number(index);
   if (Number.isInteger(i) && list[i]) {
     if (onSale.some(([, j]) => j === i)) return pick(list[i]);
-    return { error: `The ${list[i].label || "chosen"} rate has ended. Pick another ticket.` };
+    const name = list[i].label || "chosen";
+    if (list[i].limit && tierAvailable({ ...list[i], limit: undefined }, now)) {
+      return { error: `The ${name} rate is sold out (it was for the first ${list[i].limit} registrants). Pick another ticket.` };
+    }
+    return { error: `The ${name} rate has ended. Pick another ticket.` };
   }
   if (onSale.length === 1) return pick(onSale[0][0]);
   return { error: "Pick a ticket." };

@@ -106,3 +106,27 @@ test("price tiers can have a sale period (early bird)", async () => {
   assert.deepEqual(chooseTicket(tiers, 0, { now: after, anyTier: true }).value, { label: "Early bird", amount: 650 });
   assert.match(cleanTiers([{ amount: 5, from: "2026-10-10T00:00:00Z", until: "2026-10-09T00:00:00Z" }]).error, /ends before it starts/);
 });
+
+test("an early bird for the first N registrants, then the regular rate", async () => {
+  const { activeTiers, tierAvailable, tierKey, tierLeft } = await import("./prices.mjs");
+  const { chooseTicket } = await import("./eventPayments.mjs");
+  const { countsFromRows } = await import("./ticketCounts.mjs");
+  const { tiers } = cleanTiers([{ label: "Early bird", amount: "650", limit: "20" }, { label: "Regular", amount: "795" }]);
+  assert.equal(tiers[0].limit, 20);
+  assert.match(cleanTiers([{ amount: 5, limit: "lots" }]).error, /whole number/);
+  const nineteen = countsFromRows([{ label: "Early bird", amount: 650, n: 19 }, { label: "", amount: 795, n: 4 }]);
+  assert.equal(tierKey(tiers[0]), "Early bird|650");
+  assert.equal(tierLeft(tiers[0], nineteen), 1);
+  assert.deepEqual(chooseTicket(tiers, 0, { counts: nineteen }).value, { label: "Early bird", amount: 650 });
+  const twenty = { ...nineteen, "Early bird|650": 20 };
+  assert.equal(tierAvailable(tiers[0], Date.now(), twenty), false);
+  assert.deepEqual(activeTiers(tiers, Date.now(), twenty).map((t) => t.label), ["Regular"]);
+  // The 21st: the early bird is refused, and with one price left it's picked by itself.
+  assert.match(chooseTicket(tiers, 0, { counts: twenty }).error, /sold out \(it was for the first 20 registrants\)/);
+  assert.deepEqual(chooseTicket(tiers, undefined, { counts: twenty }).value, { label: "Regular", amount: 795 });
+  // Public view: places left on the RSVP, taken on the event page, the card shows what's on sale.
+  const pub = toPublicEvent({ status: "published", registration: "required", rsvp_open: true, fee_required: true, date: "2099-01-01", title: "T", slug: "t", venue: "V", city: "C", price_tiers: tiers, ticket_counts: twenty }, 24);
+  assert.equal(pub.tickets[0].left, 0);
+  assert.equal(pub.cost, "₱795");
+  assert.match(pub.priceTiers[0].window, /Sold out/);
+});

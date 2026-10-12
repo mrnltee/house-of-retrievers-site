@@ -3,7 +3,7 @@
  * events page reads (the HorEvent typedef in app/content/events.js).
  */
 
-import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierWindow, tiersFromCost } from "../prices.mjs";
+import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
 
@@ -351,6 +351,8 @@ export function eventTiers(row) {
 /** DB row (+ confirmed count) → HorEvent for EventsView. */
 export function toPublicEvent(row, confirmed = 0) {
   const tiers = eventTiers(row);
+  // Registrations per ticket (TICKET_COUNTS_COLUMN), for tiers limited to the first N.
+  const counts = row.ticket_counts && typeof row.ticket_counts === "object" ? row.ticket_counts : {};
   const gallery = Array.isArray(row.gallery) ? row.gallery : [];
   // On the event page every picture is shown whole: the cover as uploaded (before
   // it was framed for the card), then the extra photos.
@@ -372,11 +374,15 @@ export function toPublicEvent(row, confirmed = 0) {
     venue: row.venue,
     city: row.city,
     // With sale periods, the card shows what's on sale now (5-minute page cache).
-    cost: (hasTierDates(tiers) ? priceSummary(activeTiers(tiers)) : priceSummary(tiers)) || row.cost || undefined,
+    cost: (hasTierDates(tiers) ? priceSummary(activeTiers(tiers, Date.now(), counts)) : priceSummary(tiers)) || row.cost || undefined,
     // Listed lowest first, the order people compare them in.
     // Each tier with its sale period in words ("Until Oct 10, 11:59 PM", "Ended Oct 10").
     priceTiers: tiers.length > 1 || tiers.some((t) => t.label)
-      ? [...tiers].sort((a, b) => a.amount - b.amount).map((t) => ({ label: t.label, amount: t.amount, window: tierWindow(t) || undefined, ended: Boolean(t.until && Date.now() >= Date.parse(t.until)) || undefined }))
+      ? [...tiers].sort((a, b) => a.amount - b.amount).map((t) => {
+          const left = tierLeft(t, counts);
+          const window = [t.limit ? (left === 0 ? `Sold out · it was for the first ${t.limit}` : `First ${t.limit} registrants · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
+          return { label: t.label, amount: t.amount, window: window || undefined, ended: Boolean((t.until && Date.now() >= Date.parse(t.until)) || left === 0) || undefined };
+        })
       : undefined,
     supports: (row.is_charity && row.supports && !isPlaceholder(row.supports) && row.supports) || undefined,
     venueAddress: row.venue_address || undefined,
@@ -398,6 +404,6 @@ export function toPublicEvent(row, confirmed = 0) {
     rsvp: row.registration === "required",
     feeRequired: row.fee_required,
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
-    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, from: t.from, until: t.until })) : undefined,
+    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
   };
 }

@@ -7,6 +7,7 @@ import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter,
 import { eventTiers } from "../../lib/admin/events.mjs";
 import { chooseTicket, owesPayment } from "../../lib/eventPayments.mjs";
 import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
+import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 
 export const runtime = "nodejs";
@@ -55,7 +56,10 @@ export async function POST(request) {
         return { error: "This event has already happened.", status: 409 };
       }
       // The ticket they picked (paid events with several prices); one price needs no choice.
-      const ticket = chooseTicket(event.fee_required ? eventTiers(event) : [], body?.ticket);
+      const tiers = event.fee_required ? eventTiers(event) : [];
+      // Tiers for the first N registrants: count under the event lock, so the 20th place goes once.
+      const counts = hasLimits(tiers) ? countsFromRows(await tx.sql(TICKET_COUNTS_SQL, [event.id])) : {};
+      const ticket = chooseTicket(tiers, body?.ticket, { counts });
       if (ticket.error) return { error: ticket.error, status: 422 };
       const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed'", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });

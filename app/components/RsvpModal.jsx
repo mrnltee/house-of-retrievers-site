@@ -22,7 +22,7 @@ export default function RsvpModal({ event, onClose }) {
   const [proofSent, setProofSent] = useState(false);
   const waitlist = event.status === "full";
   // Tickets on sale now (an early bird rate drops off at its cutoff), keeping each one's place in the full list.
-  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t)) : [];
+  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0) : [];
   const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
   const chosen = tickets.find((t) => t.i === ticket);
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
@@ -140,7 +140,7 @@ export default function RsvpModal({ event, onClose }) {
                   {tickets.map((t) => (
                     <label key={t.i} className={ticket === t.i ? "selected" : ""}>
                       <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => setTicket(t.i)} />
-                      <span>{t.label || `Ticket ${t.i + 1}`}{t.until && <small className="ticket-until">{tierWindow(t)}</small>}</span>
+                      <span>{t.label || `Ticket ${t.i + 1}`}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} registrants · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
                       <strong>{peso(t.amount)}</strong>
                     </label>
                   ))}

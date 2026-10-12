@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { eventTiers } from "../../../../../lib/admin/events.mjs";
-import { tierWindow } from "../../../../../lib/prices.mjs";
+import { tierLeft, tierWindow } from "../../../../../lib/prices.mjs";
+import { TICKET_COUNTS_SQL, countsFromRows } from "../../../../../lib/ticketCounts.mjs";
 import { ADMIN_PAY_METHODS, ticketLine } from "../../../../../lib/eventPayments.mjs";
 import { emailReady } from "../../../../../lib/email";
 import { addRegistration } from "../../../../registrationActions";
@@ -25,6 +26,7 @@ export default async function AddRegistration({ params, searchParams }) {
   const base = await adminBase();
   const [{ count }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed'", [eventId]);
   const tiers = event.fee_required ? eventTiers(event) : [];
+  const counts = tiers.some((t) => t.limit) ? countsFromRows(await sql(TICKET_COUNTS_SQL, [eventId])) : {};
   const full = event.capacity != null && count >= event.capacity;
   const ready = emailReady();
 
@@ -45,7 +47,7 @@ export default async function AddRegistration({ params, searchParams }) {
             <label className="field"><span>Ticket</span>
               <select name="ticket" required={tiers.length > 1} defaultValue={tiers.length === 1 ? "0" : ""}>
                 {tiers.length > 1 && <option value="">Choose…</option>}
-                {tiers.map((t, i) => <option key={i} value={i}>{ticketLine(t.label, t.amount)}{tierWindow(t) ? ` · ${tierWindow(t)}` : ""}</option>)}
+                {tiers.map((t, i) => <option key={i} value={i}>{ticketLine(t.label, t.amount)}{t.limit ? ` · ${t.limit - (tierLeft(t, counts) ?? 0)}/${t.limit} taken` : ""}{tierWindow(t) ? ` · ${tierWindow(t)}` : ""}</option>)}
               </select>
             </label>
           ) : <div />}
