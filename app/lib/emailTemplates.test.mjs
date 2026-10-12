@@ -84,6 +84,8 @@ test("paid events: spot held, then the pass with QR and the matched payment, or 
   const held = spotHeld({ name: "Ana Reyes", event, passUrl: "https://x.test/r/ABC", ticket: "Human + 1 · ₱795" });
   assert.equal(held.subject, "Your spot is held: Bedazzle Barkdate");
   assert.match(held.text, /non-refundable/);
+  assert.match(held.text, /approved payment methods/);
+  assert.doesNotMatch(held.text, /GCash, Maya, GoTyme or QR Ph/);
   assert.match(held.html, /Pay and upload proof/);
   const pass = rsvpConfirmed({ name: "Ana", status: "confirmed", passUrl: "https://x.test/r/7KQ2MPX4RT", code: "7KQ2MPX4RT", paidLine: "GCash · Ref 1012 · ₱795", event });
   assert.match(pass.html, /api\/pass-qr\/7KQ2MPX4RT/);

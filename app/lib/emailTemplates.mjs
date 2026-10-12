@@ -441,7 +441,7 @@ export function spotHeld({ name, event, passUrl, ticket = "" }) {
     heading: `Your spot is held, ${firstName(name)}.`,
     paragraphs: [
       eventBox(event),
-      `To confirm it, pay${ticket ? ` <strong style="white-space:nowrap">${esc(ticket)}</strong>` : ""} by GCash, Maya, GoTyme or QR Ph, then upload your reference number and confirmation screenshot on your RSVP page.`,
+      `To confirm it, pay${ticket ? ` <strong style="white-space:nowrap">${esc(ticket)}</strong>` : ""} using one of the approved payment methods on your RSVP page, then upload your reference number and confirmation screenshot there.`,
       "We'll email your QR pass once the team has matched your payment. Your spot stays held in the meantime.",
     ],
     button: { label: "Pay and upload proof", href: passUrl },
