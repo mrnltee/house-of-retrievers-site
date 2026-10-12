@@ -58,11 +58,11 @@ async function storeProof(tx, regId, dataUrl, who) {
 
 /** Approve: the reference was found in HOR's payment history. Paid, and the QR pass is emailed. */
 export async function approvePayment(data) {
-  const reg = await registration(form(data, "id"));
-  const back = reg ? pagePath(reg) : "/registrations";
-  return guarded(back, async () => {
+  return guarded("/registrations", async () => {
     const admin = await actionAdmin("registrations:fees");
+    const reg = await registration(form(data, "id"));
     if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
     if (reg.status !== "confirmed" || !UNPAID.includes(reg.fee_status)) await backWith(back, "error", "This payment isn't waiting for a check.");
     if (!reg.fee_reference) await backWith(back, "error", "There's no reference number to match. Use “Mark paid” and type the reference.");
     if (form(data, "matched") !== "on") await backWith(back, "error", "Tick the box once you've found the reference and amount in HOR's payment history.");
@@ -76,11 +76,11 @@ export async function approvePayment(data) {
 
 /** Mark paid without their upload (cash, or a payment matched another way): the admin types the details. */
 export async function markPaid(data) {
-  const reg = await registration(form(data, "id"));
-  const back = reg ? pagePath(reg) : "/registrations";
-  return guarded(back, async () => {
+  return guarded("/registrations", async () => {
     const admin = await actionAdmin("registrations:fees");
+    const reg = await registration(form(data, "id"));
     if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
     if (reg.status !== "confirmed" || reg.fee_status === "paid") await backWith(back, "error", "This registration isn't waiting for a payment.");
     const { value, error } = validateProof({ method: form(data, "method"), reference: form(data, "reference"), amount: form(data, "amount") }, { admin: true });
     if (error) await backWith(back, "error", error);
@@ -98,11 +98,11 @@ export async function markPaid(data) {
 
 /** Ask for a new receipt: their reason is emailed; the spot stays held. */
 export async function rejectPayment(data) {
-  const reg = await registration(form(data, "id"));
-  const back = reg ? pagePath(reg) : "/registrations";
-  return guarded(back, async () => {
+  return guarded("/registrations", async () => {
     const admin = await actionAdmin("registrations:fees");
+    const reg = await registration(form(data, "id"));
     if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
     if (reg.status !== "confirmed" || !["review", "waiting"].includes(reg.fee_status)) await backWith(back, "error", "This payment isn't waiting for a check.");
     const reason = form(data, "reason").replace(/\s+/g, " ").trim();
     if (!reason) await backWith(back, "error", "Write the reason they'll see.");
@@ -116,11 +116,11 @@ export async function rejectPayment(data) {
 
 /** Attach (or replace) a receipt for someone, e.g. one they sent by chat. Unpaid ones go to "To check". */
 export async function attachReceipt(data) {
-  const reg = await registration(form(data, "id"));
-  const back = reg ? pagePath(reg) : "/registrations";
-  return guarded(back, async () => {
+  return guarded("/registrations", async () => {
     const admin = await actionAdmin("registrations:fees");
+    const reg = await registration(form(data, "id"));
     if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
     if (!reg.fee_required) await backWith(back, "error", "This event has no fee.");
     const { value, error } = validateProof({ method: form(data, "method"), reference: form(data, "reference"), amount: form(data, "amount") }, { admin: true });
     if (error) await backWith(back, "error", error);
@@ -144,11 +144,11 @@ export async function attachReceipt(data) {
 
 /** Email the QR pass again. */
 export async function resendPass(data) {
-  const reg = await registration(form(data, "id"));
-  const back = reg ? pagePath(reg) : "/registrations";
-  return guarded(back, async () => {
+  return guarded("/registrations", async () => {
     const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(form(data, "id"));
     if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
     if (reg.status !== "confirmed" || (reg.fee_required && UNPAID.includes(reg.fee_status))) await backWith(back, "error", "Only confirmed registrations with no payment owing get a QR pass.");
     const sent = await sendPass(reg.id, { paid: reg.fee_status === "paid", again: true });
     if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");

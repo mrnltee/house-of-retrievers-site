@@ -3,6 +3,7 @@
 import jsQR from "jsqr";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { checkInByCode } from "../../../actions";
+import ConfirmButton from "../../ConfirmButton";
 
 const MESSAGES = {
   ok: ["Checked in", "good"],
@@ -138,7 +139,14 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
             <span>Or type the code</span>
             <input type="text" inputMode="text" autoCapitalize="characters" autoComplete="off" value={manual} onChange={(event) => setManual(event.target.value)} placeholder="10 letters and numbers" />
           </label>
-          <button className="btn ghost" type="submit">Check in</button>
+          <ConfirmButton
+            className="btn ghost"
+            title="Check in this code?"
+            echo={[]}
+            items={[`The matching registration is checked in to ${title}`, "The check-in time is saved under your admin account"]}
+            yes="Yes, check in"
+            tone="ghost"
+          >Check in</ConfirmButton>
         </form>
         <p className="small muted">Someone who said no to photos shows a “No photos” flag here. Let the photographers know.</p>
       </div>

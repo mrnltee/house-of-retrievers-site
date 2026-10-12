@@ -49,6 +49,12 @@ const LABELS = {
 
 /** The copy for each button that asks first, keyed by the button's data-confirm. */
 const COPY = {
+  draft: {
+    title: "Save this draft?",
+    lead: "The draft stays off the events page. These changes are saved for the team to continue later.",
+    go: "Save draft",
+    tone: "ink",
+  },
   save: {
     title: "Save these changes?",
     lead: "This event is live, so visitors see the changes as soon as you save.",
@@ -97,8 +103,8 @@ function changedLabels(before, after) {
 }
 
 /**
- * Sits inside the event form. Buttons with `data-confirm` ("save", "publish",
- * "unpublish", "cancel") open a dialog first; the dialog lists what changed
+ * Sits inside the event form. Buttons with `data-confirm` ("draft", "save",
+ * "publish", "unpublish", "cancel") open a dialog first; the dialog lists what changed
  * since the page loaded, and only "confirm" sends the form, through the same
  * button, so its own server action still runs.
  */

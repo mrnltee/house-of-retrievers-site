@@ -10,6 +10,7 @@ import { cloudinaryConfig, photoUrl } from "../../../../lib/cloudinary.mjs";
 import ShareMenu from "../../../../components/ShareMenu";
 import { toPublicEvent } from "../../../../lib/admin/events.mjs";
 import { eventUrl, shareCaption } from "../../../../lib/share.mjs";
+import ConfirmButton from "../../ConfirmButton";
 
 export default async function EditEventPage({ params, searchParams }) {
   const { id } = await params;
@@ -77,7 +78,16 @@ function DeleteEventCard({ event, registrations }) {
           <input type="hidden" name="id" value={event.id} />
           <p className="small">Removes the event, its page, its cover photo and its album photos for good. This can't be undone. Links to it will show "not found".</p>
           <label className="check"><input type="checkbox" name="confirm" required /> I want to delete "{event.title}" for good</label>
-          <div className="actions"><button className="btn danger">Delete event</button></div>
+          <div className="actions">
+            <ConfirmButton
+              className="btn danger"
+              title={`Delete “${event.title}” for good?`}
+              items={["The event and its public page are deleted", "Its cover and album photos are removed", "Shared links to it stop working"]}
+              note="This can't be undone."
+              yes="Yes, delete it for good"
+              tone="danger"
+            >Delete event</ConfirmButton>
+          </div>
         </form>
       )}
     </section>

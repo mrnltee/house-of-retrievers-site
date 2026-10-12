@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { acceptanceEmail } from "../../../lib/emailTemplates.mjs";
+import ConfirmButton from "../ConfirmButton";
 
 /**
  * "Send an email" on a profile: pick one of HOR's Acceptance templates, see it
@@ -33,13 +34,16 @@ export default function SendTemplate({ action, personId, email, ready, templates
         <p className="small muted">This template uses {"{{member_no}}"}, but {person.name.split(" ")[0]} has no number yet, so it will be blank.</p>
       )}
       <div className="actions">
-        <button
+        <ConfirmButton
           className="btn ghost"
           disabled={!ready || !template}
-          onClick={(e) => { if (!window.confirm(`Send “${template?.name}” to ${email}?`)) e.preventDefault(); }}
+          title={`Send “${template?.name || "this template"}”?`}
+          items={[`The email is sent to ${email}`, "The activity log records who sent it"]}
+          yes="Yes, send email"
+          tone="ghost"
         >
           Send to {email}
-        </button>
+        </ConfirmButton>
       </div>
       {!ready && <p className="small muted">Switches on once the Resend key is in Vercel.</p>}
     </form>

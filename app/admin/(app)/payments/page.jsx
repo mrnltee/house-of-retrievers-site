@@ -5,6 +5,7 @@ import { METHODS, METHOD_KEYS, formatMobile } from "../../../lib/admin/payments.
 import { cancelPaymentRequest, requestPaymentChange } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import QrPicker from "./QrPicker";
+import ConfirmButton from "../ConfirmButton";
 
 export default async function PaymentsPage({ searchParams }) {
   const params = await searchParams;
@@ -35,7 +36,16 @@ export default async function PaymentsPage({ searchParams }) {
           </div>
           <div className="actions">
             {(request.requested_by === admin.email || admin.roles.includes("owner")) && (
-              <form action={cancelPaymentRequest}><input type="hidden" name="id" value={request.id} /><button className="btn ghost">Cancel request</button></form>
+              <form action={cancelPaymentRequest}>
+                <input type="hidden" name="id" value={request.id} />
+                <ConfirmButton
+                  className="btn ghost"
+                  title={`Cancel the ${METHODS[request.method_key].label} change request?`}
+                  items={["The pending request is removed", "The payment details currently on the site stay unchanged"]}
+                  yes="Yes, cancel request"
+                  tone="ghost"
+                >Cancel request</ConfirmButton>
+              </form>
             )}
             {admin.roles.includes("owner") && request.requested_by !== admin.email && <a className="btn" href={`${base}/payments/review/${request.id}`}>Review change</a>}
           </div>
@@ -86,7 +96,15 @@ export default async function PaymentsPage({ searchParams }) {
                 <span className="small muted">
                   {live.updated_at ? `Live since ${formatWhen(live.updated_at)}${live.approved_by ? ` · approved by ${live.approved_by}` : ""}` : "No details approved yet"}
                 </span>
-                {canRequest && !waiting && <button className="btn">Request change</button>}
+                {canRequest && !waiting && (
+                  <ConfirmButton
+                    className="btn"
+                    title={`Request this ${method.label} change?`}
+                    items={["Changing details or switching this method on waits for a different Owner to approve", `Switching ${method.label} off takes it off the Support panel immediately`, "The activity log records who requested it"]}
+                    yes="Yes, request change"
+                    tone="ink"
+                  >Request change</ConfirmButton>
+                )}
               </div>
             </form>
           );

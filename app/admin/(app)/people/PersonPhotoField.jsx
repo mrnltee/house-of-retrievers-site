@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { loadBitmap } from "../../../lib/resizeImage";
 import { removePersonPhoto, uploadPersonPhoto } from "../../actions";
+import ConfirmButton from "../ConfirmButton";
 
 /** Longest side sent up; the server keeps a 480 px WebP copy. */
 const EDGE = 960;
@@ -45,7 +46,12 @@ export default function PersonPhotoField({ personId, current, name }) {
           <img className="person-avatar" src={preview} alt={`New photo for ${name}`} width={64} height={64} />
           <input type="hidden" name="id" value={personId} />
           <input type="hidden" name="photoData" value={data} />
-          <button className="btn gold small">Save photo</button>
+          <ConfirmButton
+            className="btn gold small"
+            title={`Save this photo for ${name}?`}
+            items={[current ? "The current profile photo is replaced" : "The photo is added to their admin profile", "The photo stays private to admins"]}
+            yes="Yes, save photo"
+          >Save photo</ConfirmButton>
           <button type="button" className="linkish" onClick={() => { setPreview(""); setData(""); if (input.current) input.current.value = ""; }}>Cancel</button>
         </form>
       ) : (
@@ -57,7 +63,13 @@ export default function PersonPhotoField({ personId, current, name }) {
           {current && (
             <form action={removePersonPhoto}>
               <input type="hidden" name="id" value={personId} />
-              <button className="linkish danger-text">Remove</button>
+              <ConfirmButton
+                className="linkish danger-text"
+                title={`Remove ${name}'s profile photo?`}
+                items={["The photo is removed from their admin profile", "Their other profile details stay unchanged"]}
+                yes="Yes, remove photo"
+                tone="danger"
+              >Remove</ConfirmButton>
             </form>
           )}
         </div>

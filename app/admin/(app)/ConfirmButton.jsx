@@ -48,7 +48,7 @@ export default function ConfirmButton({ children, className = "btn gold", formAc
 
   return (
     <>
-      <button ref={button} className={className} formAction={formAction} onClick={onClick} disabled={disabled} name={name} value={value}>{children}</button>
+      <button ref={button} type="submit" data-confirmed-action="true" className={className} formAction={formAction} onClick={onClick} disabled={disabled} name={name} value={value}>{children}</button>
       <dialog ref={dialog} className="confirm-dialog" aria-labelledby={`${id}-title`}>
         <div className="confirm-body">
           <h2 id={`${id}-title`}>{title}</h2>

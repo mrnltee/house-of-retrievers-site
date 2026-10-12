@@ -5,6 +5,7 @@ import { canApprovePaymentChange, signedInRecently } from "../../../../../lib/ad
 import { METHODS, diffChange, formatMobile } from "../../../../../lib/admin/payments.mjs";
 import { approvePaymentRequest, rejectPaymentRequest } from "../../../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../../../ui";
+import ConfirmButton from "../../../ConfirmButton";
 
 export default async function ReviewPaymentChange({ params, searchParams }) {
   const { id } = await params;
@@ -75,8 +76,20 @@ export default async function ReviewPaymentChange({ params, searchParams }) {
               : "Approving asks you to sign in with Google again first. Then come back here and approve."}
           </p>
           <div className="actions">
-            <button className="btn danger" formAction={rejectPaymentRequest}>Reject</button>
-            <button className="btn gold">Approve and publish</button>
+            <ConfirmButton
+              className="btn danger"
+              formAction={rejectPaymentRequest}
+              title={`Reject this ${METHODS[request.method_key].label} change?`}
+              items={["The request is closed without changing the payment details on the site", `The activity log records you (${admin.email}) as the person who rejected it`]}
+              yes="Yes, reject request"
+              tone="danger"
+            >Reject</ConfirmButton>
+            <ConfirmButton
+              title={`Approve and publish this ${METHODS[request.method_key].label} change?`}
+              items={["The requested payment details replace the current ones on the Support panel immediately", `The activity log records you (${admin.email}) as the approving Owner`]}
+              note="Approve only after checking these details against HOR's own account records."
+              yes="Yes, approve and publish"
+            >Approve and publish</ConfirmButton>
           </div>
         </form>
       )}

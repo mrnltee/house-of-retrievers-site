@@ -4,6 +4,7 @@ import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { ROLES, ROLE_LABELS, parseEmailList } from "../../../lib/admin/roles.mjs";
 import { inviteAdmin, removeAdmin, updateAdmin } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
+import ConfirmButton from "../ConfirmButton";
 
 const ROLE_HELP = {
   owner: "Everything, including admins and approving payment changes",
@@ -50,7 +51,14 @@ export default async function AdminsPage({ searchParams }) {
         <form action={inviteAdmin} className="form">
           <label className="field"><span>Their Google email <small>The account they&apos;ll sign in with</small></span><input type="email" name="email" required /></label>
           <RolePicker idPrefix="invite" />
-          <div><button className="btn gold">Invite</button></div>
+          <div>
+            <ConfirmButton
+              title="Invite this admin?"
+              echo={[{ name: "email", label: "Google email" }]}
+              items={["They can sign in once their Google account is also allowed in Google Cloud", "Their selected roles decide what they can view and change"]}
+              yes="Yes, invite admin"
+            >Invite</ConfirmButton>
+          </div>
         </form>
       </section>
 
@@ -70,8 +78,21 @@ export default async function AdminsPage({ searchParams }) {
                       <input type="hidden" name="email" value={a.email} />
                       <RolePicker selected={a.roles} idPrefix={`edit-${a.email}`} />
                       <div className="actions">
-                        <button className="btn small">Save roles</button>
-                        <button className="btn small danger" formAction={removeAdmin}>Remove access</button>
+                        <ConfirmButton
+                          className="btn small"
+                          title={`Save roles for ${a.email}?`}
+                          items={["Their permissions change on their next page or action", "Roles are still checked fresh from the database"]}
+                          yes="Yes, save roles"
+                          tone="ink"
+                        >Save roles</ConfirmButton>
+                        <ConfirmButton
+                          className="btn small danger"
+                          formAction={removeAdmin}
+                          title={`Remove ${a.email}'s admin access?`}
+                          items={["They can no longer sign in as an active admin", "Their earlier activity-log entries stay"]}
+                          yes="Yes, remove access"
+                          tone="danger"
+                        >Remove access</ConfirmButton>
                       </div>
                     </form>
                   </details>

@@ -1,6 +1,7 @@
 import { saveSupporter } from "../../supporterActions";
 import { BLURB_MAX, GIVES, STATUSES, TIERS, isPublic, suggestCode, supporterNumber } from "../../../lib/supporters.mjs";
 import LogoField from "./LogoField";
+import ConfirmButton from "../ConfirmButton";
 
 /** Sponsor or partner record (Figma S2). `row` is a DB row or null; `person` prefills a new one. */
 export default function SupporterForm({ row, person = null, canEdit = true }) {
@@ -84,7 +85,16 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
           <label className="field"><span>Notes</span><textarea name="notes" rows={3} maxLength={2000} defaultValue={v("notes")} /></label>
         </section>
       </fieldset>
-      {canEdit && <div className="actions form-actions-sticky"><button className="btn gold">{row ? "Save" : "Create record"}</button></div>}
+      {canEdit && (
+        <div className="actions form-actions-sticky">
+          <ConfirmButton
+            title={row ? `Save changes to ${row.name}?` : "Create this supporter record?"}
+            echo={[{ name: "name", label: "Name" }, { name: "kind", label: "Type" }, { name: "status", label: "Status" }]}
+            items={[row ? "The supporter record is updated" : "A new supporter record is added", "Public details change only when the record is complete, Confirmed and switched on"]}
+            yes={row ? "Yes, save changes" : "Yes, create record"}
+          >{row ? "Save" : "Create record"}</ConfirmButton>
+        </div>
+      )}
     </form>
   );
 }

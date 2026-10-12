@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
 import { resetEmailTemplate, saveEmailTemplate, sendTestEmail } from "../../../emailActions";
+import ConfirmButton from "../../ConfirmButton";
 
 const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage("7KQ2MPX4RT") };
 
@@ -79,11 +80,41 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
           </ul>
         </div>
         <div className="actions">
-          <button className="btn gold" disabled={!changed && custom}>Save</button>
-          <button className="btn ghost" formAction={sendTestEmail}>Send a test to me</button>
+          <ConfirmButton
+            disabled={!changed && custom}
+            title={own ? `${customId ? "Save" : "Create"} “${name || "this template"}”?` : "Save this email wording?"}
+            items={[own && !customId ? "A new template is added" : "The saved wording is replaced", event ? "Events using this template get the new wording on future emails" : "Future emails use the new wording"]}
+            yes={own && !customId ? "Yes, create template" : "Yes, save wording"}
+          >Save</ConfirmButton>
+          <ConfirmButton
+            className="btn ghost"
+            formAction={sendTestEmail}
+            title="Send this test email?"
+            items={["The preview is sent to your signed-in admin email", "No member, volunteer or registrant is emailed"]}
+            yes="Yes, send the test"
+            tone="ghost"
+          >Send a test to me</ConfirmButton>
           {!own && <button type="button" className="linkish" onClick={() => setFields({ ...defaults })}>Start from HOR's original wording</button>}
-          {!own && custom && <button className="linkish danger-text" formAction={resetEmailTemplate}>Delete my wording</button>}
-          {customId && <button className="linkish danger-text" formAction={resetEmailTemplate} onClick={(e) => { if (!window.confirm(`Delete “${initialName}”?${kind === "event" ? " Events that use it will send the standard confirmation." : ""}`)) e.preventDefault(); }}>Delete this template</button>}
+          {!own && custom && (
+            <ConfirmButton
+              className="linkish danger-text"
+              formAction={resetEmailTemplate}
+              title="Delete your saved wording?"
+              items={["This built-in email goes back to HOR's original wording", "The frame, sign-off and fixed event details stay unchanged"]}
+              yes="Yes, use the original"
+              tone="danger"
+            >Delete my wording</ConfirmButton>
+          )}
+          {customId && (
+            <ConfirmButton
+              className="linkish danger-text"
+              formAction={resetEmailTemplate}
+              title={`Delete “${initialName}”?`}
+              items={["The template is removed", ...(kind === "event" ? ["Events using it return to the standard confirmation email"] : [])]}
+              yes="Yes, delete template"
+              tone="danger"
+            >Delete this template</ConfirmButton>
+          )}
         </div>
         <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The event's name, date and venue, the check-in QR, the payment line (paid events) and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
       </form>

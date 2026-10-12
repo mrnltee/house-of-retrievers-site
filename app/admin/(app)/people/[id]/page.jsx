@@ -15,6 +15,7 @@ import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import PersonAvatar from "../PersonAvatar";
 import PersonPhotoField from "../PersonPhotoField";
 import ConfirmMembership from "../ConfirmMembership";
+import ConfirmButton from "../../ConfirmButton";
 
 const REG_STATUS = { confirmed: "Going", waitlist: "Waitlist", cancelled: "Cancelled" };
 
@@ -124,13 +125,19 @@ export default async function PersonPage({ params, searchParams }) {
                       </select>
                     </label>
                   )}
-                  <div className="actions"><button className="btn gold">Save membership</button></div>
+                  <div className="actions"><button className="btn gold" data-confirm="membership">Save membership</button></div>
                 </form>
               )}
               {canEdit && person.membership === "active" && ready && (
                 <form action={resendWelcome} style={{ marginTop: 8 }}>
                   <input type="hidden" name="id" value={person.id} />
-                  <button className="linkish">Send the welcome email again</button>
+                  <ConfirmButton
+                    className="linkish"
+                    title={`Send ${person.name}'s welcome email again?`}
+                    items={[`The welcome email is sent to ${person.email}`, "Their membership status and number stay unchanged"]}
+                    yes="Yes, send it again"
+                    tone="ghost"
+                  >Send the welcome email again</ConfirmButton>
                 </form>
               )}
             </section>
@@ -148,7 +155,13 @@ export default async function PersonPage({ params, searchParams }) {
                 <form action={supporterFromPerson}>
                   <input type="hidden" name="personId" value={person.id} />
                   <p className="small muted">Make a record for logo, tier, amounts and the events they back. It appears on the website only once it's confirmed and switched on.</p>
-                  <button className="btn ghost">Make a {person.kind.toLowerCase()} record</button>
+                  <ConfirmButton
+                    className="btn ghost"
+                    title={`Make a ${person.kind.toLowerCase()} record for ${person.name}?`}
+                    items={["A supporter record is created from their People details", "It stays off the website until it is complete, Confirmed and switched on"]}
+                    yes="Yes, make the record"
+                    tone="ghost"
+                  >Make a {person.kind.toLowerCase()} record</ConfirmButton>
                 </form>
               ) : (
                 <p className="small muted">No record yet.</p>
@@ -189,7 +202,16 @@ export default async function PersonPage({ params, searchParams }) {
                 <label className="field"><span>Notes <small>Only admins see these</small></span>
                   <textarea name="notes" rows={4} maxLength={2000} defaultValue={person.notes || ""} />
                 </label>
-                <div className="actions"><button className="btn ghost">Save follow-up</button></div>
+                <div className="actions">
+                  <ConfirmButton
+                    className="btn ghost"
+                    title={`Save follow-up changes for ${person.name}?`}
+                    echo={[{ name: "status", label: "Status" }, { name: "notes", label: "Notes" }]}
+                    items={["Their People record is updated", "The activity log records the change"]}
+                    yes="Yes, save follow-up"
+                    tone="ghost"
+                  >Save follow-up</ConfirmButton>
+                </div>
               </form>
             ) : (
               <p><span className="chip">{person.status}</span> {person.notes}</p>

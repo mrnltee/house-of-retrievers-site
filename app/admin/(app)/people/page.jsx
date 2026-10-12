@@ -5,6 +5,7 @@ import { updatePerson } from "../../actions";
 import { MEMBERSHIP, PEOPLE_KINDS, PEOPLE_STATUSES, hasMembership, memberNumber, membershipLabel } from "../../../lib/admin/people.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import PersonAvatar from "./PersonAvatar";
+import ConfirmButton from "../ConfirmButton";
 
 const KINDS = PEOPLE_KINDS;
 const STATUSES = PEOPLE_STATUSES;
@@ -137,7 +138,14 @@ export default async function PeoplePage({ searchParams }) {
                       <select id={`st-${p.id}`} name="status" defaultValue={p.status}>
                         {STATUSES[kind].map((s) => <option key={s}>{s}</option>)}
                       </select>
-                      <button className="btn small ghost">Save</button>
+                      <ConfirmButton
+                        className="btn small ghost"
+                        title={`Save ${p.name}'s follow-up status?`}
+                        echo={[{ name: "status", label: "Status" }]}
+                        items={["Their People record is updated", "The activity log records the change"]}
+                        yes="Yes, save status"
+                        tone="ghost"
+                      >Save</ConfirmButton>
                     </form>
                   ) : (
                     <span className={`chip ${p.status === "New" ? "warn" : ""}`}>{p.status}</span>

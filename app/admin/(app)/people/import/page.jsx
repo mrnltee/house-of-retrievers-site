@@ -1,6 +1,7 @@
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { importPeople } from "../../../actions";
 import { Flash, NotAllowed, PageHead } from "../../ui";
+import ConfirmButton from "../../ConfirmButton";
 
 /** Brings everyone from the Join sheet into People, once (re-running is safe). */
 export default async function ImportPeoplePage({ searchParams }) {
@@ -28,7 +29,14 @@ export default async function ImportPeoplePage({ searchParams }) {
             <li>Photos stay in Drive and aren't imported. New sign-ups bring theirs in automatically.</li>
             <li>No emails are sent.</li>
           </ul>
-          <div className="actions"><button className="btn gold">Import</button></div>
+          <div className="actions">
+            <ConfirmButton
+              title="Import people from this CSV?"
+              echo={[{ name: "file", label: "File" }]}
+              items={["New people are added to the admin", "Existing people keep their data; the sheet only fills blanks and earlier join dates", "No emails are sent"]}
+              yes="Yes, import people"
+            >Import</ConfirmButton>
+          </div>
         </form>
       </section>
     </>

@@ -109,7 +109,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
       {missing.length > 0 && <p className="banner note small">Needed before publishing: {missing.join(", ")}.</p>}
       <div className="actions form-actions-sticky">
         <EventPreview image={event?.image || ""} imageSource={event?.image_source || ""} slug={event?.slug || ""} />
-        <button className="btn ghost">Save draft</button>
+        <button className="btn ghost" data-confirm="draft">Save draft</button>
         {event?.status !== "published" && <button className="btn gold" formAction={publishEvent} data-confirm="publish">Publish</button>}
         {event?.status === "published" && <button className="btn gold" data-confirm="save">Save changes</button>}
         {event?.status === "published" && <button className="btn ghost" formAction={unpublishEvent} data-confirm="unpublish">Move back to draft</button>}
