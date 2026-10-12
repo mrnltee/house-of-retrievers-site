@@ -1,6 +1,6 @@
 # AGENTS.md — handoff for Codex (and any other coding agent)
 
-You are continuing work that Claude Code did on this repo through 12 Oct 2026.
+You are continuing work that Claude Code and Codex did on this repo through 13 Oct 2026.
 Read this file fully before you change anything. Then read `CLAUDE.md` in full.
 
 - **AGENTS.md** (this file) is *how to work here*: workflow, safety rules,
@@ -75,7 +75,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 112 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 114 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -197,14 +197,16 @@ supporter numbers. Pick a new number for any new lock.
   `app/lib/ticketCounts.mjs`. Never count in the browser.
 - **Admin server actions**: one per button, using `formAction` (the clicked
   button's name/value isn't reliably sent). Check the capability first
-  (`actionAdmin("registrations:fees")` etc.). Redirect back with a flash message
-  (`backWith`). Log every change to `activity_log` and add its label to
-  `app/lib/admin/activity.mjs`.
+  (`actionAdmin("registrations:fees")` etc.), before reading the target record.
+  Redirect back with a flash message (`backWith`). Log every change to
+  `activity_log` and add its label to `app/lib/admin/activity.mjs`.
 - **Every admin button that changes something** goes through
   `app/admin/(app)/ConfirmButton.jsx`. It validates the form, then opens a dialog
   saying exactly what will happen (`items`, `echo` fields, `note`), then submits
   through the same button. Use `ConfirmSave` / `ConfirmMembership` for those
-  forms. No one-click destructive actions.
+  forms; the event album's existing inline Remove → Yes, remove step is also a
+  confirmation. `app/lib/admin/actionSafety.test.mjs` fails if a native admin
+  submit button has no declared confirmation path. No one-click changes.
 - New permissions go in `app/lib/admin/roles.mjs`. Roles are owner, events
   (Events lead), treasurer, content, checkin.
 - **Event page layout uses container queries** on `.event-detail-wrap`, not
