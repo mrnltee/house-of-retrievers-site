@@ -421,3 +421,9 @@ button.tag-badge { border: 1px solid transparent; padding: 6px 12px; cursor: poi
 button.tag-badge.is-on { background: var(--a-ink); color: white; }
 @media (max-width: 900px) { .check-grid { grid-template-columns: 1fr; } .receipt-card { position: static; } }
 .indent-full { grid-column: 1 / -1; }
+/* Price tiers: optional sale period (early bird) */
+.tier-list li .tier-period { grid-column: 1 / -1; display: grid; gap: 8px; margin-top: -2px; }
+.tier-period-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-radius: 12px; background: var(--a-sand); }
+.tier-period-pair { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px; }
+.tier-period-note { grid-column: 1 / -1; margin: 0; }
+@media (max-width: 640px) { .tier-period-fields { grid-template-columns: 1fr; } }

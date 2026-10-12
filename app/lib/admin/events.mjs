@@ -3,7 +3,7 @@
  * events page reads (the HorEvent typedef in app/content/events.js).
  */
 
-import { cleanTiers, priceSummary, tiersFromCost } from "../prices.mjs";
+import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierWindow, tiersFromCost } from "../prices.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
 
@@ -371,9 +371,13 @@ export function toPublicEvent(row, confirmed = 0) {
     sponsors: row.sponsors?.length ? row.sponsors : undefined,
     venue: row.venue,
     city: row.city,
-    cost: priceSummary(tiers) || row.cost || undefined,
+    // With sale periods, the card shows what's on sale now (5-minute page cache).
+    cost: (hasTierDates(tiers) ? priceSummary(activeTiers(tiers)) : priceSummary(tiers)) || row.cost || undefined,
     // Listed lowest first, the order people compare them in.
-    priceTiers: tiers.length > 1 || tiers.some((t) => t.label) ? [...tiers].sort((a, b) => a.amount - b.amount) : undefined,
+    // Each tier with its sale period in words ("Until Oct 10, 11:59 PM", "Ended Oct 10").
+    priceTiers: tiers.length > 1 || tiers.some((t) => t.label)
+      ? [...tiers].sort((a, b) => a.amount - b.amount).map((t) => ({ label: t.label, amount: t.amount, window: tierWindow(t) || undefined, ended: Boolean(t.until && Date.now() >= Date.parse(t.until)) || undefined }))
+      : undefined,
     supports: (row.is_charity && row.supports && !isPlaceholder(row.supports) && row.supports) || undefined,
     venueAddress: row.venue_address || undefined,
     included: row.included?.length ? row.included : undefined,
@@ -394,6 +398,6 @@ export function toPublicEvent(row, confirmed = 0) {
     rsvp: row.registration === "required",
     feeRequired: row.fee_required,
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
-    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount })) : undefined,
+    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, from: t.from, until: t.until })) : undefined,
   };
 }

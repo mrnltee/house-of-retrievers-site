@@ -84,3 +84,25 @@ test("what's included: one per line, bullets trimmed, ten at most", () => {
   assert.deepEqual(cleanIncluded("• Bedazzling kit\n- 1 drink\n\n✓ Furbaby treat"), ["Bedazzling kit", "1 drink", "Furbaby treat"]);
   assert.equal(cleanIncluded(Array.from({ length: 12 }, (_, i) => `Item ${i}`)).length, 10);
 });
+
+test("price tiers can have a sale period (early bird)", async () => {
+  const { activeTiers, tierAvailable, tierWindow } = await import("./prices.mjs");
+  const { chooseTicket } = await import("./eventPayments.mjs");
+  const { tiers } = cleanTiers([{ label: "Early bird", amount: "650", until: "2026-10-10T15:59:00.000Z" }, { label: "Regular", amount: "795" }]);
+  assert.equal(tiers[0].until, "2026-10-10T15:59:00.000Z");
+  const before = Date.parse("2026-10-09T00:00:00Z");
+  const after = Date.parse("2026-10-12T00:00:00Z");
+  assert.equal(tierAvailable(tiers[0], before), true);
+  assert.equal(tierAvailable(tiers[0], after), false);
+  assert.deepEqual(activeTiers(tiers, after).map((t) => t.label), ["Regular"]);
+  assert.equal(tierWindow(tiers[0], before), "Until Oct 10, 11:59 PM");
+  assert.equal(tierWindow(tiers[0], after), "Ended Oct 10");
+  // After the cutoff the early bird can't be chosen; the one tier left is picked by itself.
+  assert.match(chooseTicket(tiers, 0, { now: after }).error, /Early bird rate has ended/);
+  assert.deepEqual(chooseTicket(tiers, undefined, { now: after }).value, { label: "Regular", amount: 795 });
+  assert.deepEqual(chooseTicket(tiers, 1, { now: after }).value, { label: "Regular", amount: 795 });
+  assert.match(chooseTicket(tiers, undefined, { now: before }).error, /Pick a ticket/);
+  // An admin adding someone who paid before the cutoff may still pick it.
+  assert.deepEqual(chooseTicket(tiers, 0, { now: after, anyTier: true }).value, { label: "Early bird", amount: 650 });
+  assert.match(cleanTiers([{ amount: 5, from: "2026-10-10T00:00:00Z", until: "2026-10-09T00:00:00Z" }]).error, /ends before it starts/);
+});

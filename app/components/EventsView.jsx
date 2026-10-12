@@ -472,7 +472,10 @@ function DetailFacts({ event, past }) {
           <dd>
             <ul className="event-tier-table">
               {event.priceTiers.map((tier, i) => (
-                <li key={i}><span>{tier.label || "Ticket"}</span><strong>{tier.amount === 0 ? "Free" : formatPeso(tier.amount)}</strong></li>
+                <li key={i} className={tier.ended ? "is-ended" : undefined}>
+                  <span>{tier.label || "Ticket"}{tier.window && <small>{tier.window}</small>}</span>
+                  <strong>{tier.amount === 0 ? "Free" : formatPeso(tier.amount)}</strong>
+                </li>
               ))}
             </ul>
           </dd>

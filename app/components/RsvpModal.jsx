@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { NO_REFUND } from "../lib/eventPayments.mjs";
+import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import PayStep from "./PayStep";
 
 const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
@@ -20,8 +21,10 @@ export default function RsvpModal({ event, onClose }) {
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [proofSent, setProofSent] = useState(false);
   const waitlist = event.status === "full";
-  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets : [];
-  const [ticket, setTicket] = useState(tickets.length === 1 ? 0 : -1);
+  // Tickets on sale now (an early bird rate drops off at its cutoff), keeping each one's place in the full list.
+  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t)) : [];
+  const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
+  const chosen = tickets.find((t) => t.i === ticket);
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
 
   useEffect(() => {
@@ -58,7 +61,7 @@ export default function RsvpModal({ event, onClose }) {
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
-          ticket: tickets.length > 1 ? Number(form.get("ticket")) : undefined,
+          ticket: ticket >= 0 ? ticket : undefined,
           [HONEYPOT_FIELD]: form.get(HONEYPOT_FIELD),
           elapsedMs: Date.now() - openedAt.current,
         }),
@@ -134,10 +137,10 @@ export default function RsvpModal({ event, onClose }) {
               <fieldset className="furbaby-question ticket-question">
                 <legend>Ticket</legend>
                 <div className="ticket-options">
-                  {tickets.map((t, i) => (
-                    <label key={i} className={ticket === i ? "selected" : ""}>
-                      <input type="radio" name="ticket" value={i} required checked={ticket === i} onChange={() => setTicket(i)} />
-                      <span>{t.label || `Ticket ${i + 1}`}</span>
+                  {tickets.map((t) => (
+                    <label key={t.i} className={ticket === t.i ? "selected" : ""}>
+                      <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => setTicket(t.i)} />
+                      <span>{t.label || `Ticket ${t.i + 1}`}{t.until && <small className="ticket-until">{tierWindow(t)}</small>}</span>
                       <strong>{peso(t.amount)}</strong>
                     </label>
                   ))}

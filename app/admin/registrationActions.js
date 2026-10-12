@@ -174,7 +174,7 @@ export async function addRegistration(data) {
       under18: data.get("under18") === "on", guardianName: form(data, "guardianName"),
     });
     if (error) await backWith(back, "error", error);
-    const ticket = chooseTicket(event.fee_required ? eventTiers(event) : [], form(data, "ticket"));
+    const ticket = chooseTicket(event.fee_required ? eventTiers(event) : [], form(data, "ticket"), { anyTier: true });
     if (ticket.error) await backWith(back, "error", ticket.error);
     const payment = ["paid", "pending", "none"].includes(form(data, "payment")) ? form(data, "payment") : "none";
     const owes = owesPayment(event.fee_required, ticket.value);

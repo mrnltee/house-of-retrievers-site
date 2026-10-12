@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
 import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
-import { MAX_TIERS, cleanTiers, priceSummary } from "../../../lib/prices.mjs";
+import { MAX_TIERS, activeTiers, cleanTiers, priceSummary, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 
 /**
@@ -317,15 +317,34 @@ export function VenueField({ venue, city, address, lat, lng, mapUrl }) {
 }
 
 /** Peso tiers. "Free" is one tier at ₱0; "Paid" lists as many as the event has. */
+/** "On sale until Oct 10, 11:59 PM, then it disappears from the RSVP." */
+function periodNote(tier) {
+  if (!tier.from && !tier.until) return "Pick an end date (and a start date if it starts later). Without a time, it ends at 11:59 PM.";
+  const window = tierWindow(tier);
+  if (window.startsWith("Ended")) return `${window}: it's no longer offered on the RSVP, and the event page shows it as ended.`;
+  return `${window ? `${window}. ` : ""}Outside its period it isn't offered on the RSVP; the card shows the prices on sale.`;
+}
+
 export function PriceField({ tiers, legacyCost }) {
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
+  // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
+  const blank = { label: "", amount: "", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" } };
   const [rows, setRows] = useState(
-    tiers?.length && initialMode === "paid" ? tiers.map((t) => ({ label: t.label, amount: String(t.amount) })) : [{ label: "", amount: "" }],
+    tiers?.length && initialMode === "paid"
+      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until) }))
+      : [blank],
   );
-  const sent = mode === "free" ? [{ label: "", amount: 0 }] : mode === "paid" ? rows : [];
+  const toSend = (row) => ({
+    label: row.label,
+    amount: row.amount,
+    from: row.dated ? manilaInstant(row.from.date, row.from.time || "00:00") : null,
+    until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null,
+  });
+  const sent = mode === "free" ? [{ label: "", amount: 0 }] : mode === "paid" ? rows.map(toSend) : [];
   const parsed = cleanTiers(sent);
-  const summary = parsed.tiers ? priceSummary(parsed.tiers) : null;
+  const dated = parsed.tiers?.some((t) => t.from || t.until);
+  const summary = parsed.tiers ? priceSummary(dated ? activeTiers(parsed.tiers) : parsed.tiers) : null;
   const update = (i, patch) => setRows(rows.map((row, j) => (j === i ? { ...row, ...patch } : row)));
 
   return (
@@ -361,16 +380,39 @@ export function PriceField({ tiers, legacyCost }) {
                 {rows.length > 1 && (
                   <button type="button" className="tier-remove" onClick={() => setRows(rows.filter((_, j) => j !== i))} aria-label={`Remove tier ${i + 1}`}>×</button>
                 )}
+                <div className="tier-period">
+                  <label className="check small">
+                    <input type="checkbox" checked={row.dated} onChange={(e) => update(i, { dated: e.target.checked })} />
+                    <span>Sale period <span className="muted">e.g. an early bird rate that ends on a date</span></span>
+                  </label>
+                  {row.dated && (
+                    <div className="tier-period-fields">
+                      <label className="field"><span>From <small>Optional</small></span>
+                        <span className="tier-period-pair">
+                          <input type="date" value={row.from.date} onChange={(e) => update(i, { from: { ...row.from, date: e.target.value } })} aria-label={`Tier ${i + 1} on sale from date`} />
+                          <input type="time" value={row.from.time} onChange={(e) => update(i, { from: { ...row.from, time: e.target.value } })} aria-label={`Tier ${i + 1} on sale from time`} />
+                        </span>
+                      </label>
+                      <label className="field"><span>Until <small>Manila time</small></span>
+                        <span className="tier-period-pair">
+                          <input type="date" value={row.until.date} onChange={(e) => update(i, { until: { ...row.until, date: e.target.value } })} aria-label={`Tier ${i + 1} on sale until date`} />
+                          <input type="time" value={row.until.time} onChange={(e) => update(i, { until: { ...row.until, time: e.target.value } })} aria-label={`Tier ${i + 1} on sale until time`} />
+                        </span>
+                      </label>
+                      <p className="small muted tier-period-note">{periodNote(toSend(row))}</p>
+                    </div>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
           {rows.length < MAX_TIERS && (
-            <p className="small"><button type="button" className="linkish" onClick={() => setRows([...rows, { label: "", amount: "" }])}>+ Add a price tier</button></p>
+            <p className="small"><button type="button" className="linkish" onClick={() => setRows([...rows, blank])}>+ Add a price tier</button></p>
           )}
         </>
       )}
       <p className="small muted" role="status">
-        {parsed.error ? parsed.error : summary ? <>Shown on the card as <strong>{summary}</strong>{parsed.tiers.length > 1 ? "; the event page lists every tier." : "."}</> : "No price shown until you choose."}
+        {parsed.error ? parsed.error : summary ? <>Shown on the card as <strong>{summary}</strong>{dated ? " right now (prices outside their sale period drop off by themselves)" : ""}{parsed.tiers.length > 1 ? "; the event page lists every tier." : "."}</> : "No price shown until you choose."}
       </p>
       <input type="hidden" name="priceTiers" value={JSON.stringify(sent)} />
       {/* An old free-text price stays until it's re-entered as tiers. */}

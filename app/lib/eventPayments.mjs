@@ -12,6 +12,8 @@
  * Pure functions: shared by the routes, the admin and the tests.
  */
 
+import { tierAvailable } from "./prices.mjs";
+
 export const FEE_STATUS = {
   not_due: { label: "No fee", tone: "" },
   waiting: { label: "Payment pending", tone: "" },
@@ -63,17 +65,26 @@ export const referenceKey = (value) => String(value || "").toUpperCase().replace
 
 /**
  * The ticket someone picked. `tiers` are the event's price tiers
- * ([{label, amount}], see eventTiers); `index` is the chosen one. With one
- * tier (or none) there is nothing to choose.
+ * ([{label, amount, from?, until?}], see eventTiers); `index` points into
+ * that full list. Only tiers on sale now count (an early bird rate ends at
+ * its cutoff); with one on sale there is nothing to choose. An admin adding
+ * someone by hand may pick any tier (`anyTier`), e.g. an early bird who paid
+ * before the cutoff.
  * @returns {{ value?: {label: string|null, amount: number|null}, error?: string }}
  */
-export function chooseTicket(tiers, index) {
+export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false } = {}) {
   const list = Array.isArray(tiers) ? tiers : [];
   if (list.length === 0) return { value: { label: null, amount: null } };
-  if (list.length === 1) return { value: { label: list[0].label || null, amount: list[0].amount ?? null } };
-  const i = Number(index);
-  if (!Number.isInteger(i) || i < 0 || i >= list.length) return { error: "Pick a ticket." };
-  return { value: { label: list[i].label || null, amount: list[i].amount ?? null } };
+  const pick = (t) => ({ value: { label: t.label || null, amount: t.amount ?? null } });
+  const onSale = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now));
+  if (onSale.length === 0) return { error: "Tickets for this event aren't on sale right now." };
+  const i = index === undefined || index === null || index === "" ? NaN : Number(index);
+  if (Number.isInteger(i) && list[i]) {
+    if (onSale.some(([, j]) => j === i)) return pick(list[i]);
+    return { error: `The ${list[i].label || "chosen"} rate has ended. Pick another ticket.` };
+  }
+  if (onSale.length === 1) return pick(onSale[0][0]);
+  return { error: "Pick a ticket." };
 }
 
 /** Whether a new confirmed registration owes a payment: a paid event, and a ticket that isn't free. */

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { eventTiers } from "../../../../../lib/admin/events.mjs";
+import { tierWindow } from "../../../../../lib/prices.mjs";
 import { ADMIN_PAY_METHODS, ticketLine } from "../../../../../lib/eventPayments.mjs";
 import { emailReady } from "../../../../../lib/email";
 import { addRegistration } from "../../../../registrationActions";
@@ -44,7 +45,7 @@ export default async function AddRegistration({ params, searchParams }) {
             <label className="field"><span>Ticket</span>
               <select name="ticket" required={tiers.length > 1} defaultValue={tiers.length === 1 ? "0" : ""}>
                 {tiers.length > 1 && <option value="">Choose…</option>}
-                {tiers.map((t, i) => <option key={i} value={i}>{ticketLine(t.label, t.amount)}</option>)}
+                {tiers.map((t, i) => <option key={i} value={i}>{ticketLine(t.label, t.amount)}{tierWindow(t) ? ` · ${tierWindow(t)}` : ""}</option>)}
               </select>
             </label>
           ) : <div />}
