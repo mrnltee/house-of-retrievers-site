@@ -30,7 +30,7 @@ taking RSVPs and payments, and checking people in at the door.
 | `www.houseofretrieversph.org` (apex redirects) | Main one-page site | `app/page.jsx`, `app/components/` |
 | `events.houseofretrieversph.org` | Events list, event pages, passes | `app/events/`, rewritten by `middleware.js` → `app/lib/eventsHost.mjs` |
 | `admin.houseofretrieversph.org` | Admin module (Google sign-in) | `app/admin/`, routed by `app/lib/adminHost.mjs` |
-| `countdown.houseofretrieversph.org` | Pre-launch countdown. **Expired 10 Oct 2026, 5 PM Manila**, now just redirects to www | `app/countdown/`, `app/lib/countdownHost.mjs` (cleanup pending, see §10) |
+| `countdown.houseofretrieversph.org` | Retired pre-launch hostname; permanently redirects to www until the owner removes the Vercel domain | `app/lib/hostRouting.mjs` |
 
 On localhost and Vercel previews the subdomains are paths instead: `/events`,
 `/admin`.
@@ -75,7 +75,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 114 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 113 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -131,15 +131,14 @@ then built. Plain, warm language matters as much as the code (see §7).
 ## 5. File map
 
 ```
-middleware.js            host routing: events / admin / countdown
+middleware.js            host routing: events / admin / retired-host redirect
 app/page.jsx             main site composition
 app/components/          public UI: Header, Hero, PurposeStories, Journey, InstagramFeed, Pack,
                          Supporters, FinalCta, JoinModal, SupportModal, Footer, FooterLegal,
-                         LogoMoments, EventsView (cards, event page, countdown), RsvpModal,
+                         LogoMoments, EventsView (cards, event page, RSVP countdown), RsvpModal,
                          PayStep, ShareMenu, BackgroundVideo, ScrollProgress, BrandTransition
 app/content/             editable copy/data: activities, families, join, journey, events (fallback)
 app/events/              events home, [slug] event page, r/[code] pass page (+ PassPayment)
-app/countdown/           expired pre-launch countdown (remove, see §10)
 app/api/                 join, rsvp (+ rsvp/proof), pass-qr/[code], event-image/[id], supporters,
                          support-details, legal, instagram, cron/refresh-instagram-token, auth
 app/admin/               server actions: actions.js (events, people, membership, check-in),
@@ -367,7 +366,7 @@ npx next dev
 - **Payment settings:** approved channels with two-Owner approval.
   `/api/support-details` shows only approved methods.
 
-## 10. Open items (as of 12 Oct 2026)
+## 10. Open items (as of 13 Oct 2026)
 
 Things the owner/HOR does in the admin (not code):
 - Enter the GoTyme details in Payment settings. A second Owner approves.
@@ -381,26 +380,28 @@ Things the owner/HOR does in the admin (not code):
   what's done).
 
 Code work, roughly in priority order (confirm scope with the owner first):
-1. **Countdown cleanup.** Launch has passed. Remove `app/countdown/`,
-   `app/lib/countdownHost.mjs` (+ test) and its call in `middleware.js`. The
-   owner removes the `countdown.` domain in Vercel.
-2. **Privacy notice page.** The owner's direction is a short statement: collect
+Completed 13 Oct 2026: the expired countdown page, preview cookie/key and launch
+gate were removed. `app/lib/hostRouting.mjs` keeps the still-attached
+`countdown.` hostname as a permanent redirect to www; the owner removes that
+domain in Vercel after the production release.
+
+1. **Privacy notice page.** The owner's direction is a short statement: collect
    only what events need and keep it confidential and protected. Link it from
    the Join, RSVP and pay steps. The owner approves the wording.
-3. **Accessibility pass.** Re-verify the Aug 2026 findings against current code
+2. **Accessibility pass.** Re-verify the Aug 2026 findings against current code
    (several were fixed). Then fix what remains: on-light gold text, the brand
    token drift, autoplay video pause control, nested interactive in family
    cards, and landmark/skip-link order.
-4. **Albums phase 2.** Participant uploads through a share link per event
+3. **Albums phase 2.** Participant uploads through a share link per event
    (`events.…/share/<token>`, with a QR), an approval queue (every participant
    photo waits for an admin), reordering, using an album photo as the cover,
    Gemini-suggested descriptions, a photo count on past cards, and "Ask us to
    remove a photo". The design is in `docs/event-albums-plan.md`.
-5. Email delivery tracking (Resend webhooks: delivered or bounced, shown on a
+4. Email delivery tracking (Resend webhooks: delivered or bounced, shown on a
    registration or person). Proposed, not built.
-6. Transparency: donations and spending reports (HOR promises public amounts).
+5. Transparency: donations and spending reports (HOR promises public amounts).
    Not built.
-7. Later phases: member portal (members log in, get event updates; guest
+6. Later phases: member portal (members log in, get event updates; guest
    album uploads use `events.photo_uploads`), forms builder, content editing,
    privacy requests, online checkout (PayMongo; current payments are manual
    QR / e-wallet / bank).
