@@ -1220,3 +1220,56 @@ main:focus { outline: none; }
 /* Links typed into an event's summary or "What's included" */
 .event-link { color: var(--gold-on-light); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 .event-link:hover, .event-link:focus-visible { color: var(--ink); }
+
+/* Event payments (Figma "Event payments", 12 Oct 2026): ticket choice, pay and upload proof, pass states. */
+.ticket-options { display: grid; gap: 8px; margin-top: 10px; }
+.ticket-options label { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.ticket-options label.selected { border: 2px solid var(--ink); background: #fbf8f1; padding: 13px; }
+.ticket-options input { width: auto; margin: 0; accent-color: var(--ink); }
+.ticket-options strong { font-size: 16px; }
+.pay-step { display: grid; gap: 14px; margin-top: 8px; }
+.pay-step h3 { margin: 10px 0 0; font: 700 15px "DM Sans", sans-serif; color: var(--ink); }
+.pay-amount { display: grid; gap: 6px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbf8f1; }
+.pay-amount > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--muted-on-light); }
+.pay-amount > div strong { font: 400 30px "DM Serif Display", serif; color: var(--ink); }
+.pay-amount p, .pay-muted { margin: 0; color: var(--muted-on-light); font-size: 13px; line-height: 1.5; }
+.pay-channels { display: flex; flex-wrap: wrap; gap: 6px; }
+.pay-channels button { min-height: 40px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--ink); font-weight: 700; font-size: 13px; }
+.pay-channels button.active { background: var(--ink); border-color: var(--ink); color: white; }
+.pay-channel { display: grid; justify-items: center; gap: 6px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: white; text-align: center; }
+.pay-channel img { width: min(220px, 100%); height: auto; border-radius: 8px; border: 1px solid var(--line); }
+.pay-channel span { color: var(--muted-on-light); font-size: 14px; }
+.pay-link, .pass-link-button { justify-self: center; min-height: 44px; display: inline-flex; align-items: center; border: 0; background: none; color: var(--gold-on-light); font-weight: 700; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0; }
+.pay-form { gap: 12px; }
+.pay-form select { width: 100%; border: 1px solid var(--line); background: white; padding: 14px 15px; color: var(--ink); font: inherit; text-transform: none; letter-spacing: 0; }
+.pay-hint, .pay-file { color: var(--muted-on-light); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.pay-file { color: #2f5d3a; font-weight: 700; }
+.pay-upload input[type="file"] { padding: 12px 15px; font-size: 13px; border-style: dashed; }
+.pay-tip { margin: 0; padding: 12px; border-radius: 10px; background: #f3e9d2; color: var(--ink); font-size: 13px; line-height: 1.5; }
+.pay-norefund { margin: 0; color: #9c2f2f; font-size: 13px; font-weight: 700; line-height: 1.5; }
+.pay-reason { padding: 14px; border-radius: 12px; background: #f6e3e1; }
+.pay-reason strong { color: #9c2f2f; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.pay-reason p { margin: 6px 0 0; color: var(--ink); line-height: 1.5; }
+.pay-confirm { width: min(440px, calc(100vw - 24px)); border: 0; border-radius: 22px; padding: 24px 22px; background: white; color: var(--ink); }
+.pay-confirm::backdrop { background: rgba(13,13,13,.6); }
+.pay-confirm h3 { margin: 6px 0 12px; font: 400 26px/1.15 "DM Serif Display", serif; }
+.pay-confirm dl, .pass-sent { display: grid; gap: 8px; margin: 0 0 12px; padding: 14px; border-radius: 12px; background: #fbf8f1; }
+.pay-confirm dl div, .pass-sent div { display: flex; justify-content: space-between; gap: 12px; }
+.pay-confirm dt, .pass-sent dt { color: var(--muted-on-light); font-size: 13px; }
+.pay-confirm dd, .pass-sent dd { margin: 0; font-weight: 700; font-size: 14px; text-align: right; overflow-wrap: anywhere; }
+.pay-confirm p { margin: 0 0 14px; line-height: 1.5; font-size: 14px; }
+.pay-confirm-actions { display: grid; gap: 8px; }
+.pay-confirm-actions .button { width: 100%; margin: 0; }
+.pass-state { width: fit-content; padding: 5px 12px; border-radius: 999px; background: var(--cream); letter-spacing: .08em; }
+.pass-state-waiting, .pass-state-review { background: #f3e9d2; color: #7a5c1f; }
+.pass-state-rejected, .pass-state-cancelled { background: #f6e3e1; color: #9c2f2f; }
+.pass-state-pass { background: #e3ede4; color: #2f5d3a; }
+.pass-payment { display: grid; gap: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+.pass-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pass-steps li { display: flex; align-items: center; gap: 10px; color: var(--muted-on-light); }
+.pass-steps li::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line); background: white; flex: none; }
+.pass-steps li.done { color: var(--ink); }
+.pass-steps li.done::before { background: #2f5d3a; border-color: #2f5d3a; }
+.pass-steps li.now { color: var(--ink); font-weight: 700; }
+.pass-steps li.now::before { background: var(--gold); border-color: var(--gold); }
+.pass-small { margin: 0; color: var(--muted-on-light); font-size: 13px; }

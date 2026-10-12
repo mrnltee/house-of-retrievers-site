@@ -43,7 +43,7 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * The shared frame. Tables and inline styles, because email apps ignore most
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
-function frame({ preheader, greeting, heading, paragraphs, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
+function frame({ preheader, greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
   const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${text}</p>`;
   const sign = signoff
     ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${signoff.join("<br>")}</p>`
@@ -57,6 +57,13 @@ function frame({ preheader, greeting, heading, paragraphs, button, after = [], s
     : `<tr><td class="em-foot" style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
       ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
     </td></tr>`;
+  // A centered picture after the message (the check-in QR), with a caption under it.
+  const picture = image
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px"><tr><td align="center">
+         <img src="${esc(image.src)}" width="${image.width || 200}" height="${image.width || 200}" alt="${esc(image.alt || "")}" style="display:block;margin:0 auto;border:0;border-radius:8px;background:#ffffff">
+         ${image.caption ? `<p class="em-p" style="margin:10px 0 0;font:700 15px Helvetica,Arial,sans-serif;color:#2b2a27;letter-spacing:1px">${esc(image.caption)}</p>` : ""}
+       </td></tr></table>`
+    : "";
   const cta = button
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px"><tr><td style="border-radius:999px;background:#A78440">
          <a href="${esc(button.href)}" style="display:inline-block;padding:14px 26px;font:700 15px Helvetica,Arial,sans-serif;color:#0D0D0D;text-decoration:none;border-radius:999px">${esc(button.label)}</a>
@@ -72,6 +79,7 @@ function frame({ preheader, greeting, heading, paragraphs, button, after = [], s
       ${greeting ? p(esc(greeting)) : ""}
       <h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D">${esc(heading)}</h1>
       ${paragraphs.map(p).join("\n      ")}
+      ${picture}
       ${cta}
       ${after.map(p).join("\n      ")}
       ${sign}
@@ -83,7 +91,7 @@ function frame({ preheader, greeting, heading, paragraphs, button, after = [], s
 }
 
 /** The plain-text twin every email needs (some apps show only this; spam filters check for it). */
-function plain({ greeting, heading, paragraphs, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
+function plain({ greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
   const strip = (html) => String(html).replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   const ending = centered
     ? [`THORSI · ${ORG}`, "Reply to this email to reach the team.", "", footnote ? strip(footnote) : ""]
@@ -92,6 +100,7 @@ function plain({ greeting, heading, paragraphs, button, after = [], signoff = SI
     ...(greeting ? [greeting, ""] : []),
     heading, "",
     ...paragraphs.map(strip).flatMap((x) => [x, ""]),
+    ...(image?.caption ? [image.caption, ""] : []),
     ...(button ? [`${button.label}: ${button.href}`, ""] : []),
     ...after.map(strip).flatMap((x) => [x, ""]),
     ...(signoff ? [signoff.map(strip).join("\n"), ""] : []),
@@ -160,7 +169,7 @@ const EVENT_DEFAULTS = {
   subject: "You're going: {{event_title}}",
   greeting: "",
   heading: "See you there, {{first_name}}.",
-  message: "Show your pass at the door. It has a QR code the team scans to check you in.",
+  message: "Show this QR at the door (a screenshot works too). The team scans it to check you in.",
 };
 
 export const EDITABLE_TEMPLATES = {
@@ -225,7 +234,7 @@ export const EDITABLE_TEMPLATES = {
   },
   "rsvp-confirmed": {
     title: "RSVP confirmed (standard)",
-    when: "Sent when someone RSVPs and gets a spot, for events that don't pick one of your Event templates. The event's details, any fee note and the “Open my pass” button are added automatically.",
+    when: "The pass: sent when someone gets a spot on a free event, or when their payment is approved on a paid one, for events that don't pick one of your Event templates. The event's details, the check-in QR, the payment line and the “Open my pass” button are added automatically.",
     variables: EVENT_VARIABLES,
     defaults: EVENT_DEFAULTS,
     event: true,
@@ -250,7 +259,7 @@ export const CUSTOM_KINDS = {
   },
   event: {
     title: "Event confirmation",
-    when: "Pick it in an event's “Price and sign-ups” section. Everyone who RSVPs to that event gets it. The event's details, any fee note and the pass button are added automatically.",
+    when: "Pick it in an event's “Price and sign-ups” section. It's the pass everyone at that event gets (on a paid event, once their payment is approved). The event's details, the check-in QR and the pass button are added automatically.",
     variables: EVENT_VARIABLES,
     defaults: EVENT_DEFAULTS,
     event: true,
@@ -342,6 +351,7 @@ export function renderTemplate(ref, custom, person, extras = {}) {
     greeting: fillPlain(fields.greeting, vars).trim() || undefined,
     heading: fillPlain(fields.heading, vars).trim() || fillPlain(t.defaults.heading, vars),
     paragraphs: [...eventBox, ...messageParagraphs(fields.message, vars), ...(extras.paragraphs || [])],
+    image: extras.image,
     button: extras.button || t.button,
     after: extras.after,
     footnote: extras.footnote || t.footnote,
@@ -384,21 +394,30 @@ export function acceptanceEmail({ person, custom }) {
   return renderTemplate("custom:acceptance", custom, person);
 }
 
+const RSVP_FOOTNOTE = `You're getting this because this email address was used to RSVP at ${EVENTS_URL.replace("https://", "")}.`;
+const NO_REFUND_LINE = "Payments are non-refundable. This is a charity event, so every peso goes to the cause.";
+const eventBox = (event) => `<strong>${esc(event.title)}</strong><br>${esc(formatWhen(event))}<br>${esc([event.venue, event.city].filter(Boolean).join(", "))}`;
+
+/** The check-in QR as a picture in the email (served by /api/pass-qr/[code]). */
+export const passQrImage = (code) => ({ src: `${EVENTS_URL}/api/pass-qr/${code}`, width: 200, alt: `Check-in QR code ${code}`, caption: `Code ${code.slice(0, 5)} ${code.slice(5)}` });
+
 /**
- * Sent when someone RSVPs (or joins the waitlist) on the events page. A
- * confirmed spot uses the event's chosen template, HOR's saved standard
- * wording, or the default; the waitlist note is fixed.
+ * The pass: sent when someone RSVPs and gets a spot on a free event, or when
+ * an admin approves their payment on a paid one (`paidLine` says what was
+ * matched). Uses the event's chosen template, HOR's saved standard wording,
+ * or the default; the QR picture, pass button and fixed lines are added.
+ * The waitlist note is fixed.
  */
-export function rsvpConfirmed({ name, event, status, passUrl, feeRequired, custom = null, ref = "rsvp-confirmed" }) {
+export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLine = "", custom = null, ref = "rsvp-confirmed" }) {
   const waitlist = status === "waitlist";
-  const footnote = `You're getting this because this email address was used to RSVP at ${EVENTS_URL.replace("https://", "")}.`;
   const after = ["Can't make it after all? Reply to this email so someone else can have the spot."];
   if (!waitlist) {
     return renderTemplate(ref, custom, { name, event }, {
-      paragraphs: feeRequired ? ["This event has a fee, paid by QR before the day. The team will confirm once it's in."] : [],
+      paragraphs: paidLine ? [`We matched your payment (${esc(paidLine)}). Thank you!`] : [],
+      image: code ? passQrImage(code) : undefined,
       button: { label: "Open my pass", href: passUrl },
-      after,
-      footnote,
+      after: paidLine ? [...after, NO_REFUND_LINE] : after,
+      footnote: RSVP_FOOTNOTE,
     });
   }
   const when = formatWhen(event);
@@ -407,12 +426,43 @@ export function rsvpConfirmed({ name, event, status, passUrl, feeRequired, custo
     subject: `You're on the waitlist: ${event.title}`,
     preheader: `${when} · ${where}`,
     heading: `You're on the waitlist, ${firstName(name)}.`,
-    paragraphs: [
-      `<strong>${esc(event.title)}</strong><br>${esc(when)}<br>${esc(where)}`,
-      "The event is full right now. If a spot opens, we'll email you, and your pass below will show it.",
-    ],
+    paragraphs: [eventBox(event), "The event is full right now. If a spot opens, we'll email you, and your pass below will show it."],
     button: { label: "Open my waitlist pass", href: passUrl },
     after,
-    footnote,
+    footnote: RSVP_FOOTNOTE,
+  });
+}
+
+/** Paid event: sent straight after the RSVP. The spot is held; the pass comes once the payment is approved. */
+export function spotHeld({ name, event, passUrl, ticket = "" }) {
+  return build({
+    subject: `Your spot is held: ${event.title}`,
+    preheader: "Pay and upload your receipt to get your QR pass.",
+    heading: `Your spot is held, ${firstName(name)}.`,
+    paragraphs: [
+      eventBox(event),
+      `To confirm it, pay${ticket ? ` <strong style="white-space:nowrap">${esc(ticket)}</strong>` : ""} by GCash, Maya, GoTyme or QR Ph, then upload your reference number and confirmation screenshot on your RSVP page.`,
+      "We'll email your QR pass once the team has matched your payment. Your spot stays held in the meantime.",
+    ],
+    button: { label: "Pay and upload proof", href: passUrl },
+    after: [NO_REFUND_LINE, "Can't make it after all? Reply to this email so someone else can have the spot."],
+    footnote: RSVP_FOOTNOTE,
+  });
+}
+
+/** An admin couldn't match the receipt: their reason, and the way back to upload a new one. */
+export function receiptRejected({ name, event, passUrl, reason }) {
+  return build({
+    subject: `We need another look at your payment: ${event.title}`,
+    preheader: "Your spot is still held.",
+    heading: `One more step, ${firstName(name)}.`,
+    paragraphs: [
+      eventBox(event),
+      `From the team: <em>${esc(reason)}</em>`,
+      "Your spot is still held. Upload a new screenshot on your RSVP page and we'll check it again.",
+    ],
+    button: { label: "Upload a new receipt", href: passUrl },
+    after: [NO_REFUND_LINE],
+    footnote: RSVP_FOOTNOTE,
   });
 }

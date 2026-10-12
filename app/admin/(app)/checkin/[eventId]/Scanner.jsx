@@ -8,10 +8,13 @@ const MESSAGES = {
   ok: ["Checked in", "good"],
   already: ["Already checked in", "warn"],
   "not-confirmed": ["Not confirmed (waitlist or cancelled)", "alert"],
+  unpaid: ["Payment not confirmed", "alert"],
   "wrong-event": ["This QR is for a different event", "alert"],
   unknown: ["Code not found. Check it and try again.", "alert"],
   forbidden: ["Your role can't check people in", "alert"],
 };
+
+const FEE_TEXT = { paid: "paid", waiting: "no proof uploaded yet", review: "receipt waiting to be checked", rejected: "new receipt asked", not_due: "no fee" };
 
 /** Pulls the 10-character code out of a scanned value (a bare code or a confirmation link). */
 function codeFrom(text) {
@@ -119,7 +122,8 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
             </div>
             {result.person && (
               <>
-                <p className="muted">{result.person.furbaby ? `With ${result.person.furbaby}` : "No furbaby listed"}{result.person.feeStatus ? ` · fee: ${result.person.feeStatus === "paid" ? "paid" : "not marked paid"}` : ""}</p>
+                <p className="muted">{result.person.furbaby ? `With ${result.person.furbaby}` : "No furbaby listed"}{result.person.ticket ? ` · ${result.person.ticket}` : ""}{result.person.feeStatus ? ` · fee: ${FEE_TEXT[result.person.feeStatus] || result.person.feeStatus}` : ""}</p>
+                {result.outcome === "unpaid" && <p className="small">Not checked in. Only someone with fee access can approve a payment: check it on the Registrations page, then scan again.</p>}
                 <div className="actions">
                   {result.person.under18 && <span className="chip warn">Under 18 · guardian: {result.person.guardian}</span>}
                   <span className={`chip ${result.person.photoConsent ? "" : "alert"}`}>{result.person.photoConsent ? "Photos OK" : "No photos"}</span>

@@ -18,6 +18,8 @@ import { sendEmail } from "../lib/email";
 import { acceptanceEmail, welcomeKey, welcomeMember } from "../lib/emailTemplates.mjs";
 import { loadCustomTemplate, loadTemplate } from "../lib/emailSettings";
 import { savePersonPhoto } from "../lib/personPhotos";
+import { sendPass, sendSpotHeld } from "../lib/passEmails";
+import { ticketLine } from "../lib/eventPayments.mjs";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -220,21 +222,6 @@ async function registrationWithEvent(regId) {
   return rows[0] || null;
 }
 
-export async function setFeeStatus(data) {
-  const regId = form(data, "id");
-  const reg = await registrationWithEvent(regId);
-  const back = reg ? `/registrations/${reg.event_id}` : "/registrations";
-  return guarded(back, async () => {
-    const admin = await actionAdmin("registrations:fees");
-    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
-    const status = ["not_due", "waiting", "paid"].includes(form(data, "fee")) ? form(data, "fee") : "waiting";
-    const ref = form(data, "reference").trim().slice(0, 80) || null;
-    await sql("UPDATE registrations SET fee_status=$1, fee_reference=COALESCE($2, fee_reference) WHERE id=$3", [status, ref, regId]);
-    await logActivity(admin.email, "registration.fee", reg.title, { registrationId: regId, status });
-    await backWith(back, "ok", "Fee updated.");
-  });
-}
-
 export async function changeRegistration(data) {
   const regId = form(data, "id");
   const op = form(data, "op");
@@ -257,7 +244,7 @@ export async function changeRegistration(data) {
         if (reg.capacity != null && count >= reg.capacity) return false;
         await tx.sql(
           `UPDATE registrations SET status='confirmed',
-             fee_status = CASE WHEN (SELECT fee_required FROM events WHERE id=$2) AND fee_status='not_due' THEN 'waiting' ELSE fee_status END
+             fee_status = CASE WHEN (SELECT fee_required FROM events WHERE id=$2) AND fee_status='not_due' AND ticket_amount IS DISTINCT FROM 0 THEN 'waiting' ELSE fee_status END
            WHERE id=$1 AND status='waitlist'`,
           [regId, reg.event_id],
         );
@@ -266,7 +253,10 @@ export async function changeRegistration(data) {
       if (!moved) await backWith(back, "error", "The event is full. Cancel someone or raise the capacity first.");
       await logActivity(admin.email, "registration.confirm", reg.title, { registrationId: regId });
       revalidatePath("/events", "layout");
-      await backWith(back, "ok", "Moved from the waitlist to confirmed. Let them know.");
+      // Their next email: how to pay (paid event), or the QR pass.
+      const [now] = await sql("SELECT fee_status FROM registrations WHERE id=$1", [regId]);
+      const sent = now?.fee_status === "waiting" ? await sendSpotHeld(regId) : await sendPass(regId);
+      await backWith(back, "ok", `Moved from the waitlist to confirmed.${sent.ok ? (now?.fee_status === "waiting" ? " They were emailed how to pay." : " Their QR pass was emailed.") : " Email isn't sent; let them know."}`);
     }
     await backWith(back, "error", "Unknown action.");
   });
@@ -279,14 +269,14 @@ export async function checkInByCode(eventId, rawCode) {
     const code = normalizeCode(rawCode);
     if (!isUuid(eventId) || !code) return { outcome: "unknown" };
     const rows = await sql(
-      `SELECT r.id, r.event_id, r.name, r.furbaby_name, r.status, r.checked_in_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, e.fee_required
+      `SELECT r.id, r.event_id, r.name, r.furbaby_name, r.status, r.checked_in_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, e.fee_required
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1`,
       [code],
     );
     const reg = rows[0];
     const outcome = checkInOutcome(reg, eventId);
     const person = reg && reg.event_id === eventId
-      ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null }
+      ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, ticket: reg.fee_required ? ticketLine(reg.ticket_label, reg.ticket_amount) : "" }
       : null;
     if (outcome === "ok") {
       await sql("UPDATE registrations SET checked_in_at = now() WHERE id = $1 AND checked_in_at IS NULL", [reg.id]);

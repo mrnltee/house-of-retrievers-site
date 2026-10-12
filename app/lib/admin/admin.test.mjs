@@ -210,3 +210,10 @@ test("all-day events keep no times; partners and sponsors are cleaned names", as
   assert.deepEqual(pub.partners, ["PetPals Vet"]);
   assert.equal(pub.sponsors, undefined);
 });
+
+test("the door turns away payments that aren't approved", () => {
+  const reg = { event_id: "e1", status: "confirmed", checked_in_at: null, fee_required: true };
+  assert.equal(checkInOutcome({ ...reg, fee_status: "paid" }, "e1"), "ok");
+  for (const s of ["waiting", "review", "rejected"]) assert.equal(checkInOutcome({ ...reg, fee_status: s }, "e1"), "unpaid");
+  assert.equal(checkInOutcome({ ...reg, fee_required: false, fee_status: "waiting" }, "e1"), "ok");
+});

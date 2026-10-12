@@ -377,5 +377,7 @@ export function toPublicEvent(row, confirmed = 0) {
     media: media.length ? media : undefined,
     rsvp: row.registration === "required",
     feeRequired: row.fee_required,
+    // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
+    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount })) : undefined,
   };
 }

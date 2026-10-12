@@ -405,3 +405,18 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .template-frame.is-phone { max-width: 390px; }
 .person-photo-field { margin-bottom: 8px; }
 .person-photo-field .actions { align-items: center; }
+
+/* Event payments (Figma "Event payments" R1–R4) */
+a.stat { color: inherit; text-decoration: none; transition: border-color .15s; }
+a.stat:hover, a.stat:focus-visible { border-color: var(--a-ink); }
+.stat.stat-warn { background: #f3e9d2; border-color: var(--a-gold); }
+.registrations-table td { vertical-align: top; }
+.check-grid { align-items: start; grid-template-columns: minmax(260px, 380px) 1fr; }
+.receipt-card { display: grid; gap: 10px; position: sticky; top: 24px; }
+.receipt-shot { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--a-line); background: #f2f2f2; }
+.receipt-shot img { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: contain; }
+.mono { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.good-text { color: var(--a-success); font-weight: 700; }
+button.tag-badge { border: 1px solid transparent; padding: 6px 12px; cursor: pointer; }
+button.tag-badge.is-on { background: var(--a-ink); color: white; }
+@media (max-width: 900px) { .check-grid { grid-template-columns: 1fr; } .receipt-card { position: static; } }

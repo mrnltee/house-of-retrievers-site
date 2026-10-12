@@ -3,23 +3,37 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
+import { NO_REFUND } from "../lib/eventPayments.mjs";
+import PayStep from "./PayStep";
 
-/** RSVP for one event. On success it links to the confirmation page with the check-in QR. */
+const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
+
+/**
+ * RSVP for one event. A free event links to the pass with the check-in QR.
+ * A paid event (Figma P1–P2) asks for a ticket, holds the spot, then shows
+ * the payment step; the QR pass is emailed once an admin approves.
+ */
 export default function RsvpModal({ event, onClose }) {
   const dialog = useRef(null);
   const openedAt = useRef(Date.now());
   const [under18, setUnder18] = useState(false);
   const [state, setState] = useState({ sending: false, error: "", result: null });
+  const [proofSent, setProofSent] = useState(false);
   const waitlist = event.status === "full";
+  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets : [];
+  const [ticket, setTicket] = useState(tickets.length === 1 ? 0 : -1);
+  const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
 
   useEffect(() => {
     const opener = document.activeElement;
     const node = dialog.current;
     node.querySelector("input, button")?.focus();
     const trap = (e) => {
+      // A confirm dialog inside the modal handles its own keys.
+      if (node.querySelector("dialog[open]")) return;
       if (e.key === "Escape") onClose();
       if (e.key !== "Tab") return;
-      const items = [...node.querySelectorAll("button, a[href], input")].filter((item) => item.getClientRects().length && !item.disabled);
+      const items = [...node.querySelectorAll("button, a[href], input, select")].filter((item) => item.getClientRects().length && !item.disabled);
       const first = items[0]; const last = items[items.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
@@ -44,6 +58,7 @@ export default function RsvpModal({ event, onClose }) {
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
+          ticket: tickets.length > 1 ? Number(form.get("ticket")) : undefined,
           [HONEYPOT_FIELD]: form.get(HONEYPOT_FIELD),
           elapsedMs: Date.now() - openedAt.current,
         }),
@@ -61,17 +76,33 @@ export default function RsvpModal({ event, onClose }) {
     <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <section ref={dialog} className="join-modal rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title">
         <button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
-        {done ? (
+        {done && done.feeDue && done.code ? (
+          proofSent ? (
+            <div className="success-state" role="status">
+              <div className="eyebrow">Payment under review</div>
+              <h2 id="rsvp-title">Thanks! We&apos;ll check it.</h2>
+              <p>Your spot is held. We&apos;ll email your QR pass as soon as the team has matched your payment.</p>
+              <a className="button dark" href={passHref(done.code)}>Open my RSVP page <Icon name="arrow" size={16} /></a>
+              <p className="form-note">Your RSVP page shows where things stand, and lets you replace the screenshot.</p>
+            </div>
+          ) : (
+            <div role="status">
+              <div className="eyebrow">Step 2 of 3 · Pay</div>
+              <h2 id="rsvp-title">Your spot is held</h2>
+              <p className="modal-lead">Pay, then upload your proof. Paying later? The link in your email brings you back here; your spot stays held.</p>
+              <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.ticket?.amount ?? null} onSent={() => setProofSent(true)} />
+            </div>
+          )
+        ) : done ? (
           <div className="success-state" role="status">
             <div className="eyebrow">{done.status === "confirmed" ? "You're in" : "You're on the waitlist"}</div>
             <h2 id="rsvp-title">{event.title}</h2>
             <p>
               {done.status === "confirmed"
-                ? "Open your confirmation and keep it handy. We scan its QR at the door."
+                ? "Open your confirmation and keep it handy. We scan its QR at the door. It's in your email too."
                 : "If a slot opens up, someone from the pack will message you. Your link shows where you stand."}
-              {event.feeRequired && done.status === "confirmed" ? " The fee is paid by QR before the day; the confirmation says how." : ""}
             </p>
-            {done.code && <a className="button dark" href={`${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${done.code}`}>Open my confirmation <Icon name="arrow" size={16} /></a>}
+            {done.code && <a className="button dark" href={passHref(done.code)}>Open my confirmation <Icon name="arrow" size={16} /></a>}
             <p className="form-note">Save or screenshot that page. It&apos;s your check-in pass.</p>
           </div>
         ) : (
@@ -99,9 +130,25 @@ export default function RsvpModal({ event, onClose }) {
               </div>
             </fieldset>
             {under18 && <label>Parent or guardian&apos;s name (they come with you)<input required name="guardianName" maxLength={120} /></label>}
+            {tickets.length > 1 && (
+              <fieldset className="furbaby-question ticket-question">
+                <legend>Ticket</legend>
+                <div className="ticket-options">
+                  {tickets.map((t, i) => (
+                    <label key={i} className={ticket === i ? "selected" : ""}>
+                      <input type="radio" name="ticket" value={i} required checked={ticket === i} onChange={() => setTicket(i)} />
+                      <span>{t.label || `Ticket ${i + 1}`}</span>
+                      <strong>{peso(t.amount)}</strong>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+            {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(tickets[0].amount)}</p>}
+            {!waitlist && event.feeRequired && <p className="form-note">{NO_REFUND} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event.</p>
-            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : "Send my RSVP"}</button>
+            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${ticket >= 0 && tickets[ticket] ? ` · ${peso(tickets[ticket].amount)}` : ""}` : "Send my RSVP"}</button>
           </form>
         )}
       </section>

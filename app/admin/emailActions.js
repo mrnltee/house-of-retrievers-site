@@ -4,7 +4,7 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { sendEmail } from "../lib/email";
-import { CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, renderTemplate, unknownVariables } from "../lib/emailTemplates.mjs";
+import { CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, unknownVariables } from "../lib/emailTemplates.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -129,7 +129,7 @@ export async function sendTestEmail(data) {
     const t = await target(data);
     const f = await readFields(data, t);
     const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event";
-    const mail = renderTemplate(t.ref, f, SAMPLE_PERSON, event ? { button: { label: "Open my pass", href: "https://events.houseofretrieversph.org/" } } : {});
+    const mail = renderTemplate(t.ref, f, SAMPLE_PERSON, event ? { button: { label: "Open my pass", href: "https://events.houseofretrieversph.org/" }, image: passQrImage("7KQ2MPX4RT") } : {});
     const sent = await sendEmail({ to: admin.email, ...mail, subject: `[Test] ${mail.subject}`, idempotencyKey: `test/${t.key || t.id || t.kind}/${Date.now()}` });
     if (!sent.ok) await backWith(t.back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The test didn't go through. Try again in a moment.");
     await logActivity(admin.email, "email.test", t.title, { template: t.key || t.id || t.kind });

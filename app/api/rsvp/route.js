@@ -4,10 +4,9 @@ import { hasEnded } from "../../lib/eventTime.mjs";
 import { hasDatabase, transaction } from "../../lib/db";
 import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../lib/admin/registrations.mjs";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
-import { sendEmail } from "../../lib/email";
-import { rsvpConfirmed } from "../../lib/emailTemplates.mjs";
-import { loadCustomTemplate, loadTemplate } from "../../lib/emailSettings";
-import { EVENTS_URL } from "../../lib/eventsHost.mjs";
+import { eventTiers } from "../../lib/admin/events.mjs";
+import { chooseTicket, owesPayment } from "../../lib/eventPayments.mjs";
+import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,7 +43,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, email_template_id FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, cost FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -52,35 +51,28 @@ export async function POST(request) {
       if (hasEnded({ date: String(event.date).slice(0, 10), startTime: event.start_time, endTime: event.end_time, allDay: event.all_day })) {
         return { error: "This event has already happened.", status: 409 };
       }
+      // The ticket they picked (paid events with several prices); one price needs no choice.
+      const ticket = chooseTicket(event.fee_required ? eventTiers(event) : [], body?.ticket);
+      if (ticket.error) return { error: ticket.error, status: 422 };
       const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed'", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
       const code = newCheckInCode();
-      await tx.sql(
-        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
-           CASE WHEN $8 = 'confirmed' AND (SELECT fee_required FROM events WHERE id = $1) THEN 'waiting' ELSE 'not_due' END, $9)`,
-        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, code],
+      // A held spot on a paid event waits for payment (no time limit); everyone else owes nothing now.
+      const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";
+      const [row] = await tx.sql(
+        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code, ticket_label, ticket_amount)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, code, ticket.value.label, ticket.value.amount],
       );
-      return { status, code, event };
+      return { id: row.id, status, code, feeStatus, ticket: ticket.value };
     });
     if (result.error) return fail(result.error, result.status);
-    // Their pass by email too, so it isn't lost when the tab closes.
-    const { event } = result;
-    // The event's own confirmation template, else HOR's standard wording, else the default.
-    const own = result.status === "confirmed" && event.email_template_id ? await loadCustomTemplate(event.email_template_id, "event") : null;
-    const custom = own || (result.status === "confirmed" ? await loadTemplate("rsvp-confirmed") : null);
-    const mail = rsvpConfirmed({
-      custom,
-      ref: own ? "custom:event" : "rsvp-confirmed",
-      name: value.name,
-      status: result.status,
-      feeRequired: event.fee_required,
-      passUrl: `${EVENTS_URL}/r/${result.code}`,
-      event: { title: event.title, date: String(event.date).slice(0, 10), startTime: event.start_time || undefined, endTime: event.end_time || undefined, allDay: Boolean(event.all_day), venue: event.venue, city: event.city },
-    });
-    await sendEmail({ to: value.email, ...mail, idempotencyKey: `rsvp/${result.code}` }).catch(() => null);
+    // Email too, so it isn't lost when the tab closes: the pass, the "spot held, now pay" note, or the waitlist note.
+    if (result.status === "waitlist") await sendWaitlisted(result.id);
+    else if (result.feeStatus === "waiting") await sendSpotHeld(result.id);
+    else await sendPass(result.id);
     revalidatePath("/events");
-    return NextResponse.json({ status: result.status, code: result.code }, { headers: noStore });
+    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", ticket: result.ticket }, { headers: noStore });
   } catch (dbError) {
     if (dbError?.code === "23505") return fail("That email is already registered for this event. Check your confirmation link, or message us to change it.", 409);
     return fail("We couldn't save that just now. Please try again.", 502);

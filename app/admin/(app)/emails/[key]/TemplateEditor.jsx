@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
+import { passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
 import { resetEmailTemplate, saveEmailTemplate, sendTestEmail } from "../../../emailActions";
 
-const PASS = { button: { label: "Open my pass", href: "#" } };
+const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage("7KQ2MPX4RT") };
 
 /**
  * Edits one email with a live preview: a built-in one (`templateKey`), or one
@@ -85,7 +85,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
           {!own && custom && <button className="linkish danger-text" formAction={resetEmailTemplate}>Delete my wording</button>}
           {customId && <button className="linkish danger-text" formAction={resetEmailTemplate} onClick={(e) => { if (!window.confirm(`Delete “${initialName}”?${kind === "event" ? " Events that use it will send the standard confirmation." : ""}`)) e.preventDefault(); }}>Delete this template</button>}
         </div>
-        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The event's name, date and venue, any fee note and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
+        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The event's name, date and venue, the check-in QR, the payment line (paid events) and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
       </form>
 
       <section className="card template-preview">

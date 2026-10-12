@@ -77,3 +77,20 @@ test("every kind's Join reply and welcome can be reworded; own templates fill pe
   const own = rsvpConfirmed({ name: "Ana", status: "confirmed", passUrl: "p", ref: "custom:event", custom: { subject: "Own {{event_title}}", heading: "H", message: "M" }, event: SAMPLE_PERSON.event });
   assert.equal(own.subject, "Own Bedazzle Barkdate");
 });
+
+test("paid events: spot held, then the pass with QR and the matched payment, or a request for a new receipt", async () => {
+  const { spotHeld, receiptRejected, passQrImage } = await import("./emailTemplates.mjs");
+  const event = { title: "Bedazzle Barkdate", date: "2026-10-17", startTime: "13:00", endTime: "16:00", venue: "Wiltlover Café", city: "Pasay" };
+  const held = spotHeld({ name: "Ana Reyes", event, passUrl: "https://x.test/r/ABC", ticket: "Human + 1 · ₱795" });
+  assert.equal(held.subject, "Your spot is held: Bedazzle Barkdate");
+  assert.match(held.text, /non-refundable/);
+  assert.match(held.html, /Pay and upload proof/);
+  const pass = rsvpConfirmed({ name: "Ana", status: "confirmed", passUrl: "https://x.test/r/7KQ2MPX4RT", code: "7KQ2MPX4RT", paidLine: "GCash · Ref 1012 · ₱795", event });
+  assert.match(pass.html, /api\/pass-qr\/7KQ2MPX4RT/);
+  assert.match(pass.text, /We matched your payment \(GCash · Ref 1012 · ₱795\)/);
+  assert.match(pass.text, /Code 7KQ2M PX4RT/);
+  const no = receiptRejected({ name: "Ana", event, passUrl: "p", reason: "Can't <read> it" });
+  assert.doesNotMatch(no.html, /<read>/);
+  assert.match(no.text, /Your spot is still held/);
+  assert.equal(passQrImage("7KQ2MPX4RT").caption, "Code 7KQ2M PX4RT");
+});

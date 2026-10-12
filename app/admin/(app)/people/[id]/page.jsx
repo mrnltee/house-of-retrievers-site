@@ -5,6 +5,7 @@ import { can } from "../../../../lib/admin/roles.mjs";
 import { actionLabel } from "../../../../lib/admin/activity.mjs";
 import { MEMBERSHIP, NUMBER_PREFIX, PEOPLE_STATUSES, hasMembership, memberNumber, membershipFor, membershipLabel } from "../../../../lib/admin/people.mjs";
 import { supporterNumber } from "../../../../lib/supporters.mjs";
+import { FEE_STATUS } from "../../../../lib/eventPayments.mjs";
 import { listCustomTemplates } from "../../../../lib/emailSettings";
 import SendTemplate from "../SendTemplate";
 import { emailReady } from "../../../../lib/email";
@@ -211,7 +212,7 @@ export default async function PersonPage({ params, searchParams }) {
                   <tr key={`${e.event_id}-${e.created_at}`}>
                     <td><a href={`${base}/registrations/${e.event_id}`}>{e.title}</a></td>
                     <td>{isoDate(e.date)}</td>
-                    <td>{REG_STATUS[e.status] || e.status}{e.fee_status === "waiting" ? " · fee due" : e.fee_status === "paid" ? " · paid" : ""}</td>
+                    <td>{REG_STATUS[e.status] || e.status}{e.fee_status && e.fee_status !== "not_due" ? ` · ${FEE_STATUS[e.fee_status]?.label.toLowerCase() || e.fee_status}` : ""}</td>
                     <td>{e.checked_in_at ? formatWhen(e.checked_in_at) : "—"}</td>
                   </tr>
                 ))}

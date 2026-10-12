@@ -6,6 +6,7 @@
 export const METHODS = {
   gcash: { label: "GCash", fields: [["accountName", "Account name"], ["number", "Mobile number"]], qr: true },
   maya: { label: "Maya", fields: [["accountName", "Account name"], ["number", "Mobile number"]], qr: true },
+  gotyme: { label: "GoTyme", fields: [["accountName", "Account name"], ["accountNumber", "Account number"]], qr: true },
   qrph: { label: "QR Ph", fields: [["accountName", "Account name"]], qr: true },
   bank: { label: "Bank transfer", fields: [["bankName", "Bank"], ["accountName", "Account name"], ["accountNumber", "Account number"]], qr: false },
 };
@@ -65,7 +66,7 @@ export function validateChange(key, input) {
     if (!qrPayload) return { error: "That image doesn't scan as a QR code. Try a sharper screenshot." };
     qrImage = input.qrImage;
   }
-  if (enabled && method.qr && key !== "gcash" && key !== "maya" && !qrImage && !input?.hasQr) {
+  if (enabled && method.qr && !["gcash", "maya", "gotyme"].includes(key) && !qrImage && !input?.hasQr) {
     return { error: `${method.label} needs its QR image before it can be shown.` };
   }
   return { value: { enabled, details, qrImage, qrPayload } };

@@ -62,13 +62,15 @@ export function normalizeCode(value) {
 }
 
 /**
- * Check-in outcome for a scanned code.
- * @returns {"ok" | "already" | "not-confirmed" | "wrong-event" | "unknown"}
+ * Check-in outcome for a scanned code. On a paid event a payment that hasn't
+ * been approved (pending, to check, new receipt asked) doesn't get in.
+ * @returns {"ok" | "already" | "not-confirmed" | "unpaid" | "wrong-event" | "unknown"}
  */
 export function checkInOutcome(registration, eventId) {
   if (!registration) return "unknown";
   if (registration.event_id !== eventId) return "wrong-event";
   if (registration.status !== "confirmed") return "not-confirmed";
   if (registration.checked_in_at) return "already";
+  if (registration.fee_required && ["waiting", "review", "rejected"].includes(registration.fee_status)) return "unpaid";
   return "ok";
 }
