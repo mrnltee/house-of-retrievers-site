@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
 import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
 import { MAX_TIERS, cleanTiers, priceSummary } from "../../../lib/prices.mjs";
+import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 
 /**
  * Date and times. "All day" hides the times (and saves none), for events
@@ -384,8 +385,11 @@ export function PriceField({ tiers, legacyCost }) {
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, date }) {
+export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, date, rsvpOpensAt }) {
   const ref = useRef(null);
+  const opensParts = manilaParts(rsvpOpensAt);
+  const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
+  const [opens, setOpens] = useState(opensParts);
   const [past, setPast] = useState(isPastDate(date || ""));
   const [on, setOn] = useState(registration === "required");
   const [paid, setPaid] = useState(false);
@@ -428,12 +432,27 @@ export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, da
             <label className="check"><input type="checkbox" name="rsvpOpen" defaultChecked={rsvpOpen ?? true} /> RSVPs are open</label>
             {paid && <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> They pay by QR before the day (track it per person)</label>}
           </div>
+          <div className="form indent-full" style={{ gap: 10 }}>
+            <input type="hidden" name="rsvpOpensSent" value="1" />
+            <label className="check">
+              <input type="checkbox" name="rsvpOpensOn" checked={scheduled} onChange={(e) => setScheduled(e.target.checked)} />
+              <span><strong>Open RSVPs at a set time</strong> <span className="small muted">The events page counts down to it, then the RSVP button appears by itself.</span></span>
+            </label>
+            {scheduled && (
+              <div className="row-2">
+                <label className="field"><span>Opens on</span><input type="date" name="rsvpOpensDate" required value={opens.date} onChange={(e) => setOpens((o) => ({ ...o, date: e.target.value }))} /></label>
+                <label className="field"><span>At <small>Manila time</small></span><input type="time" name="rsvpOpensTime" required value={opens.time} onChange={(e) => setOpens((o) => ({ ...o, time: e.target.value }))} /></label>
+              </div>
+            )}
+            {scheduled && opens.date && opens.time && <p className="small muted" style={{ margin: 0 }}>RSVPs open {formatOpens(manilaInstant(opens.date, opens.time))} (Manila). {opensLater(manilaInstant(opens.date, opens.time)) ? "Until then the RSVP button shows a countdown." : "That time has passed, so RSVPs are open now."}</p>}
+          </div>
         </div>
       ) : (
         <>
           {/* Kept as they were, for when sign-ups are switched back on. */}
           <input type="hidden" name="capacity" value={capacity ?? ""} />
           {(rsvpOpen ?? true) && <input type="hidden" name="rsvpOpen" value="on" />}
+          {/* A scheduled opening stays saved while sign-ups are off. */}
         </>
       )}
       {!(on && paid) && feeRequired && <input type="hidden" name="feeRequired" value="on" />}

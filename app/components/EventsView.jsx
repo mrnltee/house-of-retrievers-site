@@ -12,6 +12,7 @@ import { eventUrl, formatWhen } from "../lib/share.mjs";
 import { googleCalendarUrl, icsFile } from "../lib/calendar.mjs";
 import { formatPeso } from "../lib/prices.mjs";
 import { linkify } from "../lib/linkify.mjs";
+import { countdownParts, formatOpens } from "../lib/rsvpOpens.mjs";
 
 const STATUS_LABELS = {
   open: "RSVP open",
@@ -19,8 +20,79 @@ const STATUS_LABELS = {
   full: "Full · Waitlist open",
   "no-rsvp": "No RSVP needed",
   closed: "RSVP closed",
+  soon: "RSVP opens soon",
   cancelled: "Cancelled",
 };
+
+/**
+ * An event whose RSVPs open at a set time has status "soon" until then. In
+ * the browser it switches to its open status (open / few left / full) the
+ * moment the countdown ends, without a reload; the server checks the time too.
+ */
+function useLiveEvent(event) {
+  const opensAt = event.status === "soon" ? Date.parse(event.rsvpOpensAt || "") : NaN;
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!Number.isFinite(opensAt)) return undefined;
+    let timer;
+    const check = () => {
+      const left = opensAt - Date.now();
+      if (left <= 0) return setOpen(true);
+      timer = setTimeout(check, Math.min(left, 2 ** 31 - 1));
+    };
+    check();
+    return () => clearTimeout(timer);
+  }, [opensAt]);
+  return open ? { ...event, status: event.openStatus || "open" } : event;
+}
+
+const pad2 = (n) => String(n).padStart(2, "0");
+
+/** Google Calendar reminder for the moment RSVPs open (15 minutes long). */
+function reminderUrl(event) {
+  const start = new Date(event.rsvpOpensAt);
+  const stamp = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `RSVP opens: ${event.title}`,
+    dates: `${stamp(start)}/${stamp(new Date(start.getTime() + 15 * 60 * 1000))}`,
+    details: `RSVPs for ${event.title} open now. ${eventUrl(event.slug)}`,
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+/**
+ * The countdown that stands in for the RSVP button until RSVPs open. The
+ * digits tick every second (hidden from screen readers, which get the
+ * opening time once instead of a reading every second).
+ */
+function RsvpCountdown({ event, compact = false }) {
+  const opensAt = Date.parse(event.rsvpOpensAt || "");
+  const [now, setNow] = useState(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+  const when = formatOpens(event.rsvpOpensAt);
+  const { days, hours, minutes, seconds } = countdownParts(now == null ? 0 : opensAt - now);
+  return (
+    <div className={`event-countdown${compact ? " is-compact" : ""}`} role="timer" aria-label={`RSVPs open ${when}, Manila time`}>
+      <span className="event-countdown-label" aria-hidden="true">RSVP opens in</span>
+      <span className="event-countdown-digits" aria-hidden="true">
+        {now == null ? <span className="event-countdown-when">{when}</span> : (
+          <>
+            {days > 0 && <span><strong>{days}</strong><small>d</small></span>}
+            <span><strong>{pad2(hours)}</strong><small>h</small></span>
+            <span><strong>{pad2(minutes)}</strong><small>m</small></span>
+            <span><strong>{pad2(seconds)}</strong><small>s</small></span>
+          </>
+        )}
+      </span>
+      {!compact && <span className="event-countdown-foot" aria-hidden="true">{when} · <a href={reminderUrl(event)} target="_blank" rel="noreferrer">Remind me</a></span>}
+    </div>
+  );
+}
 
 const INSTAGRAM_URL = SOCIAL_PROFILES.find((url) => url.includes("instagram"));
 const FACEBOOK_URL = SOCIAL_PROFILES.find((url) => url.includes("facebook"));
@@ -125,7 +197,8 @@ function Price({ event, past }) {
   );
 }
 
-function RsvpButton({ event, past, onRsvp }) {
+function RsvpButton({ event, past, onRsvp, compact = false }) {
+  if (!past && event.rsvp && event.status === "soon") return <RsvpCountdown event={event} compact={compact} />;
   if (past || !event.rsvp || !["open", "few-left", "full"].includes(event.status)) return null;
   return (
     <button type="button" className="button primary event-rsvp" onClick={() => onRsvp(event)}>
@@ -134,7 +207,8 @@ function RsvpButton({ event, past, onRsvp }) {
   );
 }
 
-export function EventCard({ event, past = false, onRsvp, base }) {
+export function EventCard({ event: given, past = false, onRsvp, base }) {
+  const event = useLiveEvent(given);
   const href = `${base}/${event.slug}`;
   return (
     <li className="event-card">
@@ -406,11 +480,12 @@ function SupporterChip({ name, link }) {
   );
 }
 
-export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
+export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
+  const event = useLiveEvent(given);
   const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
   const card = useRef(null);
   const [cardInView, setCardInView] = useState(true);
-  const canRsvp = !past && event.rsvp && ["open", "few-left", "full"].includes(event.status);
+  const canRsvp = !past && event.rsvp && ["open", "few-left", "full", "soon"].includes(event.status);
 
   // The phone's bottom bar steps aside while the main RSVP card is on screen.
   useEffect(() => {
@@ -490,7 +565,7 @@ export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
       {canRsvp && (
         <div className={`event-rsvp-bar${cardInView ? " is-hidden" : ""}`} inert={cardInView}>
           <Price event={event} past={past} />
-          <RsvpButton event={event} past={past} onRsvp={onRsvp} />
+          <RsvpButton event={event} past={past} onRsvp={onRsvp} compact />
         </div>
       )}
     </article>

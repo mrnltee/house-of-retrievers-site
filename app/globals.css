@@ -1273,3 +1273,16 @@ main:focus { outline: none; }
 .pass-steps li.now { color: var(--ink); font-weight: 700; }
 .pass-steps li.now::before { background: var(--gold); border-color: var(--gold); }
 .pass-small { margin: 0; color: var(--muted-on-light); font-size: 13px; }
+
+/* RSVP countdown (scheduled opening): stands in for the RSVP button until RSVPs open. */
+.event-status.status-soon { background: #f3e9d2; color: #7a5c1f; }
+.event-countdown { display: grid; gap: 4px; justify-items: start; padding: 10px 16px; border: 1px solid var(--gold); border-radius: 16px; background: #fbf8f1; color: var(--ink); }
+.event-countdown-label { font-size: var(--text-caption); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-on-light); }
+.event-countdown-digits { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.event-countdown-digits strong { font: 400 28px/1 "DM Serif Display", serif; }
+.event-countdown-digits small { margin-left: 2px; font-size: 12px; font-weight: 700; color: var(--muted-on-light); }
+.event-countdown-when { font-weight: 700; }
+.event-countdown-foot { font-size: 12px; color: var(--muted-on-light); }
+.event-countdown-foot a { color: var(--gold-on-light); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.event-countdown.is-compact { padding: 6px 12px; gap: 2px; }
+.event-countdown.is-compact .event-countdown-digits strong { font-size: 22px; }

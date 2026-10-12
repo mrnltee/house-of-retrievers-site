@@ -90,6 +90,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           rsvpOpen={event ? event.rsvp_open : true}
           feeRequired={event?.fee_required}
           date={event ? isoDate(event.date) : ""}
+          rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}
         />
         <label className="field"><span>Confirmation email <small>What people get when they RSVP and have a spot. Write your own in Email templates (Event confirmation). The event's details and the pass button are always added.</small></span>
           <select name="emailTemplateId" defaultValue={v("email_template_id") || ""}>

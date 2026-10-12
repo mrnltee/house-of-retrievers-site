@@ -1,5 +1,7 @@
 "use client";
 
+import { manilaInstant } from "../../../lib/rsvpOpens.mjs";
+
 import { useRef, useState } from "react";
 import { EventCard, EventDetailPage } from "../../../components/EventsView";
 import { isPastDate, parseHashtags, toPublicEvent } from "../../../lib/admin/events.mjs";
@@ -61,6 +63,7 @@ function draftEvent(form, saved) {
     registration: f.get("registration") === "required" ? "required" : "none",
     capacity: get("capacity") ? Number(get("capacity")) : null,
     rsvp_open: f.get("rsvpOpen") === "on",
+    rsvp_opens_at: f.get("rsvpOpensOn") === "on" ? manilaInstant(get("rsvpOpensDate"), get("rsvpOpensTime")) : null,
     fee_required: f.get("feeRequired") === "on",
     status: "published",
   };

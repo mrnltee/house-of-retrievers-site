@@ -42,6 +42,9 @@ const LABELS = {
   rsvpOpen: "RSVPs open",
   feeRequired: "Fee required",
   emailTemplateId: "Confirmation email",
+  rsvpOpensOn: "RSVPs open at a set time",
+  rsvpOpensDate: "RSVPs open at a set time",
+  rsvpOpensTime: "RSVPs open at a set time",
 };
 
 /** The copy for each button that asks first, keyed by the button's data-confirm. */

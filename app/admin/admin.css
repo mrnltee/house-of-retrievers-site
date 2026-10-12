@@ -420,3 +420,4 @@ a.stat:hover, a.stat:focus-visible { border-color: var(--a-ink); }
 button.tag-badge { border: 1px solid transparent; padding: 6px 12px; cursor: pointer; }
 button.tag-badge.is-on { background: var(--a-ink); color: white; }
 @media (max-width: 900px) { .check-grid { grid-template-columns: 1fr; } .receipt-card { position: static; } }
+.indent-full { grid-column: 1 / -1; }

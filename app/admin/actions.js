@@ -189,6 +189,7 @@ export async function saveEvent(data) {
     // Sent only by editors that have these fields, so an older open tab can't blank them.
     if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
     if (data.has("allDaySent")) await sql("UPDATE events SET all_day=$1 WHERE id=$2", [value.allDay, eventId]);
+    if (data.has("rsvpOpensSent")) await sql("UPDATE events SET rsvp_opens_at=$1 WHERE id=$2", [value.rsvpOpensAt, eventId]);
     if (data.has("emailTemplateId")) {
       const tid = form(data, "emailTemplateId");
       await sql("UPDATE events SET email_template_id = (SELECT id FROM custom_email_templates WHERE id::text = $1 AND kind = 'event') WHERE id = $2", [tid, eventId]);

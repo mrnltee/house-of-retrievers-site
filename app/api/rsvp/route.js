@@ -6,6 +6,7 @@ import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../li
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 import { eventTiers } from "../../lib/admin/events.mjs";
 import { chooseTicket, owesPayment } from "../../lib/eventPayments.mjs";
+import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 
 export const runtime = "nodejs";
@@ -43,11 +44,13 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, cost FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, cost, rsvp_opens_at FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
       if (!event.rsvp_open) return { error: "RSVPs for this event are closed.", status: 409 };
+      const opensAt = event.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : null;
+      if (opensLater(opensAt)) return { error: `RSVPs open ${formatOpens(opensAt)} (Manila time). See you then!`, status: 409 };
       if (hasEnded({ date: String(event.date).slice(0, 10), startTime: event.start_time, endTime: event.end_time, allDay: event.all_day })) {
         return { error: "This event has already happened.", status: 409 };
       }

@@ -4,6 +4,8 @@
  */
 
 import { cleanTiers, priceSummary, tiersFromCost } from "../prices.mjs";
+import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
+import { eventEndsAt } from "../eventTime.mjs";
 
 export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
 
@@ -254,6 +256,7 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     capacity: input?.capacity === "" || input?.capacity == null ? null : Number(input.capacity),
     rsvpOpen: input?.rsvpOpen === undefined ? true : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
     feeRequired: input?.feeRequired === true || input?.feeRequired === "on" || input?.feeRequired === "true",
+    rsvpOpensAt: null,
   };
 
   // An all-day event has no times.
@@ -291,12 +294,20 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
   }
   if (value.image && !value.image.startsWith("/") && !value.image.startsWith("https://")) return { error: "The photo must be a site path like /4-events/run.jpg or an https link." };
 
+  // A scheduled opening (Manila time) has to come before the event ends.
+  if (value.registration === "required") {
+    const opens = readOpensAt(input, eventEndsAt({ date: value.date, startTime: value.startTime, endTime: value.endTime, allDay: value.allDay }));
+    if (opens.error) return { error: opens.error };
+    value.rsvpOpensAt = opens.value;
+  }
+
   // An event that has already happened takes no sign-ups, whatever the form says.
   if (isPastDate(value.date, today)) {
     value.registration = "none";
     value.capacity = null;
     value.rsvpOpen = false;
     value.feeRequired = false;
+    value.rsvpOpensAt = null;
   }
 
   const missing = [];
@@ -315,10 +326,12 @@ export function fewLeftThreshold(capacity) {
 }
 
 /** The status chip the public page shows. */
-export function publicStatus(row, confirmed = 0) {
+export function publicStatus(row, confirmed = 0, now = Date.now()) {
   if (row.status === "cancelled") return "cancelled";
   if (row.registration !== "required") return "no-rsvp";
   if (!row.rsvp_open) return "closed";
+  // A scheduled opening still ahead: the pages count down to it.
+  if (opensLater(row.rsvp_opens_at instanceof Date ? row.rsvp_opens_at.toISOString() : row.rsvp_opens_at, now)) return "soon";
   if (row.capacity) {
     const left = row.capacity - confirmed;
     if (left <= 0) return "full";
@@ -372,6 +385,9 @@ export function toPublicEvent(row, confirmed = 0) {
     venueLat: row.venue_lat ?? undefined,
     venueLng: row.venue_lng ?? undefined,
     status: publicStatus(row, confirmed),
+    // With "soon", the moment RSVPs open and the status the page switches to then.
+    rsvpOpensAt: row.rsvp_opens_at ? new Date(row.rsvp_opens_at).toISOString() : undefined,
+    openStatus: publicStatus({ ...row, rsvp_opens_at: null }, confirmed),
     image: row.image || undefined,
     imageAlt: row.image_alt || undefined,
     media: media.length ? media : undefined,
