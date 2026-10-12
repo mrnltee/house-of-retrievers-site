@@ -22,6 +22,7 @@ export default async function PeoplePage({ searchParams }) {
   const kind = KINDS.includes(params?.kind) ? params.kind : "Member";
   const q = typeof params?.q === "string" ? params.q.trim().slice(0, 80) : "";
   const filter = MEMBERSHIP.some(([k]) => k === params?.m) ? params.m : "";
+  const noPhoto = params?.photo === "none";
   const [counts, rows, [stats]] = await Promise.all([
     sql("SELECT kind, count(*)::int AS count FROM people GROUP BY kind"),
     sql(
@@ -29,14 +30,16 @@ export default async function PeoplePage({ searchParams }) {
          FROM people p WHERE kind=$1
          AND ($2 = '' OR name ILIKE '%' || $2 || '%' OR email ILIKE '%' || $2 || '%' OR social_profile ILIKE '%' || $2 || '%' OR furbaby_name ILIKE '%' || $2 || '%')
          AND ($3 = '' OR membership = $3)
+         AND (NOT $4 OR photo_id IS NULL)
        ORDER BY (status = 'New') DESC, created_at DESC LIMIT 300`,
-      [kind, q, filter],
+      [kind, q, filter, noPhoto],
     ),
     sql(
       `SELECT count(*) FILTER (WHERE membership = 'active')::int AS active,
               count(*) FILTER (WHERE membership = 'applicant')::int AS applicants,
               count(*) FILTER (WHERE created_at >= date_trunc('month', now() AT TIME ZONE 'Asia/Manila') AT TIME ZONE 'Asia/Manila')::int AS this_month,
-              count(*) FILTER (WHERE status = 'New' AND created_at < now() - interval '7 days')::int AS waiting
+              count(*) FILTER (WHERE status = 'New' AND created_at < now() - interval '7 days')::int AS waiting,
+              count(*) FILTER (WHERE photo_id IS NULL)::int AS no_photo
          FROM people WHERE kind = $1`,
       [kind],
     ),
@@ -44,7 +47,7 @@ export default async function PeoplePage({ searchParams }) {
   const count = (k) => counts.find((row) => row.kind === k)?.count || 0;
   const canEdit = can(admin.roles, "people:edit");
   const members = kind === "Member";
-  const link = (extra) => `${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...extra })}`;
+  const link = (extra) => `${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(noPhoto ? { photo: "none" } : {}), ...extra })}`;
 
   return (
     <>
@@ -80,7 +83,12 @@ export default async function PeoplePage({ searchParams }) {
           {MEMBERSHIP.map(([k, label]) => <a key={k} href={link({ m: k })} aria-current={filter === k ? "page" : undefined}>{label}</a>)}
         </nav>
       )}
-      <p className="small muted">{HELP[kind]}</p>
+      <p className="small muted">
+        {HELP[kind]}{" "}
+        {stats.no_photo > 0 && (noPhoto
+          ? <a href={`${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(filter ? { m: filter } : {}) })}`}>Show everyone</a>
+          : <a href={link({ ...(filter ? { m: filter } : {}), photo: "none" })}>No photo yet · {stats.no_photo}</a>)}
+      </p>
       <div className="table-wrap">
         <table className="people-table">
           <thead>
@@ -94,7 +102,7 @@ export default async function PeoplePage({ searchParams }) {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={members ? 6 : 5} className="empty">{q || filter ? "No one matches." : "Nobody here yet."}</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={members ? 6 : 5} className="empty">{q || filter || noPhoto ? "No one matches." : "Nobody here yet."}</td></tr>}
             {rows.map((p) => (
               <tr key={p.id}>
                 <td>

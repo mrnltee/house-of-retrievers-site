@@ -5,6 +5,7 @@ import { logActivity } from "../../lib/admin/log";
 import { savePersonPhoto } from "../../lib/personPhotos";
 import { sendEmail } from "../../lib/email";
 import { applicationReceived } from "../../lib/emailTemplates.mjs";
+import { loadTemplate } from "../../lib/emailSettings";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 
 // Module scope so it lives as long as the server instance. See spamGuard.mjs.
@@ -194,7 +195,9 @@ export async function POST(request) {
     }
 
     // "We got your application", straight away. Best effort: no email setup, no email.
-    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again: (joined?.joined_count || 1) > 1 });
+    const again = (joined?.joined_count || 1) > 1;
+    const custom = interest === "Member" && !again ? await loadTemplate("member-registered") : null;
+    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again, furbaby: payload.submission.furbabyName || "", custom });
     await sendEmail({
       to: payload.submission.email,
       ...mail,

@@ -6,7 +6,7 @@ const GROUPS = [
   ["Run", [["Dashboard", "/", "dashboard:view"], ["Events", "/events", "events:view"], ["Registrations", "/registrations", "registrations:view"], ["Check-in", "/checkin", "checkin"], ["People", "/people", "people:view"], ["Sponsors & partners", "/supporters", "people:view"]]],
   ["Publish", [["Gallery", null], ["Forms", null], ["Content", null]]],
   ["Money", [["Payment settings", "/payments", "payments:view"], ["Donations & spending", null]]],
-  ["Settings", [["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
+  ["Settings", [["Email templates", "/emails", "people:edit"], ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
 ];
 
 export default async function AdminAppLayout({ children }) {

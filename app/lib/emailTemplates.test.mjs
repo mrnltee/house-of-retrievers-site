@@ -45,3 +45,15 @@ test("welcome carries the member number; RSVP the pass link and the event", () =
   assert.match(rsvp.text, /Wiltlover Café, Pasay/);
   assert.match(rsvpConfirmed({ name: "Ana", status: "waitlist", passUrl: "x", event: { title: "T", date: "2026-10-17", venue: "V", city: "C" } }).subject, /waitlist/);
 });
+
+test("editable welcome emails: HOR's wording with variables, safely filled", async () => {
+  const { renderTemplate, unknownVariables } = await import("./emailTemplates.mjs");
+  const mail = renderTemplate("member-welcome", { subject: "Hi {{ first_name }}!", heading: "Welcome, {{full_name}}", message: "Your number: **{{member_no}}**\nwith {{furbaby_name}}\n\nSecond paragraph" }, { name: "Ana <b>Cruz</b>", memberNo: "HOR-26-0007", furbaby: "Mochi" });
+  assert.equal(mail.subject, "Hi Ana!");
+  assert.match(mail.html, /<strong style="white-space:nowrap">HOR-26-0007<\/strong><br>with Mochi/);
+  assert.doesNotMatch(mail.html, /<b>Cruz/);
+  assert.match(mail.text, /Second paragraph/);
+  assert.deepEqual(unknownVariables("member-registered", { message: "{{first_name}} {{member_no}} {{oops}}" }), ["member_no", "oops"]);
+  const fallback = renderTemplate("member-registered", { heading: "  ", message: "Hello" }, { name: "Juan" });
+  assert.equal(fallback.subject, "Welcome to the House, Juan! 🤎");
+});

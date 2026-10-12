@@ -119,31 +119,123 @@ const SIGNOFF = [
 ];
 
 /**
- * A new member's first email, in HOR's own words (supplied 11 Oct 2026):
- * centered logo, warm welcome, signed by the Society. Repeat submissions
- * and the other kinds keep the shorter note below.
+ * Emails HOR can reword in the admin (Email templates). Each has a subject,
+ * an optional greeting, a heading and a message; {{variables}} are filled in
+ * per person. The frame (logo band, sign-off, footer) stays fixed. These
+ * defaults are HOR's own wording, used until someone saves their own.
  */
-function memberRegistered({ name }) {
-  return build({
-    subject: `Welcome to the House, ${firstName(name)}! 🤎`,
+export const TEMPLATE_VARIABLES = {
+  first_name: "First name, e.g. Juan",
+  full_name: "Full name, e.g. Juan dela Cruz",
+  furbaby_name: "Their dog's name from the Join form (blank if none)",
+  member_no: "Member number, e.g. HOR-26-0001 (welcome email only)",
+};
+
+export const EDITABLE_TEMPLATES = {
+  "member-registered": {
+    title: "New member registration",
+    when: "Sent straight away when someone sends the Join form as a Member (first time only).",
+    variables: ["first_name", "full_name", "furbaby_name"],
+    defaults: {
+      subject: "Welcome to the House, {{first_name}}! 🤎",
+      greeting: "Hi {{first_name}},",
+      heading: "Welcome to the House! ⚡️",
+      message: [
+        "Thank you for registering with The House of Retrievers Society Inc. We’ve successfully received your membership registration.",
+        "What started as a shared love for dogs has grown into a community built on friendship, kindness, and a genuine desire to give back.",
+        "We’re happy you’ve chosen to be part of this journey.",
+        "Here at the House, we believe that every paw has a purpose. Whether it’s making new friends, sharing meaningful experiences, or lending a helping paw, there’s so much we can do together.",
+        "We look forward to creating more memories and making a difference with you.",
+        "**Welcome home! 🤎**",
+      ].join("\n\n"),
+    },
     preheader: "We've received your membership registration.",
-    greeting: `Hi ${firstName(name)},`,
-    heading: "Welcome to the House! ⚡️",
-    paragraphs: [
-      "Thank you for registering with The House of Retrievers Society Inc. We’ve successfully received your membership registration.",
-      "What started as a shared love for dogs has grown into a community built on friendship, kindness, and a genuine desire to give back.",
-      "We’re happy you’ve chosen to be part of this journey.",
-      "Here at the House, we believe that every paw has a purpose. Whether it’s making new friends, sharing meaningful experiences, or lending a helping paw, there’s so much we can do together.",
-      "We look forward to creating more memories and making a difference with you.",
-      "<strong>Welcome home! 🤎</strong>",
-    ],
     footnote: "You're getting this because this email address was entered on the Join form. If that wasn't you, just reply and we'll remove it.",
+  },
+  "member-welcome": {
+    title: "Welcome to the pack (made Active)",
+    when: "Sent when an admin sets a Member to Active and ticks “Send the welcome email”, or uses “Send the welcome email again”.",
+    variables: ["first_name", "full_name", "furbaby_name", "member_no"],
+    defaults: {
+      subject: "Welcome to House of Retrievers, {{first_name}}",
+      greeting: "",
+      heading: "Welcome to the pack, {{first_name}}.",
+      message: [
+        "You're now a member of House of Retrievers. Your member number is **{{member_no}}**.",
+        "Events are where it all happens: runs, care visits, workshops and fundraisers. RSVP on the events page with this email address and you'll get your pass straight away.",
+        "There is always room for one more good human. Thanks for being one.",
+      ].join("\n\n"),
+    },
+    preheader: "You're in.",
+    button: { label: "See upcoming events", href: EVENTS_URL },
+    footnote: "You're getting this because you joined House of Retrievers.",
+  },
+};
+
+export const TEMPLATE_LIMITS = { subject: 150, greeting: 120, heading: 150, message: 4000 };
+
+const VAR_RE = /\{\{\s*([a-z_]+)\s*\}\}/g;
+
+/** Variable names used in `text` that the template doesn't offer. */
+export function unknownVariables(key, fields) {
+  const allowed = new Set(EDITABLE_TEMPLATES[key]?.variables || []);
+  const found = new Set();
+  for (const value of Object.values(fields || {})) for (const [, name] of String(value || "").matchAll(VAR_RE)) if (!allowed.has(name)) found.add(name);
+  return [...found];
+}
+
+/** Plain text with {{variables}} filled in. */
+function fillPlain(text, vars) {
+  return String(text || "").replace(VAR_RE, (_, name) => String(vars[name] ?? ""));
+}
+
+/**
+ * The message as email paragraphs: a blank line starts a new paragraph, a
+ * single line break stays a line break, **text** is bold. Variables are
+ * filled after escaping, so a name can never inject markup.
+ */
+function messageParagraphs(text, vars) {
+  return String(text || "")
+    .replace(/\r\n?/g, "\n")
+    .split(/\n{2,}/)
+    .map((para) => para.trim())
+    .filter(Boolean)
+    .map((para) =>
+      esc(para)
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="white-space:nowrap">$1</strong>')
+        .replace(/\n/g, "<br>")
+        .replace(VAR_RE, (_, name) => esc(vars[name] ?? "")),
+    );
+}
+
+/** Builds one of the editable emails from saved (or default) wording. */
+export function renderTemplate(key, custom, person) {
+  const t = EDITABLE_TEMPLATES[key];
+  const fields = { ...t.defaults, ...Object.fromEntries(Object.entries(custom || {}).filter(([, v]) => typeof v === "string")) };
+  const vars = {
+    first_name: firstName(person?.name),
+    full_name: String(person?.name || "").trim() || "there",
+    furbaby_name: String(person?.furbaby || "").trim(),
+    member_no: person?.memberNo || "",
+  };
+  return build({
+    subject: fillPlain(fields.subject, vars).replace(/\s+/g, " ").trim() || fillPlain(t.defaults.subject, vars),
+    preheader: t.preheader,
+    greeting: fillPlain(fields.greeting, vars).trim() || undefined,
+    heading: fillPlain(fields.heading, vars).trim() || fillPlain(t.defaults.heading, vars),
+    paragraphs: messageParagraphs(fields.message, vars),
+    button: t.button,
+    footnote: t.footnote,
   });
 }
 
+function memberRegistered({ name, furbaby, custom }) {
+  return renderTemplate("member-registered", custom, { name, furbaby });
+}
+
 /** Sent straight away when someone sends the Join form. */
-export function applicationReceived({ name, kind, again = false }) {
-  if (kind === "Member" && !again) return memberRegistered({ name });
+export function applicationReceived({ name, kind, again = false, furbaby = "", custom = null }) {
+  if (kind === "Member" && !again) return memberRegistered({ name, furbaby, custom });
   const role = { Member: "member", Volunteer: "volunteer", Partner: "partner", Sponsor: "sponsor" }[kind] || "member";
   return build({
     subject: again ? "We got your update" : `Thanks for joining House of Retrievers, ${firstName(name)}`,
@@ -161,19 +253,8 @@ export function applicationReceived({ name, kind, again = false }) {
 }
 
 /** Sent when an admin confirms a member. */
-export function welcomeMember({ name, memberNo }) {
-  return build({
-    subject: `Welcome to House of Retrievers, ${firstName(name)}`,
-    preheader: memberNo ? `You're member ${memberNo}.` : "You're in.",
-    heading: `Welcome to the pack, ${firstName(name)}.`,
-    paragraphs: [
-      `You're now a member of House of Retrievers${memberNo ? `. Your member number is <strong style="white-space:nowrap">${esc(memberNo)}</strong>` : ""}.`,
-      "Events are where it all happens: runs, care visits, workshops and fundraisers. RSVP on the events page with this email address and you'll get your pass straight away.",
-    ],
-    button: { label: "See upcoming events", href: EVENTS_URL },
-    after: ["There is always room for one more good human. Thanks for being one."],
-    footnote: "You're getting this because you joined House of Retrievers.",
-  });
+export function welcomeMember({ name, memberNo, furbaby = "", custom = null }) {
+  return renderTemplate("member-welcome", custom, { name, memberNo, furbaby });
 }
 
 /** Sent when someone RSVPs (or joins the waitlist) on the events page. */

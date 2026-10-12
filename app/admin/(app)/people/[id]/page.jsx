@@ -9,6 +9,8 @@ import { resendWelcome, updateMembership, updatePerson } from "../../../actions"
 import { supporterFromPerson } from "../../../supporterActions";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import PersonAvatar from "../PersonAvatar";
+import PersonPhotoField from "../PersonPhotoField";
+import ConfirmMembership from "../ConfirmMembership";
 
 const REG_STATUS = { confirmed: "Going", waitlist: "Waitlist", cancelled: "Cancelled" };
 
@@ -51,6 +53,7 @@ export default async function PersonPage({ params, searchParams }) {
       <div className="person-head">
         <PersonAvatar person={person} base={base} size={96} />
         <div>
+          {canEdit && <PersonPhotoField personId={person.id} current={Boolean(person.photo_id)} name={person.name} />}
           <PageHead title={person.name} lead={[person.kind, member && person.member_no ? memberNumber(person) : "", member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} />
         </div>
       </div>
@@ -67,7 +70,7 @@ export default async function PersonPage({ params, searchParams }) {
             <div><dt>Joined</dt><dd>{formatWhen(person.created_at)}{person.joined_count > 1 && <> · sent the form {person.joined_count} times, last {formatWhen(person.last_joined_at)}</>}</dd></div>
             {others.length > 0 && <div><dt>Also</dt><dd>{others.map((o) => <a key={o.id} href={`${base}/people/${o.id}`} className="chip" style={{ marginRight: 6 }}>{o.kind}</a>)}</dd></div>}
           </dl>
-          {!person.photo_id && <p className="small muted">No photo here. Photos sent before 11 Oct 2026 are in the "HOR Member photos" Drive folder, linked from the sheet.</p>}
+          {!person.photo_id && <p className="small muted">No photo yet. Use “Add a photo” at the top. Photos sent with the Join form before 11 Oct 2026 are in the "HOR Member photos" Drive folder, linked from the sheet.</p>}
           {person.message && (
             <>
               <h3>What they wrote</h3>
@@ -88,6 +91,14 @@ export default async function PersonPage({ params, searchParams }) {
               {canEdit && (
                 <form action={updateMembership} className="form" style={{ gap: 12 }}>
                   <input type="hidden" name="id" value={person.id} />
+                  <ConfirmMembership
+                    name={person.name}
+                    email={person.email}
+                    current={person.membership}
+                    labels={Object.fromEntries(MEMBERSHIP.map(([k, l]) => [k, l]))}
+                    hasNumber={Boolean(person.member_no)}
+                    year={new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric" }).format(new Date(person.created_at))}
+                  />
                   <fieldset className="plain">
                     <legend>Change to</legend>
                     {MEMBERSHIP.map(([key, label, hint]) => (

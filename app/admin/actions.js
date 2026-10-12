@@ -15,6 +15,8 @@ import { MEMBERSHIP_KEYS, PEOPLE_STATUSES, memberNumber, membershipLabel } from 
 import { readSheet } from "../lib/admin/peopleImport.mjs";
 import { sendEmail } from "../lib/email";
 import { welcomeMember } from "../lib/emailTemplates.mjs";
+import { loadTemplate } from "../lib/emailSettings";
+import { savePersonPhoto } from "../lib/personPhotos";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -323,7 +325,7 @@ export async function updateMembership(data) {
     const admin = await actionAdmin("people:edit");
     const membership = form(data, "membership");
     if (!isUuid(id) || !MEMBERSHIP_KEYS.includes(membership)) await backWith(back, "error", "Pick a membership status from the list.");
-    const [before] = await sql("SELECT name, email, kind, membership, member_no FROM people WHERE id=$1", [id]);
+    const [before] = await sql("SELECT name, email, kind, membership, member_no, furbaby_name FROM people WHERE id=$1", [id]);
     if (!before || before.kind !== "Member") await backWith(back, "error", "Membership applies to Members only.");
     // First activation takes the next number in the year they registered
     // (HOR-YY-NNNN, YY = Join form year, Manila). The lock makes two admins
@@ -348,7 +350,7 @@ export async function updateMembership(data) {
     let note = `${before.name} is now ${membershipLabel(membership).toLowerCase()}.`;
     const firstActivation = membership === "active" && before.member_no == null;
     if (firstActivation && data.get("sendWelcome") === "on") {
-      const mail = welcomeMember({ name: before.name, memberNo: memberNumber(after) });
+      const mail = welcomeMember({ name: before.name, memberNo: memberNumber(after), furbaby: before.furbaby_name || "", custom: await loadTemplate("member-welcome") });
       const sent = await sendEmail({ to: before.email, ...mail, idempotencyKey: `welcome/${id}` });
       if (sent.ok) {
         await logActivity(admin.email, "person.email", before.name, { personId: id, template: "welcome" });
@@ -367,9 +369,9 @@ export async function resendWelcome(data) {
   const back = isUuid(id) ? `/people/${id}` : "/people";
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
-    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year FROM people WHERE id=$1", [id]) : [];
+    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year, furbaby_name FROM people WHERE id=$1", [id]) : [];
     if (!person || person.kind !== "Member" || person.membership !== "active") await backWith(back, "error", "Only active members get the welcome email.");
-    const mail = welcomeMember({ name: person.name, memberNo: memberNumber(person) });
+    const mail = welcomeMember({ name: person.name, memberNo: memberNumber(person), furbaby: person.furbaby_name || "", custom: await loadTemplate("member-welcome") });
     const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `welcome/${id}/${Date.now()}` });
     if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");
     await logActivity(admin.email, "person.email", person.name, { personId: id, template: "welcome" });
@@ -619,3 +621,35 @@ export async function cancelEvent(data) { data.set("intent", "cancel"); return s
 export async function approvePaymentRequest(data) { data.set("decision", "approve"); return decidePaymentRequest(data); }
 export async function rejectPaymentRequest(data) { data.set("decision", "reject"); return decidePaymentRequest(data); }
 export async function removeAdmin(data) { data.set("op", "remove"); return updateAdmin(data); }
+
+// ---------- Profile photos ----------
+
+/** Sets (or replaces) a person's profile photo from the admin. Resized in the browser, then to 480 px WebP here. */
+export async function uploadPersonPhoto(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/people/${id}` : "/people";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const [person] = isUuid(id) ? await sql("SELECT name FROM people WHERE id=$1", [id]) : [];
+    if (!person) await backWith("/people", "error", "That person no longer exists.");
+    const dataUrl = form(data, "photoData");
+    if (!dataUrl || dataUrl.length > 4 * 1024 * 1024) await backWith(back, "error", "Pick a photo first (JPG or PNG).");
+    const saved = await savePersonPhoto(id, dataUrl);
+    if (!saved) await backWith(back, "error", "That photo couldn't be saved. Try another one.");
+    await logActivity(admin.email, "person.photo", person.name, { personId: id });
+    await backWith(back, "ok", "Photo saved.");
+  });
+}
+
+/** Takes the profile photo off (the stored copy stays, unlinked, like other uploads). */
+export async function removePersonPhoto(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/people/${id}` : "/people";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const [person] = isUuid(id) ? await sql("UPDATE people SET photo_id = NULL WHERE id=$1 RETURNING name", [id]) : [];
+    if (!person) await backWith("/people", "error", "That person no longer exists.");
+    await logActivity(admin.email, "person.photo", person.name, { personId: id, removed: true });
+    await backWith(back, "ok", "Photo removed.");
+  });
+}

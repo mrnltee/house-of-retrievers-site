@@ -389,3 +389,19 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .plain-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
 .supporter-grid .person-history li { grid-template-columns: 1fr; gap: 2px; }
 .admin h2 .chip { font: 600 12px/1.4 "DM Sans", sans-serif; vertical-align: middle; margin-left: 8px; }
+
+/* ---------- Email templates ---------- */
+.template-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 1100px) { .template-grid { grid-template-columns: 1fr; } }
+.template-vars ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.var-chip { border: 0; cursor: pointer; font: 600 13px/1.4 ui-monospace, Menlo, monospace; padding: 4px 12px; }
+.var-chip:hover, .var-chip:focus-visible { background: var(--a-ink); color: white; }
+.template-preview { position: sticky; top: 16px; display: grid; gap: 12px; }
+.template-preview-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.template-subject { margin: 4px 0 0; }
+.segmented button { border: 0; background: transparent; padding: 8px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer; color: inherit; }
+.segmented button[aria-pressed="true"] { background: var(--a-ink); color: white; }
+.template-frame { width: 100%; height: 760px; border: 1px solid var(--a-line); border-radius: 12px; background: #F5F1E6; display: block; margin: 0 auto; }
+.template-frame.is-phone { max-width: 390px; }
+.person-photo-field { margin-bottom: 8px; }
+.person-photo-field .actions { align-items: center; }
