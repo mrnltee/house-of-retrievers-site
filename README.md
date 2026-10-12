@@ -77,4 +77,4 @@ The join form posts to `/api/join`, which forwards submissions to a Google Apps 
 - `scripts/create-reversed-logo.py` — deterministic reversed-logo generator
 - `scripts/apps-script/Code.gs` — Google Apps Script that records join submissions to a sheet
 
-See `CLAUDE.md` for refactoring constraints and recommended next work.
+See `AGENTS.md` (workflow, conventions, open items) and `CLAUDE.md` (feature spec) before changing anything.
