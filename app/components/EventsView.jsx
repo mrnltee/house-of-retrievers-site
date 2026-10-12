@@ -11,6 +11,7 @@ import { HOME_URL, SOCIAL_PROFILES } from "../lib/siteSeo.mjs";
 import { eventUrl, formatWhen } from "../lib/share.mjs";
 import { googleCalendarUrl, icsFile } from "../lib/calendar.mjs";
 import { formatPeso } from "../lib/prices.mjs";
+import { linkify } from "../lib/linkify.mjs";
 
 const STATUS_LABELS = {
   open: "RSVP open",
@@ -46,6 +47,19 @@ function Hashtags({ tags }) {
     <ul className="event-tags" aria-label="Hashtags">
       {tags.map((tag) => <li key={tag}>#{tag}</li>)}
     </ul>
+  );
+}
+
+/** Event text with its web links and emails clickable; web links open in a new tab. */
+function Linked({ text }) {
+  return linkify(text).map((part, i) =>
+    typeof part === "string" ? (
+      part
+    ) : part.email ? (
+      <a key={i} href={part.href} className="event-link">{part.text}</a>
+    ) : (
+      <a key={i} href={part.href} className="event-link" target="_blank" rel="noopener noreferrer">{part.text}</a>
+    ),
   );
 }
 
@@ -130,7 +144,7 @@ export function EventCard({ event, past = false, onRsvp, base }) {
         <p className="event-category">{[event.category, event.purpose].filter(Boolean).join("  ·  ")}</p>
         <h3><a className="event-title-link" href={href}>{event.title}</a></h3>
         <Meta event={event} past={past} />
-        {event.summary && <p className="event-summary event-summary-clamp">{event.summary}</p>}
+        {event.summary && <p className="event-summary event-summary-clamp"><Linked text={event.summary} /></p>}
         {event.summary && isLong(event.summary) && (
           <a className="event-more" href={href}>Read more<span className="visually-hidden"> about {event.title}</span></a>
         )}
@@ -432,14 +446,14 @@ export function EventDetail({ event, past, onRsvp, base, photos = [] }) {
           {event.summary && (
             <section className="event-about" aria-labelledby="about-title">
               <h2 id="about-title">About</h2>
-              <div className="event-summary event-summary-full">{event.summary}</div>
+              <div className="event-summary event-summary-full"><Linked text={event.summary} /></div>
             </section>
           )}
           {event.included && (
             <section className="event-included" aria-labelledby="included-title">
               <h3 id="included-title">What's included</h3>
               <ul>
-                {event.included.map((item) => <li key={item}><Icon name="check" size={14} /> {item}</li>)}
+                {event.included.map((item) => <li key={item}><Icon name="check" size={14} /> <span><Linked text={item} /></span></li>)}
               </ul>
             </section>
           )}

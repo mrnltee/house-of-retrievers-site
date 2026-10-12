@@ -1216,3 +1216,7 @@ main:focus { outline: none; }
 .supporter-events li a:hover strong { text-decoration: underline; }
 @media (max-width: 520px) { .supporter-dialog-top { grid-template-columns: 96px 1fr auto; } }
 @media (prefers-reduced-motion: reduce) { .supporter-logo, .supporter-tile:hover .supporter-logo { transition: none; transform: none; } }
+
+/* Links typed into an event's summary or "What's included" */
+.event-link { color: var(--gold-on-light); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.event-link:hover, .event-link:focus-visible { color: var(--ink); }
