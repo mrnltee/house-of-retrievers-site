@@ -4,7 +4,7 @@ import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
 import { can } from "../../../../../../lib/admin/roles.mjs";
 import { ADMIN_PAY_METHODS, FEE_STATUS, REJECT_REASONS, UNPAID, payMethodLabel, referenceKey, ticketLine } from "../../../../../../lib/eventPayments.mjs";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
-import { approvePayment, attachReceipt, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
+import { approvePayment, attachReceipt, correctPaidAmount, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
 import ReasonPicker from "../../../ReasonPicker";
@@ -125,6 +125,18 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 {reg.under_18 && <label className="field"><span>Guardian&apos;s name</span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
                 <label className="check"><input type="checkbox" name="sendEmail" /> <span>Send the updated confirmation or payment instructions after saving</span></label>
                 <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["The paid status, payment amount, reference and QR pass stay unchanged"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
+              </form>
+            </section>
+          )}
+
+          {canFees && reg.fee_status === "paid" && amountOk === false && (
+            <section className="card form" style={{ gap: 12 }}>
+              <h2 style={{ margin: 0 }}>Correct the saved amount</h2>
+              <p className="small muted">The payment record says {peso(reg.pay_amount)}, but this registration saved a different amount due. This changes only the saved amount due so the records agree.</p>
+              <form action={correctPaidAmount} className="form" style={{ gap: 12 }}>
+                <input type="hidden" name="id" value={reg.id} />
+                <label className="field"><span>Correct amount due <small>₱</small></span><input name="amount" type="text" inputMode="decimal" required defaultValue={reg.pay_amount ?? ""} /></label>
+                <div className="actions"><ConfirmButton className="btn ghost" title={`Correct ${reg.name}'s saved amount?`} items={[`Amount due: ${peso(due)} → ${peso(reg.pay_amount)}`, "Paid status, payment amount, reference, receipt and QR pass stay unchanged", "Nothing is emailed"]} yes="Yes, correct amount">Correct saved amount</ConfirmButton></div>
               </form>
             </section>
           )}

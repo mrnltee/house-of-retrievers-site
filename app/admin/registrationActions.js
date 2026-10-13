@@ -6,7 +6,7 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { newCheckInCode, validateRsvp } from "../lib/admin/registrations.mjs";
 import { eventTiers } from "../lib/admin/events.mjs";
-import { UNPAID, chooseTicket, owesPayment, readProofImage, validateProof } from "../lib/eventPayments.mjs";
+import { UNPAID, chooseTicket, owesPayment, parsePeso, readProofImage, validateProof } from "../lib/eventPayments.mjs";
 import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../lib/passEmails";
 import { deletionState } from "../lib/registrationRecovery.mjs";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
@@ -283,6 +283,28 @@ export async function updateRegistration(data) {
     }
     revalidatePath("/events", "layout");
     await backWith(back, "ok", note);
+  });
+}
+
+/** Correct only a paid registration's saved amount snapshot when its existing payment matches. */
+export async function correctPaidAmount(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:fees");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
+    if (reg.fee_status !== "paid") await backWith(back, "error", "Only a paid registration can have its saved amount corrected.");
+    const amount = parsePeso(form(data, "amount"));
+    if (amount === undefined || amount === null) await backWith(back, "error", "Enter the amount already found in the payment record.");
+    const oldDue = reg.amount_due ?? reg.ticket_amount ?? 0;
+    if (!paidAmountChangeAllowed({ oldDue, nextDue: amount, payAmount: reg.pay_amount })) {
+      await backWith(back, "error", "The corrected amount must exactly match the payment already recorded for this registration.");
+    }
+    await sql("UPDATE registrations SET amount_due=$2 WHERE id=$1", [reg.id, amount]);
+    await logActivity(admin.email, "registration.edit", reg.title, { registrationId: reg.id, amountCorrection: true, previousAmount: oldDue, amount });
+    revalidatePath("/events", "layout");
+    await backWith(back, "ok", `${reg.name}'s saved amount was corrected. Their payment, reference and QR pass were left unchanged.`);
   });
 }
 
