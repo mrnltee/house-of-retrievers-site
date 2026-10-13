@@ -20,12 +20,5 @@ export default function SeasonalTheme({ children }) {
     return () => { live = false; };
   }, []);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme?.logoVariant) root.dataset.seasonalTheme = theme.logoVariant;
-    else delete root.dataset.seasonalTheme;
-    return () => { delete root.dataset.seasonalTheme; };
-  }, [theme]);
-
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }
