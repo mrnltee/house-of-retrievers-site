@@ -46,6 +46,7 @@ export const ACTION_LABELS = {
   "admin.invite": "Invited an admin",
   "admin.roles": "Changed an admin's roles",
   "admin.remove": "Removed an admin",
+  "theme.save": "Updated a seasonal theme",
 };
 
 export const actionLabel = (action) => ACTION_LABELS[action] || action;

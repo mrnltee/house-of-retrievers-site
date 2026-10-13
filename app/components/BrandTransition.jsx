@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motionDurations, shouldShowIntro } from "../lib/brandMotion.mjs";
+import { useSeasonalTheme } from "./SeasonalTheme";
 
-function AnimatedLogo() {
+function AnimatedLogo({ theme }) {
   return (
     <div className="brand-transition-mark">
       <img className="brand-transition-layer" src="/house-of-retrievers-logo-reverse.png" alt="" />
@@ -22,6 +23,7 @@ function AnimatedLogo() {
 }
 
 export default function BrandTransition({ interactionId, onInteractionComplete }) {
+  const theme = useSeasonalTheme();
   const [visible, setVisible] = useState(true);
   const [mode, setMode] = useState("intro");
 
@@ -82,9 +84,12 @@ export default function BrandTransition({ interactionId, onInteractionComplete }
     <div
       key={`${mode}-${interactionId}`}
       className={`brand-transition brand-transition-${mode}`}
+      data-seasonal-theme={theme?.splashVariant || "default"}
+      data-seasonal-welcome={theme?.welcomeText || ""}
       aria-hidden="true"
     >
-      <AnimatedLogo />
+      <AnimatedLogo theme={theme} />
+      {theme?.welcomeText && <p className="brand-transition-welcome">{theme.welcomeText}</p>}
     </div>
   );
 }

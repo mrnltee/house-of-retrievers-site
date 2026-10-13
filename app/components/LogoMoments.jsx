@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { GOLDEN_PATH, LAB_PATH, LOGO_VIEWBOX, logoRig } from "../lib/logoMomentsRig.mjs";
 import { logoTiming, momentSetFor, nextGap, pickMoment } from "../lib/logoMoments.mjs";
+import { useSeasonalTheme } from "./SeasonalTheme";
 
 const ALT = "The House of Retrievers Society Inc. — Paws for a Purpose";
 const WORDMARK = {
@@ -77,6 +78,7 @@ function prefersDark() {
  * a themed surface) passes the theme it is showing.
  */
 export default function LogoMoments({ tone = "auto", scheme, priority = false, className = "" }) {
+  const seasonalTheme = useSeasonalTheme();
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const rootRef = useRef(null);
   const [moment, setMoment] = useState(null);
@@ -143,7 +145,7 @@ export default function LogoMoments({ tone = "auto", scheme, priority = false, c
   }, []);
 
   return (
-    <span ref={rootRef} className={`hor-logo ${className}`.trim()} data-tone={tone}>
+    <span ref={rootRef} className={`hor-logo ${className}`.trim()} data-tone={tone} data-seasonal-theme={seasonalTheme?.logoVariant || "default"}>
       <Wordmark tone={tone} priority={priority} />
       <svg
         className="hor-logo-dogs"

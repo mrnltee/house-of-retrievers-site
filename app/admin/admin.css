@@ -377,6 +377,12 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .chip.status-ended { background: transparent; border: 1px solid var(--a-line, #cfc8b6); }
 .supporter-card-site { padding-top: 10px; border-top: 1px solid var(--a-sand); font-size: 13px; font-weight: 600; color: var(--a-muted); }
 .supporter-card-site.is-on { color: #2f5d3a; }
+.seasonal-theme-list { display: grid; gap: 20px; }
+.seasonal-theme-form { display: grid; gap: 18px; }
+.seasonal-theme-heading { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.seasonal-theme-heading h2 { margin: 0; }
+.seasonal-theme-heading p { margin: 6px 0 0; }
+.compact-fields { gap: 8px; }
 .supporter-grid { grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); align-items: start; }
 @media (max-width: 1000px) { .supporter-grid { grid-template-columns: 1fr; } }
 .logo-field { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
