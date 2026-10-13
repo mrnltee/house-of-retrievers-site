@@ -30,7 +30,7 @@ export const PAY_METHODS = { gcash: "GCash", maya: "Maya", gotyme: "GoTyme", qrp
 export const ADMIN_PAY_METHODS = { ...PAY_METHODS, cash: "Cash", other: "Other" };
 export const payMethodLabel = (key) => ADMIN_PAY_METHODS[key] || "";
 
-export const NO_REFUND = "Payments are non-refundable. This is a charity event, so every peso goes to the cause.";
+export const NO_REFUND = "All payments are non-refundable. As this is a fundraising event, proceeds will go toward supporting our chosen cause. Thank you for being part of something meaningful! 🐾";
 export const READABLE = "Make sure the amount, date and reference number are readable. A screenshot straight from the app is best.";
 
 /** Reasons an admin can pick when asking for a new receipt (they can still type their own). */

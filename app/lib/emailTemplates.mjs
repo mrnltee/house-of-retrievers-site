@@ -395,7 +395,7 @@ export function acceptanceEmail({ person, custom }) {
 }
 
 const RSVP_FOOTNOTE = `You're getting this because this email address was used to RSVP at ${EVENTS_URL.replace("https://", "")}.`;
-const NO_REFUND_LINE = "Payments are non-refundable. This is a charity event, so every peso goes to the cause.";
+const NO_REFUND_LINE = "All payments are non-refundable. As this is a fundraising event, proceeds will go toward supporting our chosen cause. Thank you for being part of something meaningful! 🐾";
 const eventBox = (event) => `<strong>${esc(event.title)}</strong><br>${esc(formatWhen(event))}<br>${esc([event.venue, event.city].filter(Boolean).join(", "))}`;
 
 /** The check-in QR as a picture in the email (served by /api/pass-qr/[code]). */
