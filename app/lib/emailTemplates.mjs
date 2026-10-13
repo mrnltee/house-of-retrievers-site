@@ -9,6 +9,7 @@
 import { HOME_URL } from "./siteSeo.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
 import { formatWhen } from "./share.mjs";
+import { paymentNotice } from "./eventPayments.mjs";
 
 const ORG = "The House of Retrievers Society Inc.";
 /**
@@ -395,7 +396,6 @@ export function acceptanceEmail({ person, custom }) {
 }
 
 const RSVP_FOOTNOTE = `You're getting this because this email address was used to RSVP at ${EVENTS_URL.replace("https://", "")}.`;
-const NO_REFUND_LINE = "All payments are non-refundable. As this is a fundraising event, proceeds will go toward supporting our chosen cause. Thank you for being part of something meaningful! 🐾";
 const eventBox = (event) => `<strong>${esc(event.title)}</strong><br>${esc(formatWhen(event))}<br>${esc([event.venue, event.city].filter(Boolean).join(", "))}`;
 
 /** The check-in QR as a picture in the email (served by /api/pass-qr/[code]). */
@@ -416,7 +416,7 @@ export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLin
       paragraphs: paidLine ? [`We matched your payment (${esc(paidLine)}). Thank you!`] : [],
       image: code ? passQrImage(code) : undefined,
       button: { label: "Open my pass", href: passUrl },
-      after: paidLine ? [...after, NO_REFUND_LINE] : after,
+      after: paidLine ? [...after, paymentNotice(event)] : after,
       footnote: RSVP_FOOTNOTE,
     });
   }
@@ -445,7 +445,7 @@ export function spotHeld({ name, event, passUrl, ticket = "" }) {
       "We'll email your QR pass once the team has matched your payment. Your spot stays held in the meantime.",
     ],
     button: { label: "Pay and upload proof", href: passUrl },
-    after: [NO_REFUND_LINE, "Can't make it after all? Reply to this email so someone else can have the spot."],
+    after: [paymentNotice(event), "Can't make it after all? Reply to this email so someone else can have the spot."],
     footnote: RSVP_FOOTNOTE,
   });
 }
@@ -462,7 +462,7 @@ export function receiptRejected({ name, event, passUrl, reason }) {
       "Your spot is still held. Upload a new screenshot on your RSVP page and we'll check it again.",
     ],
     button: { label: "Upload a new receipt", href: passUrl },
-    after: [NO_REFUND_LINE],
+    after: [paymentNotice(event)],
     footnote: RSVP_FOOTNOTE,
   });
 }

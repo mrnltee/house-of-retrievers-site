@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chooseTicket, cleanReference, owesPayment, parsePeso, passState, readProofImage, referenceKey, ticketLine, validateProof } from "./eventPayments.mjs";
+import { chooseTicket, cleanReference, owesPayment, parsePeso, passState, paymentNotice, readProofImage, referenceKey, ticketLine, validateProof } from "./eventPayments.mjs";
+
+test("payment notices match the event policy", () => {
+  assert.match(paymentNotice({ isCharity: true }), /fundraising event/);
+  assert.match(paymentNotice({ isCharity: false }), /Early bird rates are limited/);
+  assert.match(paymentNotice({ onsitePayment: true }), /On-site payment.*regular rate/);
+});
 
 test("tickets: one price needs no choice; several need a valid pick", () => {
   const tiers = [{ label: "Human + 1 furbaby", amount: 795 }, { label: "Extra human", amount: 350 }];

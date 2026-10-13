@@ -122,7 +122,7 @@ export async function saveEvent(data) {
     if (intent === "unpublish") status = "draft";
     if (intent === "cancel") status = "cancelled";
 
-    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee];
+    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment];
     let eventId = id;
     let unpublished = false;
     if (isUuid(id) && !status && missing.length) {
@@ -152,9 +152,9 @@ export async function saveEvent(data) {
       const rows = await sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
            image=$11, image_alt=$12, registration=$13, capacity=$14, rsvp_open=$15, fee_required=$16, pricing_basis=$17,
-           included_furbabies_per_human=$18, additional_furbaby_fee=$19,
-           status=COALESCE($20, status), updated_at=now()
-         WHERE id=$21 RETURNING id`,
+           included_furbabies_per_human=$18, additional_furbaby_fee=$19, onsite_payment=$20,
+           status=COALESCE($21, status), updated_at=now()
+         WHERE id=$22 RETURNING id`,
         [...fields, status, id],
       );
       if (!rows.length) await backWith("/events", "error", "That event no longer exists.");
@@ -164,8 +164,8 @@ export async function saveEvent(data) {
       if (taken.length) slug = `${slug}-${taken.length + 1}`;
       const rows = await sql(
         `INSERT INTO events (title, category, date, start_time, end_time, venue, city, cost, supports, summary, image, image_alt,
-           registration, capacity, rsvp_open, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, status, slug)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,COALESCE($20,'draft'),$21) RETURNING id`,
+           registration, capacity, rsvp_open, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, onsite_payment, status, slug)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,COALESCE($21,'draft'),$22) RETURNING id`,
         [...fields, status, slug],
       );
       eventId = rows[0].id;

@@ -93,6 +93,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           capacity={event?.capacity}
           rsvpOpen={event ? event.rsvp_open : true}
           feeRequired={event?.fee_required}
+          onsitePayment={event?.onsite_payment}
           date={event ? isoDate(event.date) : ""}
           rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}
         />

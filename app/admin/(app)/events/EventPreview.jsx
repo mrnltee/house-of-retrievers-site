@@ -66,6 +66,7 @@ function draftEvent(form, saved) {
     rsvp_open: f.get("rsvpOpen") === "on",
     rsvp_opens_at: f.get("rsvpOpensOn") === "on" ? manilaInstant(get("rsvpOpensDate"), get("rsvpOpensTime")) : null,
     fee_required: f.get("feeRequired") === "on",
+    onsite_payment: f.get("onsitePayment") === "on",
     pricing_basis: pricingBasis,
     included_furbabies_per_human: Number(get("includedFurbabiesPerHuman") || 0),
     additional_furbaby_fee: Number(get("additionalFurbabyFee") || 0),

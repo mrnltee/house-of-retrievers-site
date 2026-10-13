@@ -44,6 +44,7 @@ const LABELS = {
   pricingBasis: "Payment basis",
   includedFurbabiesPerHuman: "Dog companion pricing",
   additionalFurbabyFee: "Dog companion pricing",
+  onsitePayment: "On-site payment",
   emailTemplateId: "Confirmation email",
   rsvpOpensOn: "RSVPs open at a set time",
   rsvpOpensDate: "RSVPs open at a set time",

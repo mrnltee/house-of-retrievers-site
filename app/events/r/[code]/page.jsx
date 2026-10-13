@@ -4,7 +4,7 @@ import { hasDatabase, sql } from "../../../lib/db";
 import { normalizeCode } from "../../../lib/admin/registrations.mjs";
 import { publicMethods } from "../../../lib/admin/payments.mjs";
 import { EVENTS_URL } from "../../../lib/eventsHost.mjs";
-import { NO_REFUND, PAY_METHODS, passState } from "../../../lib/eventPayments.mjs";
+import { PAY_METHODS, passState, paymentNotice } from "../../../lib/eventPayments.mjs";
 import PassPayment from "./PassPayment";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export default async function RsvpPass({ params }) {
   const [reg] = await sql(
     `SELECT r.id, r.name, r.status, r.fee_status, r.checked_in_at, r.created_at, r.event_id,
        r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.proof_at, r.fee_note,
-       e.title, e.date, e.start_time, e.end_time, e.venue, e.city, e.fee_required, e.cost
+       e.title, e.date, e.start_time, e.end_time, e.venue, e.city, e.fee_required, e.cost, e.is_charity, e.onsite_payment
      FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
     [code],
   );
@@ -85,6 +85,7 @@ export default async function RsvpPass({ params }) {
             amount={reg.amount_due ?? reg.ticket_amount ?? null}
             methods={methods}
             reason={reg.fee_note || ""}
+            paymentNotice={paymentNotice(reg)}
             sent={{
               method: reg.pay_method,
               reference: reg.fee_reference || "",
@@ -95,7 +96,7 @@ export default async function RsvpPass({ params }) {
         )}
         {state === "waitlist" && <p>Hi {firstName}, you&apos;re number {position} on the waitlist. If a slot opens, someone from the pack will message you, and this page will show what to do next.</p>}
         {state === "cancelled" && <p>This registration was cancelled. Message us on Instagram or Facebook if that&apos;s a mistake.</p>}
-        {reg.fee_required && state === "pass" && <p className="rsvp-pass-note">{NO_REFUND}</p>}
+        {reg.fee_required && state === "pass" && <p className="rsvp-pass-note">{paymentNotice(reg)}</p>}
         <p className="rsvp-pass-note">Keep this link private: it&apos;s your pass. We use your details only to run this event.</p>
       </section>
     </main>

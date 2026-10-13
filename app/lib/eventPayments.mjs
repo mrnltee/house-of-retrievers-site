@@ -8,7 +8,7 @@
  *   rejected  an admin asked for a new receipt (their spot stays held)
  *   paid      matched by an admin; the QR pass is emailed
  *
- * No time limit on holds. Payments are non-refundable (charity events).
+ * No time limit on holds. Payment wording is event-specific.
  * Pure functions: shared by the routes, the admin and the tests.
  */
 
@@ -30,7 +30,14 @@ export const PAY_METHODS = { gcash: "GCash", maya: "Maya", gotyme: "GoTyme", qrp
 export const ADMIN_PAY_METHODS = { ...PAY_METHODS, cash: "Cash", other: "Other" };
 export const payMethodLabel = (key) => ADMIN_PAY_METHODS[key] || "";
 
-export const NO_REFUND = "All payments are non-refundable. As this is a fundraising event, proceeds will go toward supporting our chosen cause. Thank you for being part of something meaningful! 🐾";
+export const CHARITY_PAYMENT_NOTICE = "All payments are non-refundable. As this is a fundraising event, proceeds will go toward supporting our chosen cause. Thank you for being part of something meaningful! 🐾";
+export const EVENT_PAYMENT_NOTICE = "All payments are non-refundable. Early bird rates are limited and may end once the offer period or available slots are reached. The regular rate applies after that.";
+export function paymentNotice({ isCharity = false, onsitePayment = false } = {}) {
+  if (isCharity) return CHARITY_PAYMENT_NOTICE;
+  return `${EVENT_PAYMENT_NOTICE}${onsitePayment ? " On-site payment, if available, is charged at the regular rate." : ""}`;
+}
+// Kept for older imports; new surfaces should use paymentNotice(event).
+export const NO_REFUND = CHARITY_PAYMENT_NOTICE;
 export const READABLE = "Make sure the amount, date and reference number are readable. A screenshot straight from the app is best.";
 
 /** Reasons an admin can pick when asking for a new receipt (they can still type their own). */

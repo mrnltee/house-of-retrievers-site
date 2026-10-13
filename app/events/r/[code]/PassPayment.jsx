@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import PayStep from "../../../components/PayStep";
-import { NO_REFUND, PAY_METHODS, ticketLine } from "../../../lib/eventPayments.mjs";
+import { PAY_METHODS, ticketLine } from "../../../lib/eventPayments.mjs";
 
 const STEPS = ["RSVP sent", "Proof uploaded", "Payment checked", "QR pass emailed"];
 
@@ -12,7 +12,7 @@ const STEPS = ["RSVP sent", "Proof uploaded", "Payment checked", "QR pass emaile
  * pending, "under review" with what they sent (and a way to replace it), or
  * the team's reason and a new upload when a receipt was turned back.
  */
-export default function PassPayment({ code, state, ticketLabel, amount, methods, sent, reason }) {
+export default function PassPayment({ code, state, ticketLabel, amount, methods, sent, reason, paymentNotice }) {
   const router = useRouter();
   const [replacing, setReplacing] = useState(false);
   const done = () => { setReplacing(false); router.refresh(); };
@@ -33,14 +33,14 @@ export default function PassPayment({ code, state, ticketLabel, amount, methods,
           {sent.at && <div><dt>Sent</dt><dd>{sent.at}</dd></div>}
         </dl>
         <button type="button" className="pass-link-button" onClick={() => setReplacing(true)}>Sent the wrong one? Replace screenshot</button>
-        <p className="pass-small">{NO_REFUND}</p>
+        <p className="pass-small">{paymentNotice}</p>
       </div>
     );
   }
   return (
     <div className="pass-payment">
       {state === "review" && <button type="button" className="pass-link-button" onClick={() => setReplacing(false)}>Keep what I sent</button>}
-      <PayStep code={code} ticketLabel={ticketLabel} amount={amount} methods={methods} reason={state === "rejected" ? reason : ""} replacing={state !== "waiting"} onSent={done} />
+      <PayStep code={code} ticketLabel={ticketLabel} amount={amount} methods={methods} reason={state === "rejected" ? reason : ""} paymentNotice={paymentNotice} replacing={state !== "waiting"} onSent={done} />
     </div>
   );
 }

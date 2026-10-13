@@ -80,10 +80,12 @@ test("every kind's Join reply and welcome can be reworded; own templates fill pe
 
 test("paid events: spot held, then the pass with QR and the matched payment, or a request for a new receipt", async () => {
   const { spotHeld, receiptRejected, passQrImage } = await import("./emailTemplates.mjs");
-  const event = { title: "Bedazzle Barkdate", date: "2026-10-17", startTime: "13:00", endTime: "16:00", venue: "Wiltlover Café", city: "Pasay" };
+  const event = { title: "Bedazzle Barkdate", date: "2026-10-17", startTime: "13:00", endTime: "16:00", venue: "Wiltlover Café", city: "Pasay", isCharity: false, onsitePayment: true };
   const held = spotHeld({ name: "Ana Reyes", event, passUrl: "https://x.test/r/ABC", ticket: "Human + 1 · ₱795" });
   assert.equal(held.subject, "Your spot is held: Bedazzle Barkdate");
   assert.match(held.text, /non-refundable/);
+  assert.match(held.text, /On-site payment.*regular rate/);
+  assert.doesNotMatch(held.text, /fundraising event/);
   assert.match(held.text, /approved payment methods/);
   assert.doesNotMatch(held.text, /GCash, Maya, GoTyme or QR Ph/);
   assert.match(held.html, /Pay and upload proof/);
@@ -94,5 +96,6 @@ test("paid events: spot held, then the pass with QR and the matched payment, or 
   const no = receiptRejected({ name: "Ana", event, passUrl: "p", reason: "Can't <read> it" });
   assert.doesNotMatch(no.html, /<read>/);
   assert.match(no.text, /Your spot is still held/);
+  assert.match(spotHeld({ name: "Ana Reyes", event: { ...event, isCharity: true, onsitePayment: false }, passUrl: "p", ticket: "Regular · ₱995" }).text, /fundraising event/);
   assert.equal(passQrImage("7KQ2MPX4RT").caption, "Code 7KQ2M PX4RT");
 });

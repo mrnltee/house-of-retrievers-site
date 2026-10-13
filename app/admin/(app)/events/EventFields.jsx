@@ -472,7 +472,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, date, rsvpOpensAt }) {
+export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, onsitePayment, date, rsvpOpensAt }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
@@ -517,7 +517,10 @@ export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, da
           <label className="field"><span>Capacity <small>Empty for no limit. When full, new sign-ups join the waitlist.</small></span><input type="number" name="capacity" min={1} max={5000} defaultValue={capacity ?? ""} /></label>
           <div className="form">
             <label className="check"><input type="checkbox" name="rsvpOpen" defaultChecked={rsvpOpen ?? true} /> RSVPs are open</label>
-            {paid && <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> They pay by QR before the day (track it per person)</label>}
+            {paid && <>
+              <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> They pay by QR before the day (track it per person)</label>
+              {feeRequired && <label className="check"><input type="checkbox" name="onsitePayment" defaultChecked={Boolean(onsitePayment)} /> On-site payment is available <span className="small muted">The regular rate applies on site; leave this off until the venue confirms.</span></label>}
+            </>}
           </div>
           <div className="form indent-full" style={{ gap: 10 }}>
             <input type="hidden" name="rsvpOpensSent" value="1" />

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { resizeImage } from "../lib/resizeImage";
-import { NO_REFUND, PAY_METHODS, READABLE, ticketLine } from "../lib/eventPayments.mjs";
+import { PAY_METHODS, READABLE, ticketLine } from "../lib/eventPayments.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
@@ -15,7 +15,7 @@ const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
  * `methods` are the approved channels (publicMethods); when not given they're
  * fetched from /api/support-details. `onSent` runs after a good upload.
  */
-export default function PayStep({ code, ticketLabel, amount, methods: given, reason, replacing = false, onSent }) {
+export default function PayStep({ code, ticketLabel, amount, methods: given, reason, paymentNotice = "All payments are non-refundable.", replacing = false, onSent }) {
   const [methods, setMethods] = useState(given || null);
   const [channel, setChannel] = useState(given?.[0]?.key || "");
   const [method, setMethod] = useState("");
@@ -145,7 +145,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
           {file && <span className="pay-file">✓ {file.name}</span>}
         </label>
         <p className="pay-tip">{READABLE}</p>
-        <p className="pay-norefund">{NO_REFUND}</p>
+        <p className="pay-norefund">{paymentNotice}</p>
         <p className="form-note">We keep your payment details and screenshot private and use them to confirm your payment. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
         {state.error && <p className="form-error" role="alert">{state.error}</p>}
         <button className="button dark" type="submit" disabled={state.busy}>{state.busy ? "Sending…" : "Send for checking"}</button>
@@ -163,7 +163,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
               {pending.amount && <div><dt>Amount</dt><dd>₱{pending.amount}</dd></div>}
               <div><dt>Screenshot</dt><dd>{file?.name} ✓</dd></div>
             </dl>
-            <p>The team matches the reference with HOR&apos;s payment history, then emails your QR pass. {NO_REFUND}</p>
+            <p>The team matches the reference with HOR&apos;s payment history, then emails your QR pass. {paymentNotice}</p>
             <div className="pay-confirm-actions">
               <button type="button" className="button dark" onClick={send} autoFocus>Yes, send it</button>
               <button type="button" className="button events-button-outline" onClick={() => confirmRef.current?.close()}>Let me fix something</button>

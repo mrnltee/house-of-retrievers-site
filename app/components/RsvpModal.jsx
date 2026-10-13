@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
-import { NO_REFUND } from "../lib/eventPayments.mjs";
+import { paymentNotice } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { calculateAmountDue } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
@@ -100,7 +100,7 @@ export default function RsvpModal({ event, onClose }) {
               <div className="eyebrow">Step 2 of 3 · Pay</div>
               <h2 id="rsvp-title">Your spot is held</h2>
               <p className="modal-lead">Pay, then upload your proof. Paying later? The link in your email brings you back here; your spot stays held.</p>
-              <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.amountDue ?? done.ticket?.amount ?? null} onSent={() => setProofSent(true)} />
+              <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.amountDue ?? done.ticket?.amount ?? null} paymentNotice={paymentNotice(event)} onSent={() => setProofSent(true)} />
             </div>
           )
         ) : done ? (
@@ -164,7 +164,7 @@ export default function RsvpModal({ event, onClose }) {
               </fieldset>
             )}
             {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(due?.amount ?? tickets[0].amount)}{event.pricingBasis === "human_plus_furbaby" ? ` · ${humanCount} person${humanCount === 1 ? "" : "s"}${due?.extraFurbabies ? ` + ${due.extraFurbabies} extra furbaby fee${due.extraFurbabies === 1 ? "" : "s"}` : ""}` : event.pricingBasis !== "registration" ? ` · ${event.pricingBasis === "bundle" ? `${due?.quantity || 1} bundle${due?.quantity === 1 ? "" : "s"}` : `${event.pricingBasis === "human" ? humanCount : furbabyCount} × price`}` : ""}</p>}
-            {!waitlist && event.feeRequired && <p className="form-note">{NO_REFUND} Your spot is held as soon as you send this; you pay next.</p>}
+            {!waitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
             <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : "Send my RSVP"}</button>
