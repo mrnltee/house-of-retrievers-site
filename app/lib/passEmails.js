@@ -15,7 +15,7 @@ async function load(registrationId) {
   const [row] = await sql(
     `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note,
             e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id
-       FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1`,
+       FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
   );
   return row || null;

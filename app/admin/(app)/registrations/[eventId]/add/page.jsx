@@ -24,11 +24,12 @@ export default async function AddRegistration({ params, searchParams }) {
   const [event] = await sql("SELECT * FROM events WHERE id = $1", [eventId]);
   if (!event) notFound();
   const base = await adminBase();
-  const [{ count }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed'", [eventId]);
+  const [{ count }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL", [eventId]);
   const tiers = event.fee_required ? eventTiers(event) : [];
   const counts = tiers.some((t) => t.limit) ? countsFromRows(await sql(TICKET_COUNTS_SQL, [eventId])) : {};
   const full = event.capacity != null && count >= event.capacity;
   const ready = emailReady();
+  const existing = await sql("SELECT name, email FROM registrations WHERE event_id=$1 AND deleted_at IS NULL", [eventId]);
 
   return (
     <>
@@ -86,6 +87,7 @@ export default async function AddRegistration({ params, searchParams }) {
               "If the email box is ticked, they're emailed now",
             ]}
             yes="Yes, add them"
+            duplicateEntries={existing}
           >Add registration</ConfirmButton>
           <a className="btn ghost" href={`${base}/registrations/${eventId}`}>Cancel</a>
         </div>

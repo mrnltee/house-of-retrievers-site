@@ -20,7 +20,7 @@ export default async function EventsPage({ searchParams }) {
   }[tab];
   const rows = await sql(
     `SELECT e.id, e.title, e.date, e.status, e.registration, e.capacity, e.cost, e.rsvp_opens_at,
-       count(r.*) FILTER (WHERE r.status='confirmed')::int AS confirmed
+       count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed
      FROM events e LEFT JOIN registrations r ON r.event_id = e.id
      WHERE ${where} GROUP BY e.id ORDER BY e.date ${tab === "past" ? "DESC" : "ASC"}`,
     [today],

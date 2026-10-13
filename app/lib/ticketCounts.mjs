@@ -6,12 +6,12 @@ import { tierKey } from "./prices.mjs";
  * payments and the waitlist do. Keys match tierKey() ("Early bird|650").
  */
 export const TICKET_COUNTS_SQL = `SELECT coalesce(ticket_label, '') AS label, ticket_amount AS amount, count(*)::int AS n
-  FROM registrations WHERE event_id = $1 AND status <> 'cancelled' GROUP BY 1, 2`;
+  FROM registrations WHERE event_id = $1 AND status <> 'cancelled' AND deleted_at IS NULL GROUP BY 1, 2`;
 
 /** The same counts as a JSON column on an events query (`e` is the event). */
 export const TICKET_COUNTS_COLUMN = `(SELECT json_object_agg(x.k, x.n) FROM (
     SELECT coalesce(r.ticket_label, '') || '|' || coalesce(r.ticket_amount::text, '') AS k, count(*)::int AS n
-      FROM registrations r WHERE r.event_id = e.id AND r.status <> 'cancelled' AND r.ticket_amount IS NOT NULL GROUP BY 1
+      FROM registrations r WHERE r.event_id = e.id AND r.status <> 'cancelled' AND r.deleted_at IS NULL AND r.ticket_amount IS NOT NULL GROUP BY 1
   ) x) AS ticket_counts`;
 
 /** Rows from TICKET_COUNTS_SQL → { tierKey: n }. */

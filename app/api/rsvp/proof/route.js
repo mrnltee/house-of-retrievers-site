@@ -41,7 +41,7 @@ export async function POST(request) {
   const result = await transaction(async (tx) => {
     const [reg] = await tx.sql(
       `SELECT r.id, r.name, r.status, r.fee_status, e.title, e.fee_required FROM registrations r JOIN events e ON e.id = r.event_id
-        WHERE r.check_in_code = $1 FOR UPDATE OF r`,
+        WHERE r.check_in_code = $1 AND r.deleted_at IS NULL FOR UPDATE OF r`,
       [code],
     );
     if (!reg) return { error: "We couldn't find that RSVP.", status: 404 };

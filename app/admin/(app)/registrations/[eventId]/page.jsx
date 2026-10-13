@@ -4,11 +4,12 @@ import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { FEE_STATUS, payMethodLabel, referenceKey, ticketLine } from "../../../../lib/eventPayments.mjs";
 import { changeRegistration } from "../../../actions";
+import { deleteRegistration, restoreRegistration } from "../../../registrationActions";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../ui";
 
-const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"]];
-const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"]];
+const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
+const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
 
 /**
@@ -28,9 +29,11 @@ export default async function EventRegistrations({ params, searchParams }) {
   const all = await sql("SELECT * FROM registrations WHERE event_id=$1 ORDER BY created_at", [eventId]);
   const paidEvent = event.fee_required;
 
-  const live = all.filter((r) => r.status !== "cancelled");
-  const confirmed = all.filter((r) => r.status === "confirmed");
-  const waitlist = all.filter((r) => r.status === "waitlist");
+  const current = all.filter((r) => !r.deleted_at);
+  const deleted = all.filter((r) => r.deleted_at);
+  const live = current.filter((r) => r.status !== "cancelled");
+  const confirmed = current.filter((r) => r.status === "confirmed");
+  const waitlist = current.filter((r) => r.status === "waitlist");
   const checked = confirmed.filter((r) => r.checked_in_at);
   const toCheck = confirmed.filter((r) => r.fee_status === "review");
   const pending = confirmed.filter((r) => r.fee_status === "waiting" || r.fee_status === "rejected");
@@ -38,7 +41,9 @@ export default async function EventRegistrations({ params, searchParams }) {
   const FILTERS = paidEvent ? PAY_FILTERS : BASE_FILTERS;
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
-    filter === "all" ? r.status !== "cancelled"
+    filter === "deleted" ? Boolean(r.deleted_at)
+      : r.deleted_at ? false
+      : filter === "all" ? r.status !== "cancelled"
       : filter === "checked" ? r.checked_in_at
         : filter === "check" ? r.status === "confirmed" && r.fee_status === "review"
           : filter === "pending" ? r.status === "confirmed" && (r.fee_status === "waiting" || r.fee_status === "rejected")
@@ -53,7 +58,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const canEdit = can(admin.roles, "registrations:edit");
   const canFees = can(admin.roles, "registrations:fees");
   const counts = {
-    all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, cancelled: all.length - live.length,
+    all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
     check: toCheck.length, pending: pending.length, paid: paid.length,
   };
   const waitPosition = new Map(waitlist.map((r, i) => [r.id, i + 1]));
@@ -127,7 +132,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                   <td>
                     {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? "Checked in" : "Confirmed"}</span>}
                     {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
-                    {r.status === "cancelled" && <span className="chip alert">Cancelled</span>}
+                    {r.deleted_at ? <span className="chip alert">Deleted · recoverable</span> : r.status === "cancelled" && <span className="chip alert">Cancelled</span>}
                   </td>
                   <td>
                     <div className="actions">
@@ -148,7 +153,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                           >Confirm</ConfirmButton>
                         </form>
                       )}
-                      {canEdit && r.status !== "cancelled" && (
+                      {canEdit && !r.deleted_at && r.status !== "cancelled" && (
                         <form action={changeRegistration}>
                           <input type="hidden" name="id" value={r.id} /><input type="hidden" name="op" value="cancel" />
                           <ConfirmButton
@@ -163,6 +168,18 @@ export default async function EventRegistrations({ params, searchParams }) {
                             yes="Yes, cancel it"
                             tone="danger"
                           >Cancel</ConfirmButton>
+                        </form>
+                      )}
+                      {canEdit && !r.deleted_at && r.fee_status !== "paid" && !r.checked_in_at && (
+                        <form action={deleteRegistration}>
+                          <input type="hidden" name="id" value={r.id} />
+                          <ConfirmButton className="linkish danger-text" title={`Delete ${r.name}'s registration?`} items={["It moves to Recently deleted for 30 days", "Its slot is freed and its QR pass stops working", "It can be restored during those 30 days", "After that, the registration and receipts are permanently removed"]} yes="Yes, move it" tone="danger">Delete</ConfirmButton>
+                        </form>
+                      )}
+                      {canEdit && r.deleted_at && (
+                        <form action={restoreRegistration}>
+                          <input type="hidden" name="id" value={r.id} />
+                          <ConfirmButton className="linkish" title={`Restore ${r.name}'s registration?`} items={["It returns to its previous status", "A confirmed registration takes a slot again", "Its original QR link works again"]} yes="Yes, restore it">Restore</ConfirmButton>
                         </form>
                       )}
                     </div>

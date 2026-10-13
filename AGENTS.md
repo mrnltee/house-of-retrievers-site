@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`020_…sql`**).
+     number (the next one is **`021_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -75,7 +75,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 115 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 118 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -152,7 +152,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–019 (see §6)
+db/migrations/           001–020 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -174,6 +174,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 017 | volunteer numbers (HORV-YY-NNNN), supporter `code` + numbers (HOR-XXX-YY-NNNN) |
 | 018 | event payments: fee_status `not_due/waiting/review/rejected/paid`, ticket + proof columns, `payment_proofs`, GoTyme |
 | 019 | `events.rsvp_opens_at` (scheduled RSVP opening) |
+| 020 | shared event emails with an exact-identity guard/admin override; 30-day recoverable registration deletion (`deleted_at`, actor and previous status) |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -344,6 +345,12 @@ npx next dev
     attach a receipt, or add a registration by hand.
   - Duplicate references are flagged. No QR before approval; the door says
     "Payment not confirmed".
+  - Different people may share an email. Public exact name+email repeats are
+    blocked; an admin may confirm an intentional exact repeat.
+  - Admin Delete is only for unpaid, unchecked-in registrations. It moves the
+    record to Recently deleted for 30 days, frees its slot/ticket and disables
+    its pass; Restore reverses it when capacity permits. A daily cron purges
+    expired records and their receipts. Paid/checked-in rows stay as history.
   - Non-refundable notice. Waitlist.
   - Scheduled RSVP opening with a live countdown and a "Remind me" button.
 - **Check-in:** `/admin/checkin` scans the QR (`Scanner.jsx`, camera allowed only

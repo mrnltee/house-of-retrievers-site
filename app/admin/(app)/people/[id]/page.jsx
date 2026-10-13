@@ -37,7 +37,7 @@ export default async function PersonPage({ params, searchParams }) {
     sql(
       `SELECT r.status, r.checked_in_at, r.fee_status, r.created_at, e.id AS event_id, e.title, e.date
          FROM registrations r JOIN events e ON e.id = r.event_id
-        WHERE lower(r.email) = lower($1) ORDER BY e.date DESC LIMIT 50`,
+        WHERE lower(r.email) = lower($1) AND r.deleted_at IS NULL ORDER BY e.date DESC LIMIT 50`,
       [person.email],
     ),
     sql("SELECT at, actor_email, action, details FROM activity_log WHERE details->>'personId' = $1 ORDER BY at DESC LIMIT 50", [id]),

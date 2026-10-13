@@ -8,6 +8,7 @@ import { newCheckInCode, validateRsvp } from "../lib/admin/registrations.mjs";
 import { eventTiers } from "../lib/admin/events.mjs";
 import { UNPAID, chooseTicket, owesPayment, readProofImage, validateProof } from "../lib/eventPayments.mjs";
 import { sendPass, sendReceiptRejected, sendSpotHeld } from "../lib/passEmails";
+import { deletionState } from "../lib/registrationRecovery.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -31,10 +32,10 @@ async function guarded(path, work) {
   }
 }
 
-async function registration(id) {
+async function registration(id, { includeDeleted = false } = {}) {
   if (!isUuid(id)) return null;
   const [row] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.capacity FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1`,
+    `SELECT r.*, e.title, e.fee_required, e.capacity FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1${includeDeleted ? "" : " AND r.deleted_at IS NULL"}`,
     [id],
   );
   return row || null;
@@ -190,13 +191,23 @@ export async function addRegistration(data) {
     let created;
     try {
       created = await transaction(async (tx) => {
+        await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [event.id]);
+        const [duplicate] = await tx.sql(
+          `SELECT id FROM registrations WHERE event_id=$1 AND deleted_at IS NULL
+             AND lower(email)=lower($2) AND lower(regexp_replace(trim(name), '[[:space:]]+', ' ', 'g'))=lower(regexp_replace(trim($3), '[[:space:]]+', ' ', 'g')) LIMIT 1`,
+          [event.id, value.email, value.name],
+        );
+        if (duplicate && form(data, "allowDuplicate") !== "yes") {
+          throw Object.assign(new Error("duplicate"), { userMessage: "That name and email already have a registration. Confirm the duplicate warning to add another." });
+        }
         const [row] = await tx.sql(
           `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code,
-             ticket_label, ticket_amount, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,NULLIF($13,''),$14,$15,$16,$17) RETURNING id`,
+             ticket_label, ticket_amount, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,NULLIF($13,''),$14,$15,$16,$17,$18) RETURNING id`,
           [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, feeStatus, newCheckInCode(),
             ticket.value.label, ticket.value.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
-            feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email],
+            feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email,
+            Boolean(duplicate && form(data, "allowDuplicate") === "yes")],
         );
         const receipt = form(data, "receipt");
         if (receipt) {
@@ -219,5 +230,52 @@ export async function addRegistration(data) {
     }
     revalidatePath("/events", "layout");
     await backWith(`/registrations/${event.id}`, "ok", note);
+  });
+}
+
+export async function deleteRegistration(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id, { includeDeleted: true });
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = `/registrations/${reg.event_id}`;
+    const state = deletionState(reg);
+    if (state === "paid") await backWith(back, "error", "Paid registrations stay in the event history. Cancel this registration instead.");
+    if (state === "checked-in") await backWith(back, "error", "Checked-in registrations stay in the event history.");
+    if (reg.deleted_at) await backWith(back, "error", "That registration is already in Recently deleted.");
+    await sql(`UPDATE registrations SET deleted_at=now(), deleted_by=$2, deleted_previous_status=status, status='cancelled' WHERE id=$1`, [id, admin.email]);
+    await logActivity(admin.email, "registration.delete", reg.title, { registrationId: id });
+    revalidatePath("/events", "layout");
+    await backWith(`${back}?show=deleted`, "ok", `${reg.name} moved to Recently deleted for 30 days.`);
+  });
+}
+
+export async function restoreRegistration(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id, { includeDeleted: true });
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = `/registrations/${reg.event_id}`;
+    if (deletionState(reg) !== "recoverable") await backWith(back, "error", "That registration can no longer be restored.");
+    const restored = await transaction(async (tx) => {
+      await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
+      if (reg.deleted_previous_status === "confirmed" && reg.capacity != null) {
+        const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1 AND status='confirmed' AND deleted_at IS NULL", [reg.event_id]);
+        if (count >= reg.capacity) return false;
+      }
+      const [duplicate] = await tx.sql(
+        `SELECT id FROM registrations WHERE event_id=$1 AND id<>$2 AND deleted_at IS NULL
+           AND lower(email)=lower($3) AND lower(regexp_replace(trim(name), '[[:space:]]+', ' ', 'g'))=lower(regexp_replace(trim($4), '[[:space:]]+', ' ', 'g')) LIMIT 1`,
+        [reg.event_id, id, reg.email, reg.name],
+      );
+      await tx.sql(`UPDATE registrations SET status=coalesce(deleted_previous_status, 'cancelled'), deleted_at=NULL, deleted_by=NULL, deleted_previous_status=NULL, duplicate_allowed=(duplicate_allowed OR $2) WHERE id=$1`, [id, Boolean(duplicate)]);
+      return true;
+    });
+    if (!restored) await backWith(`${back}?show=deleted`, "error", "The event is full. Free a slot before restoring this registration.");
+    await logActivity(admin.email, "registration.restore", reg.title, { registrationId: id });
+    revalidatePath("/events", "layout");
+    await backWith(back, "ok", `${reg.name}'s registration was restored.`);
   });
 }

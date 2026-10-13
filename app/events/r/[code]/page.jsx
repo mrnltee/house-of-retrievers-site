@@ -29,7 +29,7 @@ export default async function RsvpPass({ params }) {
     `SELECT r.id, r.name, r.status, r.fee_status, r.checked_in_at, r.created_at, r.event_id,
        r.ticket_label, r.ticket_amount, r.pay_method, r.pay_amount, r.fee_reference, r.proof_at, r.fee_note,
        e.title, e.date, e.start_time, e.end_time, e.venue, e.city, e.fee_required, e.cost
-     FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1`,
+     FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
     [code],
   );
   if (!reg) notFound();
@@ -37,7 +37,7 @@ export default async function RsvpPass({ params }) {
   let position = null;
   if (reg.status === "waitlist") {
     const [{ ahead }] = await sql(
-      "SELECT count(*)::int AS ahead FROM registrations WHERE event_id=$1 AND status='waitlist' AND created_at < $2",
+      "SELECT count(*)::int AS ahead FROM registrations WHERE event_id=$1 AND status='waitlist' AND deleted_at IS NULL AND created_at < $2",
       [reg.event_id, reg.created_at],
     );
     position = ahead + 1;

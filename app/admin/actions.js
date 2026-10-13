@@ -217,7 +217,7 @@ export async function saveEvent(data) {
 async function registrationWithEvent(regId) {
   if (!isUuid(regId)) return null;
   const rows = await sql(
-    `SELECT r.*, e.capacity, e.title FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1`,
+    `SELECT r.*, e.capacity, e.title FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [regId],
   );
   return rows[0] || null;
@@ -241,7 +241,7 @@ export async function changeRegistration(data) {
       // Re-count inside a transaction so two admins can't both fill the last slot.
       const moved = await transaction(async (tx) => {
         await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
-        const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1 AND status='confirmed'", [reg.event_id]);
+        const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1 AND status='confirmed' AND deleted_at IS NULL", [reg.event_id]);
         if (reg.capacity != null && count >= reg.capacity) return false;
         await tx.sql(
           `UPDATE registrations SET status='confirmed',
@@ -271,7 +271,7 @@ export async function checkInByCode(eventId, rawCode) {
     if (!isUuid(eventId) || !code) return { outcome: "unknown" };
     const rows = await sql(
       `SELECT r.id, r.event_id, r.name, r.furbaby_name, r.status, r.checked_in_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, e.fee_required
-       FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1`,
+       FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
       [code],
     );
     const reg = rows[0];

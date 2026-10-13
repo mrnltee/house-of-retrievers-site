@@ -55,13 +55,19 @@ export async function POST(request) {
       if (hasEnded({ date: String(event.date).slice(0, 10), startTime: event.start_time, endTime: event.end_time, allDay: event.all_day })) {
         return { error: "This event has already happened.", status: 409 };
       }
+      const [duplicate] = await tx.sql(
+        `SELECT id FROM registrations WHERE event_id=$1 AND deleted_at IS NULL
+           AND lower(email)=lower($2) AND lower(regexp_replace(trim(name), '[[:space:]]+', ' ', 'g'))=lower(regexp_replace(trim($3), '[[:space:]]+', ' ', 'g')) LIMIT 1`,
+        [event.id, value.email, value.name],
+      );
+      if (duplicate) return { error: "This name and email are already registered for this event. Check the confirmation link, or message us to change it.", status: 409 };
       // The ticket they picked (paid events with several prices); one price needs no choice.
       const tiers = event.fee_required ? eventTiers(event) : [];
       // Tiers for the first N registrants: count under the event lock, so the 20th place goes once.
       const counts = hasLimits(tiers) ? countsFromRows(await tx.sql(TICKET_COUNTS_SQL, [event.id])) : {};
       const ticket = chooseTicket(tiers, body?.ticket, { counts });
       if (ticket.error) return { error: ticket.error, status: 422 };
-      const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed'", [event.id]);
+      const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
       const code = newCheckInCode();
       // A held spot on a paid event waits for payment (no time limit); everyone else owes nothing now.
@@ -81,7 +87,7 @@ export async function POST(request) {
     revalidatePath("/events");
     return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", ticket: result.ticket }, { headers: noStore });
   } catch (dbError) {
-    if (dbError?.code === "23505") return fail("That email is already registered for this event. Check your confirmation link, or message us to change it.", 409);
+    if (dbError?.code === "23505") return fail("That registration already exists. Check the confirmation link, or message us to change it.", 409);
     return fail("We couldn't save that just now. Please try again.", 502);
   }
 }

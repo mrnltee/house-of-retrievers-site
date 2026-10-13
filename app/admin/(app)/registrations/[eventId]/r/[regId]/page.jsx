@@ -33,7 +33,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const [proofs, twins] = await Promise.all([
     sql("SELECT id, uploaded_by, created_at, bytes FROM payment_proofs WHERE registration_id = $1 ORDER BY created_at DESC", [regId]),
     reg.fee_reference
-      ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
+      ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
   ]);
   const proof = proofs[0];

@@ -9,7 +9,7 @@ export function manilaToday() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 }
 
-const PUBLIC_EVENTS = `SELECT e.*, (SELECT count(*)::int FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') AS confirmed,
+const PUBLIC_EVENTS = `SELECT e.*, (SELECT count(*)::int FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed' AND r.deleted_at IS NULL) AS confirmed,
   ${TICKET_COUNTS_COLUMN}
   FROM events e WHERE e.status IN ('published', 'cancelled')`;
 

@@ -32,8 +32,8 @@ export default async function Dashboard({ searchParams }) {
       : [],
     sql(
       `SELECT e.id, e.title, e.date, e.venue, e.city, e.status, e.registration, e.capacity,
-         count(r.*) FILTER (WHERE r.status='confirmed')::int AS confirmed,
-         count(r.*) FILTER (WHERE r.status='waitlist')::int AS waitlist
+         count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed,
+         count(r.*) FILTER (WHERE r.status='waitlist' AND r.deleted_at IS NULL)::int AS waitlist
        FROM events e LEFT JOIN registrations r ON r.event_id = e.id
        WHERE e.date >= $1 AND e.status <> 'cancelled' GROUP BY e.id ORDER BY e.date LIMIT 5`,
       [today],
@@ -41,7 +41,7 @@ export default async function Dashboard({ searchParams }) {
     can(admin.roles, "registrations:view")
       ? sql(
           `SELECT e.id, e.title, count(*)::int AS count FROM registrations r JOIN events e ON e.id=r.event_id
-           WHERE r.status='waitlist' AND e.date >= $1 GROUP BY e.id ORDER BY e.date`,
+           WHERE r.status='waitlist' AND r.deleted_at IS NULL AND e.date >= $1 GROUP BY e.id ORDER BY e.date`,
           [today],
         )
       : [],

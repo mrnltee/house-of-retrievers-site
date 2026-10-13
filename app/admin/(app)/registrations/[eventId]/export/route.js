@@ -23,7 +23,7 @@ export async function GET(_request, { params }) {
   const rows = await sql(
     `SELECT name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, fee_reference, checked_in_at, created_at,
             ticket_label, ticket_amount, pay_method, pay_amount, fee_checked_by, added_by
-     FROM registrations WHERE event_id=$1 ORDER BY created_at`,
+     FROM registrations WHERE event_id=$1 AND deleted_at IS NULL ORDER BY created_at`,
     [eventId],
   );
   const head = ["Name", "Email", "Furbaby", "Photo consent", "Under 18", "Guardian", "Status", "Ticket", "Ticket price", "Fee", "Paid with", "Reference", "Amount sent", "Checked by", "Added by", "Checked in", "Registered"];

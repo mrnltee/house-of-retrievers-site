@@ -27,7 +27,7 @@ export default async function PeoplePage({ searchParams }) {
   const [counts, rows, [stats]] = await Promise.all([
     sql("SELECT kind, count(*)::int AS count FROM people GROUP BY kind"),
     sql(
-      `SELECT p.*, (SELECT count(*)::int FROM registrations r WHERE lower(r.email) = lower(p.email) AND r.checked_in_at IS NOT NULL) AS attended
+      `SELECT p.*, (SELECT count(*)::int FROM registrations r WHERE lower(r.email) = lower(p.email) AND r.deleted_at IS NULL AND r.checked_in_at IS NOT NULL) AS attended
          FROM people p WHERE kind=$1
          AND ($2 = '' OR name ILIKE '%' || $2 || '%' OR email ILIKE '%' || $2 || '%' OR social_profile ILIKE '%' || $2 || '%' OR furbaby_name ILIKE '%' || $2 || '%')
          AND ($3 = '' OR membership = $3)

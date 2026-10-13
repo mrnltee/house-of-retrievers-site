@@ -8,8 +8,8 @@ export default async function RegistrationsIndex() {
   const base = await adminBase();
   const rows = await sql(
     `SELECT e.id, e.title, e.date, e.capacity, e.status,
-       count(r.*) FILTER (WHERE r.status='confirmed')::int AS confirmed,
-       count(r.*) FILTER (WHERE r.status='waitlist')::int AS waitlist
+       count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed,
+       count(r.*) FILTER (WHERE r.status='waitlist' AND r.deleted_at IS NULL)::int AS waitlist
      FROM events e LEFT JOIN registrations r ON r.event_id = e.id
      WHERE e.registration = 'required' AND e.date >= ($1::date - 30)
      GROUP BY e.id ORDER BY e.date`,
