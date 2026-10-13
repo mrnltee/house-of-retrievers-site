@@ -161,7 +161,7 @@ export default function Supporters({ onJoin }) {
 
       {partners.length > 0 && (
         <div className="supporters-group">
-          <h3>Partners <small>Run events with us</small></h3>
+          <h3>Partners <small>With us in every meaningful moment</small></h3>
           <SupporterWall items={partners} onOpen={setOpen} label="Partner" />
         </div>
       )}
