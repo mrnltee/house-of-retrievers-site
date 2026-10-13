@@ -100,7 +100,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
           {canEdit && (
             <section className="card form" style={{ gap: 12 }}>
               <h2 style={{ margin: 0 }}>Edit registration</h2>
-              <p className="small muted">Update the attendee details or counts. Saving does not email them unless you tick the box below.</p>
+              <p className="small muted">Update the attendee details or counts. Saving does not email them unless you tick the box below. A paid registration can be recalculated only when the payment already matches the new amount.</p>
               <form action={updateRegistration} className="form" style={{ gap: 12 }}>
                 <input type="hidden" name="id" value={reg.id} />
                 <div className="row-2">
@@ -124,7 +124,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 <label className="check"><input type="checkbox" name="under18" defaultChecked={reg.under_18} /> <span>Under 18</span></label>
                 {reg.under_18 && <label className="field"><span>Guardian&apos;s name</span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
                 <label className="check"><input type="checkbox" name="sendEmail" /> <span>Send the updated confirmation or payment instructions after saving</span></label>
-                <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["A paid amount cannot be changed"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
+                <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["The paid status, payment amount, reference and QR pass stay unchanged"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
               </form>
             </section>
           )}

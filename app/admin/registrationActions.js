@@ -9,7 +9,7 @@ import { eventTiers } from "../lib/admin/events.mjs";
 import { UNPAID, chooseTicket, owesPayment, readProofImage, validateProof } from "../lib/eventPayments.mjs";
 import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../lib/passEmails";
 import { deletionState } from "../lib/registrationRecovery.mjs";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "../lib/registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -262,7 +262,9 @@ export async function updateRegistration(data) {
     const due = calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event?.included_furbabies_per_human, additionalFurbabyFee: event?.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
     const oldDue = reg.amount_due ?? reg.ticket_amount ?? 0;
-    if (reg.fee_status === "paid" && due.amount !== oldDue) await backWith(back, "error", "This registration is already paid. Change the payment through the payment team instead of changing its attendee count or ticket.");
+    if (reg.fee_status === "paid" && !paidAmountChangeAllowed({ oldDue, nextDue: due.amount, payAmount: reg.pay_amount })) {
+      await backWith(back, "error", "This registration is already paid. The existing payment must match the new amount before its attendee count or ticket can change.");
+    }
     const amountChanged = due.amount !== oldDue || chosen.value.label !== reg.ticket_label || Number(chosen.value.amount ?? 0) !== Number(reg.ticket_amount ?? 0);
     const nextFee = amountChanged && reg.status === "confirmed" && due.amount > 0 && reg.fee_status !== "paid" ? "waiting" : (due.amount === 0 ? "not_due" : reg.fee_status);
     await sql(

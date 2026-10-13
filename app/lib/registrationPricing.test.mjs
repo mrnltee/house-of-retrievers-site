@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "./registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "./registrationPricing.mjs";
 
 test("keeps the existing one-ticket-per-registration default", () => {
   assert.deepEqual(calculateAmountDue({ tier: { amount: 795 }, humans: 3, furbabies: 2 }), { quantity: 1, amount: 795 });
@@ -25,4 +25,13 @@ test("attendee counts are bounded and require one person", () => {
   assert.deepEqual(cleanAttendeeCounts(2, 1), { humans: 2, furbabies: 1 });
   assert.match(cleanAttendeeCounts(0, 1).error, /at least one person/);
   assert.match(cleanAttendeeCounts(1, 101).error, /0 to 100/);
+});
+
+test("allows a paid registration correction when the existing payment matches the new due", () => {
+  assert.equal(paidAmountChangeAllowed({ oldDue: 695, nextDue: 2085, payAmount: 2085 }), true);
+});
+
+test("keeps paid amount changes blocked when the payment does not match", () => {
+  assert.equal(paidAmountChangeAllowed({ oldDue: 695, nextDue: 2085, payAmount: 695 }), false);
+  assert.equal(paidAmountChangeAllowed({ oldDue: 695, nextDue: 2085, payAmount: null }), false);
 });

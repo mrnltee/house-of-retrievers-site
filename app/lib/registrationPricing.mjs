@@ -66,6 +66,16 @@ export function calculateAmountDue({ basis = "registration", tier = {}, humans =
   return result;
 }
 
+/**
+ * A paid registration may be recalculated only when its existing payment
+ * already matches the new amount. This protects paid records from accidental
+ * changes while allowing an admin to repair an attendee-count snapshot.
+ */
+export function paidAmountChangeAllowed({ oldDue, nextDue, payAmount } = {}) {
+  if (Number(nextDue) === Number(oldDue)) return true;
+  return payAmount != null && Number(payAmount) === Number(nextDue);
+}
+
 export function pricingLabel(basis, tier = {}) {
   const key = cleanPricingBasis(basis);
   if (key === "human") return "Per person";
