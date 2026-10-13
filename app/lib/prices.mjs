@@ -30,7 +30,7 @@ export function parsePeso(text) {
  * first 20); after that it isn't offered and people take the other tiers.
  * @returns {{ tiers?: {label: string, amount: number, from?: string, until?: string, limit?: number}[], error?: string }}
  */
-export function cleanTiers(input) {
+export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
   let rows = input;
   if (typeof input === "string") {
     try {
@@ -50,6 +50,15 @@ export function cleanTiers(input) {
       return { error: `"${raw}" isn't a price. Use numbers only, like 500.` };
     }
     const tier = { label, amount: Math.round(amount * 100) / 100 };
+    if (pricingBasis === "bundle") {
+      const bundleHumans = Number(row?.bundleHumans ?? 0);
+      const bundleFurbabies = Number(row?.bundleFurbabies ?? 0);
+      if (!Number.isInteger(bundleHumans) || bundleHumans < 0 || bundleHumans > 100 || !Number.isInteger(bundleFurbabies) || bundleFurbabies < 0 || bundleFurbabies > 100 || (bundleHumans === 0 && bundleFurbabies === 0)) {
+        return { error: `${label || "A bundle"} needs at least one included person or furbaby.` };
+      }
+      tier.bundleHumans = bundleHumans;
+      tier.bundleFurbabies = bundleFurbabies;
+    }
     for (const key of ["from", "until"]) {
       if (row?.[key] == null || row[key] === "") continue;
       const ms = Date.parse(row[key]);

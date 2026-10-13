@@ -122,7 +122,7 @@ export async function saveEvent(data) {
     if (intent === "unpublish") status = "draft";
     if (intent === "cancel") status = "cancelled";
 
-    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.feeRequired];
+    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.feeRequired, value.pricingBasis];
     let eventId = id;
     let unpublished = false;
     if (isUuid(id) && !status && missing.length) {
@@ -151,9 +151,9 @@ export async function saveEvent(data) {
     if (isUuid(id)) {
       const rows = await sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
-           image=$11, image_alt=$12, registration=$13, capacity=$14, rsvp_open=$15, fee_required=$16,
-           status=COALESCE($17, status), updated_at=now()
-         WHERE id=$18 RETURNING id`,
+           image=$11, image_alt=$12, registration=$13, capacity=$14, rsvp_open=$15, fee_required=$16, pricing_basis=$17,
+           status=COALESCE($18, status), updated_at=now()
+         WHERE id=$19 RETURNING id`,
         [...fields, status, id],
       );
       if (!rows.length) await backWith("/events", "error", "That event no longer exists.");
@@ -163,8 +163,8 @@ export async function saveEvent(data) {
       if (taken.length) slug = `${slug}-${taken.length + 1}`;
       const rows = await sql(
         `INSERT INTO events (title, category, date, start_time, end_time, venue, city, cost, supports, summary, image, image_alt,
-           registration, capacity, rsvp_open, fee_required, status, slug)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,COALESCE($17,'draft'),$18) RETURNING id`,
+           registration, capacity, rsvp_open, fee_required, pricing_basis, status, slug)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,COALESCE($18,'draft'),$19) RETURNING id`,
         [...fields, status, slug],
       );
       eventId = rows[0].id;
@@ -270,14 +270,14 @@ export async function checkInByCode(eventId, rawCode) {
     const code = normalizeCode(rawCode);
     if (!isUuid(eventId) || !code) return { outcome: "unknown" };
     const rows = await sql(
-      `SELECT r.id, r.event_id, r.name, r.furbaby_name, r.status, r.checked_in_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, e.fee_required
+      `SELECT r.id, r.event_id, r.name, r.furbaby_name, r.status, r.checked_in_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
       [code],
     );
     const reg = rows[0];
     const outcome = checkInOutcome(reg, eventId);
     const person = reg && reg.event_id === eventId
-      ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, ticket: reg.fee_required ? ticketLine(reg.ticket_label, reg.ticket_amount) : "" }
+      ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, ticket: reg.fee_required ? ticketLine(reg.ticket_label, reg.amount_due ?? reg.ticket_amount) : "" }
       : null;
     if (outcome === "ok") {
       await sql("UPDATE registrations SET checked_in_at = now() WHERE id = $1 AND checked_in_at IS NULL", [reg.id]);

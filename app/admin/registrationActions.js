@@ -7,8 +7,9 @@ import { logActivity } from "../lib/admin/log";
 import { newCheckInCode, validateRsvp } from "../lib/admin/registrations.mjs";
 import { eventTiers } from "../lib/admin/events.mjs";
 import { UNPAID, chooseTicket, owesPayment, readProofImage, validateProof } from "../lib/eventPayments.mjs";
-import { sendPass, sendReceiptRejected, sendSpotHeld } from "../lib/passEmails";
+import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../lib/passEmails";
 import { deletionState } from "../lib/registrationRecovery.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "../lib/registrationPricing.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -167,7 +168,7 @@ export async function addRegistration(data) {
   const back = isUuid(eventId) ? `/registrations/${eventId}/add` : "/registrations";
   return guarded(back, async () => {
     const admin = await actionAdmin("registrations:edit");
-    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
+    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, pricing_basis, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
     if (!event) await backWith("/registrations", "error", "That event no longer exists.");
     const { value, error } = validateRsvp({
       name: form(data, "name"), email: form(data, "email"), furbabyName: form(data, "furbabyName"),
@@ -177,8 +178,12 @@ export async function addRegistration(data) {
     if (error) await backWith(back, "error", error);
     const ticket = chooseTicket(event.fee_required ? eventTiers(event) : [], form(data, "ticket"), { anyTier: true });
     if (ticket.error) await backWith(back, "error", ticket.error);
+    const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
+    if (attendees.error) await backWith(back, "error", attendees.error);
     const payment = ["paid", "pending", "none"].includes(form(data, "payment")) ? form(data, "payment") : "none";
     const owes = owesPayment(event.fee_required, ticket.value);
+    const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies });
+    if (due.error) await backWith(back, "error", due.error);
     let feeStatus = "not_due";
     let proofDetails = { method: null, reference: "", amount: null };
     if (owes && payment === "paid") {
@@ -202,10 +207,10 @@ export async function addRegistration(data) {
         }
         const [row] = await tx.sql(
           `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code,
-             ticket_label, ticket_amount, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,NULLIF($13,''),$14,$15,$16,$17,$18) RETURNING id`,
+             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21) RETURNING id`,
           [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, feeStatus, newCheckInCode(),
-            ticket.value.label, ticket.value.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
+            ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
             feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email,
             Boolean(duplicate && form(data, "allowDuplicate") === "yes")],
         );
@@ -230,6 +235,52 @@ export async function addRegistration(data) {
     }
     revalidatePath("/events", "layout");
     await backWith(`/registrations/${event.id}`, "ok", note);
+  });
+}
+
+/** Edit the registration facts and attendance counts. Email is opt-in. */
+export async function updateRegistration(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
+    const { value, error } = validateRsvp({
+      name: form(data, "name"), email: form(data, "email"), furbabyName: form(data, "furbabyName"),
+      photoConsent: data.get("photoConsent") === "on" ? "yes" : "no",
+      under18: data.get("under18") === "on", guardianName: form(data, "guardianName"),
+    });
+    if (error) await backWith(back, "error", error);
+    const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
+    if (attendees.error) await backWith(back, "error", attendees.error);
+    const [event] = await sql("SELECT title, fee_required, pricing_basis, price_tiers, cost FROM events WHERE id=$1", [reg.event_id]);
+    const tiers = event?.fee_required ? eventTiers(event) : [];
+    const currentIndex = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
+    const chosen = chooseTicket(tiers, form(data, "ticket") || (currentIndex >= 0 ? currentIndex : undefined), { anyTier: true });
+    if (chosen.error) await backWith(back, "error", chosen.error);
+    const due = calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies });
+    if (due.error) await backWith(back, "error", due.error);
+    const oldDue = reg.amount_due ?? reg.ticket_amount ?? 0;
+    if (reg.fee_status === "paid" && due.amount !== oldDue) await backWith(back, "error", "This registration is already paid. Change the payment through the payment team instead of changing its attendee count or ticket.");
+    const amountChanged = due.amount !== oldDue || chosen.value.label !== reg.ticket_label || Number(chosen.value.amount ?? 0) !== Number(reg.ticket_amount ?? 0);
+    const nextFee = amountChanged && reg.status === "confirmed" && due.amount > 0 && reg.fee_status !== "paid" ? "waiting" : (due.amount === 0 ? "not_due" : reg.fee_status);
+    await sql(
+      `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
+         ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
+         fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END WHERE id=$1`,
+      [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
+        chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged],
+    );
+    await logActivity(admin.email, "registration.edit", event?.title || reg.title, { registrationId: id, amountChanged });
+    let note = `${value.name}'s registration was saved.`;
+    if (amountChanged && nextFee === "waiting") note += " The payment is waiting for a new proof at the updated amount.";
+    if (data.get("sendEmail") === "on") {
+      const sent = reg.status === "waitlist" ? await sendWaitlisted(id) : nextFee === "waiting" ? await sendSpotHeld(id) : await sendPass(id, { paid: nextFee === "paid", again: true });
+      note += emailNote(sent, reg.status === "waitlist" ? "The waitlist note was" : nextFee === "waiting" ? "Payment instructions were" : "Their QR pass was");
+    }
+    revalidatePath("/events", "layout");
+    await backWith(back, "ok", note);
   });
 }
 

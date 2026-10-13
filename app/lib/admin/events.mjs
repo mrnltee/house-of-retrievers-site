@@ -6,6 +6,7 @@
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
+import { cleanPricingBasis } from "../registrationPricing.mjs";
 
 export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
 
@@ -256,6 +257,7 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     capacity: input?.capacity === "" || input?.capacity == null ? null : Number(input.capacity),
     rsvpOpen: input?.rsvpOpen === undefined ? true : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
     feeRequired: input?.feeRequired === true || input?.feeRequired === "on" || input?.feeRequired === "true",
+    pricingBasis: cleanPricingBasis(input?.pricingBasis),
     rsvpOpensAt: null,
   };
 
@@ -268,7 +270,7 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
 
   // Prices: tiers from the editor decide the cost line; without them the typed cost stays.
   if (input?.priceTiers !== undefined) {
-    const { tiers, error } = cleanTiers(input.priceTiers);
+    const { tiers, error } = cleanTiers(input.priceTiers, { pricingBasis: value.pricingBasis });
     if (error) return { error };
     value.priceTiers = tiers;
     value.cost = priceSummary(tiers) || value.cost;
@@ -403,7 +405,8 @@ export function toPublicEvent(row, confirmed = 0) {
     media: media.length ? media : undefined,
     rsvp: row.registration === "required",
     feeRequired: row.fee_required,
+    pricingBasis: cleanPricingBasis(row.pricing_basis),
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
-    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
+    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, bundleHumans: t.bundleHumans, bundleFurbabies: t.bundleFurbabies, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
   };
 }

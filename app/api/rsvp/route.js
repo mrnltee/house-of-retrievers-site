@@ -9,6 +9,7 @@ import { chooseTicket, owesPayment } from "../../lib/eventPayments.mjs";
 import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "../../lib/registrationPricing.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, cost, rsvp_opens_at FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, cost, rsvp_opens_at FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -67,17 +68,21 @@ export async function POST(request) {
       const counts = hasLimits(tiers) ? countsFromRows(await tx.sql(TICKET_COUNTS_SQL, [event.id])) : {};
       const ticket = chooseTicket(tiers, body?.ticket, { counts });
       if (ticket.error) return { error: ticket.error, status: 422 };
+      const attendees = cleanAttendeeCounts(body?.humanCount ?? 1, body?.furbabyCount ?? 0);
+      if (attendees.error) return { error: attendees.error, status: 422 };
+      const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies });
+      if (due.error) return { error: due.error, status: 422 };
       const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
       const code = newCheckInCode();
       // A held spot on a paid event waits for payment (no time limit); everyone else owes nothing now.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";
       const [row] = await tx.sql(
-        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code, ticket_label, ticket_amount)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, code, ticket.value.label, ticket.value.amount],
+        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
+        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount],
       );
-      return { id: row.id, status, code, feeStatus, ticket: ticket.value };
+      return { id: row.id, status, code, feeStatus, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };
     });
     if (result.error) return fail(result.error, result.status);
     // Email too, so it isn't lost when the tab closes: the pass, the "spot held, now pay" note, or the waitlist note.
@@ -85,7 +90,7 @@ export async function POST(request) {
     else if (result.feeStatus === "waiting") await sendSpotHeld(result.id);
     else await sendPass(result.id);
     revalidatePath("/events");
-    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", ticket: result.ticket }, { headers: noStore });
+    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", ticket: result.ticket, amountDue: result.amountDue, humanCount: result.humanCount, furbabyCount: result.furbabyCount }, { headers: noStore });
   } catch (dbError) {
     if (dbError?.code === "23505") return fail("That registration already exists. Check the confirmation link, or message us to change it.", 409);
     return fail("We couldn't save that just now. Please try again.", 502);

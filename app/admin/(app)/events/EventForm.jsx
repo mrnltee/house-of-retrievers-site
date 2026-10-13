@@ -87,7 +87,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
 
       <section className="card">
         <h2>Price and sign-ups</h2>
-        <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} />
+        <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} pricingBasis={event?.pricing_basis || "registration"} />
         <SignupFields
           registration={event?.registration}
           capacity={event?.capacity}

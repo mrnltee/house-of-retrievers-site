@@ -5,6 +5,7 @@ import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { NO_REFUND } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
+import { calculateAmountDue } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
@@ -19,6 +20,8 @@ export default function RsvpModal({ event, onClose }) {
   const dialog = useRef(null);
   const openedAt = useRef(Date.now());
   const [under18, setUnder18] = useState(false);
+  const [humanCount, setHumanCount] = useState(1);
+  const [furbabyCount, setFurbabyCount] = useState(0);
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [proofSent, setProofSent] = useState(false);
   const waitlist = event.status === "full";
@@ -26,6 +29,7 @@ export default function RsvpModal({ event, onClose }) {
   const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0) : [];
   const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
   const chosen = tickets.find((t) => t.i === ticket);
+  const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount }) : null;
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
 
   useEffect(() => {
@@ -59,6 +63,8 @@ export default function RsvpModal({ event, onClose }) {
           name: form.get("name"),
           email: form.get("email"),
           furbabyName: form.get("furbabyName"),
+          humanCount: form.get("humanCount"),
+          furbabyCount: form.get("furbabyCount"),
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
@@ -94,7 +100,7 @@ export default function RsvpModal({ event, onClose }) {
               <div className="eyebrow">Step 2 of 3 · Pay</div>
               <h2 id="rsvp-title">Your spot is held</h2>
               <p className="modal-lead">Pay, then upload your proof. Paying later? The link in your email brings you back here; your spot stays held.</p>
-              <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.ticket?.amount ?? null} onSent={() => setProofSent(true)} />
+              <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.amountDue ?? done.ticket?.amount ?? null} onSent={() => setProofSent(true)} />
             </div>
           )
         ) : done ? (
@@ -118,6 +124,10 @@ export default function RsvpModal({ event, onClose }) {
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
             <label>Furbaby&apos;s name (optional)<input name="furbabyName" maxLength={120} /></label>
+            <div className="row-2">
+              <label>People attending<input required type="number" name="humanCount" min="1" max="100" value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
+              <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} onChange={(e) => setFurbabyCount(e.target.value)} /></label>
+            </div>
             <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
               <p className="furbaby-hint">We share event photos on Instagram and Facebook.</p>
@@ -139,20 +149,25 @@ export default function RsvpModal({ event, onClose }) {
                 <legend>Ticket</legend>
                 <div className="ticket-options">
                   {tickets.map((t) => (
+                    (() => {
+                      const ticketDue = calculateAmountDue({ basis: event.pricingBasis, tier: t, humans: humanCount, furbabies: furbabyCount });
+                      return (
                     <label key={t.i} className={ticket === t.i ? "selected" : ""}>
                       <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => setTicket(t.i)} />
                       <span>{t.label || `Ticket ${t.i + 1}`}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} registrants · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
-                      <strong>{peso(t.amount)}</strong>
+                      <strong>{peso(ticketDue.amount)}</strong>
                     </label>
+                      );
+                    })()
                   ))}
                 </div>
               </fieldset>
             )}
-            {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(tickets[0].amount)}</p>}
+            {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(due?.amount ?? tickets[0].amount)}{event.pricingBasis !== "registration" ? ` · ${event.pricingBasis === "bundle" ? `${due?.quantity || 1} bundle${due?.quantity === 1 ? "" : "s"}` : `${event.pricingBasis === "human" ? humanCount : furbabyCount} × price`}` : ""}</p>}
             {!waitlist && event.feeRequired && <p className="form-note">{NO_REFUND} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
-            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${ticket >= 0 && tickets[ticket] ? ` · ${peso(tickets[ticket].amount)}` : ""}` : "Send my RSVP"}</button>
+            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : "Send my RSVP"}</button>
           </form>
         )}
       </section>

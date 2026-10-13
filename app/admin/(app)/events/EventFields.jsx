@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
 import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
+import { PRICING_BASES } from "../../../lib/registrationPricing.mjs";
 import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 
@@ -333,25 +334,27 @@ function limitNote(row, counts = {}) {
   return `${taken} of ${n} taken so far. Pending payments and the waitlist count; a cancelled registration frees its place. Once all ${n} are taken it isn't offered on the RSVP.`;
 }
 
-export function PriceField({ tiers, legacyCost, counts = {} }) {
+export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration" }) {
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
-  const blank = { label: "", amount: "", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
+  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
+  const [basis, setBasis] = useState(pricingBasis);
   const [rows, setRows] = useState(
     tiers?.length && initialMode === "paid"
-      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
+      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
       : [blank],
   );
   const toSend = (row) => ({
     label: row.label,
     amount: row.amount,
+    ...(basis === "bundle" ? { bundleHumans: row.bundleHumans, bundleFurbabies: row.bundleFurbabies } : {}),
     from: row.dated ? manilaInstant(row.from.date, row.from.time || "00:00") : null,
     until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null,
     limit: row.limited && row.limit !== "" ? row.limit : null,
   });
   const sent = mode === "free" ? [{ label: "", amount: 0 }] : mode === "paid" ? rows.map(toSend) : [];
-  const parsed = cleanTiers(sent);
+  const parsed = cleanTiers(sent, { pricingBasis: basis });
   const dated = parsed.tiers?.some((t) => t.from || t.until || t.limit);
   const summary = parsed.tiers ? priceSummary(dated ? activeTiers(parsed.tiers, Date.now(), counts) : parsed.tiers) : null;
   const update = (i, patch) => setRows(rows.map((row, j) => (j === i ? { ...row, ...patch } : row)));
@@ -369,6 +372,11 @@ export function PriceField({ tiers, legacyCost, counts = {} }) {
           ))}
         </div>
       </fieldset>
+      <label className="field"><span>How is the price counted? <small>Existing events stay per registration unless you change this.</small></span>
+        <select name="pricingBasis" value={basis} onChange={(e) => setBasis(e.target.value)}>
+          {PRICING_BASES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        </select>
+      </label>
       {mode === "paid" && (
         <>
           {legacyCost && !tiers?.length && <p className="small muted">It used to say "{legacyCost}". Enter it as prices below.</p>}
@@ -379,6 +387,10 @@ export function PriceField({ tiers, legacyCost, counts = {} }) {
                   <span className={i ? "visually-hidden" : undefined}>Tier name <small>Optional, e.g. Early bird</small></span>
                   <input type="text" value={row.label} maxLength={40} onChange={(e) => update(i, { label: e.target.value })} placeholder={rows.length > 1 ? `Tier ${i + 1}` : "Regular"} aria-label={`Tier ${i + 1} name`} />
                 </label>
+                {basis === "bundle" && <div className="row-2">
+                  <label className="field"><span>People included</span><input type="number" min={0} max={100} value={row.bundleHumans} onChange={(e) => update(i, { bundleHumans: e.target.value })} /></label>
+                  <label className="field"><span>Furbabies included</span><input type="number" min={0} max={100} value={row.bundleFurbabies} onChange={(e) => update(i, { bundleFurbabies: e.target.value })} /></label>
+                </div>}
                 <label className="field">
                   <span className={i ? "visually-hidden" : undefined}>Amount</span>
                   <span className="peso-input">

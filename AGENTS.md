@@ -152,7 +152,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–020 (see §6)
+db/migrations/           001–021 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -175,6 +175,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 018 | event payments: fee_status `not_due/waiting/review/rejected/paid`, ticket + proof columns, `payment_proofs`, GoTyme |
 | 019 | `events.rsvp_opens_at` (scheduled RSVP opening) |
 | 020 | shared event emails with an exact-identity guard/admin override; 30-day recoverable registration deletion (`deleted_at`, actor and previous status) |
+| 021 | event pricing basis (`registration/human/furbaby/bundle`); registration people/furbaby counts and calculated amount due |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -336,7 +337,7 @@ npx next dev
   - The editor's Preview uses the public components.
   - Ended events move to "Where we have been" (`hasEnded`).
 - **RSVP and payments:**
-  - Ticket choice.
+  - Ticket choice. Event pricing can be per registration (the existing default), per person, per furbaby, or a human + furbaby bundle. Registration counts are stored with the calculated amount due; event capacity and first-N limits remain registration-based.
   - Free event → the confirmed pass (QR) is emailed.
   - Paid event → spot held as "Payment pending". The registrant uploads the
     method, reference, amount and a screenshot, which moves it to "To check".
@@ -347,6 +348,9 @@ npx next dev
     "Payment not confirmed".
   - Different people may share an email. Public exact name+email repeats are
     blocked; an admin may confirm an intentional exact repeat.
+  - Admins with `registrations:edit` can edit registration details and attendee
+    counts. Saving does not send email unless the admin explicitly ticks the
+    email option; a paid registration cannot be changed to a different amount.
   - Admin Delete is only for unpaid, unchecked-in registrations. It moves the
     record to Recently deleted for 30 days, frees its slot/ticket and disables
     its pass; Restore reverses it when capacity permits. A daily cron purges

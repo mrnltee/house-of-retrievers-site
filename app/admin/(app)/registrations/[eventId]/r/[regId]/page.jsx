@@ -3,7 +3,8 @@ import { sql } from "../../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
 import { can } from "../../../../../../lib/admin/roles.mjs";
 import { ADMIN_PAY_METHODS, FEE_STATUS, REJECT_REASONS, UNPAID, payMethodLabel, referenceKey, ticketLine } from "../../../../../../lib/eventPayments.mjs";
-import { approvePayment, attachReceipt, markPaid, rejectPayment, resendPass } from "../../../../../registrationActions";
+import { eventTiers } from "../../../../../../lib/admin/events.mjs";
+import { approvePayment, attachReceipt, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
 import ReasonPicker from "../../../ReasonPicker";
@@ -25,7 +26,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(regId)) notFound();
   const [reg] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.date FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
+    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.date FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
     [regId, eventId],
   );
   if (!reg) notFound();
@@ -41,7 +42,9 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const canEdit = can(admin.roles, "registrations:edit");
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
   const owing = reg.fee_required && reg.status === "confirmed" && UNPAID.includes(reg.fee_status);
-  const due = reg.ticket_amount;
+  const due = reg.amount_due ?? reg.ticket_amount;
+  const tiers = reg.fee_required ? eventTiers(reg) : [];
+  const selectedTier = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
   const amountOk = due == null || reg.pay_amount == null ? null : reg.pay_amount === due;
   const back = `${base}/registrations/${eventId}${reg.fee_status === "review" ? "?show=check" : ""}`;
 
@@ -75,6 +78,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
               <div><dt>Status</dt><dd>{reg.status === "confirmed" ? (reg.checked_in_at ? `Checked in ${formatWhen(reg.checked_in_at)}` : "Confirmed") : reg.status === "waitlist" ? "Waitlist" : "Cancelled"}</dd></div>
               {reg.fee_required && <div><dt>Ticket</dt><dd>{ticketLine(reg.ticket_label, reg.ticket_amount) || "—"}</dd></div>}
               {reg.fee_required && <div><dt>Amount due</dt><dd>{due != null ? peso(due) : "—"}</dd></div>}
+              <div><dt>People</dt><dd>{reg.human_count ?? 1}</dd></div>
+              <div><dt>Furbabies</dt><dd>{reg.furbaby_count ?? 0}</dd></div>
               {reg.pay_method && <div><dt>Paid with</dt><dd>{payMethodLabel(reg.pay_method)}</dd></div>}
               {reg.fee_reference && <div><dt>Reference number</dt><dd><strong className="mono">{reg.fee_reference}</strong></dd></div>}
               {reg.pay_amount != null && <div><dt>They entered</dt><dd className={amountOk === false ? "danger-text" : amountOk ? "good-text" : ""}>{peso(reg.pay_amount)}{amountOk === false ? " · doesn't match" : ""}</dd></div>}
@@ -91,6 +96,38 @@ export default async function RegistrationDetail({ params, searchParams }) {
               <p className="banner ok small" style={{ margin: 0 }}>✓ No other registration for this event uses this reference.</p>
             ))}
           </section>
+
+          {canEdit && (
+            <section className="card form" style={{ gap: 12 }}>
+              <h2 style={{ margin: 0 }}>Edit registration</h2>
+              <p className="small muted">Update the attendee details or counts. Saving does not email them unless you tick the box below.</p>
+              <form action={updateRegistration} className="form" style={{ gap: 12 }}>
+                <input type="hidden" name="id" value={reg.id} />
+                <div className="row-2">
+                  <label className="field"><span>Name</span><input name="name" required maxLength={120} defaultValue={reg.name} /></label>
+                  <label className="field"><span>Email</span><input name="email" type="email" required maxLength={200} defaultValue={reg.email} /></label>
+                </div>
+                <div className="row-2">
+                  <label className="field"><span>Furbaby&apos;s name <small>Optional</small></span><input name="furbabyName" maxLength={120} defaultValue={reg.furbaby_name || ""} /></label>
+                  <div className="row-2">
+                    <label className="field"><span>People</span><input name="humanCount" type="number" min="1" max="100" required defaultValue={reg.human_count ?? 1} /></label>
+                    <label className="field"><span>Furbabies</span><input name="furbabyCount" type="number" min="0" max="100" required defaultValue={reg.furbaby_count ?? 0} /></label>
+                  </div>
+                </div>
+                {reg.fee_required && tiers.length > 0 && <label className="field"><span>Ticket</span>
+                  <select name="ticket" defaultValue={selectedTier >= 0 ? String(selectedTier) : ""} required={tiers.length > 1}>
+                    {tiers.length > 1 && <option value="">Choose…</option>}
+                    {tiers.map((tier, index) => <option key={index} value={index}>{ticketLine(tier.label, tier.amount)}</option>)}
+                  </select>
+                </label>}
+                <label className="check"><input type="checkbox" name="photoConsent" defaultChecked={reg.photo_consent} /> <span>Photos of them are OK</span></label>
+                <label className="check"><input type="checkbox" name="under18" defaultChecked={reg.under_18} /> <span>Under 18</span></label>
+                {reg.under_18 && <label className="field"><span>Guardian&apos;s name</span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
+                <label className="check"><input type="checkbox" name="sendEmail" /> <span>Send the updated confirmation or payment instructions after saving</span></label>
+                <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["A paid amount cannot be changed"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
+              </form>
+            </section>
+          )}
 
           {canFees && owing && reg.fee_status === "review" && (
             <section className="card form" style={{ gap: 14 }}>

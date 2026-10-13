@@ -79,7 +79,7 @@ export default async function EventRegistrations({ params, searchParams }) {
             <div className="stat"><span className="label">Confirmed</span><span className="value">{event.capacity ? `${confirmed.length} / ${event.capacity}` : confirmed.length}</span><span className="small muted">{capacityNote}</span></div>
             <a className={`stat${toCheck.length ? " stat-warn" : ""}`} href={`${base}/registrations/${event.id}?show=check`}><span className="label">To check</span><span className="value">{toCheck.length}</span><span className="small muted">Proof uploaded, waiting for an admin</span></a>
             <a className="stat" href={`${base}/registrations/${event.id}?show=pending`}><span className="label">Payment pending</span><span className="value">{pending.length}</span><span className="small muted">Spot held, no approved payment yet</span></a>
-            <a className="stat" href={`${base}/registrations/${event.id}?show=paid`}><span className="label">Paid</span><span className="value">{paid.length}</span><span className="small muted">{peso(paid.reduce((sum, r) => sum + (r.pay_amount ?? r.ticket_amount ?? 0), 0))} matched · QR passes sent</span></a>
+            <a className="stat" href={`${base}/registrations/${event.id}?show=paid`}><span className="label">Paid</span><span className="value">{paid.length}</span><span className="small muted">{peso(paid.reduce((sum, r) => sum + (r.pay_amount ?? r.amount_due ?? r.ticket_amount ?? 0), 0))} matched · QR passes sent</span></a>
           </>
         ) : (
           <>
@@ -110,10 +110,10 @@ export default async function EventRegistrations({ params, searchParams }) {
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
                 <tr key={r.id}>
-                  <td><a className="strong" href={detail}>{r.name}</a>{paidEvent && r.furbaby_name && <><br /><span className="small muted">Furbaby: {r.furbaby_name}</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                  <td><a className="strong" href={detail}>{r.name}</a>{paidEvent && r.furbaby_name && <><br /><span className="small muted">Furbaby: {r.furbaby_name}</span></>}{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
                   {paidEvent ? (
                     <>
-                      <td>{ticketLine(r.ticket_label, r.ticket_amount) || "—"}</td>
+                      <td>{ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
                       <td>
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
                         {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}

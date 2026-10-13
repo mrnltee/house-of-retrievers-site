@@ -13,7 +13,7 @@ import { payMethodLabel, ticketLine } from "./eventPayments.mjs";
 
 async function load(registrationId) {
   const [row] = await sql(
-    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note,
+    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note,
             e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
@@ -34,7 +34,7 @@ const passUrl = (row) => `${EVENTS_URL}/r/${row.check_in_code}`;
 
 /** "GCash · Ref 1012 345 678 901 · ₱795" */
 export function paidLine(row) {
-  const amount = row.pay_amount ?? row.ticket_amount;
+  const amount = row.pay_amount ?? row.amount_due ?? row.ticket_amount;
   return [payMethodLabel(row.pay_method), row.fee_reference ? `Ref ${row.fee_reference}` : "", amount ? `₱${Number(amount).toLocaleString("en-PH")}` : ""].filter(Boolean).join(" · ");
 }
 
@@ -74,7 +74,7 @@ export async function sendPass(registrationId, { paid = false, again = false } =
 export async function sendSpotHeld(registrationId) {
   const row = await load(registrationId);
   if (!row) return { ok: false };
-  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.ticket_amount) });
+  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount) });
   return safeSend({ to: row.email, ...mail, idempotencyKey: `held/${row.check_in_code}` });
 }
 

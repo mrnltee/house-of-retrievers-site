@@ -5,6 +5,7 @@ import { eventTiers } from "../../../../../lib/admin/events.mjs";
 import { tierLeft, tierWindow } from "../../../../../lib/prices.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../../../lib/ticketCounts.mjs";
 import { ADMIN_PAY_METHODS, ticketLine } from "../../../../../lib/eventPayments.mjs";
+import { calculateAmountDue } from "../../../../../lib/registrationPricing.mjs";
 import { emailReady } from "../../../../../lib/email";
 import { addRegistration } from "../../../../registrationActions";
 import ConfirmButton from "../../../ConfirmButton";
@@ -30,6 +31,8 @@ export default async function AddRegistration({ params, searchParams }) {
   const full = event.capacity != null && count >= event.capacity;
   const ready = emailReady();
   const existing = await sql("SELECT name, email FROM registrations WHERE event_id=$1 AND deleted_at IS NULL", [eventId]);
+  const defaultTier = tiers[0] || { amount: 0 };
+  const defaultDue = calculateAmountDue({ basis: event.pricing_basis, tier: defaultTier, humans: 1, furbabies: 0 }).amount;
 
   return (
     <>
@@ -41,6 +44,10 @@ export default async function AddRegistration({ params, searchParams }) {
         <div className="row-2">
           <label className="field"><span>Name</span><input type="text" name="name" required maxLength={120} /></label>
           <label className="field"><span>Email</span><input type="email" name="email" required maxLength={200} /></label>
+        </div>
+        <div className="row-2">
+          <label className="field"><span>People attending</span><input type="number" name="humanCount" min={1} max={100} defaultValue="1" required /></label>
+          <label className="field"><span>Furbabies attending</span><input type="number" name="furbabyCount" min={0} max={100} defaultValue="0" required /></label>
         </div>
         <div className="row-2">
           <label className="field"><span>Furbaby&apos;s name <small>Optional</small></span><input type="text" name="furbabyName" maxLength={120} /></label>
@@ -85,6 +92,7 @@ export default async function AddRegistration({ params, searchParams }) {
             items={[
               full ? `They're confirmed, which puts the event over capacity (${count + 1} of ${event.capacity})` : "They're confirmed and take a slot",
               "If the email box is ticked, they're emailed now",
+              event.pricing_basis !== "registration" ? `The amount is calculated from the people/furbaby count (${defaultDue ? `₱${defaultDue}` : "free"} for one person)` : "The ticket price is saved with this registration",
             ]}
             yes="Yes, add them"
             duplicateEntries={existing}
