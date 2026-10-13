@@ -2,38 +2,23 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeContext = createContext({ theme: null, ready: false });
+const ThemeContext = createContext(null);
 
 export function useSeasonalTheme() {
   return useContext(ThemeContext);
 }
 
 export default function SeasonalTheme({ children }) {
-  const [state, setState] = useState({ theme: null, ready: false });
+  const [theme, setTheme] = useState(null);
 
   useEffect(() => {
     let live = true;
-    const controller = new AbortController();
-    const fallback = window.setTimeout(() => {
-      controller.abort();
-      if (live) setState({ theme: null, ready: true });
-    }, 800);
-    fetch("/api/theme", { signal: controller.signal })
+    fetch("/api/theme")
       .then((response) => response.ok ? response.json() : { theme: null })
-      .then(({ theme: next }) => {
-        window.clearTimeout(fallback);
-        if (live) setState({ theme: next || null, ready: true });
-      })
-      .catch(() => {
-        window.clearTimeout(fallback);
-        if (live) setState({ theme: null, ready: true });
-      });
-    return () => {
-      live = false;
-      controller.abort();
-      window.clearTimeout(fallback);
-    };
+      .then(({ theme: next }) => { if (live) setTheme(next || null); })
+      .catch(() => {});
+    return () => { live = false; };
   }, []);
 
-  return <ThemeContext.Provider value={state}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }

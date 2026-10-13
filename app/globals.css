@@ -63,15 +63,6 @@ a { color: inherit; text-decoration: none; }
 .brand-transition-interaction .brand-transition-head-companion { animation: brand-companion-nod-short .56s ease-in-out both; }
 .brand-transition-welcome { position: absolute; z-index: 3; top: calc(50% + min(23vw, 185px)); margin: 0; color: var(--brand-white); font-size: clamp(13px, 1.5vw, 18px); letter-spacing: .08em; text-align: center; }
 .brand-transition[data-seasonal-theme="halloween"] { background: #171119; }
-.seasonal-halloween { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
-.halloween-bat { position: absolute; display: block; width: clamp(46px, 6vw, 78px); color: #09070a; filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .35)); opacity: 0; }
-.halloween-bat svg { display: block; width: 100%; height: auto; fill: currentColor; }
-.halloween-bat-one { top: 25%; left: -10%; animation: halloween-bat-left 2.35s .18s cubic-bezier(.24, .7, .32, 1) both; }
-.halloween-bat-two { top: 38%; right: -10%; width: clamp(34px, 4.5vw, 58px); animation: halloween-bat-right 2.1s .48s cubic-bezier(.24, .7, .32, 1) both; }
-.halloween-pumpkin { position: absolute; z-index: 3; top: calc(50% + min(17.5vw, 146px)); left: 50%; width: clamp(42px, 5vw, 60px); height: auto; color: #c96f2d; opacity: 0; translate: -50% 0; filter: drop-shadow(0 0 14px rgba(215, 119, 54, .25)); animation: halloween-pumpkin-arrive 2.7s .2s cubic-bezier(.22, 1, .36, 1) both; }
-.pumpkin-body, .pumpkin-stem { fill: currentColor; }
-.pumpkin-stem { color: #7a5c1f; }
-.pumpkin-rib { fill: none; stroke: #7e3d1c; stroke-width: 2; stroke-linecap: round; opacity: .62; }
 .brand-transition[data-seasonal-theme="holiday"] { background: #10251e; }
 .brand-transition[data-seasonal-theme="holiday"]::before { content: "✦  ✦  ✦"; position: absolute; top: 20%; color: #d6b35a; font-size: clamp(16px, 3vw, 34px); letter-spacing: 1em; animation: seasonal-twinkle 1.8s ease-in-out infinite; }
 .brand-transition[data-seasonal-theme="sparkling"] { background: #17131d; }
@@ -83,23 +74,6 @@ a { color: inherit; text-decoration: none; }
 @keyframes seasonal-float { 0%, 100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(-12px); opacity: 1; } }
 @keyframes seasonal-twinkle { 0%, 100% { opacity: .35; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.08); } }
 @keyframes seasonal-fireworks { 0% { opacity: .25; transform: scale(.75); } 45%, 70% { opacity: 1; transform: scale(1.15); } 100% { opacity: .2; transform: scale(1.35); } }
-@keyframes halloween-bat-left {
-  0% { opacity: 0; transform: translate3d(0, 30px, 0) rotate(-8deg) scale(.8); }
-  14% { opacity: .72; }
-  58% { opacity: .72; transform: translate3d(62vw, -22px, 0) rotate(5deg) scale(1); }
-  100% { opacity: 0; transform: translate3d(118vw, 12px, 0) rotate(-3deg) scale(.9); }
-}
-@keyframes halloween-bat-right {
-  0% { opacity: 0; transform: translate3d(0, -12px, 0) rotate(7deg) scale(.78); }
-  16% { opacity: .55; }
-  62% { opacity: .55; transform: translate3d(-58vw, 28px, 0) rotate(-6deg) scale(1); }
-  100% { opacity: 0; transform: translate3d(-116vw, -8px, 0) rotate(4deg) scale(.86); }
-}
-@keyframes halloween-pumpkin-arrive {
-  0%, 32% { opacity: 0; transform: translateY(10px) scale(.82); }
-  52%, 84% { opacity: .92; transform: translateY(0) scale(1); filter: drop-shadow(0 0 18px rgba(215, 119, 54, .38)); }
-  100% { opacity: 0; transform: translateY(2px) scale(.98); filter: drop-shadow(0 0 10px rgba(215, 119, 54, .18)); }
-}
 
 /* Intro runs 3s. The nods keep the timing they had in the old 4.2s cut
    (about 0.85s each); only the dead hold before and after them was trimmed. */
@@ -1294,10 +1268,6 @@ main:focus { outline: none; }
 @media (max-width: 520px) { .supporter-dialog-top { grid-template-columns: 96px 1fr auto; } }
 @media (prefers-reduced-motion: reduce) {
   .brand-transition[data-seasonal-theme]::before, .brand-transition-welcome, .supporter-logo, .supporter-tile:hover .supporter-logo { animation: none; transition: none; transform: none; }
-  .halloween-bat, .halloween-pumpkin { animation: none !important; transition: none; }
-  .halloween-bat-one { left: 18%; top: 28%; opacity: .34; transform: rotate(-8deg); }
-  .halloween-bat-two { right: 18%; top: 34%; opacity: .28; transform: rotate(7deg); }
-  .halloween-pumpkin { opacity: .82; transform: none; }
 }
 
 /* Links typed into an event's summary or "What's included" */
