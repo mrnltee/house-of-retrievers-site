@@ -6,6 +6,7 @@ import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { NO_REFUND } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import PayStep from "./PayStep";
+import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
 
@@ -150,7 +151,7 @@ export default function RsvpModal({ event, onClose }) {
             {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(tickets[0].amount)}</p>}
             {!waitlist && event.feeRequired && <p className="form-note">{NO_REFUND} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
-            <p className="form-note">We only use this to run this event.</p>
+            <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
             <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${ticket >= 0 && tickets[ticket] ? ` · ${peso(tickets[ticket].amount)}` : ""}` : "Send my RSVP"}</button>
           </form>
         )}

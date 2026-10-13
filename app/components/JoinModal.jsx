@@ -4,6 +4,7 @@ import { interests, joinFieldCopy } from "../content/join";
 import { socialPlatforms } from "../lib/socialProfile";
 import { resizeImage } from "../lib/resizeImage";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
+import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 export default function JoinModal({ interest, setInterest, onClose }) {
   const dialog = useRef(null);
@@ -199,7 +200,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               </button>
               {submitError ? <p className="form-error" role="alert">{submitError}</p> : null}
               <small className="form-note">
-                We keep your name, email, photo, and anything else you share here on a private House of Retrievers list, and we only use it to follow up about joining. Message us on <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noreferrer">Instagram</a> or <a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noreferrer">Facebook</a> any time and we’ll take you off it.
+                We keep what you share private and use it to follow up about joining. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a>
               </small>
             </form>
           </>

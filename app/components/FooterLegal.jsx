@@ -1,6 +1,7 @@
 "use client";
 
 import useLegal from "../lib/useLegal";
+import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 /**
  * The society's name and SEC registration are part of the unveiling. They
@@ -19,6 +20,7 @@ export default function FooterLegal() {
           <p>SEC Registration No. {legal.sec}</p>
         </>
       )}
+      <a className="footer-privacy" href={PRIVACY_URL}>Privacy notice</a>
       <p suppressHydrationWarning>© {new Date().getFullYear()} All rights reserved.</p>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { resizeImage } from "../lib/resizeImage";
 import { NO_REFUND, PAY_METHODS, READABLE, ticketLine } from "../lib/eventPayments.mjs";
+import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 
@@ -145,6 +146,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
         </label>
         <p className="pay-tip">{READABLE}</p>
         <p className="pay-norefund">{NO_REFUND}</p>
+        <p className="form-note">We keep your payment details and screenshot private and use them to confirm your payment. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
         {state.error && <p className="form-error" role="alert">{state.error}</p>}
         <button className="button dark" type="submit" disabled={state.busy}>{state.busy ? "Sending…" : "Send for checking"}</button>
       </form>

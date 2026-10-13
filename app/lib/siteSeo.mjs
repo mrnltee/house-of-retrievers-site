@@ -1,5 +1,6 @@
 export const SITE_URL = "https://www.houseofretrieversph.org";
 export const HOME_URL = SITE_URL;
+export const PRIVACY_URL = `${HOME_URL}/privacy`;
 export const SITE_NAME = "House of Retrievers PH";
 export const SITE_TITLE = "House of Retrievers PH | Paws for a Purpose";
 export const SITE_DESCRIPTION =

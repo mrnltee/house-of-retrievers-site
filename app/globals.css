@@ -362,12 +362,39 @@ footer > .social-links { justify-self: end; }
 .social-links { display: flex; align-items: center; gap: 10px; }
 .footer-legal { flex: 1; display: grid; gap: 6px; justify-items: center; text-align: center; line-height: 1.5; font-size: var(--text-small); }
 .footer-legal p { margin: 0; }
+.footer-privacy { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.footer-privacy:hover, .footer-privacy:focus-visible { color: #71541d; }
 .footer-org { font-family: "Federo", "DM Serif Display", serif; font-weight: 400; font-size: clamp(20px, 1.9vw, 26px); line-height: 1.15; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px !important; }
 .social-button { display: inline-flex; align-items: center; gap: 9px; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit; padding: 10px 15px 10px 10px; transition: color .2s, background .2s, transform .2s; }
 .social-button:hover, .social-button:focus-visible { color: var(--ink); background: var(--gold); transform: translateY(-2px); }
 .social-mark { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; background: transparent; color: inherit; font-family: Arial, sans-serif; font-size: 18px; font-weight: 700; line-height: 1; }
 .social-button:hover .social-mark, .social-button:focus-visible .social-mark { background: var(--ink); color: var(--gold); }
 .instagram-mark { font-size: 10px; text-transform: uppercase; }
+
+/* Privacy notice: a quiet reading page using the public site's existing type and palette. */
+.privacy-header { min-height: 104px; padding: 14px clamp(24px, 6vw, 84px); display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.privacy-brand { display: block; width: min(320px, 54vw); color: var(--ink); }
+.privacy-brand svg { display: block; width: 100%; height: auto; }
+.privacy-home { min-height: 44px; display: inline-flex; align-items: center; border-bottom: 1px solid currentColor; color: var(--ink); font-size: var(--text-small); font-weight: 700; }
+.privacy-page { min-height: 70vh; padding: clamp(72px, 10vw, 140px) clamp(24px, 8vw, 120px); background: var(--paper); }
+.privacy-intro, .privacy-sections { width: min(820px, 100%); margin-inline: auto; }
+.privacy-intro { padding-bottom: clamp(42px, 7vw, 76px); border-bottom: 1px solid var(--line); }
+.privacy-intro h1 { margin: 20px 0 24px; font-size: clamp(58px, 9vw, 104px); line-height: .94; }
+.privacy-intro > p:last-child { max-width: 700px; margin: 0; color: var(--muted-on-light); font-size: clamp(18px, 2.2vw, 24px); line-height: 1.6; }
+.privacy-sections { display: grid; gap: 0; }
+.privacy-sections section { padding: clamp(34px, 5vw, 54px) 0; border-bottom: 1px solid var(--line); }
+.privacy-sections h2 { margin: 0 0 14px; font-size: clamp(30px, 4vw, 44px); }
+.privacy-sections p { margin: 0; color: #555950; font-size: 17px; line-height: 1.75; }
+.privacy-sections a { color: #71541d; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 600px) {
+  .privacy-header { min-height: 84px; padding: 12px 20px; }
+  .privacy-brand { width: min(220px, 58vw); }
+  .privacy-home { font-size: 11px; }
+  .privacy-page { padding: 64px 20px 80px; }
+  .privacy-intro h1 { font-size: clamp(52px, 17vw, 72px); }
+  .privacy-sections p { font-size: 16px; }
+}
 
 @media (prefers-color-scheme: dark) {
   footer { background: #21180b; color: var(--brand-white); }

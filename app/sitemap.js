@@ -1,4 +1,4 @@
-import { HOME_URL } from "./lib/siteSeo.mjs";
+import { HOME_URL, PRIVACY_URL } from "./lib/siteSeo.mjs";
 import { EVENTS_URL } from "./lib/eventsHost.mjs";
 import { loadEvents } from "./lib/publicEvents";
 import { eventUrl } from "./lib/share.mjs";
@@ -19,6 +19,12 @@ export default async function sitemap() {
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
+    },
+    {
+      url: PRIVACY_URL,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
     ...events.map((event) => ({ url: eventUrl(event.slug), changeFrequency: "weekly", priority: 0.6 })),
   ];

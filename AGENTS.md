@@ -75,7 +75,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 114 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 115 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -324,7 +324,8 @@ npx next dev
   `public/journey/<id>/`), Instagram feed (rotating token in a private Blob +
   daily cron), Pack, Supporters section (`#partners`), Join modal → `/api/join`
   → Apps Script/Sheet + `people` table + "application received" email. Footer
-  legal name / SEC number from `/api/legal`.
+  legal name / SEC number from `/api/legal`; `/privacy` is linked from Join,
+  RSVP, payment proof and every public footer.
 - **Events:**
   - Admin-managed events with cover framing (`PhotoCropper`) and up to 3 more
     photos with fit/fill/tile.
@@ -385,23 +386,20 @@ gate were removed. `app/lib/hostRouting.mjs` keeps the still-attached
 `countdown.` hostname as a permanent redirect to www; the owner removes that
 domain in Vercel after the production release.
 
-1. **Privacy notice page.** The owner's direction is a short statement: collect
-   only what events need and keep it confidential and protected. Link it from
-   the Join, RSVP and pay steps. The owner approves the wording.
-2. **Accessibility pass.** Re-verify the Aug 2026 findings against current code
+1. **Accessibility pass.** Re-verify the Aug 2026 findings against current code
    (several were fixed). Then fix what remains: on-light gold text, the brand
    token drift, autoplay video pause control, nested interactive in family
    cards, and landmark/skip-link order.
-3. **Albums phase 2.** Participant uploads through a share link per event
+2. **Albums phase 2.** Participant uploads through a share link per event
    (`events.…/share/<token>`, with a QR), an approval queue (every participant
    photo waits for an admin), reordering, using an album photo as the cover,
    Gemini-suggested descriptions, a photo count on past cards, and "Ask us to
    remove a photo". The design is in `docs/event-albums-plan.md`.
-4. Email delivery tracking (Resend webhooks: delivered or bounced, shown on a
+3. Email delivery tracking (Resend webhooks: delivered or bounced, shown on a
    registration or person). Proposed, not built.
-5. Transparency: donations and spending reports (HOR promises public amounts).
+4. Transparency: donations and spending reports (HOR promises public amounts).
    Not built.
-6. Later phases: member portal (members log in, get event updates; guest
+5. Later phases: member portal (members log in, get event updates; guest
    album uploads use `events.photo_uploads`), forms builder, content editing,
    privacy requests, online checkout (PayMongo; current payments are manual
    QR / e-wallet / bank).
