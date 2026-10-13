@@ -7,6 +7,7 @@ import { byTier, gaveLine, totals } from "../lib/supporters.mjs";
 const formatPeso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const formatDate = (iso) => new Date(`${iso}T00:00:00+08:00`).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", weekday: "short", month: "short", day: "numeric", year: "numeric" });
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
+const CAROUSEL_PAGE_SIZE = 5;
 
 function Tile({ supporter, big = false, onOpen }) {
   return (
@@ -16,6 +17,35 @@ function Tile({ supporter, big = false, onOpen }) {
         <span className="supporter-name">{supporter.name}</span>
       </button>
     </li>
+  );
+}
+
+function SupporterWall({ items, onOpen, label }) {
+  const carousel = items.length > CAROUSEL_PAGE_SIZE;
+  const pageCount = Math.ceil(items.length / CAROUSEL_PAGE_SIZE);
+  const [page, setPage] = useState(0);
+  const start = page * CAROUSEL_PAGE_SIZE;
+  const visible = carousel ? items.slice(start, start + CAROUSEL_PAGE_SIZE) : items;
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(0, pageCount - 1)));
+  }, [pageCount]);
+
+  return (
+    <div className={`supporter-carousel${carousel ? " is-carousel" : ""}`} aria-label={`${label} logos`}>
+      {carousel && (
+        <div className="supporter-carousel-controls">
+          <p aria-live="polite">Showing {start + 1}–{Math.min(start + CAROUSEL_PAGE_SIZE, items.length)} of {items.length}</p>
+          <div>
+            <button type="button" onClick={() => setPage((current) => Math.max(0, current - 1))} disabled={page === 0} aria-label={`Previous ${label.toLowerCase()} logos`}><span aria-hidden="true">←</span></button>
+            <button type="button" onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))} disabled={page === pageCount - 1} aria-label={`Next ${label.toLowerCase()} logos`}><span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      )}
+      <ul className="supporter-wall">
+        {visible.map((s) => <Tile key={s.slug} supporter={s} onOpen={onOpen} />)}
+      </ul>
+    </div>
   );
 }
 
@@ -132,7 +162,7 @@ export default function Supporters({ onJoin }) {
       {partners.length > 0 && (
         <div className="supporters-group">
           <h3>Partners <small>Run events with us</small></h3>
-          <ul className="supporter-wall">{partners.map((s) => <Tile key={s.slug} supporter={s} onOpen={setOpen} />)}</ul>
+          <SupporterWall items={partners} onOpen={setOpen} label="Partner" />
         </div>
       )}
 
@@ -142,7 +172,7 @@ export default function Supporters({ onJoin }) {
           {byTier(sponsors).map((group) => (
             <div key={group.key} className="supporter-tier">
               {group.name && <p className="supporter-label">★ {group.name}</p>}
-              <ul className="supporter-wall">{group.items.map((s) => <Tile key={s.slug} supporter={s} big={group.key === "pack-leader"} onOpen={setOpen} />)}</ul>
+              <SupporterWall items={group.items} onOpen={setOpen} label={group.name || "Sponsor"} />
             </div>
           ))}
           {sum && (sum.cash > 0 || sum.inKind > 0) && (
