@@ -26,7 +26,8 @@ function draftEvent(form, saved) {
   const newCrop = get("imageData");
   const image = removed ? "" : newCrop || saved.image || "";
   const source = removed ? "" : newCrop ? get("imageSourceData") || get("imageSource") || newCrop : saved.imageSource || "";
-  const tiers = cleanTiers(get("priceTiers") || "[]").tiers || [];
+  const pricingBasis = get("pricingBasis") || "registration";
+  const tiers = cleanTiers(get("priceTiers") || "[]", { pricingBasis }).tiers || [];
   const lat = Number(get("venueLat"));
   const lng = Number(get("venueLng"));
   const hasPin = get("venueLat") !== "" && Number.isFinite(lat) && Number.isFinite(lng);
@@ -65,6 +66,9 @@ function draftEvent(form, saved) {
     rsvp_open: f.get("rsvpOpen") === "on",
     rsvp_opens_at: f.get("rsvpOpensOn") === "on" ? manilaInstant(get("rsvpOpensDate"), get("rsvpOpensTime")) : null,
     fee_required: f.get("feeRequired") === "on",
+    pricing_basis: pricingBasis,
+    included_furbabies_per_human: Number(get("includedFurbabiesPerHuman") || 0),
+    additional_furbaby_fee: Number(get("additionalFurbabyFee") || 0),
     status: "published",
   };
   return { event: toPublicEvent(row, 0), past: isPastDate(date) };

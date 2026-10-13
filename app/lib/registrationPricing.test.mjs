@@ -12,6 +12,10 @@ test("charges by people or furbabies", () => {
   assert.equal(calculateAmountDue({ basis: "furbaby", tier: { amount: 500 }, humans: 1, furbabies: 3 }).amount, 1500);
 });
 
+test("charges an additional fee for furbabies beyond the included companions", () => {
+  assert.deepEqual(calculateAmountDue({ basis: "human_plus_furbaby", tier: { amount: 795 }, humans: 1, furbabies: 3, includedFurbabiesPerHuman: 1, additionalFurbabyFee: 200 }), { quantity: 1, extraFurbabies: 2, amount: 1195 });
+});
+
 test("charges enough bundles for the people and furbabies attending", () => {
   const result = calculateAmountDue({ basis: "bundle", tier: { amount: 795, bundleHumans: 1, bundleFurbabies: 1 }, humans: 2, furbabies: 1 });
   assert.deepEqual(result, { quantity: 2, amount: 1590 });

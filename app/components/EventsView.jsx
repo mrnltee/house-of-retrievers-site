@@ -478,6 +478,7 @@ function DetailFacts({ event, past }) {
                 </li>
               ))}
             </ul>
+            {event.pricingBasis === "human_plus_furbaby" && <p className="small muted" style={{ margin: "8px 0 0" }}>Each human ticket includes {event.includedFurbabiesPerHuman || 0} furbabies. {event.additionalFurbabyFee ? `${formatPeso(event.additionalFurbabyFee)} for each additional furbaby.` : "Additional furbabies are not charged."}</p>}
           </dd>
         </div>
       )}

@@ -32,7 +32,7 @@ export default async function AddRegistration({ params, searchParams }) {
   const ready = emailReady();
   const existing = await sql("SELECT name, email FROM registrations WHERE event_id=$1 AND deleted_at IS NULL", [eventId]);
   const defaultTier = tiers[0] || { amount: 0 };
-  const defaultDue = calculateAmountDue({ basis: event.pricing_basis, tier: defaultTier, humans: 1, furbabies: 0 }).amount;
+  const defaultDue = calculateAmountDue({ basis: event.pricing_basis, tier: defaultTier, humans: 1, furbabies: 0, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee }).amount;
 
   return (
     <>

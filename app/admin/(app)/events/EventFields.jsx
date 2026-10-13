@@ -334,12 +334,14 @@ function limitNote(row, counts = {}) {
   return `${taken} of ${n} taken so far. Pending payments and the waitlist count; a cancelled registration frees its place. Once all ${n} are taken it isn't offered on the RSVP.`;
 }
 
-export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration" }) {
+export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration", includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 }) {
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
   const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
   const [basis, setBasis] = useState(pricingBasis);
+  const [includedDogs, setIncludedDogs] = useState(String(includedFurbabiesPerHuman));
+  const [extraDogFee, setExtraDogFee] = useState(additionalFurbabyFee ? String(additionalFurbabyFee) : "");
   const [rows, setRows] = useState(
     tiers?.length && initialMode === "paid"
       ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
@@ -377,6 +379,16 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
           {PRICING_BASES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select>
       </label>
+      {basis === "human_plus_furbaby" && <div className="card inset form" style={{ gap: 10 }}>
+        <strong>Dog companion pricing</strong>
+        <p className="small muted" style={{ margin: 0 }}>Each human ticket includes the number of furbabies below. Additional furbabies use the extra fee.</p>
+        <div className="row-2">
+          <label className="field"><span>Included per person</span><input type="number" min={0} max={100} value={includedDogs} onChange={(e) => setIncludedDogs(e.target.value)} /></label>
+          <label className="field"><span>Extra furbaby fee <small>Optional</small></span><input type="text" inputMode="decimal" value={extraDogFee} onChange={(e) => setExtraDogFee(e.target.value)} placeholder="0" /></label>
+        </div>
+        <input type="hidden" name="includedFurbabiesPerHuman" value={includedDogs} />
+        <input type="hidden" name="additionalFurbabyFee" value={extraDogFee} />
+      </div>}
       {mode === "paid" && (
         <>
           {legacyCost && !tiers?.length && <p className="small muted">It used to say "{legacyCost}". Enter it as prices below.</p>}

@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`021_…sql`**).
+   number (the next one is **`023_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -75,7 +75,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 118 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 123 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -152,7 +152,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–021 (see §6)
+db/migrations/           001–022 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -176,6 +176,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 019 | `events.rsvp_opens_at` (scheduled RSVP opening) |
 | 020 | shared event emails with an exact-identity guard/admin override; 30-day recoverable registration deletion (`deleted_at`, actor and previous status) |
 | 021 | event pricing basis (`registration/human/furbaby/bundle`); registration people/furbaby counts and calculated amount due |
+| 022 | optional human + dog companion pricing: included furbabies per person and an additional furbaby fee |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -337,7 +338,7 @@ npx next dev
   - The editor's Preview uses the public components.
   - Ended events move to "Where we have been" (`hasEnded`).
 - **RSVP and payments:**
-  - Ticket choice. Event pricing can be per registration (the existing default), per person, per furbaby, or a human + furbaby bundle. Registration counts are stored with the calculated amount due; event capacity and first-N limits remain registration-based.
+  - Ticket choice. Event pricing can be per registration (the existing default), per person, per furbaby, a human + furbaby bundle, or per person with a configurable number of included dog companions and an extra fee per additional furbaby. Registration counts are stored with the calculated amount due; human + dog companion first-N limits count people, while event capacity remains registration-based for now.
   - Free event → the confirmed pass (QR) is emailed.
   - Paid event → spot held as "Payment pending". The registrant uploads the
     method, reference, amount and a screenshot, which moves it to "To check".

@@ -6,7 +6,7 @@
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
-import { cleanPricingBasis } from "../registrationPricing.mjs";
+import { cleanFurbabyPricing, cleanPricingBasis } from "../registrationPricing.mjs";
 
 export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
 
@@ -258,6 +258,8 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     rsvpOpen: input?.rsvpOpen === undefined ? true : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
     feeRequired: input?.feeRequired === true || input?.feeRequired === "on" || input?.feeRequired === "true",
     pricingBasis: cleanPricingBasis(input?.pricingBasis),
+    includedFurbabiesPerHuman: 0,
+    additionalFurbabyFee: 0,
     rsvpOpensAt: null,
   };
 
@@ -275,6 +277,9 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     value.priceTiers = tiers;
     value.cost = priceSummary(tiers) || value.cost;
   }
+  const companionPricing = cleanFurbabyPricing(input?.includedFurbabiesPerHuman, input?.additionalFurbabyFee);
+  if (companionPricing.error) return { error: companionPricing.error };
+  if (value.pricingBasis === "human_plus_furbaby") Object.assign(value, companionPricing);
   // Nothing to pay, nothing to track.
   if (!value.priceTiers.some((t) => t.amount > 0) && input?.priceTiers !== undefined) value.feeRequired = false;
   if (input?.gallery !== undefined) {
@@ -406,6 +411,8 @@ export function toPublicEvent(row, confirmed = 0) {
     rsvp: row.registration === "required",
     feeRequired: row.fee_required,
     pricingBasis: cleanPricingBasis(row.pricing_basis),
+    includedFurbabiesPerHuman: row.included_furbabies_per_human || 0,
+    additionalFurbabyFee: row.additional_furbaby_fee || 0,
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
     tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, bundleHumans: t.bundleHumans, bundleFurbabies: t.bundleFurbabies, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
   };

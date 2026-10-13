@@ -168,7 +168,7 @@ export async function addRegistration(data) {
   const back = isUuid(eventId) ? `/registrations/${eventId}/add` : "/registrations";
   return guarded(back, async () => {
     const admin = await actionAdmin("registrations:edit");
-    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, pricing_basis, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
+    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
     if (!event) await backWith("/registrations", "error", "That event no longer exists.");
     const { value, error } = validateRsvp({
       name: form(data, "name"), email: form(data, "email"), furbabyName: form(data, "furbabyName"),
@@ -182,7 +182,7 @@ export async function addRegistration(data) {
     if (attendees.error) await backWith(back, "error", attendees.error);
     const payment = ["paid", "pending", "none"].includes(form(data, "payment")) ? form(data, "payment") : "none";
     const owes = owesPayment(event.fee_required, ticket.value);
-    const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies });
+    const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
     let feeStatus = "not_due";
     let proofDetails = { method: null, reference: "", amount: null };
@@ -254,12 +254,12 @@ export async function updateRegistration(data) {
     if (error) await backWith(back, "error", error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
-    const [event] = await sql("SELECT title, fee_required, pricing_basis, price_tiers, cost FROM events WHERE id=$1", [reg.event_id]);
+    const [event] = await sql("SELECT title, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id=$1", [reg.event_id]);
     const tiers = event?.fee_required ? eventTiers(event) : [];
     const currentIndex = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
     const chosen = chooseTicket(tiers, form(data, "ticket") || (currentIndex >= 0 ? currentIndex : undefined), { anyTier: true });
     if (chosen.error) await backWith(back, "error", chosen.error);
-    const due = calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies });
+    const due = calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event?.included_furbabies_per_human, additionalFurbabyFee: event?.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
     const oldDue = reg.amount_due ?? reg.ticket_amount ?? 0;
     if (reg.fee_status === "paid" && due.amount !== oldDue) await backWith(back, "error", "This registration is already paid. Change the payment through the payment team instead of changing its attendee count or ticket.");
