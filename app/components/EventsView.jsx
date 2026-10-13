@@ -487,12 +487,19 @@ function DetailFacts({ event, past }) {
 }
 
 /** A partner or sponsor on the event page: with a public record, its logo and a link to its panel on the home page. */
+function supporterInitial(name) {
+  return Array.from(String(name || "").trim())[0]?.toUpperCase() || "?";
+}
+
 function SupporterChip({ name, link }) {
-  if (!link) return <li>{name}</li>;
+  const mark = link
+    ? <img src={link.logo} alt="" width={32} height={32} />
+    : <span className="event-supporter-initial">{supporterInitial(name)}</span>;
+  if (!link) return <li className="has-initial"><span className="event-supporter-logo" aria-hidden="true">{mark}</span>{name}</li>;
   return (
     <li className="has-logo">
       <a href={`${HOME_URL}/?supporter=${link.slug}#partners`}>
-        <img src={link.logo} alt="" width={28} height={28} />
+        <span className="event-supporter-logo" aria-hidden="true">{mark}</span>
         {name}
         <Icon name="arrow" size={13} />
       </a>

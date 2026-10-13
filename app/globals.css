@@ -1151,7 +1151,10 @@ main:focus { outline: none; }
 .event-supporters li.has-logo { padding: 0; }
 .event-supporters li.has-logo a { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; color: inherit; text-decoration: none; border-radius: 999px; }
 .event-supporters li.has-logo a:hover, .event-supporters li.has-logo a:focus-visible { background: rgba(167, 132, 64, .12); }
-.event-supporters li.has-logo img { width: 28px; height: 28px; border-radius: 50%; object-fit: contain; background: #fff; border: 1px solid rgba(13, 13, 13, .1); }
+.event-supporters li.has-initial { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; }
+.event-supporter-logo { display: inline-grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid rgba(13, 13, 13, .14); border-radius: 50%; background: var(--paper); overflow: hidden; }
+.event-supporter-logo img { width: 32px; height: 32px; border-radius: 50%; object-fit: contain; }
+.event-supporter-initial { font-size: 15px; font-weight: 700; line-height: 1; color: var(--gold-on-light); }
 .event-supporters li.has-logo svg { color: var(--gold-on-light); }
 .event-map { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; margin-top: 8px; }
 .event-detail-body .event-tags li { background: transparent; padding: 0; color: var(--muted-on-light); }
