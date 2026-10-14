@@ -1,6 +1,7 @@
 import { saveSupporter } from "../../supporterActions";
-import { BLURB_MAX, GIVES, STATUSES, TIERS, isPublic, suggestCode, supporterNumber } from "../../../lib/supporters.mjs";
+import { BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, STATUSES, TIERS, isPublic, supporterNumber } from "../../../lib/supporters.mjs";
 import LogoField from "./LogoField";
+import SupporterIdentityFields from "./SupporterIdentityFields";
 import ConfirmButton from "../ConfirmButton";
 
 /** Sponsor or partner record (Figma S2). `row` is a DB row or null; `person` prefills a new one. */
@@ -16,10 +17,17 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
         <section className="card form">
           <h2>On the website</h2>
           <LogoField current={row?.logo || ""} />
+          <SupporterIdentityFields
+            initialName={v("name", person?.organization || person?.name || "")}
+            initialCode={v("code")}
+            numbered={Boolean(row?.number_no)}
+          />
           <div className="row-2">
-            <label className="field"><span>Name</span><input type="text" name="name" required maxLength={80} defaultValue={v("name", person?.organization || person?.name || "")} /></label>
             <label className="field"><span>Type</span>
               <select name="kind" defaultValue={kind}><option>Sponsor</option><option>Partner</option></select>
+            </label>
+            <label className="field"><span>Relationship label <small>Optional; a short role such as Venue partner</small></span>
+              <input type="text" name="categoryLabel" maxLength={CATEGORY_LABEL_MAX} defaultValue={v("category_label")} placeholder="e.g. Venue partner" />
             </label>
           </div>
           <div className="row-2">
@@ -37,13 +45,8 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
               <select name="tier" defaultValue={v("tier")}><option value="">No tier</option>{TIERS.map(([k, l]) => <option key={k} value={k}>★ {l}</option>)}</select>
             </label>
           </div>
-          <div className="row-2">
-            <label className="field"><span>ID code <small>3 letters, needed to confirm. Their number reads HOR-{v("code") || "XXX"}-YY-NNNN</small></span>
-              <input type="text" name="code" maxLength={3} pattern="[A-Za-z]{3}" style={{ textTransform: "uppercase" }} defaultValue={v("code", row || person ? suggestCode(v("name", person?.organization || person?.name || "")) : "")} readOnly={Boolean(row?.number_no)} placeholder="e.g. PPS" />
-            </label>
-            <div className="field"><span>Number</span>
-              <p style={{ margin: "10px 0 0" }}>{supporterNumber(row) ? <strong>{supporterNumber(row)}</strong> : <span className="small muted">Given the first time the record is saved as Confirmed: the year they registered, then the next number for that year. The code can't change after that.</span>}</p>
-            </div>
+          <div className="field"><span>Number</span>
+            <p style={{ margin: "10px 0 0" }}>{supporterNumber(row) ? <strong>{supporterNumber(row)}</strong> : <span className="small muted">Given the first time the record is saved as Confirmed: the year they registered, then the next number for that year. The four-letter code can't change after that.</span>}</p>
           </div>
           <label className="check">
             <input type="checkbox" name="showOnSite" defaultChecked={row ? row.show_on_site : false} />
@@ -89,7 +92,7 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
         <div className="actions form-actions-sticky">
           <ConfirmButton
             title={row ? `Save changes to ${row.name}?` : "Create this supporter record?"}
-            echo={[{ name: "name", label: "Name" }, { name: "kind", label: "Type" }, { name: "status", label: "Status" }]}
+            echo={[{ name: "name", label: "Name" }, { name: "code", label: "ID code" }, { name: "kind", label: "Type" }, { name: "categoryLabel", label: "Relationship label" }, { name: "status", label: "Status" }]}
             items={[row ? "The supporter record is updated" : "A new supporter record is added", "Public details change only when the record is complete, Confirmed and switched on"]}
             yes={row ? "Yes, save changes" : "Yes, create record"}
           >{row ? "Save" : "Create record"}</ConfirmButton>

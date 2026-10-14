@@ -38,6 +38,8 @@ export async function saveSupporter(data) {
   const back = isUuid(id) ? `/supporters/${id}` : "/supporters/new";
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
+    const before = isUuid(id) ? (await sql("SELECT * FROM supporters WHERE id = $1", [id]))[0] : null;
+    if (isUuid(id) && !before) await backWith("/supporters", "error", "That record no longer exists.");
     const input = Object.fromEntries([...data.entries()].filter(([, v]) => typeof v === "string"));
     input.gives = data.getAll("gives").filter((v) => typeof v === "string");
 
@@ -54,7 +56,7 @@ export async function saveSupporter(data) {
       input.logo = "";
     }
 
-    const { value, error, notes } = validateSupporter(input);
+    const { value, error, notes } = validateSupporter(input, { legacyCode: before?.code?.length === 3 ? before.code : null });
     if (error) await backWith(back, "error", error);
     if (value.status === "ended") value.showOnSite = false;
 
@@ -62,13 +64,12 @@ export async function saveSupporter(data) {
     if (clash) await backWith(back, "error", `There's already a record called "${value.name}".`);
 
     const slug = await freeSlug(value.name, isUuid(id) ? id : null);
-    const before = isUuid(id) ? (await sql("SELECT * FROM supporters WHERE id = $1", [id]))[0] : null;
-    if (isUuid(id) && !before) await backWith("/supporters", "error", "That record no longer exists.");
-    // The code is part of their number, so it stays once a number is given.
-    if (before?.number_no) value.code = before.code;
+    // Four-letter codes stay fixed once numbered. Legacy three-letter records
+    // may be upgraded once, when an admin deliberately saves the record.
+    if (before?.number_no && before.code?.length === 4) value.code = before.code;
     if (value.code) {
       const [taken] = await sql("SELECT name FROM supporters WHERE code = $1 AND id IS DISTINCT FROM $2", [value.code, before?.id || null]);
-      if (taken) await backWith(back, "error", `The code ${value.code} is already ${taken.name}'s. Pick another 3 letters.`);
+      if (taken) await backWith(back, "error", `The code ${value.code} is already ${taken.name}'s. Pick another 4 letters.`);
     }
 
     // "Told about public amounts": dated the first time it's ticked, cleared when unticked.
@@ -78,28 +79,28 @@ export async function saveSupporter(data) {
     const fields = [
       value.kind, value.name, slug, value.status, value.tier, value.logo, value.website, value.instagram, value.blurb, value.gives,
       value.supportYear, value.cashAmount, value.inKindValue, value.inKindNote, value.showOnSite, agreedAt, agreedBy,
-      value.contactName, value.contactEmail, value.contactPhone, value.notes,
+      value.contactName, value.contactEmail, value.contactPhone, value.notes, value.categoryLabel,
     ];
     let recordId = id;
     if (before) {
       await sql(
         `UPDATE supporters SET kind=$1, name=$2, slug=$3, status=$4, tier=$5, logo=$6, website=$7, instagram=$8, blurb=$9, gives=$10,
            support_year=$11, cash_amount=$12, in_kind_value=$13, in_kind_note=$14, show_on_site=$15, amounts_agreed_at=$16, amounts_agreed_by=$17,
-           contact_name=$18, contact_email=$19, contact_phone=$20, notes=$21, code=$23, updated_at=now()
-         WHERE id=$22`,
+           contact_name=$18, contact_email=$19, contact_phone=$20, notes=$21, category_label=$22, code=$24, updated_at=now()
+         WHERE id=$23`,
         [...fields, id, value.code],
       );
     } else {
       const [row] = await sql(
         `INSERT INTO supporters (kind, name, slug, status, tier, logo, website, instagram, blurb, gives, support_year, cash_amount, in_kind_value,
-           in_kind_note, show_on_site, amounts_agreed_at, amounts_agreed_by, contact_name, contact_email, contact_phone, notes, person_id, code)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING id`,
+           in_kind_note, show_on_site, amounts_agreed_at, amounts_agreed_by, contact_name, contact_email, contact_phone, notes, category_label, person_id, code)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) RETURNING id`,
         [...fields, isUuid(form(data, "personId")) ? form(data, "personId") : null, value.code],
       );
       recordId = row.id;
     }
 
-    // First time Confirmed: HOR-XXX-YY-NNNN, YY = the year they registered
+    // First time Confirmed: HOR-XXXX-YY-NNNN, YY = the year they registered
     // (the Join form if they came through it, else when the record was made).
     let numbered = "";
     if (value.status === "confirmed" && !before?.number_no) {
@@ -122,6 +123,8 @@ export async function saveSupporter(data) {
     if (numbered) details.number = numbered;
     if (before && before.status !== value.status) details.status = value.status;
     if (before && before.show_on_site !== value.showOnSite) details.website = value.showOnSite ? "shown" : "hidden";
+    if (before && before.code !== value.code) details.code = value.code;
+    if (before && before.category_label !== value.categoryLabel) details.label = value.categoryLabel || "removed";
     if (!before?.amounts_agreed_at && agreedAt) details.amounts = "agreed";
     await logActivity(admin.email, before ? "supporter.save" : "supporter.create", value.name, details);
     const message = ["Saved.", numbered ? `Their number is ${numbered}.` : "", ...(notes || [])].filter(Boolean).join(" ");

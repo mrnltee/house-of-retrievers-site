@@ -397,7 +397,7 @@ export async function resendWelcome(data) {
 /**
  * "Send an email" on a profile: one of HOR's Acceptance templates, filled in
  * for this person. {{member_no}} is their number: HOR-/HORV- for members and
- * volunteers, HOR-XXX- from the sponsor or partner record.
+ * volunteers, HOR-XXXX- from the sponsor or partner record.
  */
 export async function sendTemplateToPerson(data) {
   const id = form(data, "id");

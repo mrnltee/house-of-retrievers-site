@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-   number (the next one is **`023_…sql`**).
+     number (the next one is **`026_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -152,7 +152,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–022 (see §6)
+db/migrations/           001–025 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -171,12 +171,15 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 013 | all-day events, event partners/sponsors names |
 | 014 | `supporters` (sponsor/partner records, tiers, logos, contributions) |
 | 015–016 | `email_templates` (saved wording for built-ins), `custom_email_templates`, `events.email_template_id` |
-| 017 | volunteer numbers (HORV-YY-NNNN), supporter `code` + numbers (HOR-XXX-YY-NNNN) |
+| 017 | volunteer numbers (HORV-YY-NNNN), supporter `code` + numbered IDs |
 | 018 | event payments: fee_status `not_due/waiting/review/rejected/paid`, ticket + proof columns, `payment_proofs`, GoTyme |
 | 019 | `events.rsvp_opens_at` (scheduled RSVP opening) |
 | 020 | shared event emails with an exact-identity guard/admin override; 30-day recoverable registration deletion (`deleted_at`, actor and previous status) |
 | 021 | event pricing basis (`registration/human/furbaby/bundle`); registration people/furbaby counts and calculated amount due |
 | 022 | optional human + dog companion pricing: included furbabies per person and an additional furbaby fee |
+| 023 | optional event-specific on-site payment notice |
+| 024 | seasonal-theme settings table (the public seasonal treatment is parked; keep this applied migration) |
+| 025 | supporter four-letter IDs (legacy three-letter IDs remain valid) and optional relationship labels |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -363,8 +366,11 @@ npx next dev
 - **People:** one record per person and kind, profiles, photos, membership
   (applicant → active → inactive/left), numbers HOR-YY-NNNN / HORV-YY-NNNN,
   import from the Join sheet CSV, and send-template emails.
-- **Sponsors & partners:** records with tier, logo, blurb, contributions,
-  public only when confirmed, shown on site, and complete. Numbers HOR-XXX-YY-NNNN.
+- **Sponsors & partners:** records with a user-written relationship label, tier,
+  logo, blurb and contributions; public only when confirmed, shown on site, and
+  complete. Numbers HOR-XXXX-YY-NNNN; existing three-letter IDs are upgraded
+  only when that record is deliberately saved. Admin has card/list views and
+  search, relationship, kind and status filters.
 - **Email templates:** built-ins (editable wording) plus HOR's own acceptance
   and event templates, live preview, and "Send a test to me".
 - **Event albums (Cloudinary):** the event editor has an Album card for *past*
@@ -435,3 +441,13 @@ domain in Vercel after the production release.
   emails to real people, or production.
 - End each finished change with: what's on staging, how to check it, and
   "say *push to main* when you're happy".
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

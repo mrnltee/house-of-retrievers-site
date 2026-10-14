@@ -5,20 +5,28 @@ import { STATUSES, givesLabel, isPublic, statusLabel, supporterNumber, tierLabel
 import { Flash, NotAllowed, PageHead } from "../ui";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
+const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
-/** Sponsors & partners (Figma S1): one card per organisation. */
+/** Sponsors & partners: switchable cards/table with kind, status and relationship filters. */
 export default async function SupportersPage({ searchParams }) {
   const params = await searchParams;
   const { admin, allowed } = await pageAdmin("people:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const kind = ["Sponsor", "Partner"].includes(params?.kind) ? params.kind : "";
-  const status = STATUSES.some(([k]) => k === params?.status) ? params.status : "";
-  const [rows, counts, events, waiting] = await Promise.all([
+  const status = STATUSES.some(([key]) => key === params?.status) ? params.status : "";
+  const label = cleanParam(params?.label, 60);
+  const q = cleanParam(params?.q);
+  const view = params?.view === "list" ? "list" : "cards";
+  const [rows, counts, events, waiting, labels] = await Promise.all([
     sql(
-      `SELECT * FROM supporters WHERE ($1 = '' OR kind = $1) AND ($2 = '' OR status = $2)
+      `SELECT * FROM supporters
+        WHERE ($1 = '' OR kind = $1)
+          AND ($2 = '' OR status = $2)
+          AND ($3 = '' OR category_label = $3)
+          AND ($4 = '' OR name ILIKE '%' || $4 || '%' OR coalesce(code, '') ILIKE '%' || $4 || '%' OR coalesce(category_label, '') ILIKE '%' || $4 || '%')
         ORDER BY array_position(ARRAY['confirmed','talking','inquiry','ended'], status), name`,
-      [kind, status],
+      [kind, status, label, q],
     ),
     sql("SELECT kind, count(*)::int AS n FROM supporters GROUP BY kind"),
     sql("SELECT title, date, partners, sponsors FROM events WHERE status <> 'draft' AND (cardinality(partners) > 0 OR cardinality(sponsors) > 0) ORDER BY date DESC"),
@@ -28,58 +36,121 @@ export default async function SupportersPage({ searchParams }) {
           AND NOT EXISTS (SELECT 1 FROM supporters s WHERE s.person_id = p.id OR lower(s.name) = lower(coalesce(nullif(p.organization, ''), p.name)))
         ORDER BY p.created_at DESC LIMIT 20`,
     ),
+    sql("SELECT DISTINCT category_label FROM supporters WHERE category_label IS NOT NULL ORDER BY category_label"),
   ]);
-  const count = (k) => counts.find((c) => c.kind === k)?.n || 0;
+  const count = (key) => counts.find((item) => item.kind === key)?.n || 0;
   const canEdit = can(admin.roles, "people:edit");
   const backed = (row) => {
     const field = row.kind === "Partner" ? "partners" : "sponsors";
-    return events.filter((e) => (e[field] || []).some((n) => n.toLowerCase() === row.name.toLowerCase()));
+    return events.filter((event) => (event[field] || []).some((name) => name.toLowerCase() === row.name.toLowerCase()));
   };
-  const link = (extra) => `${base}/supporters?${new URLSearchParams({ ...(kind ? { kind } : {}), ...(status ? { status } : {}), ...extra })}`;
+  const supportLine = (row) => [
+    row.cash_amount ? `Cash · ${peso(row.cash_amount)}` : "",
+    row.in_kind_value || row.in_kind_note ? `In-kind${row.in_kind_value ? ` · ${peso(row.in_kind_value)}` : ""}${row.in_kind_note ? ` · ${row.in_kind_note}` : ""}` : "",
+    ...(row.gives || []).filter((give) => !["cash", "in-kind"].includes(give)).map(givesLabel),
+  ].filter(Boolean).join(" · ");
+  const current = { ...(kind && { kind }), ...(status && { status }), ...(label && { label }), ...(q && { q }), ...(view === "list" && { view }) };
+  const href = (changes = {}) => {
+    const next = { ...current, ...changes };
+    Object.keys(next).forEach((key) => (next[key] == null || next[key] === "") && delete next[key]);
+    const query = new URLSearchParams(next).toString();
+    return `${base}/supporters${query ? `?${query}` : ""}`;
+  };
+  const filtered = Boolean(kind || status || label || q);
 
   return (
     <>
-      <PageHead title="Sponsors & partners" lead="Who backs HOR and how. Records marked “On the website” appear on the home page with their logo, tier, amounts and the events they backed.">
+      <PageHead title="Sponsors & partners" lead="Who backs HOR and how. Add a clear relationship label, then use cards for a quick scan or the list when the records grow.">
         {canEdit && <a className="btn gold" href={`${base}/supporters/new`}>+ Add sponsor or partner</a>}
       </PageHead>
       <Flash params={params} />
-      <div className="actions" style={{ justifyContent: "space-between" }}>
+
+      <div className="supporter-toolbar">
         <nav className="tabs" aria-label="Kind">
-          <a href={`${base}/supporters${status ? `?status=${status}` : ""}`} aria-current={!kind ? "page" : undefined}>All · {count("Sponsor") + count("Partner")}</a>
-          <a href={link({ kind: "Sponsor" })} aria-current={kind === "Sponsor" ? "page" : undefined}>Sponsors · {count("Sponsor")}</a>
-          <a href={link({ kind: "Partner" })} aria-current={kind === "Partner" ? "page" : undefined}>Partners · {count("Partner")}</a>
+          <a href={href({ kind: null })} aria-current={!kind ? "page" : undefined}>All · {count("Sponsor") + count("Partner")}</a>
+          <a href={href({ kind: "Sponsor" })} aria-current={kind === "Sponsor" ? "page" : undefined}>Sponsors · {count("Sponsor")}</a>
+          <a href={href({ kind: "Partner" })} aria-current={kind === "Partner" ? "page" : undefined}>Partners · {count("Partner")}</a>
         </nav>
-        <nav className="tabs small-tabs" aria-label="Status">
-          <a href={`${base}/supporters${kind ? `?kind=${kind}` : ""}`} aria-current={!status ? "page" : undefined}>Any status</a>
-          {STATUSES.map(([k, l]) => <a key={k} href={`${base}/supporters?${new URLSearchParams({ ...(kind ? { kind } : {}), status: k })}`} aria-current={status === k ? "page" : undefined}>{l}</a>)}
+        <nav className="tabs small-tabs" aria-label="View">
+          <a href={href({ view: null })} aria-current={view === "cards" ? "page" : undefined}>Cards</a>
+          <a href={href({ view: "list" })} aria-current={view === "list" ? "page" : undefined}>List</a>
         </nav>
       </div>
 
+      <nav className="tabs small-tabs" aria-label="Status">
+        <a href={href({ status: null })} aria-current={!status ? "page" : undefined}>Any status</a>
+        {STATUSES.map(([key, text]) => <a key={key} href={href({ status: key })} aria-current={status === key ? "page" : undefined}>{text}</a>)}
+      </nav>
+
+      <form method="get" action={`${base}/supporters`} className="card supporter-filters" role="search">
+        {kind && <input type="hidden" name="kind" value={kind} />}
+        {status && <input type="hidden" name="status" value={status} />}
+        {view === "list" && <input type="hidden" name="view" value="list" />}
+        <label className="field">
+          <span>Find a record</span>
+          <input type="search" name="q" defaultValue={q} maxLength={80} placeholder="Name, ID or relationship" />
+        </label>
+        <label className="field">
+          <span>Relationship label</span>
+          <select name="label" defaultValue={label}>
+            <option value="">All labels</option>
+            {labels.map((item) => <option key={item.category_label} value={item.category_label}>{item.category_label}</option>)}
+          </select>
+        </label>
+        <div className="actions supporter-filter-actions">
+          <button type="submit" className="btn dark" data-confirm="not-needed-read-only">Filter</button>
+          {filtered && <a className="btn ghost" href={href({ kind: null, status: null, label: null, q: null })}>Clear</a>}
+        </div>
+      </form>
+
       {rows.length === 0 ? (
-        <p className="card muted">{kind || status ? "No one matches." : "No sponsors or partners yet. Add one, or open a Sponsor or Partner in People and choose “Make a sponsor record”."}</p>
+        <p className="card muted">{filtered ? "No sponsors or partners match these filters." : "No sponsors or partners yet. Add one, or open a Sponsor or Partner in People and choose “Make a sponsor record”."}</p>
+      ) : view === "list" ? (
+        <div className="table-wrap supporter-list-wrap">
+          <table>
+            <thead><tr><th>Organisation</th><th>ID</th><th>Relationship</th><th>Status</th><th>Support</th><th>Events</th><th>Website</th></tr></thead>
+            <tbody>
+              {rows.map((row) => {
+                const linkedEvents = backed(row);
+                return (
+                  <tr key={row.id}>
+                    <td className="strong"><span className="supporter-list-name"><span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span><a href={`${base}/supporters/${row.id}`}>{row.name}</a></span></td>
+                    <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
+                    <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}{row.tier && <span className={`chip tier-${row.tier}`}>★ {tierLabel(row.tier)}</span>}</span></td>
+                    <td><span className={`chip status-${row.status}`}>{statusLabel(row.status)}</span></td>
+                    <td className="supporter-list-support">{supportLine(row) || "—"}</td>
+                    <td>{linkedEvents.length || "—"}</td>
+                    <td>{row.website ? <a href={row.website} target="_blank" rel="noreferrer">Open ↗</a> : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <ul className="supporter-cards">
-          {rows.map((r) => {
-            const ev = backed(r);
-            const gave = [r.cash_amount ? `Cash · ${peso(r.cash_amount)}` : "", r.in_kind_value || r.in_kind_note ? `In-kind${r.in_kind_value ? ` · ${peso(r.in_kind_value)}` : ""}${r.in_kind_note ? ` · ${r.in_kind_note}` : ""}` : "", ...(r.gives || []).filter((g) => !["cash", "in-kind"].includes(g)).map(givesLabel)].filter(Boolean).join(" · ");
+          {rows.map((row) => {
+            const linkedEvents = backed(row);
+            const gave = supportLine(row);
             return (
-              <li key={r.id}>
-                <a className="card supporter-card" href={`${base}/supporters/${r.id}`}>
+              <li key={row.id}>
+                <a className="card supporter-card" href={`${base}/supporters/${row.id}`}>
                   <span className="supporter-card-top">
-                    <span className="supporter-card-logo">{r.logo ? <img src={r.logo} alt="" /> : r.name.slice(0, 2).toUpperCase()}</span>
+                    <span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span>
                     <span>
-                      <strong>{r.name}</strong>
-                      {supporterNumber(r) && <span className="small muted" style={{ display: "block", marginBottom: 6 }}>{supporterNumber(r)}</span>}
+                      <strong>{row.name}</strong>
+                      {supporterNumber(row) && <span className="small muted" style={{ display: "block", marginBottom: 6 }}>{supporterNumber(row)}</span>}
                       <span className="chips">
-                        <span className="chip">{r.kind}</span>
-                        {r.tier && <span className={`chip tier-${r.tier}`}>★ {tierLabel(r.tier)}</span>}
-                        <span className={`chip status-${r.status}`}>{statusLabel(r.status)}</span>
+                        <span className="chip">{row.kind}</span>
+                        {row.category_label && <span className="chip">{row.category_label}</span>}
+                        {row.tier && <span className={`chip tier-${row.tier}`}>★ {tierLabel(row.tier)}</span>}
+                        <span className={`chip status-${row.status}`}>{statusLabel(row.status)}</span>
                       </span>
                     </span>
                   </span>
                   <span className="small">{gave || "Nothing recorded yet"}</span>
-                  <span className="small muted">{ev.length ? `${ev.length} event${ev.length === 1 ? "" : "s"} · last ${String(ev[0].date).slice(0, 10)}` : "Not linked to an event yet"}</span>
-                  <span className={`supporter-card-site${isPublic(r) ? " is-on" : ""}`}>{isPublic(r) ? "● On the website" : "○ Not on the website"}</span>
+                  <span className="small muted">{linkedEvents.length ? `${linkedEvents.length} event${linkedEvents.length === 1 ? "" : "s"} · last ${String(linkedEvents[0].date).slice(0, 10)}` : "Not linked to an event yet"}</span>
+                  <span className={`supporter-card-site${isPublic(row) ? " is-on" : ""}`}>{isPublic(row) ? "● On the website" : "○ Not on the website"}</span>
                 </a>
               </li>
             );
@@ -92,8 +163,8 @@ export default async function SupportersPage({ searchParams }) {
           <h2>From the Join form</h2>
           <p className="small muted">Sponsors and partners who used the Join form and don't have a record yet.</p>
           <ul className="plain-list">
-            {waiting.map((p) => (
-              <li key={p.id}><a href={`${base}/people/${p.id}`}>{p.organization || p.name}</a> <span className="small muted">· {p.kind}{p.organization ? ` · ${p.name}` : ""}</span></li>
+            {waiting.map((person) => (
+              <li key={person.id}><a href={`${base}/people/${person.id}`}>{person.organization || person.name}</a> <span className="small muted">· {person.kind}{person.organization ? ` · ${person.name}` : ""}</span></li>
             ))}
           </ul>
         </section>

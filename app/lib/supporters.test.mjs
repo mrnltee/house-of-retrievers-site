@@ -11,10 +11,12 @@ test("the form is cleaned; the website switch needs confirmed + logo + blurb", (
   assert.deepEqual(value.gives, ["cash"]);
   assert.equal(value.showOnSite, false);
   assert.match(notes[0], /Confirmed status, a logo, a blurb/);
-  const ok = validateSupporter({ kind: "Sponsor", name: "S", status: "confirmed", showOnSite: "on", logo: "/api/event-image/abc", blurb: "Hi", code: "abc" });
-  assert.equal(ok.value.code, "ABC");
-  assert.match(validateSupporter({ kind: "Sponsor", name: "S", status: "confirmed" }).error, /3-letter ID code/);
-  assert.match(validateSupporter({ kind: "Sponsor", name: "S", code: "AB1" }).error, /3 letters/);
+  const ok = validateSupporter({ kind: "Sponsor", name: "S", status: "confirmed", showOnSite: "on", logo: "/api/event-image/abc", blurb: "Hi", code: "nvtl", categoryLabel: " Venue partner " });
+  assert.equal(ok.value.code, "NVTL");
+  assert.equal(ok.value.categoryLabel, "Venue partner");
+  assert.match(validateSupporter({ kind: "Sponsor", name: "S", status: "confirmed" }).error, /4-letter ID code/);
+  assert.match(validateSupporter({ kind: "Sponsor", name: "S", code: "AB1" }).error, /4 letters/);
+  assert.equal(validateSupporter({ kind: "Sponsor", name: "S", code: "OLD" }, { legacyCode: "OLD" }).value.code, "OLD");
   assert.equal(ok.value.showOnSite, true);
   assert.equal(validateSupporter({ kind: "Partner", name: "P", tier: "pack-leader" }).value.tier, null);
   assert.match(validateSupporter({ kind: "Sponsor", name: "S", cashAmount: "lots" }).error, /pesos/);
@@ -34,11 +36,13 @@ test("public view: amounts only once the sponsor was told", () => {
   assert.equal(supporterSlug("Pét Pals & Co."), "pet-pals-co");
 });
 
-test("ID codes and numbers: HOR-XXX-YY-NNNN", () => {
-  assert.equal(suggestCode("Pawsome Pet Shop"), "PPS");
-  assert.equal(suggestCode("The Bark & Brew Café Co."), "BBC");
-  assert.equal(suggestCode("Vetlink"), "VET");
-  assert.equal(suggestCode("Ana Vet"), "AVN");
-  assert.equal(supporterNumber({ code: "PPS", number_year: 2026, number_no: 1 }), "HOR-PPS-26-0001");
-  assert.equal(supporterNumber({ code: "PPS", number_year: null, number_no: null }), "");
+test("ID codes and numbers: HOR-XXXX-YY-NNNN", () => {
+  assert.equal(suggestCode("Novotel"), "NVTL");
+  assert.equal(suggestCode("Pawsome Pet Shop"), "PPSW");
+  assert.equal(suggestCode("The Bark & Brew Café Co."), "BBCR");
+  assert.equal(suggestCode("Vetlink"), "VTLN");
+  assert.equal(suggestCode("Ana Vet"), "AVNT");
+  assert.equal(suggestCode(""), "");
+  assert.equal(supporterNumber({ code: "NVTL", number_year: 2026, number_no: 1 }), "HOR-NVTL-26-0001");
+  assert.equal(supporterNumber({ code: "NVTL", number_year: null, number_no: null }), "");
 });

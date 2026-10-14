@@ -27,6 +27,7 @@ export const GIVES = [
 ];
 
 export const BLURB_MAX = 200;
+export const CATEGORY_LABEL_MAX = 60;
 
 const label = (list, key) => list.find(([k]) => k === key)?.[1] || "";
 export const statusLabel = (key) => label(STATUSES, key);
@@ -81,7 +82,7 @@ const on = (v) => v === true || v === "on" || v === "true";
  * actually be public: confirmed, with a logo and a blurb. Ended switches it off.
  * @returns {{ value?: object, error?: string, notes?: string[] }}
  */
-export function validateSupporter(input) {
+export function validateSupporter(input, { legacyCode = null } = {}) {
   const value = {
     kind: KINDS.includes(input?.kind) ? input.kind : null,
     name: clean(input?.name, 80),
@@ -90,6 +91,7 @@ export function validateSupporter(input) {
     website: cleanUrl(input?.website),
     instagram: cleanHandle(input?.instagram),
     blurb: clean(input?.blurb, BLURB_MAX) || null,
+    categoryLabel: clean(input?.categoryLabel, CATEGORY_LABEL_MAX) || null,
     gives: GIVES.map(([k]) => k).filter((k) => [].concat(input?.gives || []).includes(k)),
     supportYear: input?.supportYear ? Number(input.supportYear) : null,
     cashAmount: peso(input?.cashAmount),
@@ -112,8 +114,9 @@ export function validateSupporter(input) {
   if (value.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.contactEmail)) return { error: "The contact email doesn't look right." };
   if (value.supportYear != null && !(Number.isInteger(value.supportYear) && value.supportYear >= 2020 && value.supportYear <= 2100)) return { error: "Pick the year these amounts are for." };
   if (value.logo && !value.logo.startsWith("/api/event-image/")) value.logo = null;
-  if (value.code && !/^[A-Z]{3}$/.test(value.code)) return { error: "The ID code should be 3 letters, like PPS." };
-  if (value.status === "confirmed" && !value.code) return { error: "Give them a 3-letter ID code before confirming. It goes in their number, e.g. HOR-PPS-26-0001." };
+  const keepsLegacyCode = /^[A-Z]{3}$/.test(legacyCode || "") && value.code === legacyCode;
+  if (value.code && !/^[A-Z]{4}$/.test(value.code) && !keepsLegacyCode) return { error: "The ID code should be 4 letters, like NVTL." };
+  if (value.status === "confirmed" && !value.code) return { error: "Give them a 4-letter ID code before confirming. It goes in their number, e.g. HOR-NVTL-26-0001." };
   if (value.kind === "Partner") value.tier = null;
 
   const notes = [];
@@ -131,8 +134,9 @@ export function validateSupporter(input) {
 }
 
 /**
- * A 3-letter ID code to suggest from the name: the first letters of the first
- * three words ("Pawsome Pet Shop" → PPS), or the first letters of a shorter name.
+ * A 4-letter placeholder ID code from the organisation name. Four or more
+ * words use their initials; shorter names add consonants from the words, then
+ * remaining letters. The admin may replace this suggestion before numbering.
  */
 export function suggestCode(name) {
   const words = String(name || "")
@@ -142,12 +146,17 @@ export function suggestCode(name) {
     .replace(/&/g, " ")
     .split(/[^A-Z0-9]+/)
     .filter((w) => w && !["THE", "AND", "OF", "INC", "CO", "CORP", "LTD"].includes(w));
-  const letters = words.length >= 3 ? words.slice(0, 3).map((w) => w[0]).join("") : (words.map((w) => w[0]).join("") + words.join("").slice(1)).replace(/[^A-Z]/g, "");
-  return letters.replace(/[^A-Z]/g, "").slice(0, 3).padEnd(3, "X");
+  if (!words.length) return "";
+  const initials = words.slice(0, 4).map((word) => word[0]).join("");
+  if (initials.length === 4) return initials;
+  const tails = words.map((word) => word.slice(1)).join("");
+  const consonants = tails.replace(/[AEIOU]/g, "");
+  const vowels = tails.replace(/[^AEIOU]/g, "");
+  return `${initials}${consonants}${vowels}`.slice(0, 4).padEnd(4, "X");
 }
 
 /**
- * "HOR-PPS-26-0001": the sponsor or partner's code, the year they registered
+ * "HOR-NVTL-26-0001": the sponsor or partner's code, the year they registered
  * (last two digits) and their place among sponsors and partners confirmed
  * from that year. Set the first time a record is confirmed; never reused.
  */
@@ -170,6 +179,7 @@ export function publicSupporter(row, events = []) {
     slug: row.slug,
     kind: row.kind,
     name: row.name,
+    label: row.category_label || null,
     tier: row.kind === "Sponsor" ? row.tier || null : null,
     tierLabel: row.kind === "Sponsor" ? tierLabel(row.tier) || null : null,
     logo: row.logo,

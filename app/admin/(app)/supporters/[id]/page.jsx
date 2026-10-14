@@ -27,7 +27,7 @@ export default async function SupporterPage({ params, searchParams }) {
   return (
     <>
       <p className="small"><a href={`${base}/supporters`}>← Sponsors & partners</a></p>
-      <PageHead title={row.name} lead={[row.kind, supporterNumber(row), row.tier ? `★ ${tierLabel(row.tier)}` : "", statusLabel(row.status), shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
+      <PageHead title={row.name} lead={[row.kind, row.category_label, supporterNumber(row), row.tier ? `★ ${tierLabel(row.tier)}` : "", statusLabel(row.status), shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
         {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}
       </PageHead>
       <Flash params={query} />
@@ -57,7 +57,7 @@ export default async function SupporterPage({ params, searchParams }) {
                 {history.map((h, i) => (
                   <li key={i}>
                     <span className="small muted">{formatWhen(h.at)}</span>
-                    <span>{actionLabel(h.action)}{h.details?.status ? `: ${statusLabel(h.details.status)}` : ""}{h.details?.website ? ` (website: ${h.details.website})` : ""}{h.details?.amounts ? " (amounts agreed public)" : ""}</span>
+                    <span>{actionLabel(h.action)}{h.details?.status ? `: ${statusLabel(h.details.status)}` : ""}{h.details?.code ? ` (ID: ${h.details.code})` : ""}{h.details?.label ? ` (label: ${h.details.label})` : ""}{h.details?.website ? ` (website: ${h.details.website})` : ""}{h.details?.amounts ? " (amounts agreed public)" : ""}</span>
                     <span className="small muted">{h.actor_email}</span>
                   </li>
                 ))}

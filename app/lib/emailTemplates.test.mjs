@@ -66,9 +66,9 @@ test("every kind's Join reply and welcome can be reworded; own templates fill pe
   assert.equal(partner.subject, "Hello Pawsome Pet Shop");
   assert.equal(welcomeKey("Volunteer"), "volunteer-welcome");
   assert.match(welcomeMember({ name: "Ben", kind: "Volunteer", memberNo: "HORV-26-0003" }).text, /volunteer number is HORV-26-0003/);
-  const accepted = acceptanceEmail({ person: { name: "Ana Reyes", kind: "Sponsor", organization: "Pawsome", memberNo: "HOR-PPS-26-0001" }, custom: { subject: "Welcome, {{organization}}", heading: "Thanks, {{first_name}}", message: "You're a {{role}}: {{member_no}}" } });
+  const accepted = acceptanceEmail({ person: { name: "Ana Reyes", kind: "Sponsor", organization: "Pawsome", memberNo: "HOR-NVTL-26-0001" }, custom: { subject: "Welcome, {{organization}}", heading: "Thanks, {{first_name}}", message: "You're a {{role}}: {{member_no}}" } });
   assert.equal(accepted.subject, "Welcome, Pawsome");
-  assert.match(accepted.text, /You're a sponsor: HOR-PPS-26-0001/);
+  assert.match(accepted.text, /You're a sponsor: HOR-NVTL-26-0001/);
   const ev = renderTemplate("custom:event", { subject: "Ready for {{event_title}}?", heading: "See you, {{first_name}}", message: "At {{event_venue}}" }, SAMPLE_PERSON, { button: { label: "Open my pass", href: "https://x.test/r/1" } });
   assert.equal(ev.subject, "Ready for Bedazzle Barkdate?");
   assert.match(ev.text, /At Wiltlover Café, Pasay/);

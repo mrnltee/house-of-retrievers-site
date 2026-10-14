@@ -148,7 +148,7 @@ export default async function PersonPage({ params, searchParams }) {
               <h2>Sponsor & partner record</h2>
               {supporter ? (
                 <>
-                  {number ? <dl className="facts"><div><dt>Number</dt><dd>{number}</dd></div></dl> : <p className="small muted">Gets a number (HOR-{supporter.code || "XXX"}-YY-NNNN) once the record is Confirmed.</p>}
+                  {number ? <dl className="facts"><div><dt>Number</dt><dd>{number}</dd></div></dl> : <p className="small muted">Gets a number (HOR-{supporter.code || "XXXX"}-YY-NNNN) once the record is Confirmed.</p>}
                   <p><a href={`${base}/supporters/${supporter.id}`}>Open “{supporter.name}” →</a></p>
                 </>
               ) : canEdit ? (
