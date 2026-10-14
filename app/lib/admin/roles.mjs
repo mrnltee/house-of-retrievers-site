@@ -28,7 +28,6 @@ const PERMISSIONS = {
   "payments:view": ["owner", "treasurer"],
   "payments:request": ["owner", "treasurer"],
   "payments:approve": ["owner"],
-  "theme:edit": ["owner", "content"],
   "admins:manage": ["owner"],
   "log:view": ["owner"],
 };

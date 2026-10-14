@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motionDurations, shouldShowIntro } from "../lib/brandMotion.mjs";
-import { useSeasonalTheme } from "./SeasonalTheme";
 
 function AnimatedLogo() {
   return (
@@ -22,22 +21,7 @@ function AnimatedLogo() {
   );
 }
 
-function HalloweenDecor() {
-  return (
-    <div className="halloween-decor" aria-hidden="true">
-      <span className="halloween-moon" />
-      <span className="halloween-bat halloween-bat-one">⌁</span>
-      <span className="halloween-bat halloween-bat-two">⌁</span>
-      <span className="halloween-pumpkin halloween-pumpkin-one"><i /><b /><em /></span>
-      <span className="halloween-pumpkin halloween-pumpkin-two"><i /><b /><em /></span>
-      <span className="halloween-hat halloween-hat-gold"><i /><b /></span>
-      <span className="halloween-hat halloween-hat-lab"><i /><b /></span>
-    </div>
-  );
-}
-
 export default function BrandTransition({ interactionId, onInteractionComplete }) {
-  const theme = useSeasonalTheme();
   const [visible, setVisible] = useState(true);
   const [mode, setMode] = useState("intro");
 
@@ -98,13 +82,9 @@ export default function BrandTransition({ interactionId, onInteractionComplete }
     <div
       key={`${mode}-${interactionId}`}
       className={`brand-transition brand-transition-${mode}`}
-      data-seasonal-theme={theme?.splashVariant || "default"}
-      data-seasonal-welcome={theme?.welcomeText || ""}
       aria-hidden="true"
     >
-      {theme?.splashVariant === "halloween" && <HalloweenDecor />}
       <AnimatedLogo />
-      {theme?.welcomeText && <p className="brand-transition-welcome">{theme.welcomeText}</p>}
     </div>
   );
 }
