@@ -22,6 +22,11 @@ test("tickets: one price needs no choice; several need a valid pick", () => {
   assert.equal(ticketLine(null, 0), "Free");
 });
 
+test("ticket choice keeps its attendance rule for the server-side price check", () => {
+  const tier = { label: "Furbaby package", amount: 760, attendanceBasis: "furbaby_package", includedHumansPerFurbaby: 2, additionalHumanFee: 100 };
+  assert.deepEqual(chooseTicket([tier], undefined).value, tier);
+});
+
 test("proof: method, reference and amount are checked", () => {
   assert.deepEqual(validateProof({ method: "gcash", reference: " 1012 345 678 901 ", amount: "₱795.00" }).value, { method: "gcash", reference: "1012 345 678 901", amount: 795 });
   assert.match(validateProof({ method: "cash", reference: "1" }).error, /how you paid/);

@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`026_…sql`**).
+     number (the next one is **`027_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -180,6 +180,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 023 | optional event-specific on-site payment notice |
 | 024 | seasonal-theme settings table (the public seasonal treatment is parked; keep this applied migration) |
 | 025 | supporter four-letter IDs (legacy three-letter IDs remain valid) and optional relationship labels |
+| 026 | ticket-specific attendance pricing (`human_only` or `furbaby_package`) in existing tier JSON |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -341,7 +342,7 @@ npx next dev
   - The editor's Preview uses the public components.
   - Ended events move to "Where we have been" (`hasEnded`).
 - **RSVP and payments:**
-  - Ticket choice. Event pricing can be per registration (the existing default), per person, per furbaby, a human + furbaby bundle, or per person with a configurable number of included dog companions and an extra fee per additional furbaby. Registration counts are stored with the calculated amount due; human + dog companion first-N limits count people, while event capacity remains registration-based for now.
+  - Ticket choice. Event pricing can be per registration (the existing default), per person, per furbaby, a human + furbaby bundle, per person with a configurable number of included dog companions and an extra fee per additional furbaby, or ticket-specific rules: Hooman only (per person, no furbabies) and Furbaby package (per dog, with included people and an extra-person fee). Registration counts are stored with the calculated amount due; human + dog companion first-N limits count people, while event capacity remains registration-based for now.
   - Free event → the confirmed pass (QR) is emailed.
   - Paid event → spot held as "Payment pending". The registrant uploads the
     method, reference, amount and a screenshot, which moves it to "To check".

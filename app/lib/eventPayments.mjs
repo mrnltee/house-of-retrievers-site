@@ -83,7 +83,13 @@ export const referenceKey = (value) => String(value || "").toUpperCase().replace
 export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, counts = {} } = {}) {
   const list = Array.isArray(tiers) ? tiers : [];
   if (list.length === 0) return { value: { label: null, amount: null } };
-  const pick = (t) => ({ value: { label: t.label || null, amount: t.amount ?? null } });
+  const pick = (t) => {
+    const value = { label: t.label || null, amount: t.amount ?? null };
+    for (const key of ["attendanceBasis", "includedHumansPerFurbaby", "additionalHumanFee"]) {
+      if (t[key] !== undefined) value[key] = t[key];
+    }
+    return { value };
+  };
   const onSale = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now, counts));
   if (onSale.length === 0) return { error: "Tickets for this event aren't on sale right now." };
   const i = index === undefined || index === null || index === "" ? NaN : Number(index);

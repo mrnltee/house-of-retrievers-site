@@ -9,6 +9,7 @@ export const PRICING_BASES = [
   ["furbaby", "Per furbaby"],
   ["bundle", "Human + furbaby bundle"],
   ["human_plus_furbaby", "Per person + dog companion"],
+  ["tiered", "Ticket-specific attendance rules"],
 ];
 
 const BASIS_KEYS = new Set(PRICING_BASES.map(([key]) => key));
@@ -33,6 +34,25 @@ export function cleanFurbabyPricing(included, extraFee) {
   return { includedFurbabiesPerHuman: includedCount, additionalFurbabyFee: fee };
 }
 
+/** Validates a ticket rule used by the ticket-specific attendance mode. */
+export function cleanTieredTicketRule(input = {}) {
+  const attendanceBasis = input?.attendanceBasis;
+  if (attendanceBasis === "human_only") return { attendanceBasis };
+  if (attendanceBasis !== "furbaby_package") return { error: "Choose whether this ticket is Hooman only or a Furbaby package." };
+
+  const includedHumansPerFurbaby = Number(input?.includedHumansPerFurbaby ?? 2);
+  const additionalHumanFee = input?.additionalHumanFee === "" || input?.additionalHumanFee == null
+    ? 0
+    : Number(String(input.additionalHumanFee).replace(/₱|php|p(?=\d)|,|\s/gi, ""));
+  if (!Number.isInteger(includedHumansPerFurbaby) || includedHumansPerFurbaby < 1 || includedHumansPerFurbaby > 100) {
+    return { error: "People included per furbaby should be a whole number from 1 to 100." };
+  }
+  if (!Number.isInteger(additionalHumanFee) || additionalHumanFee < 0 || additionalHumanFee > 1_000_000) {
+    return { error: "The extra-person fee should be a whole number from 0 to 1,000,000 pesos." };
+  }
+  return { attendanceBasis, includedHumansPerFurbaby, additionalHumanFee };
+}
+
 function bundleQuantity(tier, humans, furbabies) {
   const includedHumans = Number(tier?.bundleHumans || 0);
   const includedFurbabies = Number(tier?.bundleFurbabies || 0);
@@ -54,6 +74,21 @@ export function pricingQuantity(basis, tier, humans = 1, furbabies = 0) {
 
 /** Returns the total in whole pesos, or an error when a bundle is incomplete. */
 export function calculateAmountDue({ basis = "registration", tier = {}, humans = 1, furbabies = 0, includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 } = {}) {
+  if (cleanPricingBasis(basis) === "tiered") {
+    const rule = cleanTieredTicketRule(tier);
+    if (rule.error) return rule;
+    if (rule.attendanceBasis === "human_only") {
+      if (furbabies > 0) return { error: "This Hooman only ticket cannot include a furbaby. Choose a Furbaby package instead." };
+      return { quantity: humans, amount: Math.round(Number(tier.amount || 0) * humans) };
+    }
+    if (furbabies < 1) return { error: "Add at least one furbaby for this Furbaby package." };
+    const extraHumans = Math.max(0, humans - furbabies * rule.includedHumansPerFurbaby);
+    return {
+      quantity: furbabies,
+      extraHumans,
+      amount: Math.round(Number(tier.amount || 0) * furbabies) + extraHumans * rule.additionalHumanFee,
+    };
+  }
   const quantity = pricingQuantity(basis, tier, humans, furbabies);
   if (quantity == null) return { error: "This bundle needs at least one included person or furbaby." };
   const pricing = cleanFurbabyPricing(includedFurbabiesPerHuman, additionalFurbabyFee);
@@ -82,5 +117,6 @@ export function pricingLabel(basis, tier = {}) {
   if (key === "human_plus_furbaby") return "Per person + dog companion";
   if (key === "furbaby") return "Per furbaby";
   if (key === "bundle") return `${tier.bundleHumans || 0} person + ${tier.bundleFurbabies || 0} furbaby bundle`;
+  if (key === "tiered") return tier.attendanceBasis === "human_only" ? "Hooman only" : "Furbaby package";
   return "Per registration";
 }

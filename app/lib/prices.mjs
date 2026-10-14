@@ -28,6 +28,8 @@ export function parsePeso(text) {
  * and `until`, ISO instants the editor builds from Manila date + time. It can
  * also be limited to the first `limit` registrants (an early bird for the
  * first 20); after that it isn't offered and people take the other tiers.
+ * In ticket-specific attendance mode, each tier also says whether it is for
+ * people only or a furbaby package, including its people-per-dog allowance.
  * @returns {{ tiers?: {label: string, amount: number, from?: string, until?: string, limit?: number}[], error?: string }}
  */
 export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
@@ -58,6 +60,29 @@ export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
       }
       tier.bundleHumans = bundleHumans;
       tier.bundleFurbabies = bundleFurbabies;
+    }
+    // Free events do not present a ticket choice, so they need no attendance rule.
+    if (pricingBasis === "tiered" && amount > 0) {
+      const attendanceBasis = row?.attendanceBasis;
+      if (attendanceBasis === "human_only") {
+        tier.attendanceBasis = attendanceBasis;
+      } else if (attendanceBasis === "furbaby_package") {
+        const includedHumansPerFurbaby = Number(row?.includedHumansPerFurbaby ?? 2);
+        const additionalHumanFee = row?.additionalHumanFee === "" || row?.additionalHumanFee == null
+          ? 0
+          : parsePeso(row.additionalHumanFee);
+        if (!Number.isInteger(includedHumansPerFurbaby) || includedHumansPerFurbaby < 1 || includedHumansPerFurbaby > 100) {
+          return { error: `${label || "A Furbaby package"} needs a whole number of included people from 1 to 100.` };
+        }
+        if (additionalHumanFee == null || !Number.isInteger(additionalHumanFee)) {
+          return { error: `${label || "A Furbaby package"} needs a whole-peso extra-person fee.` };
+        }
+        tier.attendanceBasis = attendanceBasis;
+        tier.includedHumansPerFurbaby = includedHumansPerFurbaby;
+        tier.additionalHumanFee = additionalHumanFee;
+      } else {
+        return { error: `${label || "A ticket"} needs an attendance rule.` };
+      }
     }
     for (const key of ["from", "until"]) {
       if (row?.[key] == null || row[key] === "") continue;

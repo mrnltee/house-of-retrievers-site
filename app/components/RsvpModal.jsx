@@ -30,7 +30,25 @@ export default function RsvpModal({ event, onClose }) {
   const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
   const chosen = tickets.find((t) => t.i === ticket);
   const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
+  const humanOnly = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "human_only";
+  const furbabyPackage = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "furbaby_package";
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
+
+  function selectTicket(nextTicket) {
+    const next = tickets.find((item) => item.i === nextTicket);
+    setTicket(nextTicket);
+    if (event.pricingBasis !== "tiered") return;
+    if (next?.attendanceBasis === "human_only") setFurbabyCount(0);
+    if (next?.attendanceBasis === "furbaby_package" && Number(furbabyCount) < 1) setFurbabyCount(1);
+  }
+
+  function ticketRuleNote(ticketOption) {
+    if (event.pricingBasis !== "tiered") return "";
+    if (ticketOption.attendanceBasis === "human_only") return "Hooman only · no furbabies";
+    const included = ticketOption.includedHumansPerFurbaby || 2;
+    const extra = Number(ticketOption.additionalHumanFee || 0);
+    return `Includes up to ${included} ${included === 1 ? "person" : "people"} per furbaby${extra ? ` · ${peso(extra)} per extra person` : ""}`;
+  }
 
   useEffect(() => {
     const opener = document.activeElement;
@@ -49,6 +67,12 @@ export default function RsvpModal({ event, onClose }) {
     document.addEventListener("keydown", trap);
     return () => { document.removeEventListener("keydown", trap); opener?.focus?.(); };
   }, [onClose]);
+
+  // A single Furbaby package has no radio change to initialise the dog count.
+  useEffect(() => {
+    if (humanOnly && Number(furbabyCount) !== 0) setFurbabyCount(0);
+    if (furbabyPackage && Number(furbabyCount) < 1) setFurbabyCount(1);
+  }, [humanOnly, furbabyPackage, furbabyCount]);
 
   async function submit(e) {
     e.preventDefault();
@@ -123,11 +147,13 @@ export default function RsvpModal({ event, onClose }) {
             <div className="join-trap" aria-hidden="true"><label>Website<input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" defaultValue="" /></label></div>
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
-            <label>Furbaby&apos;s name (optional)<input name="furbabyName" maxLength={120} /></label>
+            <label>Furbaby&apos;s name (optional)<input name="furbabyName" maxLength={120} disabled={humanOnly} aria-describedby={humanOnly ? "no-furbabies-note" : undefined} /></label>
             <div className="row-2">
               <label>People attending<input required type="number" name="humanCount" min="1" max="100" value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
-              <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} onChange={(e) => setFurbabyCount(e.target.value)} /></label>
+              <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} disabled={humanOnly} onChange={(e) => setFurbabyCount(e.target.value)} /></label>
             </div>
+            {humanOnly && <p id="no-furbabies-note" className="form-note">This Hooman only ticket is for people attending without a furbaby.</p>}
+            {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
               <p className="furbaby-hint">We share event photos on Instagram and Facebook.</p>
@@ -153,9 +179,9 @@ export default function RsvpModal({ event, onClose }) {
                       const ticketDue = calculateAmountDue({ basis: event.pricingBasis, tier: t, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee });
                       return (
                     <label key={t.i} className={ticket === t.i ? "selected" : ""}>
-                      <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => setTicket(t.i)} />
-                      <span>{t.label || `Ticket ${t.i + 1}`}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} registrants · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
-                      <strong>{peso(ticketDue.amount)}</strong>
+                      <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => selectTicket(t.i)} />
+                      <span>{t.label || `Ticket ${t.i + 1}`}{ticketRuleNote(t) && <small className="ticket-until">{ticketRuleNote(t)}</small>}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} registrants · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
+                      <strong>{ticketDue.error ? peso(t.amount) : peso(ticketDue.amount)}</strong>
                     </label>
                       );
                     })()
@@ -163,7 +189,7 @@ export default function RsvpModal({ event, onClose }) {
                 </div>
               </fieldset>
             )}
-            {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(due?.amount ?? tickets[0].amount)}{event.pricingBasis === "human_plus_furbaby" ? ` · ${humanCount} person${humanCount === 1 ? "" : "s"}${due?.extraFurbabies ? ` + ${due.extraFurbabies} extra furbaby fee${due.extraFurbabies === 1 ? "" : "s"}` : ""}` : event.pricingBasis !== "registration" ? ` · ${event.pricingBasis === "bundle" ? `${due?.quantity || 1} bundle${due?.quantity === 1 ? "" : "s"}` : `${event.pricingBasis === "human" ? humanCount : furbabyCount} × price`}` : ""}</p>}
+            {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(due?.amount ?? tickets[0].amount)}{event.pricingBasis === "tiered" ? ` · ${ticketRuleNote(tickets[0])}${due?.extraHumans ? ` · ${due.extraHumans} extra person${due.extraHumans === 1 ? "" : "s"}` : ""}` : event.pricingBasis === "human_plus_furbaby" ? ` · ${humanCount} person${humanCount === 1 ? "" : "s"}${due?.extraFurbabies ? ` + ${due.extraFurbabies} extra furbaby fee${due.extraFurbabies === 1 ? "" : "s"}` : ""}` : event.pricingBasis !== "registration" ? ` · ${event.pricingBasis === "bundle" ? `${due?.quantity || 1} bundle${due?.quantity === 1 ? "" : "s"}` : `${event.pricingBasis === "human" ? humanCount : furbabyCount} × price`}` : ""}</p>}
             {!waitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>

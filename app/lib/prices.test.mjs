@@ -26,6 +26,19 @@ test("tiers are cleaned; empty rows dropped, bad amounts refused", () => {
   assert.match(cleanTiers(JSON.stringify(Array.from({ length: 7 }, () => ({ amount: 1 })))).error, /Up to 6/);
 });
 
+test("ticket-specific attendance rules stay with each tier", () => {
+  const { tiers } = cleanTiers([
+    { label: "Hooman only", amount: "100", attendanceBasis: "human_only" },
+    { label: "Furbaby", amount: "760", attendanceBasis: "furbaby_package", includedHumansPerFurbaby: "2", additionalHumanFee: "100" },
+  ], { pricingBasis: "tiered" });
+  assert.deepEqual(tiers, [
+    { label: "Hooman only", amount: 100, attendanceBasis: "human_only" },
+    { label: "Furbaby", amount: 760, attendanceBasis: "furbaby_package", includedHumansPerFurbaby: 2, additionalHumanFee: 100 },
+  ]);
+  assert.match(cleanTiers([{ amount: 760, attendanceBasis: "furbaby_package", includedHumansPerFurbaby: 0 }], { pricingBasis: "tiered" }).error, /included people/);
+  assert.deepEqual(cleanTiers([{ amount: 0 }], { pricingBasis: "tiered" }).tiers, [{ label: "", amount: 0 }]);
+});
+
 test("older events keep working from their cost text", () => {
   assert.deepEqual(tiersFromCost("Free"), [{ label: "", amount: 0 }]);
   assert.deepEqual(tiersFromCost("795"), [{ label: "", amount: 795 }]);

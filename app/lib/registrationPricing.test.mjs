@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "./registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed } from "./registrationPricing.mjs";
 
 test("keeps the existing one-ticket-per-registration default", () => {
   assert.deepEqual(calculateAmountDue({ tier: { amount: 795 }, humans: 3, furbabies: 2 }), { quantity: 1, amount: 795 });
@@ -19,6 +19,23 @@ test("charges an additional fee for furbabies beyond the included companions", (
 test("charges enough bundles for the people and furbabies attending", () => {
   const result = calculateAmountDue({ basis: "bundle", tier: { amount: 795, bundleHumans: 1, bundleFurbabies: 1 }, humans: 2, furbabies: 1 });
   assert.deepEqual(result, { quantity: 2, amount: 1590 });
+});
+
+test("keeps furbabies out of Hooman only tickets and charges each person", () => {
+  assert.deepEqual(calculateAmountDue({ basis: "tiered", tier: { amount: 100, attendanceBasis: "human_only" }, humans: 2, furbabies: 0 }), { quantity: 2, amount: 200 });
+  assert.match(calculateAmountDue({ basis: "tiered", tier: { amount: 100, attendanceBasis: "human_only" }, humans: 1, furbabies: 1 }).error, /cannot include a furbaby/);
+});
+
+test("charges furbaby packages and an extra fee for people beyond the included count", () => {
+  const tier = { amount: 760, attendanceBasis: "furbaby_package", includedHumansPerFurbaby: 2, additionalHumanFee: 100 };
+  assert.deepEqual(calculateAmountDue({ basis: "tiered", tier, humans: 2, furbabies: 1 }), { quantity: 1, extraHumans: 0, amount: 760 });
+  assert.deepEqual(calculateAmountDue({ basis: "tiered", tier, humans: 3, furbabies: 1 }), { quantity: 1, extraHumans: 1, amount: 860 });
+  assert.match(calculateAmountDue({ basis: "tiered", tier, humans: 1, furbabies: 0 }).error, /at least one furbaby/);
+});
+
+test("requires complete ticket-specific attendance rules", () => {
+  assert.match(cleanTieredTicketRule({ attendanceBasis: "furbaby_package", includedHumansPerFurbaby: 0, additionalHumanFee: 100 }).error, /1 to 100/);
+  assert.match(cleanTieredTicketRule({ attendanceBasis: "unknown" }).error, /Choose whether/);
 });
 
 test("attendee counts are bounded and require one person", () => {

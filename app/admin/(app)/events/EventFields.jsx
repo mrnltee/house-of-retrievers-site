@@ -338,19 +338,20 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
-  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
+  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", attendanceBasis: "human_only", includedHumansPerFurbaby: "2", additionalHumanFee: "100", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
   const [basis, setBasis] = useState(pricingBasis);
   const [includedDogs, setIncludedDogs] = useState(String(includedFurbabiesPerHuman));
   const [extraDogFee, setExtraDogFee] = useState(additionalFurbabyFee ? String(additionalFurbabyFee) : "");
   const [rows, setRows] = useState(
     tiers?.length && initialMode === "paid"
-      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
+      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), attendanceBasis: t.attendanceBasis ?? "human_only", includedHumansPerFurbaby: String(t.includedHumansPerFurbaby ?? 2), additionalHumanFee: String(t.additionalHumanFee ?? 100), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
       : [blank],
   );
   const toSend = (row) => ({
     label: row.label,
     amount: row.amount,
     ...(basis === "bundle" ? { bundleHumans: row.bundleHumans, bundleFurbabies: row.bundleFurbabies } : {}),
+    ...(basis === "tiered" ? { attendanceBasis: row.attendanceBasis, includedHumansPerFurbaby: row.includedHumansPerFurbaby, additionalHumanFee: row.additionalHumanFee } : {}),
     from: row.dated ? manilaInstant(row.from.date, row.from.time || "00:00") : null,
     until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null,
     limit: row.limited && row.limit !== "" ? row.limit : null,
@@ -379,6 +380,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
           {PRICING_BASES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select>
       </label>
+      {basis === "tiered" && <p className="small muted" style={{ margin: 0 }}>Set the rule on each ticket below: Hooman only charges per person and cannot include a furbaby. A Furbaby package charges per dog, includes a set number of people, then adds an extra-person fee.</p>}
       {basis === "human_plus_furbaby" && <div className="card inset form" style={{ gap: 10 }}>
         <strong>Dog companion pricing</strong>
         <p className="small muted" style={{ margin: 0 }}>Each human ticket includes the number of furbabies below. Additional furbabies use the extra fee.</p>
@@ -402,6 +404,18 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                 {basis === "bundle" && <div className="row-2">
                   <label className="field"><span>People included</span><input type="number" min={0} max={100} value={row.bundleHumans} onChange={(e) => update(i, { bundleHumans: e.target.value })} /></label>
                   <label className="field"><span>Furbabies included</span><input type="number" min={0} max={100} value={row.bundleFurbabies} onChange={(e) => update(i, { bundleFurbabies: e.target.value })} /></label>
+                </div>}
+                {basis === "tiered" && <div className="card inset form" style={{ gap: 10 }}>
+                  <label className="field"><span>Ticket rule</span>
+                    <select value={row.attendanceBasis} onChange={(e) => update(i, { attendanceBasis: e.target.value })} aria-label={`Tier ${i + 1} ticket rule`}>
+                      <option value="human_only">Hooman only — charge each person; no furbabies</option>
+                      <option value="furbaby_package">Furbaby package — people included with each furbaby</option>
+                    </select>
+                  </label>
+                  {row.attendanceBasis === "furbaby_package" && <div className="row-2">
+                    <label className="field"><span>People included per furbaby</span><input type="number" min={1} max={100} value={row.includedHumansPerFurbaby} onChange={(e) => update(i, { includedHumansPerFurbaby: e.target.value })} /></label>
+                    <label className="field"><span>Extra-person fee</span><input type="text" inputMode="decimal" value={row.additionalHumanFee} onChange={(e) => update(i, { additionalHumanFee: e.target.value })} placeholder="100" /></label>
+                  </div>}
                 </div>}
                 <label className="field">
                   <span className={i ? "visually-hidden" : undefined}>Amount</span>
