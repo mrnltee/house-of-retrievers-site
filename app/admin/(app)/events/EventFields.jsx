@@ -397,11 +397,23 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
           <ul className="tier-list">
             {rows.map((row, i) => (
               <li key={i}>
-                <label className="field">
-                  <span className={i ? "visually-hidden" : undefined}>Tier name <small>Optional, e.g. Early bird</small></span>
-                  <input type="text" value={row.label} maxLength={40} onChange={(e) => update(i, { label: e.target.value })} placeholder={rows.length > 1 ? `Tier ${i + 1}` : "Regular"} aria-label={`Tier ${i + 1} name`} />
-                </label>
-                {basis === "bundle" && <div className="row-2">
+                <div className="tier-main">
+                  <label className="field">
+                    <span className={i ? "visually-hidden" : undefined}>Tier name <small>Optional, e.g. Early bird</small></span>
+                    <input type="text" value={row.label} maxLength={40} onChange={(e) => update(i, { label: e.target.value })} placeholder={rows.length > 1 ? `Tier ${i + 1}` : "Regular"} aria-label={`Tier ${i + 1} name`} />
+                  </label>
+                  <label className="field">
+                    <span className={i ? "visually-hidden" : undefined}>Amount</span>
+                    <span className="peso-input">
+                      <span aria-hidden="true">₱</span>
+                      <input type="text" inputMode="decimal" value={row.amount} onChange={(e) => update(i, { amount: e.target.value })} placeholder="500" aria-label={`Tier ${i + 1} amount in pesos`} />
+                    </span>
+                  </label>
+                  {rows.length > 1 && (
+                    <button type="button" className="tier-remove" onClick={() => setRows(rows.filter((_, j) => j !== i))} aria-label={`Remove tier ${i + 1}`}>×</button>
+                  )}
+                </div>
+                {basis === "bundle" && <div className="tier-rule row-2">
                   <label className="field"><span>People included</span><input type="number" min={0} max={100} value={row.bundleHumans} onChange={(e) => update(i, { bundleHumans: e.target.value })} /></label>
                   <label className="field"><span>Furbabies included</span><input type="number" min={0} max={100} value={row.bundleFurbabies} onChange={(e) => update(i, { bundleFurbabies: e.target.value })} /></label>
                 </div>}
@@ -417,16 +429,6 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                     <label className="field"><span>Extra-person fee</span><input type="text" inputMode="decimal" value={row.additionalHumanFee} onChange={(e) => update(i, { additionalHumanFee: e.target.value })} placeholder="100" /></label>
                   </div>}
                 </div>}
-                <label className="field">
-                  <span className={i ? "visually-hidden" : undefined}>Amount</span>
-                  <span className="peso-input">
-                    <span aria-hidden="true">₱</span>
-                    <input type="text" inputMode="decimal" value={row.amount} onChange={(e) => update(i, { amount: e.target.value })} placeholder="500" aria-label={`Tier ${i + 1} amount in pesos`} />
-                  </span>
-                </label>
-                {rows.length > 1 && (
-                  <button type="button" className="tier-remove" onClick={() => setRows(rows.filter((_, j) => j !== i))} aria-label={`Remove tier ${i + 1}`}>×</button>
-                )}
                 <div className="tier-period">
                   <label className="check small">
                     <input type="checkbox" checked={row.dated} onChange={(e) => update(i, { dated: e.target.checked })} />

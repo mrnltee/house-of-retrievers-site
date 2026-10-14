@@ -230,8 +230,10 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .segmented input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
 .segmented label:has(input:focus-visible) { outline: 2px solid var(--a-gold); outline-offset: 2px; }
 
-.tier-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.tier-list li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 36px; gap: 10px; align-items: end; }
+.tier-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.tier-list li { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--a-line); border-radius: 14px; background: white; }
+.tier-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .28fr) auto; gap: 12px; align-items: end; }
+.tier-rule { padding: 12px; border: 1px solid var(--a-line); border-radius: 12px; background: var(--a-ivory); }
 .peso-input { display: flex; align-items: center; border: 1px solid var(--a-field); border-radius: 10px; background: white; overflow: hidden; }
 .peso-input > span { padding: 0 4px 0 12px; font-weight: 700; color: var(--a-muted); }
 .peso-input input { border: 0; border-radius: 0; min-width: 0; flex: 1; }
@@ -433,8 +435,8 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 @media (max-width: 900px) { .check-grid { grid-template-columns: 1fr; } .receipt-card { position: static; } }
 .indent-full { grid-column: 1 / -1; }
 /* Price tiers: optional sale period (early bird) */
-.tier-list li .tier-period { grid-column: 1 / -1; display: grid; gap: 8px; margin-top: -2px; }
+.tier-list li .tier-period { display: grid; gap: 8px; }
 .tier-period-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-radius: 12px; background: var(--a-sand); }
 .tier-period-pair { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px; }
 .tier-period-note { grid-column: 1 / -1; margin: 0; }
-@media (max-width: 640px) { .tier-period-fields { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .tier-main, .tier-period-fields { grid-template-columns: 1fr; } .tier-remove { justify-self: start; } }
