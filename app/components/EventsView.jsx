@@ -151,7 +151,7 @@ function RsvpButton({ event, past, onRsvp, compact = false }) {
   if (past || !event.rsvp || !["open", "few-left", "full"].includes(event.status)) return null;
   return (
     <button type="button" className="button primary event-rsvp" onClick={() => onRsvp(event)}>
-      {event.status === "full" ? "Join the waitlist" : "RSVP"} <Icon name="arrow" size={16} />
+      {event.status === "full" ? "Join the waitlist" : event.rsvpLabel || "RSVP"} <Icon name="arrow" size={16} />
     </button>
   );
 }

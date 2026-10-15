@@ -40,6 +40,8 @@ const LABELS = {
   registration: "Registration",
   capacity: "Capacity",
   rsvpOpen: "RSVPs open",
+  rsvpLabel: "RSVP button label",
+  vaccinationRecordRequired: "Vaccination record upload",
   feeRequired: "Fee required",
   pricingBasis: "Payment basis",
   includedFurbabiesPerHuman: "Dog companion pricing",

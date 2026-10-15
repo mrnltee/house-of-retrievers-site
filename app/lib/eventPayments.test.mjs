@@ -39,6 +39,7 @@ test("proof: method, reference and amount are checked", () => {
   assert.equal(parsePeso(""), null);
   assert.ok(readProofImage("data:image/png;base64,iVBORw0KGgo=").value);
   assert.match(readProofImage("data:text/html;base64,PGI+").error, /screenshot/);
+  assert.match(readProofImage("data:text/html;base64,PGI+", { label: "vaccination record photo" }).error, /vaccination record photo/);
 });
 
 test("pass page: no QR until a payment is approved", () => {

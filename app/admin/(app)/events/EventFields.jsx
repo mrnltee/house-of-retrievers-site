@@ -488,13 +488,14 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, onsitePayment, date, rsvpOpensAt }) {
+export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, date, rsvpOpensAt }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
   const [opens, setOpens] = useState(opensParts);
   const [past, setPast] = useState(isPastDate(date || ""));
   const [on, setOn] = useState(registration === "required");
+  const [open, setOpen] = useState(rsvpOpen ?? true);
   const [paid, setPaid] = useState(false);
 
   useEffect(() => {
@@ -532,12 +533,15 @@ export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, on
         <div className="row-2 indent">
           <label className="field"><span>Capacity <small>Empty for no limit. When full, new sign-ups join the waitlist.</small></span><input type="number" name="capacity" min={1} max={5000} defaultValue={capacity ?? ""} /></label>
           <div className="form">
-            <label className="check"><input type="checkbox" name="rsvpOpen" defaultChecked={rsvpOpen ?? true} /> RSVPs are open</label>
+            <input type="hidden" name="rsvpOpenSent" value="1" />
+            <label className="switch"><input type="checkbox" name="rsvpOpen" checked={open} onChange={(e) => setOpen(e.target.checked)} /><span><strong>Registration is open</strong><small>Switch off to close RSVP while keeping the event page visible.</small></span></label>
             {paid && <>
               <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> They pay by QR before the day (track it per person)</label>
               {feeRequired && <label className="check"><input type="checkbox" name="onsitePayment" defaultChecked={Boolean(onsitePayment)} /> On-site payment is available <span className="small muted">The regular rate applies on site; leave this off until the venue confirms.</span></label>}
             </>}
           </div>
+          <label className="field indent-full"><span>RSVP button label <small>Optional. For example, “Reserve my spot”. The usual “RSVP” stays when this is empty.</small></span><input name="rsvpLabel" maxLength={40} defaultValue={rsvpLabel || ""} placeholder="RSVP" /></label>
+          <label className="switch indent-full"><input type="checkbox" name="vaccinationRecordRequired" defaultChecked={Boolean(vaccinationRecordRequired)} /><span><strong>Show an optional vaccination record upload</strong><small>Use this only when the event asks participants for a vaccination card. The photo is optional and only authorised admins can view it.</small></span></label>
           <div className="form indent-full" style={{ gap: 10 }}>
             <input type="hidden" name="rsvpOpensSent" value="1" />
             <label className="check">
@@ -557,7 +561,10 @@ export function SignupFields({ registration, capacity, rsvpOpen, feeRequired, on
         <>
           {/* Kept as they were, for when sign-ups are switched back on. */}
           <input type="hidden" name="capacity" value={capacity ?? ""} />
+          <input type="hidden" name="rsvpOpenSent" value="1" />
           {(rsvpOpen ?? true) && <input type="hidden" name="rsvpOpen" value="on" />}
+          <input type="hidden" name="rsvpLabel" value={rsvpLabel || ""} />
+          {vaccinationRecordRequired && <input type="hidden" name="vaccinationRecordRequired" value="on" />}
           {/* A scheduled opening stays saved while sign-ups are off. */}
         </>
       )}

@@ -5,7 +5,7 @@ import { hasDatabase, transaction } from "../../lib/db";
 import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../lib/admin/registrations.mjs";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 import { eventTiers } from "../../lib/admin/events.mjs";
-import { chooseTicket, owesPayment } from "../../lib/eventPayments.mjs";
+import { chooseTicket, owesPayment, readProofImage } from "../../lib/eventPayments.mjs";
 import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
@@ -46,7 +46,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -72,6 +72,10 @@ export async function POST(request) {
       if (attendees.error) return { error: attendees.error, status: 422 };
       const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
       if (due.error) return { error: due.error, status: 422 };
+      const vaccination = event.vaccination_record_required && body?.vaccinationRecord
+        ? readProofImage(body.vaccinationRecord, { label: "vaccination record photo" })
+        : null;
+      if (vaccination?.error) return { error: vaccination.error, status: 422 };
       const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
       const code = newCheckInCode();
@@ -82,6 +86,13 @@ export async function POST(request) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
         [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount],
       );
+      if (vaccination?.value) {
+        const bytes = Buffer.from(vaccination.value.base64, "base64");
+        await tx.sql(
+          "INSERT INTO registration_vaccination_records (registration_id, mime, data, bytes) VALUES ($1, $2, $3, $4)",
+          [row.id, vaccination.value.mime, bytes, bytes.length],
+        );
+      }
       return { id: row.id, status, code, feeStatus, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };
     });
     if (result.error) return fail(result.error, result.status);

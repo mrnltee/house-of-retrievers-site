@@ -175,6 +175,19 @@ test("an upcoming event keeps its sign-up settings", () => {
   assert.equal(value.capacity, 40);
 });
 
+test("event RSVP controls preserve the usual label and support a deliberate closure", () => {
+  const base = { title: "Vaccination drive", date: "2026-11-15", registration: "required", rsvpOpenSent: "1" };
+  const { value } = validateEvent({ ...base, rsvpLabel: " Reserve my spot ", vaccinationRecordRequired: "on" }, { today: "2026-10-10" });
+  assert.equal(value.rsvpOpen, false);
+  assert.equal(value.rsvpLabel, "Reserve my spot");
+  assert.equal(value.vaccinationRecordRequired, true);
+  const legacy = validateEvent({ title: "Older event", date: "2026-11-15", registration: "required" }, { today: "2026-10-10" });
+  assert.equal(legacy.value.rsvpOpen, true);
+  const publicEvent = toPublicEvent({ slug: "vaccination-drive", title: "Vaccination drive", date: "2026-11-15", registration: "required", rsvp_open: true, rsvp_label: "Reserve my spot", vaccination_record_required: true });
+  assert.equal(publicEvent.rsvpLabel, "Reserve my spot");
+  assert.equal(publicEvent.vaccinationRecordRequired, true);
+});
+
 test("past means before today in Manila", () => {
   assert.equal(isPastDate("2026-10-09", "2026-10-10"), true);
   assert.equal(isPastDate("2026-10-10", "2026-10-10"), false);

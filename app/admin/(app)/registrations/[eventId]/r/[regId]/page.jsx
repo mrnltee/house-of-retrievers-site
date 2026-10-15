@@ -26,18 +26,20 @@ export default async function RegistrationDetail({ params, searchParams }) {
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(regId)) notFound();
   const [reg] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.date FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
+    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.date, e.vaccination_record_required FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
     [regId, eventId],
   );
   if (!reg) notFound();
   const base = await adminBase();
-  const [proofs, twins] = await Promise.all([
+  const [proofs, twins, vaccinationRows] = await Promise.all([
     sql("SELECT id, uploaded_by, created_at, bytes FROM payment_proofs WHERE registration_id = $1 ORDER BY created_at DESC", [regId]),
     reg.fee_reference
       ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
+    sql("SELECT uploaded_at, bytes FROM registration_vaccination_records WHERE registration_id = $1", [regId]),
   ]);
   const proof = proofs[0];
+  const vaccination = vaccinationRows[0];
   const canFees = can(admin.roles, "registrations:fees");
   const canEdit = can(admin.roles, "registrations:edit");
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
@@ -96,6 +98,20 @@ export default async function RegistrationDetail({ params, searchParams }) {
               <p className="banner ok small" style={{ margin: 0 }}>✓ No other registration for this event uses this reference.</p>
             ))}
           </section>
+
+          {(reg.vaccination_record_required || vaccination) && (
+            <section className="card receipt-card" aria-label="Vaccination record">
+              <h2>Vaccination record</h2>
+              {vaccination ? (
+                <>
+                  <a href={`${base}/registrations/vaccination/${reg.id}`} target="_blank" rel="noreferrer" className="receipt-shot">
+                    <img src={`${base}/registrations/vaccination/${reg.id}`} alt={`Vaccination record uploaded by ${reg.name}`} />
+                  </a>
+                  <p className="small muted">Uploaded {formatWhen(vaccination.uploaded_at)} · <a href={`${base}/registrations/vaccination/${reg.id}`} target="_blank" rel="noreferrer">Open full size</a></p>
+                </>
+              ) : <p className="muted">No vaccination record was uploaded.</p>}
+            </section>
+          )}
 
           {canEdit && (
             <section className="card form" style={{ gap: 12 }}>

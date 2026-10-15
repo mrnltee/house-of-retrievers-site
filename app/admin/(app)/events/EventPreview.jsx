@@ -64,6 +64,8 @@ function draftEvent(form, saved) {
     registration: f.get("registration") === "required" ? "required" : "none",
     capacity: get("capacity") ? Number(get("capacity")) : null,
     rsvp_open: f.get("rsvpOpen") === "on",
+    rsvp_label: get("rsvpLabel"),
+    vaccination_record_required: f.get("vaccinationRecordRequired") === "on",
     rsvp_opens_at: f.get("rsvpOpensOn") === "on" ? manilaInstant(get("rsvpOpensDate"), get("rsvpOpensTime")) : null,
     fee_required: f.get("feeRequired") === "on",
     onsite_payment: f.get("onsitePayment") === "on",

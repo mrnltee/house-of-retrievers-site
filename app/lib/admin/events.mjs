@@ -255,7 +255,14 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     imageFit: cleanFit(input?.imageFit),
     registration: input?.registration === "required" ? "required" : "none",
     capacity: input?.capacity === "" || input?.capacity == null ? null : Number(input.capacity),
-    rsvpOpen: input?.rsvpOpen === undefined ? true : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
+    // Older editor posts did not send this field when open, so preserve their
+    // open default. Current forms send rsvpOpenSent, making a deliberate
+    // closed-registration choice unambiguous.
+    rsvpOpen: input?.rsvpOpenSent === undefined && input?.rsvpOpen === undefined
+      ? true
+      : input.rsvpOpen === true || input.rsvpOpen === "on" || input.rsvpOpen === "true",
+    rsvpLabel: clean(input?.rsvpLabel, 40) || null,
+    vaccinationRecordRequired: input?.vaccinationRecordRequired === true || input?.vaccinationRecordRequired === "on" || input?.vaccinationRecordRequired === "true",
     feeRequired: input?.feeRequired === true || input?.feeRequired === "on" || input?.feeRequired === "true",
     onsitePayment: input?.onsitePayment === true || input?.onsitePayment === "on" || input?.onsitePayment === "true",
     pricingBasis: cleanPricingBasis(input?.pricingBasis),
@@ -410,6 +417,8 @@ export function toPublicEvent(row, confirmed = 0) {
     imageAlt: row.image_alt || undefined,
     media: media.length ? media : undefined,
     rsvp: row.registration === "required",
+    rsvpLabel: row.rsvp_label || undefined,
+    vaccinationRecordRequired: Boolean(row.vaccination_record_required),
     feeRequired: row.fee_required,
     isCharity: Boolean(row.is_charity),
     onsitePayment: Boolean(row.onsite_payment),

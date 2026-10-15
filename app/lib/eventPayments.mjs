@@ -132,10 +132,10 @@ export function validateProof(input, { admin = false } = {}) {
 }
 
 /** A data URL from the browser → { mime, base64 } or an error. Size is checked by the caller on the decoded bytes. */
-export function readProofImage(dataUrl) {
+export function readProofImage(dataUrl, { label = "confirmation screenshot" } = {}) {
   const match = String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
-  if (!match) return { error: "Add your confirmation screenshot (a PNG or JPG)." };
-  if (Math.ceil((match[2].length * 3) / 4) > MAX_PROOF_BYTES) return { error: "That screenshot is too large. Try a normal screenshot from your phone." };
+  if (!match) return { error: `Add your ${label} (a PNG or JPG).` };
+  if (Math.ceil((match[2].length * 3) / 4) > MAX_PROOF_BYTES) return { error: `That ${label} is too large. Try a normal photo from your phone.` };
   return { value: { mime: match[1], base64: match[2] } };
 }
 

@@ -8,6 +8,7 @@ import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { calculateAmountDue } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
+import { resizeImage } from "../lib/resizeImage";
 
 const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
 
@@ -79,6 +80,12 @@ export default function RsvpModal({ event, onClose }) {
     const form = new FormData(e.currentTarget);
     setState({ sending: true, error: "", result: null });
     try {
+      const picked = form.get("vaccinationRecord");
+      let vaccinationRecord = null;
+      if (event.vaccinationRecordRequired && picked instanceof File && picked.size) {
+        const resized = await resizeImage(picked);
+        vaccinationRecord = resized.dataUrl;
+      }
       const response = await fetch("/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,6 +99,7 @@ export default function RsvpModal({ event, onClose }) {
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
+          vaccinationRecord,
           ticket: ticket >= 0 ? ticket : undefined,
           [HONEYPOT_FIELD]: form.get(HONEYPOT_FIELD),
           elapsedMs: Date.now() - openedAt.current,
@@ -154,6 +162,7 @@ export default function RsvpModal({ event, onClose }) {
             </div>
             {humanOnly && <p id="no-furbabies-note" className="form-note">This Hooman only ticket is for people attending without a furbaby.</p>}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
+            {event.vaccinationRecordRequired && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
             <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
               <p className="furbaby-hint">We share event photos on Instagram and Facebook.</p>
@@ -193,7 +202,7 @@ export default function RsvpModal({ event, onClose }) {
             {!waitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
-            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : "Send my RSVP"}</button>
+            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : event.rsvpLabel || "Send my RSVP"}</button>
           </form>
         )}
       </section>

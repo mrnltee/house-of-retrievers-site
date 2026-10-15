@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`027_…sql`**).
+     number (the next one is **`028_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -152,7 +152,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–025 (see §6)
+db/migrations/           001–027 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -181,6 +181,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 024 | seasonal-theme settings table (the public seasonal treatment is parked; keep this applied migration) |
 | 025 | supporter four-letter IDs (legacy three-letter IDs remain valid) and optional relationship labels |
 | 026 | ticket-specific attendance pricing (`human_only` or `furbaby_package`) in existing tier JSON |
+| 027 | event RSVP label/closed state, plus private optional vaccination-record photos |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -362,6 +363,7 @@ npx next dev
     expired records and their receipts. Paid/checked-in rows stay as history.
   - Non-refundable notice. Waitlist.
   - Scheduled RSVP opening with a live countdown and a "Remind me" button.
+  - Per-event RSVP controls: a custom public button label and a registration-open switch. Events can also show an optional vaccination-record photo field; records are private to authorised admins and are never emailed or public.
 - **Check-in:** `/admin/checkin` scans the QR (`Scanner.jsx`, camera allowed only
   on admin). Outcomes come from `checkInOutcome`.
 - **People:** one record per person and kind, profiles, photos, membership
