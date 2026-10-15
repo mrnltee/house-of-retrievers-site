@@ -32,6 +32,18 @@ export function formatMobile(number) {
   return /^09\d{9}$/.test(number) ? `${number.slice(0, 4)} ${number.slice(4, 7)} ${number.slice(7)}` : number;
 }
 
+/** Show enough to recognise a payment number without publishing the full one. */
+export function maskMobile(number) {
+  const digits = normalizeMobile(number);
+  return digits ? `${digits.slice(0, 3)} •••••• ${digits.slice(-2)}` : "";
+}
+
+/** Account numbers vary by bank, so preserve only the first and last two digits. */
+export function maskAccountNumber(number) {
+  const digits = String(number || "").replace(/\D/g, "");
+  return digits.length >= 6 ? `${digits.slice(0, 2)} •••••• ${digits.slice(-2)}` : "";
+}
+
 /**
  * Checks a proposed change. A method can always be switched off; switching it
  * on needs every field filled (and a QR image where the method has one).
@@ -55,6 +67,9 @@ export function validateChange(key, input) {
     if (enabled && !value) return { error: `${label} is needed before ${method.label} can be shown.` };
     details[field] = value;
   }
+  // Omit the default so existing approved methods stay byte-for-byte the same
+  // until an admin explicitly asks to mask their public number.
+  if (input?.details?.maskNumber === true || input?.details?.maskNumber === "on") details.maskNumber = true;
 
   let qrImage = null;
   let qrPayload = null;
@@ -92,15 +107,19 @@ export function needsApproval(current, proposed) {
 export function publicMethods(rows) {
   return rows
     .filter((row) => row.enabled)
-    .map((row) => ({
-      key: row.key,
-      label: METHODS[row.key]?.label || row.key,
-      details: {
-        ...row.details,
-        ...(row.details?.number ? { number: formatMobile(row.details.number) } : {}),
-      },
-      qrImage: row.qr_image || null,
-      updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
-    }))
+    .map((row) => {
+      const { maskNumber, ...details } = row.details || {};
+      return {
+        key: row.key,
+        label: METHODS[row.key]?.label || row.key,
+        details: {
+          ...details,
+          ...(details.number ? { number: maskNumber ? maskMobile(details.number) : formatMobile(details.number) } : {}),
+          ...(details.accountNumber ? { accountNumber: maskNumber ? maskAccountNumber(details.accountNumber) : details.accountNumber } : {}),
+        },
+        qrImage: row.qr_image || null,
+        updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+      };
+    })
     .sort((a, b) => METHOD_KEYS.indexOf(a.key) - METHOD_KEYS.indexOf(b.key));
 }

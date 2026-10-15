@@ -469,6 +469,7 @@ export async function requestPaymentChange(data) {
     const admin = await actionAdmin("payments:request");
     if (!METHODS[key]) await backWith(back, "error", "Unknown payment method.");
     const details = Object.fromEntries(METHODS[key].fields.map(([field]) => [field, form(data, field)]));
+    if (data.get("maskNumber") === "on") details.maskNumber = true;
     const [current] = await sql("SELECT enabled, details, qr_image FROM payment_methods WHERE key=$1", [key]);
     const { value, error } = validateChange(key, {
       enabled: data.get("enabled") === "on",

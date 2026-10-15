@@ -87,6 +87,12 @@ export default async function PaymentsPage({ searchParams }) {
                     <input type="checkbox" name="enabled" defaultChecked={live.enabled} disabled={!canRequest || Boolean(waiting)} />
                     Show {method.label} on the Support panel
                   </label>
+                  {method.fields.some(([field]) => field === "number" || field === "accountNumber") && (
+                    <label className="check">
+                      <input type="checkbox" name="maskNumber" defaultChecked={Boolean(live.details?.maskNumber)} disabled={!canRequest || Boolean(waiting)} />
+                      Partly hide the number on the public site <span className="small muted">Mobile: 091 •••••• 89 · Account: 12 •••••• 90</span>
+                    </label>
+                  )}
                 </div>
                 {method.qr && (canRequest && !waiting ? <QrPicker name={method.label} current={live.qr_image} /> : (
                   <div className="qr-slot">{live.qr_image ? <img src={live.qr_image} alt={`${method.label} QR code (current)`} /> : "No QR yet"}</div>
@@ -100,7 +106,7 @@ export default async function PaymentsPage({ searchParams }) {
                   <ConfirmButton
                     className="btn"
                     title={`Request this ${method.label} change?`}
-                    items={["Changing details or switching this method on waits for a different Owner to approve", `Switching ${method.label} off takes it off the Support panel immediately`, "The activity log records who requested it"]}
+                    items={["Changing details, the public number visibility, or switching this method on waits for a different Owner to approve", `Switching ${method.label} off takes it off the Support panel immediately`, "The activity log records who requested it"]}
                     yes="Yes, request change"
                     tone="ink"
                   >Request change</ConfirmButton>

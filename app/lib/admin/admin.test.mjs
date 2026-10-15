@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { can, canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "./roles.mjs";
-import { diffChange, formatMobile, needsApproval, normalizeMobile, publicMethods, validateChange } from "./payments.mjs";
+import { diffChange, formatMobile, maskAccountNumber, maskMobile, needsApproval, normalizeMobile, publicMethods, validateChange } from "./payments.mjs";
 import { cleanMapUrl, cleanSlug, directionsUrl, parkingUrl, isPastDate, manilaDate, parseHashtags, publicStatus, slugify, toPublicEvent, validateEvent } from "./events.mjs";
 import { checkInOutcome, newCheckInCode, normalizeCode, statusForNewRegistration, validateRsvp } from "./registrations.mjs";
 
@@ -41,6 +41,8 @@ test("mobile numbers are normalised and formatted", () => {
   assert.equal(normalizeMobile("+63 917-123-4567"), "09171234567");
   assert.equal(normalizeMobile("12345"), "");
   assert.equal(formatMobile("09171234567"), "0917 123 4567");
+  assert.equal(maskMobile("0912 345 6789"), "091 •••••• 89");
+  assert.equal(maskAccountNumber("1234 5678 90"), "12 •••••• 90");
 });
 
 test("payment changes are validated before anyone can approve them", () => {
@@ -51,6 +53,7 @@ test("payment changes are validated before anyone can approve them", () => {
   assert.match(validateChange("gcash", { details: {}, qrImage: "data:image/gif;base64,AAAA", qrPayload: "x" }).error, /PNG, JPG/);
   const ok = validateChange("gcash", { enabled: "on", details: { accountName: " HOR  PH ", number: "0917 123 4567" }, qrImage: PNG, qrPayload: "000201..." });
   assert.deepEqual(ok.value.details, { accountName: "HOR PH", number: "09171234567" });
+  assert.equal(validateChange("gcash", { enabled: "on", details: { accountName: "HOR", number: "0917 123 4567", maskNumber: true }, qrImage: PNG, qrPayload: "000201..." }).value.details.maskNumber, true);
   assert.equal(ok.value.enabled, true);
   assert.equal(validateChange("paypal", {}).error, "Unknown payment method.");
 });
@@ -70,6 +73,9 @@ test("the Support panel shows only switched-on methods", () => {
   ]);
   assert.equal(shown.length, 1);
   assert.equal(shown[0].details.number, "0917 123 4567");
+  const masked = publicMethods([{ key: "bank", enabled: true, details: { accountName: "HOR", accountNumber: "1234567890", maskNumber: true }, qr_image: null }]);
+  assert.equal(masked[0].details.accountNumber, "12 •••••• 90");
+  assert.equal("maskNumber" in masked[0].details, false);
 });
 
 test("events: drafts may be incomplete, publishing may not", () => {

@@ -43,6 +43,11 @@ export default async function ReviewPaymentChange({ params, searchParams }) {
                 <td className="strong">{label}</td><td>{show(field, live.details?.[field])}</td><td className={changed.has(field) ? "strong" : ""}>{show(field, request.details?.[field])}</td>
               </tr>
             ))}
+            {method.fields.some(([field]) => field === "number" || field === "accountNumber") && (
+              <tr style={changed.has("maskNumber") ? { background: "rgba(167,132,64,.16)" } : undefined}>
+                <td className="strong">Number on the public site</td><td>{live.details?.maskNumber ? "Partly hidden" : "Full number"}</td><td className={changed.has("maskNumber") ? "strong" : ""}>{request.details?.maskNumber ? "Partly hidden" : "Full number"}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
