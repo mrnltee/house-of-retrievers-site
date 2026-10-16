@@ -81,6 +81,14 @@ export function ticketLimitUnits(basis, tier = {}, humans = 1, furbabies = 0) {
   return 1;
 }
 
+export function ticketLimitUnitLabel(basis, tier = {}) {
+  const key = cleanPricingBasis(basis);
+  if (key === "human_plus_furbaby" || key === "human") return "hoomans";
+  if (key === "furbaby") return "furbabies";
+  if (key === "tiered") return tier.attendanceBasis === "furbaby_package" ? "furbabies" : "hoomans";
+  return "registrations";
+}
+
 /** Returns the total in whole pesos, or an error when a bundle is incomplete. */
 export function calculateAmountDue({ basis = "registration", tier = {}, humans = 1, furbabies = 0, includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 } = {}) {
   if (cleanPricingBasis(basis) === "tiered") {

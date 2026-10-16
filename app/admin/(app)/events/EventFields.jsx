@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
 import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
-import { PRICING_BASES } from "../../../lib/registrationPricing.mjs";
+import { PRICING_BASES, ticketLimitUnitLabel } from "../../../lib/registrationPricing.mjs";
 import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 
@@ -327,11 +327,11 @@ function periodNote(tier) {
 }
 
 /** "12 of 20 taken so far. Cancelled registrations free their place." */
-function limitNote(row, counts = {}) {
+function limitNote(row, counts = {}, basis = "registration") {
   const n = Number(row.limit);
   if (!Number.isInteger(n) || n < 1) return "Type how many registrants get this price.";
   const taken = counts[tierKey({ label: row.label.trim().replace(/\s+/g, " "), amount: parsePeso(row.amount) ?? NaN })] || 0;
-  return `${taken} of ${n} taken so far. Pending payments and the waitlist count; a cancelled registration frees its place. Once all ${n} are taken it isn't offered on the RSVP.`;
+  return `${taken} of ${n} ${ticketLimitUnitLabel(basis, row)} taken so far. Pending payments and the waitlist count; a cancelled registration frees its place. Once all ${n} are taken it isn't offered on the RSVP.`;
 }
 
 export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration", includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 }) {
@@ -453,14 +453,14 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                   )}
                   <label className="check small">
                     <input type="checkbox" checked={row.limited} onChange={(e) => update(i, { limited: e.target.checked })} />
-                    <span>Only for the first registrants <span className="muted">e.g. an early bird for the first 20; after that, people take the other prices</span></span>
+                    <span>Only for the first {ticketLimitUnitLabel(basis, row)} <span className="muted">e.g. an early bird for the first 20; after that, people take the other prices</span></span>
                   </label>
                   {row.limited && (
                     <div className="tier-period-fields">
                       <label className="field"><span>How many</span>
                         <input type="number" min={1} max={5000} value={row.limit} onChange={(e) => update(i, { limit: e.target.value })} placeholder="20" aria-label={`Tier ${i + 1}: number of registrants`} />
                       </label>
-                      <p className="small muted tier-period-note">{limitNote(row, counts)}</p>
+                      <p className="small muted tier-period-note">{limitNote(row, counts, basis)}</p>
                     </div>
                   )}
                 </div>

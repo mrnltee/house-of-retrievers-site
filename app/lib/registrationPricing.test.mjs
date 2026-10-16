@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitUnits } from "./registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
 
 test("Early Bird units follow the ticket's attendance basis", () => {
   assert.equal(ticketLimitUnits("human", {}, 3, 0), 3);
@@ -9,6 +9,9 @@ test("Early Bird units follow the ticket's attendance basis", () => {
   assert.equal(ticketLimitUnits("tiered", { attendanceBasis: "human_only" }, 3, 0), 3);
   assert.equal(ticketLimitUnits("tiered", { attendanceBasis: "furbaby_package" }, 3, 2), 2);
   assert.equal(ticketLimitUnits("registration", {}, 3, 2), 1);
+  assert.equal(ticketLimitUnitLabel("human_plus_furbaby"), "hoomans");
+  assert.equal(ticketLimitUnitLabel("tiered", { attendanceBasis: "furbaby_package" }), "furbabies");
+  assert.equal(ticketLimitUnitLabel("registration"), "registrations");
 });
 
 test("keeps the existing one-ticket-per-registration default", () => {
