@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
 import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
 import { PRICING_BASES, ticketLimitUnitLabel } from "../../../lib/registrationPricing.mjs";
-import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierWindow } from "../../../lib/prices.mjs";
+import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierLeft, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 
 /**
@@ -334,6 +334,20 @@ function limitNote(row, counts = {}, basis = "registration") {
   return `${taken} of ${n} ${ticketLimitUnitLabel(basis, row)} taken so far. Pending payments and the waitlist count; a cancelled registration frees its place. Once all ${n} are taken it isn't offered on the RSVP.`;
 }
 
+function tierPreview(row, basis, counts) {
+  const amount = parsePeso(row.amount);
+  if (amount == null) return "Enter an amount to preview this tier.";
+  const tier = { label: row.label.trim().replace(/\s+/g, " "), amount, limit: row.limited && row.limit !== "" ? Number(row.limit) : null, until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null, attendanceBasis: row.attendanceBasis };
+  const parts = [`₱${amount.toLocaleString("en-PH")}`];
+  if (tier.limit) {
+    const unit = ticketLimitUnitLabel(basis, row);
+    const left = tierLeft(tier, counts);
+    parts.push(`First ${tier.limit} ${unit} · ${left} left`);
+  }
+  if (tier.until) parts.push(`Until ${tierWindow(tier).replace(/^Until /, "")}`);
+  return parts.join(" · ");
+}
+
 export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration", includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 }) {
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
@@ -413,6 +427,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                     <button type="button" className="tier-remove" onClick={() => setRows(rows.filter((_, j) => j !== i))} aria-label={`Remove tier ${i + 1}`}>×</button>
                   )}
                 </div>
+                <p className="tier-preview" role="status">{tierPreview(row, basis, counts)}</p>
                 {basis === "bundle" && <div className="tier-rule row-2">
                   <label className="field"><span>People included</span><input type="number" min={0} max={100} value={row.bundleHumans} onChange={(e) => update(i, { bundleHumans: e.target.value })} /></label>
                   <label className="field"><span>Furbabies included</span><input type="number" min={0} max={100} value={row.bundleFurbabies} onChange={(e) => update(i, { bundleFurbabies: e.target.value })} /></label>
