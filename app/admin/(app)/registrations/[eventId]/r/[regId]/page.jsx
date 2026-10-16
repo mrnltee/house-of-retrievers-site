@@ -26,7 +26,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(regId)) notFound();
   const [reg] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.date, e.vaccination_record_required FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
+    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.date, e.vaccination_record_required, e.rsvp_form_config FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
     [regId, eventId],
   );
   if (!reg) notFound();
@@ -90,6 +90,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.furbaby_name && <div><dt>Furbaby</dt><dd>{reg.furbaby_name}</dd></div>}
               <div><dt>Photos</dt><dd>{reg.photo_consent ? "OK" : "No photos"}</dd></div>
               {reg.under_18 && <div><dt>Under 18</dt><dd>Guardian: {reg.guardian_name}</dd></div>}
+              {reg.rsvp_form_config?.consentEnabled && <div><dt>Event acknowledgement</dt><dd>{reg.consent_completed_at ? `Completed ${formatWhen(reg.consent_completed_at)}${reg.consent_name ? ` · ${reg.consent_name}` : ""}` : "Not completed"}</dd></div>}
             </dl>
             {reg.fee_status === "rejected" && reg.fee_note && <p className="banner note small" style={{ margin: 0 }}><span>Asked for a new receipt: “{reg.fee_note}”</span></p>}
             {reg.fee_reference && (twins.length ? (
