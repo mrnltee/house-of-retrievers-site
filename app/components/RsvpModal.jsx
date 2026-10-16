@@ -184,12 +184,11 @@ export default function RsvpModal({ event, onClose }) {
             {event.feeRequired && tickets.length === 1 && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small></div>}
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
-            <label>Furbabies&apos; names (optional)<input name="furbabyName" maxLength={240} disabled={humanOnly} aria-describedby={humanOnly ? "no-furbabies-note" : undefined} placeholder={furbabyCount > 1 ? "e.g. Mochi, Fudge and Pao" : "e.g. Mochi"} /></label>
+            {!humanOnly && <label>Furbabies&apos; names (optional)<input name="furbabyName" maxLength={240} placeholder={furbabyCount > 1 ? "e.g. Mochi, Fudge and Pao" : "e.g. Mochi"} /></label>}
             <div className="row-2">
               <label>People attending<input required type="number" name="humanCount" min="1" max="100" value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
-              <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} disabled={humanOnly} onChange={(e) => setFurbabyCount(e.target.value)} /></label>
+              {!humanOnly && <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} onChange={(e) => setFurbabyCount(e.target.value)} /></label>}
             </div>
-            {humanOnly && <p id="no-furbabies-note" className="form-note">This Hooman only ticket is for people attending without a furbaby.</p>}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong><small>{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0)} Early Bird unit{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0) === 1 ? "" : "s"} used for this ticket</small></div>}
             {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
