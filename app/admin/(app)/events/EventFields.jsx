@@ -604,6 +604,37 @@ export function RsvpFormSettings({ initial, vaccinationRecordRequired }) {
   return <fieldset className="rsvp-form-settings indent-full"><legend>Participant form</legend><p className="small muted">Required identity and attendee details stay in the form. Choose optional questions, then arrange the blocks with the arrows.</p><div className="check-row">{["photoConsent", "under18", "vaccination"].map((key) => <label key={key} className="check"><input type="checkbox" checked={optional.includes(key)} disabled={key === "vaccination" && !vaccinationRecordRequired} onChange={() => toggle(key)} /> {labels[key]}{key === "vaccination" && !vaccinationRecordRequired ? " (turn it on above first)" : ""}</label>)}</div><ol className="rsvp-order-list">{order.filter((key) => key === "identity" || key === "attendees" || optional.includes(key)).map((key, index, list) => <li key={key}><span>{labels[key]}{key === "identity" || key === "attendees" ? " · required" : ""}</span><span><button type="button" className="linkish" disabled={index === 0} onClick={() => move(key, -1)} aria-label={`Move ${labels[key]} up`}>↑</button><button type="button" className="linkish" disabled={index === list.length - 1} onClick={() => move(key, 1)} aria-label={`Move ${labels[key]} down`}>↓</button></span></li>)}</ol><label className="switch"><input type="checkbox" checked={consentEnabled} onChange={(e) => setConsentEnabled(e.target.checked)} /><span><strong>Add an event acknowledgement</strong><small>Participants complete it from their private RSVP page. No extra email is sent.</small></span></label>{consentEnabled && <><label className="field"><span>Starting template</span><select value={consentTemplate} onChange={(e) => setConsentTemplate(e.target.value)}>{Object.entries(CONSENT_TEMPLATES).map(([key, template]) => <option key={key} value={key}>{template.label}</option>)}</select></label><label className="field"><span>Acknowledgement introduction <small>Optional. Do not add legal wording unless HOR has approved it.</small></span><textarea maxLength={1000} value={consentIntro} onChange={(e) => setConsentIntro(e.target.value)} rows={3} /></label><label className="switch"><input type="checkbox" checked={consentRequiredBeforeCheckin} onChange={(e) => setConsentRequiredBeforeCheckin(e.target.checked)} /><span><strong>Require it before check-in</strong><small>The QR still works and the registration stays confirmed; the door team will ask them to complete it first.</small></span></label></>}<input type="hidden" name="rsvpFormConfig" value={JSON.stringify({ optional, order, consentEnabled, consentIntro, consentRequiredBeforeCheckin, consentTemplate })} /></fieldset>;
 }
 
+export function CheckinSettings({ eventId, title, message, preset, hasCustomSound }) {
+  const [sound, setSound] = useState(preset || "dazzle");
+  const [data, setData] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  function pick(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["audio/mpeg", "audio/wav", "audio/x-wav", "audio/ogg"].includes(file.type)) return setError("Use an MP3, WAV or OGG file.");
+    if (file.size > 512 * 1024) return setError("Keep the sound under 512 KB.");
+    const reader = new FileReader();
+    reader.onload = () => { setData(String(reader.result)); setName(file.name); setSound("custom"); setError(""); };
+    reader.onerror = () => setError("That sound could not be read. Try another file.");
+    reader.readAsDataURL(file);
+  }
+  return <details className="card disclosure-card">
+    <summary><h2>Check-in experience</h2><span className="small muted">Success message and sound</span></summary>
+    <div className="form" style={{ gap: 14, marginTop: 16 }}>
+      <p className="small muted" style={{ margin: 0 }}>After a successful scan, the check-in team sees this message and hears the selected sound. Failed scans keep the standard warning tone.</p>
+      <label className="field"><span>Success title</span><input name="checkinSuccessTitle" maxLength={120} defaultValue={title || "You’re checked in!"} /></label>
+      <label className="field"><span>Success message <small>Optional</small></span><textarea name="checkinSuccessMessage" maxLength={300} rows={2} defaultValue={message || "Welcome in. Have a wonderful time together."} /></label>
+      <label className="field"><span>Success sound</span><select name="checkinSoundPreset" value={sound} onChange={(e) => setSound(e.target.value)}><option value="dazzle">Dazzle · bright three-note chime</option><option value="celebration">Celebration · warm three-note chime</option><option value="soft">Soft confirm · subtle single tone</option><option value="silent">Silent</option>{(hasCustomSound || data) && <option value="custom">Uploaded sound{name ? ` · ${name}` : ""}</option>}</select></label>
+      <label className="btn ghost small file-btn" style={{ width: "fit-content" }}>Upload a sound<input type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/ogg" onChange={pick} hidden /></label>
+      {hasCustomSound && <label className="check"><input type="checkbox" name="checkinSoundRemove" /> Remove the uploaded sound</label>}
+      <input type="hidden" name="checkinSoundData" value={data} />
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <p className="small muted">Custom sounds must be MP3, WAV or OGG and under 512 KB. Keep them short and use a sound you have permission to use.</p>
+    </div>
+  </details>;
+}
+
 /** Settings most events never touch: the web address, and who may add photos later. */
 export function MoreOptions({ slug, photoUploads }) {
   const [allow, setAllow] = useState(Boolean(photoUploads?.length));

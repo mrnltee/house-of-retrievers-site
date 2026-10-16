@@ -8,7 +8,7 @@ import EventPreview from "./EventPreview";
 import { sql } from "../../../lib/db";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
-import { CharityField, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
+import { CharityField, CheckinSettings, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
 /** Names to suggest: confirmed-or-not Partners and Sponsors from People (organization first). */
@@ -118,6 +118,8 @@ export default async function EventForm({ event, autoDescribe = false }) {
           </select>
         </label>
       </section>
+
+      <CheckinSettings eventId={event?.id} title={event?.checkin_success_title} message={event?.checkin_success_message} preset={event?.checkin_sound_preset} hasCustomSound={Boolean(event?.checkin_sound_data)} />
 
       <MoreOptions slug={event?.slug} photoUploads={event?.photo_uploads} />
 

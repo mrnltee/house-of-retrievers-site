@@ -24,7 +24,7 @@ function codeFrom(text) {
   return match ? match[1] : "";
 }
 
-export default function Scanner({ eventId, title, confirmed, initialChecked }) {
+export default function Scanner({ eventId, title, confirmed, initialChecked, successTitle, successMessage, soundPreset, hasCustomSound }) {
   const video = useRef(null);
   const canvas = useRef(null);
   const busy = useRef(false);
@@ -36,18 +36,24 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
   const [successOpen, setSuccessOpen] = useState(false);
 
   function playSuccessSound() {
+    if (soundPreset === "silent") return;
+    if (soundPreset === "custom" && hasCustomSound) {
+      new Audio(`/api/checkin-sound/${eventId}`).play().catch(() => null);
+      return;
+    }
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       const context = new AudioContext();
       const now = context.currentTime;
-      [[659.25, 0], [783.99, 0.1], [1046.5, 0.2]].forEach(([frequency, offset]) => {
+      const notes = soundPreset === "soft" ? [[523.25, 0]] : soundPreset === "celebration" ? [[523.25, 0], [659.25, 0.12], [783.99, 0.24]] : [[659.25, 0], [783.99, 0.1], [1046.5, 0.2]];
+      notes.forEach(([frequency, offset]) => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.type = "sine";
         oscillator.frequency.value = frequency;
         gain.gain.setValueAtTime(0.0001, now + offset);
-        gain.gain.exponentialRampToValueAtTime(0.12, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(soundPreset === "soft" ? 0.07 : 0.12, now + offset + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.32);
         oscillator.connect(gain).connect(context.destination);
         oscillator.start(now + offset);
@@ -87,7 +93,7 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
       setResult(response);
       if (response.outcome === "ok") {
         setChecked((n) => n + 1);
-        setSuccessOpen(true);
+      setSuccessOpen(true);
         playSuccessSound();
       } else playFailureSound();
       if (navigator.vibrate) navigator.vibrate(response.outcome === "ok" ? 80 : [60, 60, 60]);
@@ -155,8 +161,8 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
             <div className="checkin-success-card">
               <span className="checkin-success-star" aria-hidden="true">✦</span>
               <p className="tag">WELCOME IN</p>
-              <h2 id="checkin-success-title">You&apos;re checked in!</h2>
-              <p>{result.person?.name || "This guest"} is all set. Have a wonderful time together.</p>
+              <h2 id="checkin-success-title">{successTitle || "You’re checked in!"}</h2>
+              <p>{result.person?.name || "This guest"} {successMessage || "is all set. Have a wonderful time together."}</p>
               <button type="button" className="btn gold" onClick={() => setSuccessOpen(false)}>Ready for the next guest</button>
             </div>
           </div>

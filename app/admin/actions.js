@@ -24,6 +24,8 @@ import { ticketLine } from "../lib/eventPayments.mjs";
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
 const MAX_EVENT_PHOTO_BYTES = 2 * 1024 * 1024;
+const MAX_CHECKIN_SOUND_BYTES = 512 * 1024;
+const CHECKIN_SOUND_TYPES = new Set(["audio/mpeg", "audio/wav", "audio/x-wav", "audio/ogg"]);
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -202,6 +204,25 @@ export async function saveEvent(data) {
     if (data.has("imageFit")) await sql("UPDATE events SET image_fit=$1 WHERE id=$2", [value.imageFit, eventId]);
     if (data.has("gallery")) await sql("UPDATE events SET gallery=$1 WHERE id=$2", [JSON.stringify(value.gallery), eventId]);
     if (data.has("photoUploadsSent")) await sql("UPDATE events SET photo_uploads=$1 WHERE id=$2", [value.photoUploads, eventId]);
+    if (data.has("checkinSuccessTitle") || data.has("checkinSoundPreset")) {
+      const title = form(data, "checkinSuccessTitle").trim().slice(0, 120) || "You’re checked in!";
+      const message = form(data, "checkinSuccessMessage").trim().slice(0, 300) || "Welcome in. Have a wonderful time together.";
+      const preset = ["dazzle", "celebration", "soft", "silent", "custom"].includes(form(data, "checkinSoundPreset")) ? form(data, "checkinSoundPreset") : "dazzle";
+      const soundData = form(data, "checkinSoundData");
+      let sound = null;
+      if (soundData) {
+        const match = soundData.match(/^data:(audio\/(?:mpeg|wav|x-wav|ogg));base64,([A-Za-z0-9+/=]+)$/);
+        if (!match) await backWith(back, "error", "That sound could not be read. Use an MP3, WAV or OGG file.");
+        const bytes = Buffer.from(match[2], "base64");
+        if (bytes.length > MAX_CHECKIN_SOUND_BYTES) await backWith(back, "error", "That sound is too large. Keep it under 512 KB.");
+        sound = [match[1], bytes, bytes.length];
+      }
+      if (sound || data.get("checkinSoundRemove") === "on") {
+        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3, checkin_sound_mime=$4, checkin_sound_data=$5, checkin_sound_bytes=$6 WHERE id=$7", [title, message, sound ? "custom" : (data.get("checkinSoundRemove") === "on" && preset === "custom" ? "dazzle" : preset), sound?.[0] || null, sound?.[1] || null, sound?.[2] || null, eventId]);
+      } else {
+        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3 WHERE id=$4", [title, message, preset, eventId]);
+      }
+    }
     if (photo) {
       await sql("UPDATE events SET image_source=$1, image_crop=$2 WHERE id=$3", [photo.source, photo.crop && JSON.stringify(photo.crop), eventId]);
     }
