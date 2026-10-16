@@ -86,8 +86,8 @@ export default async function EventForm({ event, autoDescribe = false }) {
       </section>
 
       <section className="card">
-        <h2>Price and sign-ups</h2>
-        <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} pricingBasis={event?.pricing_basis || "registration"} includedFurbabiesPerHuman={event?.included_furbabies_per_human || 0} additionalFurbabyFee={event?.additional_furbaby_fee || 0} />
+        <h2>Registration</h2>
+        <p className="small muted section-lead">Decide whether people can RSVP, how many can attend, and what information they need to provide.</p>
         <SignupFields
           registration={event?.registration}
           capacity={event?.capacity}
@@ -99,6 +99,17 @@ export default async function EventForm({ event, autoDescribe = false }) {
           date={event ? isoDate(event.date) : ""}
           rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}
         />
+      </section>
+
+      <section className="card">
+        <h2>Pricing and availability</h2>
+        <p className="small muted section-lead">Set the ticket rules first, then add sale periods or Early Bird limits. The server checks the final amount and available units when someone RSVPs.</p>
+        <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} pricingBasis={event?.pricing_basis || "registration"} includedFurbabiesPerHuman={event?.included_furbabies_per_human || 0} additionalFurbabyFee={event?.additional_furbaby_fee || 0} />
+      </section>
+
+      <section className="card">
+        <h2>Confirmation</h2>
+        <p className="small muted section-lead">Choose the wording people receive after they RSVP. The event details and pass button are always added automatically.</p>
         <label className="field"><span>Confirmation email <small>What people get when they RSVP and have a spot. Write your own in Email templates (Event confirmation). The event's details and the pass button are always added.</small></span>
           <select name="emailTemplateId" defaultValue={v("email_template_id") || ""}>
             <option value="">Standard RSVP confirmation</option>
