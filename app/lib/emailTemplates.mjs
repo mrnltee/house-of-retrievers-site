@@ -408,14 +408,17 @@ export const passQrImage = (code) => ({ src: `${EVENTS_URL}/api/pass-qr/${code}`
  * or the default; the QR picture, pass button and fixed lines are added.
  * The waitlist note is fixed.
  */
-export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLine = "", custom = null, ref = "rsvp-confirmed" }) {
+export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLine = "", consentRequired = false, custom = null, ref = "rsvp-confirmed" }) {
   const waitlist = status === "waitlist";
   const after = ["Can't make it after all? Reply to this email so someone else can have the spot."];
   if (!waitlist) {
     return renderTemplate(ref, custom, { name, event }, {
-      paragraphs: paidLine ? [`We matched your payment (${esc(paidLine)}). Thank you!`] : [],
+      paragraphs: [
+        ...(paidLine ? [`We matched your payment (${esc(paidLine)}). Thank you!`] : []),
+        ...(consentRequired ? ["Please review and acknowledge the event guidelines before viewing your QR pass."] : []),
+      ],
       image: code ? passQrImage(code) : undefined,
-      button: { label: "Open my pass", href: passUrl },
+      button: { label: consentRequired ? "Review and acknowledge" : "Open my pass", href: passUrl },
       after: paidLine ? [...after, paymentNotice(event)] : after,
       footnote: RSVP_FOOTNOTE,
     });

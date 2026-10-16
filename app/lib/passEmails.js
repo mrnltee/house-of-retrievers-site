@@ -14,7 +14,7 @@ import { payMethodLabel, paymentNotice, ticketLine } from "./eventPayments.mjs";
 async function load(registrationId) {
   const [row] = await sql(
     `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note,
-            e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment
+            e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment, e.rsvp_form_config
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
   );
@@ -33,6 +33,7 @@ const eventOf = (row) => ({
   onsitePayment: Boolean(row.onsite_payment),
 });
 const passUrl = (row) => `${EVENTS_URL}/r/${row.check_in_code}`;
+const consentUrl = (row) => `${EVENTS_URL}/r/${row.check_in_code}/consent`;
 
 /** "GCash · Ref 1012 345 678 901 · ₱795" */
 export function paidLine(row) {
@@ -57,12 +58,14 @@ export async function sendPass(registrationId, { paid = false, again = false } =
   if (!row || row.status !== "confirmed") return { ok: false };
   const own = row.email_template_id ? await loadCustomTemplate(row.email_template_id, "event") : null;
   const custom = own || (await loadTemplate("rsvp-confirmed"));
+  const needsAcknowledgement = Boolean(row.rsvp_form_config?.consentEnabled);
   const mail = rsvpConfirmed({
     name: row.name,
     event: eventOf(row),
     status: "confirmed",
-    passUrl: passUrl(row),
-    code: row.check_in_code,
+    passUrl: needsAcknowledgement ? consentUrl(row) : passUrl(row),
+    code: needsAcknowledgement ? "" : row.check_in_code,
+    consentRequired: needsAcknowledgement,
     paidLine: paid ? paidLine(row) : "",
     custom,
     ref: own ? "custom:event" : "rsvp-confirmed",

@@ -43,9 +43,12 @@ export default async function RsvpPass({ params }) {
     position = ahead + 1;
   }
   const state = passState(reg);
+  const acknowledgementRequired = Boolean(reg.rsvp_form_config?.consentEnabled);
+  const acknowledgementComplete = Boolean(reg.consent_completed_at);
+  const canViewQr = state === "pass" && (!acknowledgementRequired || acknowledgementComplete);
   const paying = ["waiting", "review", "rejected"].includes(state);
   const methods = paying ? publicMethods(await sql("SELECT key, enabled, details, qr_image, updated_at FROM payment_methods")).filter((m) => PAY_METHODS[m.key]) : [];
-  const qr = state === "pass"
+  const qr = canViewQr
     ? await QRCode.toString(`${EVENTS_URL}/r/${code}`, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0d0d0d", light: "#ffffff" } })
     : null;
   const firstName = reg.name.split(" ")[0];
@@ -67,12 +70,18 @@ export default async function RsvpPass({ params }) {
         <h1>{reg.title}</h1>
         <p className="rsvp-pass-when">{formatDay(reg.date)}{time ? ` · ${time}` : ""}<br />{[reg.venue, reg.city].filter(Boolean).join(", ")}</p>
 
-        {state === "pass" && (
+        {state === "pass" && canViewQr && (
           <>
             <p>Hi {firstName}! {reg.fee_required && reg.fee_status === "paid" ? "Your payment is confirmed. " : ""}Show this QR at the door. A screenshot works too.</p>
             <div className="rsvp-pass-qr" role="img" aria-label={`Check-in QR code. Code ${code}`} dangerouslySetInnerHTML={{ __html: qr }} />
             <p className="rsvp-pass-code">Code <strong>{code.slice(0, 5)} {code.slice(5)}</strong></p>
           </>
+        )}
+        {state === "pass" && acknowledgementRequired && !acknowledgementComplete && (
+          <div className="rsvp-pass-note">
+            <p>Before you view your QR pass, please review and acknowledge the event guidelines.</p>
+            <a className="button dark" href={`${EVENTS_URL}/r/${code}/consent`}>Review and acknowledge</a>
+          </div>
         )}
         {state === "waiting" && <p>Hi {firstName}! Your spot is held. Pay below, then upload your reference number and confirmation screenshot. Your QR pass comes by email once the team has matched your payment.</p>}
         {state === "review" && <p>Thanks, {firstName}. Your spot is held. We&apos;ll email your QR pass as soon as the team has matched your payment.</p>}
@@ -97,7 +106,7 @@ export default async function RsvpPass({ params }) {
         {state === "waitlist" && <p>Hi {firstName}, you&apos;re number {position} on the waitlist. If a slot opens, someone from the pack will message you, and this page will show what to do next.</p>}
         {state === "cancelled" && <p>This registration was cancelled. Message us on Instagram or Facebook if that&apos;s a mistake.</p>}
         {reg.fee_required && state === "pass" && <p className="rsvp-pass-note">{paymentNotice(reg)}</p>}
-        {reg.rsvp_form_config?.consentEnabled && state === "pass" && (
+        {acknowledgementRequired && state === "pass" && acknowledgementComplete && (
           <p className="rsvp-pass-note"><a className="button dark" href={`${EVENTS_URL}/r/${code}/consent`}>{reg.consent_completed_at ? "View acknowledgement" : "Complete event acknowledgement"}</a></p>
         )}
         <p className="rsvp-pass-note">Keep this link private: it&apos;s your pass. We use your details only to run this event.</p>
