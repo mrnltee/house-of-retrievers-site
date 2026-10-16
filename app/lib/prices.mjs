@@ -92,7 +92,7 @@ export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
     }
     if (row?.limit != null && row.limit !== "") {
       const limit = Number(row.limit);
-      if (!Number.isInteger(limit) || limit < 1 || limit > 5000) return { error: `The limit for ${label || "a price"} should be a whole number of registrants, like 20.` };
+    if (!Number.isInteger(limit) || limit < 1 || limit > 5000) return { error: `The limit for ${label || "a price"} should be a whole number of attendance units, like 20.` };
       tier.limit = limit;
     }
     if (tier.from && tier.until && Date.parse(tier.until) <= Date.parse(tier.from)) {

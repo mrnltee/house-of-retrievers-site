@@ -9,7 +9,8 @@ import { chooseTicket, owesPayment, readProofImage } from "../../lib/eventPaymen
 import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "../../lib/registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, ticketLimitUnits } from "../../lib/registrationPricing.mjs";
+import { tierLeft } from "../../lib/prices.mjs";
 import { holdExpiresAt } from "../../lib/registrationHolds.mjs";
 
 export const runtime = "nodejs";
@@ -73,6 +74,12 @@ export async function POST(request) {
       if (attendees.error) return { error: attendees.error, status: 422 };
       const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
       if (due.error) return { error: due.error, status: 422 };
+      const selectedTier = tiers[Number(body?.ticket)];
+      if (selectedTier?.limit) {
+        const left = tierLeft(selectedTier, counts);
+        const units = ticketLimitUnits(event.pricing_basis, selectedTier, attendees.humans, attendees.furbabies);
+        if (units > left) return { error: `That rate has ${left} Early Bird ${left === 1 ? "slot" : "slots"} left, but this registration needs ${units}. Choose the next available rate.`, status: 409 };
+      }
       const vaccination = event.vaccination_record_required && body?.vaccinationRecord
         ? readProofImage(body.vaccinationRecord, { label: "vaccination record photo" })
         : null;

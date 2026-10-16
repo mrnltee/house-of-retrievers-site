@@ -8,7 +8,7 @@
  *   rejected  an admin asked for a new receipt (their spot stays held)
  *   paid      matched by an admin; the QR pass is emailed
  *
- * No time limit on holds. Payment wording is event-specific.
+ * New paid holds have a ten-minute payment window; payment wording is event-specific.
  * Pure functions: shared by the routes, the admin and the tests.
  */
 
@@ -74,7 +74,7 @@ export const referenceKey = (value) => String(value || "").toUpperCase().replace
  * The ticket someone picked. `tiers` are the event's price tiers
  * ([{label, amount, from?, until?}], see eventTiers); `index` points into
  * that full list. Only tiers on sale now count (an early bird rate ends at
- * its cutoff, or once its first-N registrants are in: `counts`, see
+ * its cutoff, or once its first-N attendance units are in: `counts`, see
  * tierKey); with one on sale there is nothing to choose. An admin adding
  * someone by hand may pick any tier (`anyTier`), e.g. an early bird who paid
  * before the cutoff.

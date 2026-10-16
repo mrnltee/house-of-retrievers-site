@@ -5,7 +5,7 @@ import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { paymentNotice } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
-import { calculateAmountDue } from "../lib/registrationPricing.mjs";
+import { calculateAmountDue, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImage } from "../lib/resizeImage";
@@ -28,7 +28,7 @@ export default function RsvpModal({ event, onClose }) {
   const [holdRemaining, setHoldRemaining] = useState(null);
   const waitlist = event.status === "full";
   // Tickets on sale now (an early bird rate drops off at its cutoff), keeping each one's place in the full list.
-  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0) : [];
+  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0 && (!t.limit || ticketLimitUnits(event.pricingBasis, t, Number(humanCount) || 1, Number(furbabyCount) || 0) <= t.left)) : [];
   const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
   const chosen = tickets.find((t) => t.i === ticket);
   const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
