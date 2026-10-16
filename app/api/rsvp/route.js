@@ -10,6 +10,7 @@ import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "../../lib/registrationPricing.mjs";
+import { holdExpiresAt } from "../../lib/registrationHolds.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,15 +77,16 @@ export async function POST(request) {
         ? readProofImage(body.vaccinationRecord, { label: "vaccination record photo" })
         : null;
       if (vaccination?.error) return { error: vaccination.error, status: 422 };
-      const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL", [event.id]);
+      const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL AND (fee_status <> 'waiting' OR hold_expires_at IS NULL OR hold_expires_at > now())", [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
       const code = newCheckInCode();
-      // A held spot on a paid event waits for payment (no time limit); everyone else owes nothing now.
+      // A paid RSVP gets a short payment window; once proof is under review it stays active.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";
+      const holdExpiry = feeStatus === "waiting" ? holdExpiresAt() : null;
       const [row] = await tx.sql(
-        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
-        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount],
+        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
+        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount],
       );
       if (vaccination?.value) {
         const bytes = Buffer.from(vaccination.value.base64, "base64");
@@ -93,7 +95,7 @@ export async function POST(request) {
           [row.id, vaccination.value.mime, bytes, bytes.length],
         );
       }
-      return { id: row.id, status, code, feeStatus, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };
+      return { id: row.id, status, code, feeStatus, holdExpiresAt: holdExpiry?.toISOString() || null, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };
     });
     if (result.error) return fail(result.error, result.status);
     // Email too, so it isn't lost when the tab closes: the pass, the "spot held, now pay" note, or the waitlist note.
@@ -101,7 +103,7 @@ export async function POST(request) {
     else if (result.feeStatus === "waiting") await sendSpotHeld(result.id);
     else await sendPass(result.id);
     revalidatePath("/events");
-    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", ticket: result.ticket, amountDue: result.amountDue, humanCount: result.humanCount, furbabyCount: result.furbabyCount }, { headers: noStore });
+    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", holdExpiresAt: result.holdExpiresAt, ticket: result.ticket, amountDue: result.amountDue, humanCount: result.humanCount, furbabyCount: result.furbabyCount }, { headers: noStore });
   } catch (dbError) {
     if (dbError?.code === "23505") return fail("That registration already exists. Check the confirmation link, or message us to change it.", 409);
     return fail("We couldn't save that just now. Please try again.", 502);

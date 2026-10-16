@@ -1,4 +1,5 @@
 import { tierKey } from "./prices.mjs";
+import { ACTIVE_REGISTRATION_SQL } from "./registrationHolds.mjs";
 
 /**
  * How many registrations hold each ticket, for tiers limited to the first N
@@ -9,13 +10,13 @@ import { tierKey } from "./prices.mjs";
 export const TICKET_COUNTS_SQL = `SELECT coalesce(r.ticket_label, '') AS label, r.ticket_amount AS amount,
   sum(CASE WHEN e.pricing_basis = 'human_plus_furbaby' THEN coalesce(r.human_count, 1) ELSE 1 END)::int AS n
   FROM registrations r JOIN events e ON e.id = r.event_id
-  WHERE r.event_id = $1 AND r.status <> 'cancelled' AND r.deleted_at IS NULL GROUP BY 1, 2`;
+  WHERE r.event_id = $1 AND r.status <> 'cancelled' AND r.deleted_at IS NULL AND ${ACTIVE_REGISTRATION_SQL} GROUP BY 1, 2`;
 
 /** The same counts as a JSON column on an events query (`e` is the event). */
 export const TICKET_COUNTS_COLUMN = `(SELECT json_object_agg(x.k, x.n) FROM (
     SELECT coalesce(r.ticket_label, '') || '|' || coalesce(r.ticket_amount::text, '') AS k,
       sum(CASE WHEN e.pricing_basis = 'human_plus_furbaby' THEN coalesce(r.human_count, 1) ELSE 1 END)::int AS n
-      FROM registrations r WHERE r.event_id = e.id AND r.status <> 'cancelled' AND r.deleted_at IS NULL AND r.ticket_amount IS NOT NULL GROUP BY 1
+      FROM registrations r WHERE r.event_id = e.id AND r.status <> 'cancelled' AND r.deleted_at IS NULL AND r.ticket_amount IS NOT NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now()) GROUP BY 1
   ) x) AS ticket_counts`;
 
 /** Rows from TICKET_COUNTS_SQL → { tierKey: n }. */

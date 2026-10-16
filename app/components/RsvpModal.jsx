@@ -25,6 +25,7 @@ export default function RsvpModal({ event, onClose }) {
   const [furbabyCount, setFurbabyCount] = useState(0);
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [proofSent, setProofSent] = useState(false);
+  const [holdRemaining, setHoldRemaining] = useState(null);
   const waitlist = event.status === "full";
   // Tickets on sale now (an early bird rate drops off at its cutoff), keeping each one's place in the full list.
   const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0) : [];
@@ -34,6 +35,15 @@ export default function RsvpModal({ event, onClose }) {
   const humanOnly = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "human_only";
   const furbabyPackage = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "furbaby_package";
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
+
+  useEffect(() => {
+    const expiresAt = state.result?.holdExpiresAt;
+    if (!expiresAt) { setHoldRemaining(null); return undefined; }
+    const update = () => setHoldRemaining(Math.max(0, new Date(expiresAt).getTime() - Date.now()));
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [state.result?.holdExpiresAt]);
 
   function selectTicket(nextTicket) {
     const next = tickets.find((item) => item.i === nextTicket);
@@ -123,7 +133,7 @@ export default function RsvpModal({ event, onClose }) {
             <div className="success-state" role="status">
               <div className="eyebrow">Payment under review</div>
               <h2 id="rsvp-title">Thanks! We&apos;ll check it.</h2>
-              <p>Your spot is held. We&apos;ll email your QR pass as soon as the team has matched your payment.</p>
+              <p>Your payment proof is with the team. We&apos;ll email your QR pass as soon as it is matched.</p>
               <a className="button dark" href={passHref(done.code)}>Open my RSVP page <Icon name="arrow" size={16} /></a>
               <p className="form-note">Your RSVP page shows where things stand, and lets you replace the screenshot.</p>
             </div>
@@ -131,8 +141,9 @@ export default function RsvpModal({ event, onClose }) {
             <div role="status">
               <div className="eyebrow">Step 2 of 3 · Pay</div>
               <h2 id="rsvp-title">Your spot is held</h2>
-              <p className="modal-lead">Pay, then upload your proof. Paying later? The link in your email brings you back here; your spot stays held.</p>
-              <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.amountDue ?? done.ticket?.amount ?? null} paymentNotice={paymentNotice(event)} onSent={() => setProofSent(true)} />
+              {holdRemaining > 0 ? <p className="hold-countdown" role="timer">Please send your payment proof within <strong>{Math.floor(holdRemaining / 60000)}:{String(Math.floor((holdRemaining % 60000) / 1000)).padStart(2, "0")}</strong>.</p> : <p className="form-error" role="alert">This payment hold has expired. Please close this window and start again so someone else can use the slot.</p>}
+              {holdRemaining > 0 && <p className="modal-lead">Pay, then upload your proof. Your payment link will remain available after you send it for checking.</p>}
+              {holdRemaining > 0 && <PayStep code={done.code} ticketLabel={done.ticket?.label} amount={done.amountDue ?? done.ticket?.amount ?? null} paymentNotice={paymentNotice(event)} onSent={() => setProofSent(true)} />}
             </div>
           )
         ) : done ? (

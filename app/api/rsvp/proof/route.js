@@ -40,7 +40,7 @@ export async function POST(request) {
 
   const result = await transaction(async (tx) => {
     const [reg] = await tx.sql(
-      `SELECT r.id, r.name, r.status, r.fee_status, e.title, e.fee_required FROM registrations r JOIN events e ON e.id = r.event_id
+      `SELECT r.id, r.name, r.status, r.fee_status, r.hold_expires_at, e.title, e.fee_required FROM registrations r JOIN events e ON e.id = r.event_id
         WHERE r.check_in_code = $1 AND r.deleted_at IS NULL FOR UPDATE OF r`,
       [code],
     );
@@ -48,6 +48,9 @@ export async function POST(request) {
     if (reg.status !== "confirmed" || !reg.fee_required) return { error: "This RSVP doesn't need a payment.", status: 409 };
     if (reg.fee_status === "paid") return { error: "Your payment is already confirmed. Your QR pass is on this page.", status: 409 };
     if (!UNPAID.includes(reg.fee_status)) return { error: "This RSVP doesn't need a payment.", status: 409 };
+    if (reg.fee_status === "waiting" && reg.hold_expires_at && new Date(reg.hold_expires_at).getTime() <= Date.now()) {
+      return { error: "This payment hold has expired. Please start the RSVP again so someone else can use the slot.", status: 409 };
+    }
     const [proof] = await tx.sql(
       "INSERT INTO payment_proofs (registration_id, mime, data, bytes, uploaded_by) VALUES ($1, $2, $3, $4, 'Registrant') RETURNING id",
       [reg.id, image.value.mime, bytes, bytes.length],

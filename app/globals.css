@@ -144,6 +144,8 @@ h1 em, h2 em { color: var(--gold); font-weight: 400; }
 .support-method-icon { display: grid; place-items: center; width: 54px; height: 54px; grid-row: span 2; border-radius: 50%; background: var(--gold); font-size: 22px; font-weight: 700; }
 .qr-placeholder { display: grid; place-items: center; width: 108px; height: 108px; grid-row: span 2; border: 7px solid white; outline: 1px solid var(--ink); background: repeating-conic-gradient(var(--ink) 0 25%, white 0 50%) 50% / 14px 14px; }
 .qr-placeholder span { padding: 4px; background: white; font-size: 11px; font-weight: 800; }
+.hold-countdown { margin: 12px 0 18px; padding: 12px 14px; border: 1px solid rgba(167,132,64,.45); background: rgba(167,132,64,.1); }
+.hold-countdown strong { font-variant-numeric: tabular-nums; }
 .qr-placeholder small { font-size: 10px; font-weight: 700; color: var(--muted-on-light); }
 .provider-qr { outline-color: var(--provider-color); background: repeating-conic-gradient(var(--provider-color) 0 25%, white 0 50%) 50% / 14px 14px; transition: background .2s ease, outline-color .2s ease; }
 .provider-qr span { color: var(--provider-color); }
