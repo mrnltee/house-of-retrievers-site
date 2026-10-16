@@ -94,6 +94,8 @@
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
 .check input { width: 20px; height: 20px; margin: 0; accent-color: var(--a-ink); flex: none; }
 .row-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.checkin-sound-row { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.checkin-sound-row > .btn { width: max-content; white-space: nowrap; }
 .row-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 fieldset.plain { border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
 fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bottom: 4px; }
