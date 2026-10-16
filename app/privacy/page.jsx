@@ -40,7 +40,7 @@ export default function PrivacyPage() {
         <div className="privacy-sections">
           <section aria-labelledby="privacy-collect">
             <h2 id="privacy-collect">What we collect</h2>
-            <p>Depending on what you choose to do, this may include your name, email address, social profile, organisation, furbaby details or photo, event registration details, photo preference, guardian&apos;s name, and payment reference or receipt.</p>
+            <p>Depending on what you choose to do, this may include your name, email address, social profile, organization, furbaby details or photo, event registration details, photo preference, guardian&apos;s name, and payment reference or receipt.</p>
           </section>
 
           <section aria-labelledby="privacy-protect">

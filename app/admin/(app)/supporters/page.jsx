@@ -108,7 +108,7 @@ export default async function SupportersPage({ searchParams }) {
       ) : view === "list" ? (
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr><th>Organisation</th><th>ID</th><th>Relationship</th><th>Status</th><th>Support</th><th>Events</th><th>Website</th></tr></thead>
+            <thead><tr><th>Organization</th><th>ID</th><th>Relationship</th><th>Status</th><th>Support</th><th>Events</th><th>Website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
                 const linkedEvents = backed(row);

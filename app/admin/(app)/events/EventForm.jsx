@@ -11,7 +11,7 @@ import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs
 import { CharityField, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
-/** Names to suggest: confirmed-or-not Partners and Sponsors from People (organisation first). */
+/** Names to suggest: confirmed-or-not Partners and Sponsors from People (organization first). */
 async function supporterNames(kind) {
   try {
     // Sponsor and partner records first (their names link the event to the record), then People not yet recorded.

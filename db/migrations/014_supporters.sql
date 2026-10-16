@@ -1,4 +1,4 @@
--- Sponsors and partners: one record per organisation (Figma "Sponsors &
+-- Sponsors and partners: one record per organization (Figma "Sponsors &
 -- partners (12 Oct 2026)", S1/S2). Public on the home page only when
 -- confirmed, switched on, and given a logo and a blurb. Amounts are public
 -- (HOR's transparency promise) once the sponsor has been told: amounts_agreed_at.

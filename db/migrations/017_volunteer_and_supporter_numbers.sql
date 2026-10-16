@@ -1,7 +1,7 @@
 -- ID numbers per kind (12 Oct 2026):
 --   Members     HOR-YY-NNNN
 --   Volunteers  HORV-YY-NNNN   (volunteers now have membership too)
---   Sponsors / partners  HOR-XXX-YY-NNNN, XXX = the organisation's own 3-letter code
+--   Sponsors / partners  HOR-XXX-YY-NNNN, XXX = the organization's own 3-letter code
 -- YY is the year they registered (Manila); NNNN restarts at 0001 each year,
 -- counted separately for members, volunteers, and sponsors+partners.
 

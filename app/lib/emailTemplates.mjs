@@ -139,7 +139,7 @@ export const TEMPLATE_VARIABLES = {
   first_name: "First name, e.g. Juan",
   full_name: "Full name, e.g. Juan dela Cruz",
   furbaby_name: "Their dog's name from the Join form (blank if none)",
-  organization: "Their organisation from the Join form (blank if none)",
+  organization: "Their organization from the Join form (blank if none)",
   role: "member, volunteer, partner or sponsor",
   member_no: "Their number, e.g. HOR-26-0001 for a member or HORV-26-0001 for a volunteer (once Active)",
   event_title: "The event's name",

@@ -132,7 +132,7 @@ export async function saveSupporter(data) {
   });
 }
 
-/** "Make a sponsor record" on a Sponsor or Partner in People: one record per organisation. */
+/** "Make a sponsor record" on a Sponsor or Partner in People: one record per organization. */
 export async function supporterFromPerson(data) {
   const personId = form(data, "personId");
   const back = isUuid(personId) ? `/people/${personId}` : "/people";

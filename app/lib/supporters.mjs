@@ -134,7 +134,7 @@ export function validateSupporter(input, { legacyCode = null } = {}) {
 }
 
 /**
- * A 4-letter placeholder ID code from the organisation name. Four or more
+ * A 4-letter placeholder ID code from the organization name. Four or more
  * words use their initials; shorter names add consonants from the words, then
  * remaining letters. The admin may replace this suggestion before numbering.
  */
