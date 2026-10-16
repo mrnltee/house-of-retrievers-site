@@ -10,6 +10,7 @@ const MESSAGES = {
   already: ["Already checked in", "warn"],
   "not-confirmed": ["Not confirmed (waitlist or cancelled)", "alert"],
   unpaid: ["Payment not confirmed", "alert"],
+  "consent-required": ["Acknowledgement needed", "alert"],
   "wrong-event": ["This QR is for a different event", "alert"],
   unknown: ["Code not found. Check it and try again.", "alert"],
   forbidden: ["Your role can't check people in", "alert"],
@@ -125,6 +126,7 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
               <>
                 <p className="muted">{result.person.furbaby ? `With ${result.person.furbaby}` : "No furbaby listed"}{result.person.ticket ? ` · ${result.person.ticket}` : ""}{result.person.feeStatus ? ` · fee: ${FEE_TEXT[result.person.feeStatus] || result.person.feeStatus}` : ""}</p>
                 {result.outcome === "unpaid" && <p className="small">Not checked in. Only someone with fee access can approve a payment: check it on the Registrations page, then scan again.</p>}
+                {result.outcome === "consent-required" && <p className="small">Not checked in yet. Ask them to open their private RSVP page, complete the event acknowledgement, then scan their QR again.</p>}
                 <div className="actions">
                   {result.person.under18 && <span className="chip warn">Under 18 · guardian: {result.person.guardian}</span>}
                   <span className={`chip ${result.person.photoConsent ? "" : "alert"}`}>{result.person.photoConsent ? "Photos OK" : "No photos"}</span>

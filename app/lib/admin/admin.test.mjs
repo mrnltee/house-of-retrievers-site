@@ -235,4 +235,6 @@ test("the door turns away payments that aren't approved", () => {
   assert.equal(checkInOutcome({ ...reg, fee_status: "paid" }, "e1"), "ok");
   for (const s of ["waiting", "review", "rejected"]) assert.equal(checkInOutcome({ ...reg, fee_status: s }, "e1"), "unpaid");
   assert.equal(checkInOutcome({ ...reg, fee_required: false, fee_status: "waiting" }, "e1"), "ok");
+  assert.equal(checkInOutcome({ ...reg, consent_required_before_checkin: true, consent_completed_at: null }, "e1"), "consent-required");
+  assert.equal(checkInOutcome({ ...reg, consent_required_before_checkin: true, consent_completed_at: new Date() }, "e1"), "ok");
 });

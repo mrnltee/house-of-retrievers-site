@@ -72,5 +72,6 @@ export function checkInOutcome(registration, eventId) {
   if (registration.status !== "confirmed") return "not-confirmed";
   if (registration.checked_in_at) return "already";
   if (registration.fee_required && ["waiting", "review", "rejected"].includes(registration.fee_status)) return "unpaid";
+  if (registration.consent_required_before_checkin && !registration.consent_completed_at) return "consent-required";
   return "ok";
 }
