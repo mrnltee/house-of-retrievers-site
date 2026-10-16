@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`031_…sql`**).
+     number (the next one is **`033_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).

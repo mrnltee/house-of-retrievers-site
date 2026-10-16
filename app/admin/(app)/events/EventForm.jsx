@@ -119,7 +119,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
         </label>
       </section>
 
-      <CheckinSettings eventId={event?.id} title={event?.checkin_success_title} message={event?.checkin_success_message} preset={event?.checkin_sound_preset} hasCustomSound={Boolean(event?.checkin_sound_data)} />
+      <CheckinSettings eventId={event?.id} title={event?.checkin_success_title} message={event?.checkin_success_message} preset={event?.checkin_sound_preset} failurePreset={event?.checkin_failure_sound_preset} hasCustomSound={Boolean(event?.checkin_sound_data)} />
 
       <MoreOptions slug={event?.slug} photoUploads={event?.photo_uploads} />
 

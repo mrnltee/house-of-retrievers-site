@@ -24,7 +24,7 @@ function codeFrom(text) {
   return match ? match[1] : "";
 }
 
-export default function Scanner({ eventId, title, confirmed, initialChecked, successTitle, successMessage, soundPreset, hasCustomSound }) {
+export default function Scanner({ eventId, title, confirmed, initialChecked, successTitle, successMessage, soundPreset, failureSoundPreset, hasCustomSound }) {
   const video = useRef(null);
   const canvas = useRef(null);
   const busy = useRef(false);
@@ -64,12 +64,14 @@ export default function Scanner({ eventId, title, confirmed, initialChecked, suc
   }
 
   function playFailureSound() {
+    if (failureSoundPreset === "silent") return;
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       const context = new AudioContext();
       const now = context.currentTime;
-      [220, 174.61].forEach((frequency, index) => {
+      const notes = failureSoundPreset === "short" ? [261.63, 196] : [220, 174.61];
+      notes.forEach((frequency, index) => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.type = "triangle";

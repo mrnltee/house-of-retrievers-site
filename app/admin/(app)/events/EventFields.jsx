@@ -604,11 +604,34 @@ export function RsvpFormSettings({ initial, vaccinationRecordRequired }) {
   return <fieldset className="rsvp-form-settings indent-full"><legend>Participant form</legend><p className="small muted">Required identity and attendee details stay in the form. Choose optional questions, then arrange the blocks with the arrows.</p><div className="check-row">{["photoConsent", "under18", "vaccination"].map((key) => <label key={key} className="check"><input type="checkbox" checked={optional.includes(key)} disabled={key === "vaccination" && !vaccinationRecordRequired} onChange={() => toggle(key)} /> {labels[key]}{key === "vaccination" && !vaccinationRecordRequired ? " (turn it on above first)" : ""}</label>)}</div><ol className="rsvp-order-list">{order.filter((key) => key === "identity" || key === "attendees" || optional.includes(key)).map((key, index, list) => <li key={key}><span>{labels[key]}{key === "identity" || key === "attendees" ? " · required" : ""}</span><span><button type="button" className="linkish" disabled={index === 0} onClick={() => move(key, -1)} aria-label={`Move ${labels[key]} up`}>↑</button><button type="button" className="linkish" disabled={index === list.length - 1} onClick={() => move(key, 1)} aria-label={`Move ${labels[key]} down`}>↓</button></span></li>)}</ol><label className="switch"><input type="checkbox" checked={consentEnabled} onChange={(e) => setConsentEnabled(e.target.checked)} /><span><strong>Add an event acknowledgement</strong><small>Participants complete it from their private RSVP page. No extra email is sent.</small></span></label>{consentEnabled && <><label className="field"><span>Starting template</span><select value={consentTemplate} onChange={(e) => setConsentTemplate(e.target.value)}>{Object.entries(CONSENT_TEMPLATES).map(([key, template]) => <option key={key} value={key}>{template.label}</option>)}</select></label><label className="field"><span>Acknowledgement introduction <small>Optional. Do not add legal wording unless HOR has approved it.</small></span><textarea maxLength={1000} value={consentIntro} onChange={(e) => setConsentIntro(e.target.value)} rows={3} /></label><label className="switch"><input type="checkbox" checked={consentRequiredBeforeCheckin} onChange={(e) => setConsentRequiredBeforeCheckin(e.target.checked)} /><span><strong>Require it before check-in</strong><small>The QR still works and the registration stays confirmed; the door team will ask them to complete it first.</small></span></label></>}<input type="hidden" name="rsvpFormConfig" value={JSON.stringify({ optional, order, consentEnabled, consentIntro, consentRequiredBeforeCheckin, consentTemplate })} /></fieldset>;
 }
 
-export function CheckinSettings({ eventId, title, message, preset, hasCustomSound }) {
+export function CheckinSettings({ eventId, title, message, preset, failurePreset, hasCustomSound }) {
   const [sound, setSound] = useState(preset || "dazzle");
+  const [failureSound, setFailureSound] = useState(failurePreset || "warning");
   const [data, setData] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  function previewPreset(kind) {
+    const selected = kind === "success" ? sound : failureSound;
+    if (selected === "silent") return;
+    if (selected === "custom" && eventId) return new Audio(`/api/checkin-sound/${eventId}`).play().catch(() => null);
+    const notes = selected === "soft" ? [[523.25, 0]] : selected === "celebration" ? [[523.25, 0], [659.25, 0.12], [783.99, 0.24]] : selected === "short" ? [[261.63, 0], [196, 0.14]] : selected === "warning" ? [[220, 0], [174.61, 0.13]] : [[659.25, 0], [783.99, 0.1], [1046.5, 0.2]];
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const context = new AudioContext();
+      const now = context.currentTime;
+      notes.forEach(([frequency, offset]) => {
+        const oscillator = context.createOscillator(); const gain = context.createGain();
+        oscillator.type = selected === "warning" || selected === "short" ? "triangle" : "sine";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.1, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.3);
+        oscillator.connect(gain).connect(context.destination); oscillator.start(now + offset); oscillator.stop(now + offset + 0.32);
+      });
+      setTimeout(() => context.close(), 900);
+    } catch { /* Preview is optional feedback. */ }
+  }
   function pick(event) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -625,9 +648,10 @@ export function CheckinSettings({ eventId, title, message, preset, hasCustomSoun
       <p className="small muted" style={{ margin: 0 }}>After a successful scan, the check-in team sees this message and hears the selected sound. Failed scans keep the standard warning tone.</p>
       <label className="field"><span>Success title</span><input name="checkinSuccessTitle" maxLength={120} defaultValue={title || "You’re checked in!"} /></label>
       <label className="field"><span>Success message <small>Optional</small></span><textarea name="checkinSuccessMessage" maxLength={300} rows={2} defaultValue={message || "Welcome in. Have a wonderful time together."} /></label>
-      <label className="field"><span>Success sound</span><select name="checkinSoundPreset" value={sound} onChange={(e) => setSound(e.target.value)}><option value="dazzle">Dazzle · bright three-note chime</option><option value="celebration">Celebration · warm three-note chime</option><option value="soft">Soft confirm · subtle single tone</option><option value="silent">Silent</option>{(hasCustomSound || data) && <option value="custom">Uploaded sound{name ? ` · ${name}` : ""}</option>}</select></label>
+      <div className="row-2"><label className="field"><span>Success sound</span><select name="checkinSoundPreset" value={sound} onChange={(e) => setSound(e.target.value)}><option value="dazzle">Dazzle · bright three-note chime</option><option value="celebration">Celebration · warm three-note chime</option><option value="soft">Soft confirm · subtle single tone</option><option value="silent">Silent</option>{(hasCustomSound || data) && <option value="custom">Uploaded sound{name ? ` · ${name}` : ""}</option>}</select></label><button type="button" className="btn ghost small" onClick={() => previewPreset("success")}>Preview success sound</button></div>
       <label className="btn ghost small file-btn" style={{ width: "fit-content" }}>Upload a sound<input type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/ogg" onChange={pick} hidden /></label>
       {hasCustomSound && <label className="check"><input type="checkbox" name="checkinSoundRemove" /> Remove the uploaded sound</label>}
+      <div className="row-2"><label className="field"><span>Failed scan sound</span><select name="checkinFailureSoundPreset" value={failureSound} onChange={(e) => setFailureSound(e.target.value)}><option value="warning">Warning · low two-note tone</option><option value="short">Short warning · quick two-note tone</option><option value="silent">Silent</option></select></label><button type="button" className="btn ghost small" onClick={() => previewPreset("failure")}>Preview failed-scan sound</button></div>
       <input type="hidden" name="checkinSoundData" value={data} />
       {error && <p className="form-error" role="alert">{error}</p>}
       <p className="small muted">Custom sounds must be MP3, WAV or OGG and under 512 KB. Keep them short and use a sound you have permission to use.</p>

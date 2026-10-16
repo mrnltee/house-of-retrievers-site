@@ -208,6 +208,7 @@ export async function saveEvent(data) {
       const title = form(data, "checkinSuccessTitle").trim().slice(0, 120) || "You’re checked in!";
       const message = form(data, "checkinSuccessMessage").trim().slice(0, 300) || "Welcome in. Have a wonderful time together.";
       const preset = ["dazzle", "celebration", "soft", "silent", "custom"].includes(form(data, "checkinSoundPreset")) ? form(data, "checkinSoundPreset") : "dazzle";
+      const failurePreset = ["warning", "short", "silent"].includes(form(data, "checkinFailureSoundPreset")) ? form(data, "checkinFailureSoundPreset") : "warning";
       const soundData = form(data, "checkinSoundData");
       let sound = null;
       if (soundData) {
@@ -218,9 +219,9 @@ export async function saveEvent(data) {
         sound = [match[1], bytes, bytes.length];
       }
       if (sound || data.get("checkinSoundRemove") === "on") {
-        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3, checkin_sound_mime=$4, checkin_sound_data=$5, checkin_sound_bytes=$6 WHERE id=$7", [title, message, sound ? "custom" : (data.get("checkinSoundRemove") === "on" && preset === "custom" ? "dazzle" : preset), sound?.[0] || null, sound?.[1] || null, sound?.[2] || null, eventId]);
+        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3, checkin_failure_sound_preset=$4, checkin_sound_mime=$5, checkin_sound_data=$6, checkin_sound_bytes=$7 WHERE id=$8", [title, message, sound ? "custom" : (data.get("checkinSoundRemove") === "on" && preset === "custom" ? "dazzle" : preset), failurePreset, sound?.[0] || null, sound?.[1] || null, sound?.[2] || null, eventId]);
       } else {
-        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3 WHERE id=$4", [title, message, preset, eventId]);
+        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3, checkin_failure_sound_preset=$4 WHERE id=$5", [title, message, preset, failurePreset, eventId]);
       }
     }
     if (photo) {
