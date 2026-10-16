@@ -164,15 +164,33 @@ export default function RsvpModal({ event, onClose }) {
             <h2 id="rsvp-title">{event.title}</h2>
             {waitlist && <p className="modal-lead">It&apos;s full right now. Add your name and we&apos;ll offer you a slot if one opens.</p>}
             <div className="join-trap" aria-hidden="true"><label>Website<input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" defaultValue="" /></label></div>
+            {event.feeRequired && tickets.length > 1 && (
+              <fieldset className="furbaby-question ticket-question">
+                <legend>Choose your ticket</legend>
+                <p className="furbaby-hint">This decides what is included and how your amount is calculated.</p>
+                <div className="ticket-options">
+                  {tickets.map((t) => {
+                    const ticketDue = calculateAmountDue({ basis: event.pricingBasis, tier: t, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee });
+                    return <label key={t.i} className={ticket === t.i ? "selected" : ""}>
+                      <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => selectTicket(t.i)} />
+                      <span>{t.label || `Ticket ${t.i + 1}`}{ticketRuleNote(t) && <small className="ticket-until">{ticketRuleNote(t)}</small>}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} units · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
+                      <strong>{ticketDue.error ? peso(t.amount) : peso(ticketDue.amount)}</strong>
+                    </label>;
+                  })}
+                </div>
+              </fieldset>
+            )}
+            {event.feeRequired && tickets.length === 1 && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small></div>}
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
-            <label>Furbaby&apos;s name (optional)<input name="furbabyName" maxLength={120} disabled={humanOnly} aria-describedby={humanOnly ? "no-furbabies-note" : undefined} /></label>
+            <label>Furbabies&apos; names (optional)<input name="furbabyName" maxLength={240} disabled={humanOnly} aria-describedby={humanOnly ? "no-furbabies-note" : undefined} placeholder={furbabyCount > 1 ? "e.g. Mochi, Fudge and Pao" : "e.g. Mochi"} /></label>
             <div className="row-2">
               <label>People attending<input required type="number" name="humanCount" min="1" max="100" value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
               <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} disabled={humanOnly} onChange={(e) => setFurbabyCount(e.target.value)} /></label>
             </div>
             {humanOnly && <p id="no-furbabies-note" className="form-note">This Hooman only ticket is for people attending without a furbaby.</p>}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
+            {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong><small>{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0)} Early Bird unit{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0) === 1 ? "" : "s"} used for this ticket</small></div>}
             {event.vaccinationRecordRequired && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
             <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
@@ -190,26 +208,6 @@ export default function RsvpModal({ event, onClose }) {
               </div>
             </fieldset>
             {under18 && <label>Parent or guardian&apos;s name (they come with you)<input required name="guardianName" maxLength={120} /></label>}
-            {tickets.length > 1 && (
-              <fieldset className="furbaby-question ticket-question">
-                <legend>Ticket</legend>
-                <div className="ticket-options">
-                  {tickets.map((t) => (
-                    (() => {
-                      const ticketDue = calculateAmountDue({ basis: event.pricingBasis, tier: t, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee });
-                      return (
-                    <label key={t.i} className={ticket === t.i ? "selected" : ""}>
-                      <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => selectTicket(t.i)} />
-                      <span>{t.label || `Ticket ${t.i + 1}`}{ticketRuleNote(t) && <small className="ticket-until">{ticketRuleNote(t)}</small>}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} registrants · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
-                      <strong>{ticketDue.error ? peso(t.amount) : peso(ticketDue.amount)}</strong>
-                    </label>
-                      );
-                    })()
-                  ))}
-                </div>
-              </fieldset>
-            )}
-            {tickets.length === 1 && <p className="modal-lead">Ticket: {tickets[0].label ? `${tickets[0].label} · ` : ""}{peso(due?.amount ?? tickets[0].amount)}{event.pricingBasis === "tiered" ? ` · ${ticketRuleNote(tickets[0])}${due?.extraHumans ? ` · ${due.extraHumans} extra person${due.extraHumans === 1 ? "" : "s"}` : ""}` : event.pricingBasis === "human_plus_furbaby" ? ` · ${humanCount} person${humanCount === 1 ? "" : "s"}${due?.extraFurbabies ? ` + ${due.extraFurbabies} extra furbaby fee${due.extraFurbabies === 1 ? "" : "s"}` : ""}` : event.pricingBasis !== "registration" ? ` · ${event.pricingBasis === "bundle" ? `${due?.quantity || 1} bundle${due?.quantity === 1 ? "" : "s"}` : `${event.pricingBasis === "human" ? humanCount : furbabyCount} × price`}` : ""}</p>}
             {!waitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
