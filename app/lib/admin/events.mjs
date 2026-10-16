@@ -30,6 +30,11 @@ export const cleanFit = (value) => (FIT_KEYS.includes(value) ? value : "fit");
 export const MAX_INCLUDED = 10;
 
 export const RSVP_FORM_DEFAULT = { optional: ["photoConsent", "under18"], order: ["identity", "attendees", "photoConsent", "under18", "vaccination"] };
+export const CONSENT_TEMPLATES = {
+  simple: { label: "Simple event acknowledgement", intro: "Please review the event notes, then confirm your registered name.", sections: [{ heading: "Event participation", body: "I will follow the instructions of the organisers and venue staff, respect other participants, and help keep the event safe and welcoming." }] },
+  safetyPhoto: { label: "Safety + photo/video consent", intro: "Please review these event safety and consent notes before attending.", sections: [{ heading: "Event safety and responsibilities", bullets: ["Follow instructions from HOR organisers and venue staff.", "Respect people, dogs, and their boundaries.", "Keep your dog supervised and under control at all times.", "Follow venue rules and report any safety concern to the organisers."] }, { heading: "Photo and video consent", body: "Event photos and videos may be used for documentation, event recaps, social media, newsletters, and organisational updates." }] },
+};
+export const consentTemplate = (key) => CONSENT_TEMPLATES[key] || CONSENT_TEMPLATES.simple;
 export function cleanRsvpFormConfig(input) {
   let value = input;
   if (typeof input === "string") { try { value = JSON.parse(input || "{}"); } catch { value = {}; } }

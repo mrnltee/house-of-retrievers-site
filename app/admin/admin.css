@@ -225,6 +225,10 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .rsvp-preview-list { list-style: none; padding: 0; margin: 20px 0 0; }
 .rsvp-preview-list li { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid var(--a-line); }
 .rsvp-preview-list small { color: var(--a-muted); }
+.consent-sections { display: grid; gap: 18px; margin: 20px 0; }
+.consent-sections h2 { font-size: 18px; margin: 0 0 6px; }
+.consent-sections p { margin: 0; }
+.consent-sections ul { margin: 6px 0 0; padding-left: 20px; }
 
 /* Hashtag badges with their own remove button. */
 .tag-input { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 48px; padding: 6px 8px; border: 1px solid var(--a-field); border-radius: 10px; background: white; cursor: text; }
