@@ -32,7 +32,9 @@ export default function RsvpModal({ event, onClose }) {
   const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
   const chosen = tickets.find((t) => t.i === ticket);
   const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
-  const humanOnly = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "human_only";
+  // Use the selected ticket rule directly. This keeps the public form correct even
+  // when older event rows carry a legacy pricing-basis value.
+  const humanOnly = chosen?.attendanceBasis === "human_only";
   const furbabyPackage = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "furbaby_package";
   const formConfig = event.rsvpFormConfig || { optional: ["photoConsent", "under18"] };
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
