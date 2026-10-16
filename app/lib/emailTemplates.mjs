@@ -45,9 +45,9 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
 function frame({ preheader, greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
-  const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${text}</p>`;
+  const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${text}</p>`;
   const sign = signoff
-    ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27">${signoff.join("<br>")}</p>`
+    ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${signoff.join("<br>")}</p>`
     : "";
   // The centered layout closes with the small logo badge and the org's full name.
   const foot = centered
@@ -66,7 +66,7 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
        </td></tr></table>`
     : "";
   const cta = button
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px"><tr><td style="border-radius:999px;background:#A78440">
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px auto 24px"><tr><td style="border-radius:999px;background:#A78440">
          <a href="${esc(button.href)}" style="display:inline-block;padding:14px 26px;font:700 15px Helvetica,Arial,sans-serif;color:#0D0D0D;text-decoration:none;border-radius:999px">${esc(button.label)}</a>
        </td></tr></table>`
     : "";
@@ -76,9 +76,9 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-bg" style="background:#F5F1E6"><tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="em-card" style="max-width:560px;background:#ffffff;border-radius:18px;overflow:hidden">
     <tr><td style="background:#0D0D0D;padding:0;line-height:0"><img src="${centered ? HEADER_CENTER : HEADER}" width="560" alt="${ORG}" style="display:block;border:0;width:100%;max-width:560px;height:auto"></td></tr>
-    <tr><td style="padding:32px 28px 12px">
+    <tr><td align="${centered ? "center" : "left"}" style="padding:32px 28px 12px;text-align:${centered ? "center" : "left"}">
       ${greeting ? p(esc(greeting)) : ""}
-      <h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D">${esc(heading)}</h1>
+      <h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D;text-align:${centered ? "center" : "left"}">${esc(heading)}</h1>
       ${paragraphs.map(p).join("\n      ")}
       ${picture}
       ${cta}
