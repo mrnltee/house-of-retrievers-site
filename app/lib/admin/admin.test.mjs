@@ -110,6 +110,8 @@ test("RSVPs: explicit photo choice, guardian for under 18s, waitlist when full",
   assert.equal(statusForNewRegistration({ capacity: null, confirmed: 99 }), "confirmed");
   assert.equal(statusForNewRegistration({ capacity: 18, confirmed: 17 }), "confirmed");
   assert.equal(statusForNewRegistration({ capacity: 18, confirmed: 18 }), "waitlist");
+  assert.equal(statusForNewRegistration({ capacity: 20, confirmed: 18, requested: 2 }), "confirmed");
+  assert.equal(statusForNewRegistration({ capacity: 20, confirmed: 19, requested: 2 }), "waitlist");
 });
 
 test("check-in codes are readable, unique enough, and checked against the event", () => {
@@ -179,6 +181,7 @@ test("an upcoming event keeps its sign-up settings", () => {
   const { value } = validateEvent({ title: "Retriever Romp", date: "2026-11-15", registration: "required", capacity: "40" }, { today: "2026-10-10" });
   assert.equal(value.registration, "required");
   assert.equal(value.capacity, 40);
+  assert.equal(value.capacityBasis, "registration");
 });
 
 test("event RSVP controls preserve the usual label and support a deliberate closure", () => {

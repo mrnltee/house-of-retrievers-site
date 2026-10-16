@@ -152,7 +152,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–027 (see §6)
+db/migrations/           001–033 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -182,6 +182,10 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 025 | supporter four-letter IDs (legacy three-letter IDs remain valid) and optional relationship labels |
 | 026 | ticket-specific attendance pricing (`human_only` or `furbaby_package`) in existing tier JSON |
 | 027 | event RSVP label/closed state, plus private optional vaccination-record photos |
+| 028 | ten-minute expiry for unpaid RSVP holds |
+| 029–030 | configurable participant form order and event acknowledgement records |
+| 031–032 | private check-in success/failure feedback settings and sound presets/uploads |
+| 033 | separate event capacity basis (`registration`, `human`, `furbaby`), defaulting to one slot per registration |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.
@@ -202,6 +206,12 @@ supporter numbers. Pick a new number for any new lock.
 - Things that can run out (the last slot, first-N ticket tiers) are checked
   **under the event row lock** in `/api/rsvp`. Ticket counts come from
   `app/lib/ticketCounts.mjs`. Never count in the browser.
+- Capacity and pricing are separate decisions. `app/lib/eventCapacity.mjs` is
+  the source for how many venue slots a registration consumes;
+  `app/lib/registrationPricing.mjs` is the source for how much it costs.
+  Existing events default to one slot per registration. Any public/admin
+  capacity count, waitlist move, restore or attendee-count edit must use the
+  capacity basis under the event lock.
 - **Admin server actions**: one per button, using `formAction` (the clicked
   button's name/value isn't reliably sent). Check the capability first
   (`actionAdmin("registrations:fees")` etc.), before reading the target record.

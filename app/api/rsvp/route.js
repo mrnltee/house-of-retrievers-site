@@ -12,6 +12,7 @@ import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, ticketLimitUnits } from "../../lib/registrationPricing.mjs";
 import { tierLeft } from "../../lib/prices.mjs";
 import { holdExpiresAt } from "../../lib/registrationHolds.mjs";
+import { CAPACITY_USED_SQL, cleanCapacityBasis, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -72,6 +73,8 @@ export async function POST(request) {
       if (ticket.error) return { error: ticket.error, status: 422 };
       const attendees = cleanAttendeeCounts(body?.humanCount ?? 1, body?.furbabyCount ?? 0);
       if (attendees.error) return { error: attendees.error, status: 422 };
+      const capacityRequest = validateCapacityCounts(cleanCapacityBasis(event.capacity_basis), attendees.humans, attendees.furbabies);
+      if (capacityRequest.error) return { error: capacityRequest.error, status: 422 };
       const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
       if (due.error) return { error: due.error, status: 422 };
       const selectedTier = tiers[Number(body?.ticket)];
@@ -84,8 +87,8 @@ export async function POST(request) {
         ? readProofImage(body.vaccinationRecord, { label: "vaccination record photo" })
         : null;
       if (vaccination?.error) return { error: vaccination.error, status: 422 };
-      const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL AND (fee_status <> 'waiting' OR hold_expires_at IS NULL OR hold_expires_at > now())", [event.id]);
-      const status = statusForNewRegistration({ capacity: event.capacity, confirmed: count });
+      const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
+      const status = statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units });
       const code = newCheckInCode();
       // A paid RSVP gets a short payment window; once proof is under review it stays active.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";

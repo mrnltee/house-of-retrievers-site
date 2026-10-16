@@ -20,6 +20,7 @@ import { loadCustomTemplate, loadTemplate } from "../lib/emailSettings";
 import { savePersonPhoto } from "../lib/personPhotos";
 import { sendPass, sendSpotHeld } from "../lib/passEmails";
 import { ticketLine } from "../lib/eventPayments.mjs";
+import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -124,7 +125,7 @@ export async function saveEvent(data) {
     if (intent === "unpublish") status = "draft";
     if (intent === "cancel") status = "cancelled";
 
-    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, form(data, "rsvpFormConfig") || "{}"];
+    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.capacityBasis, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, form(data, "rsvpFormConfig") || "{}"];
     let eventId = id;
     let unpublished = false;
     if (isUuid(id) && !status && missing.length) {
@@ -153,10 +154,10 @@ export async function saveEvent(data) {
     if (isUuid(id)) {
       const rows = await sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
-           image=$11, image_alt=$12, registration=$13, capacity=$14, rsvp_open=$15, rsvp_label=$16, vaccination_record_required=$17,
-           fee_required=$18, pricing_basis=$19, included_furbabies_per_human=$20, additional_furbaby_fee=$21, onsite_payment=$22, rsvp_form_config=$23::jsonb,
-           status=COALESCE($24, status), updated_at=now()
-         WHERE id=$25 RETURNING id`,
+           image=$11, image_alt=$12, registration=$13, capacity=$14, capacity_basis=$15, rsvp_open=$16, rsvp_label=$17, vaccination_record_required=$18,
+           fee_required=$19, pricing_basis=$20, included_furbabies_per_human=$21, additional_furbaby_fee=$22, onsite_payment=$23, rsvp_form_config=$24::jsonb,
+           status=COALESCE($25, status), updated_at=now()
+         WHERE id=$26 RETURNING id`,
         [...fields, status, id],
       );
       if (!rows.length) await backWith("/events", "error", "That event no longer exists.");
@@ -166,8 +167,8 @@ export async function saveEvent(data) {
       if (taken.length) slug = `${slug}-${taken.length + 1}`;
       const rows = await sql(
         `INSERT INTO events (title, category, date, start_time, end_time, venue, city, cost, supports, summary, image, image_alt,
-           registration, capacity, rsvp_open, rsvp_label, vaccination_record_required, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, onsite_payment, rsvp_form_config, status, slug)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb,COALESCE($24,'draft'),$25) RETURNING id`,
+           registration, capacity, capacity_basis, rsvp_open, rsvp_label, vaccination_record_required, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, onsite_payment, rsvp_form_config, status, slug)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,COALESCE($25,'draft'),$26) RETURNING id`,
         [...fields, status, slug],
       );
       eventId = rows[0].id;
@@ -240,7 +241,7 @@ export async function saveEvent(data) {
 async function registrationWithEvent(regId) {
   if (!isUuid(regId)) return null;
   const rows = await sql(
-    `SELECT r.*, e.capacity, e.title FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
+    `SELECT r.*, e.capacity, e.capacity_basis, e.title FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [regId],
   );
   return rows[0] || null;
@@ -264,8 +265,10 @@ export async function changeRegistration(data) {
       // Re-count inside a transaction so two admins can't both fill the last slot.
       const moved = await transaction(async (tx) => {
         await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
-        const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1 AND status='confirmed' AND deleted_at IS NULL", [reg.event_id]);
-        if (reg.capacity != null && count >= reg.capacity) return false;
+        const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+        if (capacityRequest.error) return false;
+        const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [reg.event_id]);
+        if (reg.capacity != null && Number(used || 0) + capacityRequest.units > reg.capacity) return false;
         await tx.sql(
           `UPDATE registrations SET status='confirmed',
              fee_status = CASE WHEN (SELECT fee_required FROM events WHERE id=$2) AND fee_status='not_due' AND ticket_amount IS DISTINCT FROM 0 THEN 'waiting' ELSE fee_status END

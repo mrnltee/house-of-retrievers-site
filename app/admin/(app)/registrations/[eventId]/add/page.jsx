@@ -6,6 +6,7 @@ import { tierLeft, tierWindow } from "../../../../../lib/prices.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../../../lib/ticketCounts.mjs";
 import { ADMIN_PAY_METHODS, ticketLine } from "../../../../../lib/eventPayments.mjs";
 import { calculateAmountDue } from "../../../../../lib/registrationPricing.mjs";
+import { CAPACITY_USED_SQL, capacityUnitLabel } from "../../../../../lib/eventCapacity.mjs";
 import { emailReady } from "../../../../../lib/email";
 import { addRegistration } from "../../../../registrationActions";
 import ConfirmButton from "../../../ConfirmButton";
@@ -25,10 +26,11 @@ export default async function AddRegistration({ params, searchParams }) {
   const [event] = await sql("SELECT * FROM events WHERE id = $1", [eventId]);
   if (!event) notFound();
   const base = await adminBase();
-  const [{ count }] = await sql("SELECT count(*)::int AS count FROM registrations WHERE event_id = $1 AND status = 'confirmed' AND deleted_at IS NULL", [eventId]);
+  const [{ used }] = await sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [eventId]);
   const tiers = event.fee_required ? eventTiers(event) : [];
   const counts = tiers.some((t) => t.limit) ? countsFromRows(await sql(TICKET_COUNTS_SQL, [eventId])) : {};
-  const full = event.capacity != null && count >= event.capacity;
+  const capacityUsed = Number(used || 0);
+  const full = event.capacity != null && capacityUsed >= event.capacity;
   const ready = emailReady();
   const existing = await sql("SELECT name, email FROM registrations WHERE event_id=$1 AND deleted_at IS NULL", [eventId]);
   const defaultTier = tiers[0] || { amount: 0 };
@@ -37,7 +39,7 @@ export default async function AddRegistration({ params, searchParams }) {
   return (
     <>
       <p className="small"><a href={`${base}/registrations/${eventId}`}>← {event.title} registrations</a></p>
-      <PageHead title="Add a registration" lead={`For people who already paid, paid at the door, or guests. Capacity: ${count} of ${event.capacity ?? "no limit"} used${full ? ", so adding goes over" : ""}.`} />
+      <PageHead title="Add a registration" lead={`For people who already paid, paid at the door, or guests. Capacity: ${capacityUsed} ${capacityUnitLabel(event.capacity_basis)} of ${event.capacity ?? "no limit"} used${full ? ", so adding goes over" : ""}.`} />
       <Flash params={query} />
       <form action={addRegistration} className="card form" style={{ maxWidth: 720, gap: 16 }}>
         <input type="hidden" name="eventId" value={eventId} />
@@ -90,7 +92,7 @@ export default async function AddRegistration({ params, searchParams }) {
             title={`Add them to ${event.title}?`}
             echo={[{ name: "name", label: "Name" }, { name: "email", label: "Email" }, ...(tiers.length ? [{ name: "ticket", label: "Ticket" }] : []), ...(event.fee_required ? [{ name: "payment", label: "Payment" }, { name: "reference", label: "Reference" }] : [])]}
             items={[
-              full ? `They're confirmed, which puts the event over capacity (${count + 1} of ${event.capacity})` : "They're confirmed and take a slot",
+              full ? `They're confirmed, which puts the event over capacity (${capacityUsed} of ${event.capacity})` : "They're confirmed and take a slot",
               "If the email box is ticked, they're emailed now",
               event.pricing_basis !== "registration" ? `The amount is calculated from the people/furbaby count (${defaultDue ? `₱${defaultDue}` : "free"} for one person)` : "The ticket price is saved with this registration",
             ]}

@@ -91,6 +91,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
         <SignupFields
           registration={event?.registration}
           capacity={event?.capacity}
+          capacityBasis={event?.capacity_basis}
           rsvpOpen={event ? event.rsvp_open : true}
           rsvpLabel={event?.rsvp_label}
           vaccinationRecordRequired={event?.vaccination_record_required}
@@ -104,7 +105,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
 
       <section className="card">
         <h2>Pricing and availability</h2>
-        <p className="small muted section-lead">Set the ticket rules first, then add sale periods or Early Bird limits. The server checks the final amount and available units when someone RSVPs.</p>
+        <p className="small muted section-lead">Set the ticket rules first, then add sale periods or Early Bird limits. Pricing decides what a group pays; Capacity in Registration decides how many venue slots it uses.</p>
         <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} pricingBasis={event?.pricing_basis || "registration"} includedFurbabiesPerHuman={event?.included_furbabies_per_human || 0} additionalFurbabyFee={event?.additional_furbaby_fee || 0} />
       </section>
 

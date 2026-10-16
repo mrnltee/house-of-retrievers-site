@@ -1,4 +1,5 @@
 import { sql } from "../../../lib/db";
+import { CAPACITY_USED_AGGREGATE_SQL } from "../../../lib/eventCapacity.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { DateBox, NotAllowed, PageHead, manilaToday } from "../ui";
 
@@ -9,6 +10,7 @@ export default async function RegistrationsIndex() {
   const rows = await sql(
     `SELECT e.id, e.title, e.date, e.capacity, e.status,
        count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed,
+       ${CAPACITY_USED_AGGREGATE_SQL} AS capacity_used,
        count(r.*) FILTER (WHERE r.status='waitlist' AND r.deleted_at IS NULL)::int AS waitlist
      FROM events e LEFT JOIN registrations r ON r.event_id = e.id
      WHERE e.registration = 'required' AND e.date >= ($1::date - 30)
@@ -25,7 +27,7 @@ export default async function RegistrationsIndex() {
             <DateBox date={event.date} />
             <div>
               <strong>{event.title}</strong>
-              <span className="small muted">{event.confirmed}{event.capacity ? ` / ${event.capacity}` : ""} confirmed{event.waitlist ? ` · ${event.waitlist} waiting` : ""}</span>
+              <span className="small muted">{event.capacity ? `${event.capacity_used} / ${event.capacity} capacity used` : `${event.confirmed} confirmed`}{event.waitlist ? ` · ${event.waitlist} waiting` : ""}</span>
             </div>
             <a className="btn ghost small" href={`${base}/registrations/${event.id}`}>Open</a>
           </div>

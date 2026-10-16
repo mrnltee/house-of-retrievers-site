@@ -3,6 +3,7 @@ import { adminBase, pageAdmin } from "../../lib/admin/guard";
 import { can } from "../../lib/admin/roles.mjs";
 import { METHODS } from "../../lib/admin/payments.mjs";
 import { actionLabel } from "../../lib/admin/activity.mjs";
+import { CAPACITY_USED_AGGREGATE_SQL } from "../../lib/eventCapacity.mjs";
 import { DateBox, Flash, NotAllowed, PageHead, formatWhen, manilaToday } from "./ui";
 
 export default async function Dashboard({ searchParams }) {
@@ -33,6 +34,7 @@ export default async function Dashboard({ searchParams }) {
     sql(
       `SELECT e.id, e.title, e.date, e.venue, e.city, e.status, e.registration, e.capacity,
          count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed,
+         ${CAPACITY_USED_AGGREGATE_SQL} AS capacity_used,
          count(r.*) FILTER (WHERE r.status='waitlist' AND r.deleted_at IS NULL)::int AS waitlist
        FROM events e LEFT JOIN registrations r ON r.event_id = e.id
        WHERE e.date >= $1 AND e.status <> 'cancelled' GROUP BY e.id ORDER BY e.date LIMIT 5`,
@@ -106,7 +108,7 @@ export default async function Dashboard({ searchParams }) {
               <div>
                 <strong>{event.title}</strong>
                 <span className="small muted">
-                  {event.registration === "required" ? `${event.confirmed}${event.capacity ? ` / ${event.capacity}` : ""} confirmed${event.waitlist ? ` · ${event.waitlist} waiting` : ""}` : "No registration"}
+                  {event.registration === "required" ? `${event.capacity ? `${event.capacity_used} / ${event.capacity} capacity used` : `${event.confirmed} confirmed`}${event.waitlist ? ` · ${event.waitlist} waiting` : ""}` : "No registration"}
                 </span>
               </div>
               <span className={`chip ${event.status === "published" ? "good" : ""}`}>{event.status === "published" ? "Published" : "Draft"}</span>

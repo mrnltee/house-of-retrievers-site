@@ -5,6 +5,8 @@ import { can } from "../../../../lib/admin/roles.mjs";
 import { FEE_STATUS, payMethodLabel, referenceKey, ticketLine } from "../../../../lib/eventPayments.mjs";
 import { changeRegistration } from "../../../actions";
 import { deleteRegistration, restoreRegistration } from "../../../registrationActions";
+import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
+import { isActiveRegistrationHold } from "../../../../lib/registrationHolds.mjs";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../ui";
 
@@ -39,6 +41,8 @@ export default async function EventRegistrations({ params, searchParams }) {
   const toCheck = confirmed.filter((r) => r.fee_status === "review");
   const pending = confirmed.filter((r) => r.fee_status === "waiting" || r.fee_status === "rejected");
   const paid = confirmed.filter((r) => r.fee_status === "paid");
+  const capacityUsed = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at })).reduce((sum, r) => sum + capacityUnits(event.capacity_basis, { humans: r.human_count, furbabies: r.furbaby_count }), 0);
+  const capacityLabel = capacityUnitLabel(event.capacity_basis);
   const FILTERS = paidEvent ? PAY_FILTERS : BASE_FILTERS;
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
@@ -63,7 +67,7 @@ export default async function EventRegistrations({ params, searchParams }) {
     check: toCheck.length, pending: pending.length, paid: paid.length,
   };
   const waitPosition = new Map(waitlist.map((r, i) => [r.id, i + 1]));
-  const capacityNote = event.capacity ? (confirmed.length >= event.capacity ? "Full · new sign-ups join the waitlist" : `${event.capacity - confirmed.length} slots left`) : "No limit";
+  const capacityNote = event.capacity ? (capacityUsed >= event.capacity ? `Full · new sign-ups join the waitlist` : `${event.capacity - capacityUsed} ${capacityLabel} left`) : `No limit · capacity is counted by ${capacityLabel}`;
 
   return (
     <>
@@ -77,7 +81,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       <section className="grid-4" aria-label="Counts">
         {paidEvent ? (
           <>
-            <div className="stat"><span className="label">Confirmed</span><span className="value">{event.capacity ? `${confirmed.length} / ${event.capacity}` : confirmed.length}</span><span className="small muted">{capacityNote}</span></div>
+            <div className="stat"><span className="label">Capacity used</span><span className="value">{event.capacity ? `${capacityUsed} / ${event.capacity}` : capacityUsed}</span><span className="small muted">{capacityNote}</span></div>
             <a className={`stat${toCheck.length ? " stat-warn" : ""}`} href={`${base}/registrations/${event.id}?show=check`}><span className="label">To check</span><span className="value">{toCheck.length}</span><span className="small muted">Proof uploaded, waiting for an admin</span></a>
             <a className="stat" href={`${base}/registrations/${event.id}?show=pending`}><span className="label">Payment pending</span><span className="value">{pending.length}</span><span className="small muted">Spot held, no approved payment yet</span></a>
             <a className="stat" href={`${base}/registrations/${event.id}?show=paid`}><span className="label">Paid</span><span className="value">{paid.length}</span><span className="small muted">{peso(paid.reduce((sum, r) => sum + (r.pay_amount ?? r.amount_due ?? r.ticket_amount ?? 0), 0))} matched · QR passes sent</span></a>
@@ -85,7 +89,7 @@ export default async function EventRegistrations({ params, searchParams }) {
         ) : (
           <>
             <div className="stat"><span className="label">Capacity</span><span className="value">{event.capacity ?? "No limit"}</span><span className="small muted">Change it in the event editor</span></div>
-            <div className="stat"><span className="label">Confirmed</span><span className="value">{confirmed.length}</span><span className="small muted">{capacityNote}</span></div>
+            <div className="stat"><span className="label">Capacity used</span><span className="value">{event.capacity ? `${capacityUsed} / ${event.capacity}` : capacityUsed}</span><span className="small muted">{capacityNote}</span></div>
             <div className="stat"><span className="label">Waitlist</span><span className="value">{waitlist.length}</span><span className="small muted">Offered in order, by hand</span></div>
             <div className="stat"><span className="label">Checked in</span><span className="value">{checked.length} / {confirmed.length}</span><span className="small muted">On the day</span></div>
           </>

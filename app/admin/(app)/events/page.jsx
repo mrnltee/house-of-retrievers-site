@@ -1,5 +1,6 @@
 import { formatOpens, opensLater } from "../../../lib/rsvpOpens.mjs";
 import { sql } from "../../../lib/db";
+import { CAPACITY_USED_AGGREGATE_SQL } from "../../../lib/eventCapacity.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, manilaToday } from "../ui";
@@ -20,7 +21,8 @@ export default async function EventsPage({ searchParams }) {
   }[tab];
   const rows = await sql(
     `SELECT e.id, e.title, e.date, e.status, e.registration, e.capacity, e.cost, e.rsvp_opens_at,
-       count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed
+       count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed,
+       ${CAPACITY_USED_AGGREGATE_SQL} AS capacity_used
      FROM events e LEFT JOIN registrations r ON r.event_id = e.id
      WHERE ${where} GROUP BY e.id ORDER BY e.date ${tab === "past" ? "DESC" : "ASC"}`,
     [today],
@@ -51,7 +53,7 @@ export default async function EventsPage({ searchParams }) {
                   {event.registration === "required" ? `Required${event.cost ? ` · ${event.cost}` : ""}` : "None needed"}
                   {event.registration === "required" && event.rsvp_opens_at && opensLater(new Date(event.rsvp_opens_at).toISOString()) && <><br /><span className="small muted">Opens {formatOpens(new Date(event.rsvp_opens_at).toISOString())}</span></>}
                 </td>
-                <td>{event.registration === "required" ? `${event.confirmed}${event.capacity ? ` / ${event.capacity}` : ""}` : "—"}</td>
+                <td>{event.registration === "required" ? `${event.capacity ? event.capacity_used : event.confirmed}${event.capacity ? ` / ${event.capacity}` : ""}` : "—"}</td>
                 <td><span className={`chip ${event.status === "published" ? "good" : event.status === "cancelled" ? "alert" : ""}`}>{event.status[0].toUpperCase() + event.status.slice(1)}</span></td>
                 <td className="actions">
                   {canEdit && <a className="linkish" href={`${base}/events/${event.id}`}>Edit</a>}

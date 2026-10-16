@@ -10,6 +10,7 @@ import { UNPAID, chooseTicket, owesPayment, parsePeso, readProofImage, validateP
 import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../lib/passEmails";
 import { deletionState } from "../lib/registrationRecovery.mjs";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
+import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -36,7 +37,7 @@ async function guarded(path, work) {
 async function registration(id, { includeDeleted = false } = {}) {
   if (!isUuid(id)) return null;
   const [row] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.capacity FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1${includeDeleted ? "" : " AND r.deleted_at IS NULL"}`,
+    `SELECT r.*, e.title, e.fee_required, e.capacity, e.capacity_basis FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1${includeDeleted ? "" : " AND r.deleted_at IS NULL"}`,
     [id],
   );
   return row || null;
@@ -168,7 +169,7 @@ export async function addRegistration(data) {
   const back = isUuid(eventId) ? `/registrations/${eventId}/add` : "/registrations";
   return guarded(back, async () => {
     const admin = await actionAdmin("registrations:edit");
-    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
+    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
     if (!event) await backWith("/registrations", "error", "That event no longer exists.");
     const { value, error } = validateRsvp({
       name: form(data, "name"), email: form(data, "email"), furbabyName: form(data, "furbabyName"),
@@ -180,6 +181,8 @@ export async function addRegistration(data) {
     if (ticket.error) await backWith(back, "error", ticket.error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
+    const capacityRequest = validateCapacityCounts(event.capacity_basis, attendees.humans, attendees.furbabies);
+    if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const payment = ["paid", "pending", "none"].includes(form(data, "payment")) ? form(data, "payment") : "none";
     const owes = owesPayment(event.fee_required, ticket.value);
     const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
@@ -254,7 +257,9 @@ export async function updateRegistration(data) {
     if (error) await backWith(back, "error", error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
-    const [event] = await sql("SELECT title, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id=$1", [reg.event_id]);
+    const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id=$1", [reg.event_id]);
+    const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies);
+    if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const tiers = event?.fee_required ? eventTiers(event) : [];
     const currentIndex = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
     const chosen = chooseTicket(tiers, form(data, "ticket") || (currentIndex >= 0 ? currentIndex : undefined), { anyTier: true });
@@ -267,13 +272,22 @@ export async function updateRegistration(data) {
     }
     const amountChanged = due.amount !== oldDue || chosen.value.label !== reg.ticket_label || Number(chosen.value.amount ?? 0) !== Number(reg.ticket_amount ?? 0);
     const nextFee = amountChanged && reg.status === "confirmed" && due.amount > 0 && reg.fee_status !== "paid" ? "waiting" : (due.amount === 0 ? "not_due" : reg.fee_status);
-    await sql(
-      `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
-         ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
-         fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END WHERE id=$1`,
-      [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
-        chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged],
-    );
+    const saved = await transaction(async (tx) => {
+      await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
+      if (reg.status === "confirmed" && event?.capacity != null) {
+        const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.id<>$2 AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [reg.event_id, id]);
+        if (Number(used || 0) + capacityRequest.units > event.capacity) return false;
+      }
+      await tx.sql(
+        `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
+           ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
+           fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END WHERE id=$1`,
+        [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
+          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged],
+      );
+      return true;
+    });
+    if (!saved) await backWith(back, "error", "Those attendee counts would exceed the event capacity. Cancel someone or raise the capacity first.");
     await logActivity(admin.email, "registration.edit", event?.title || reg.title, { registrationId: id, amountChanged });
     let note = `${value.name}'s registration was saved.`;
     if (amountChanged && nextFee === "waiting") note += " The payment is waiting for a new proof at the updated amount.";
@@ -337,8 +351,9 @@ export async function restoreRegistration(data) {
     const restored = await transaction(async (tx) => {
       await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
       if (reg.deleted_previous_status === "confirmed" && reg.capacity != null) {
-        const [{ count }] = await tx.sql("SELECT count(*)::int AS count FROM registrations WHERE event_id=$1 AND status='confirmed' AND deleted_at IS NULL", [reg.event_id]);
-        if (count >= reg.capacity) return false;
+        const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [reg.event_id]);
+        const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+        if (request.error || Number(used || 0) + request.units > reg.capacity) return false;
       }
       const [duplicate] = await tx.sql(
         `SELECT id FROM registrations WHERE event_id=$1 AND id<>$2 AND deleted_at IS NULL

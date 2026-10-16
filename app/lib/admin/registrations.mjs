@@ -35,9 +35,9 @@ export function validateRsvp(input) {
 }
 
 /** A new registration is confirmed while there's room, otherwise waitlisted. */
-export function statusForNewRegistration({ capacity, confirmed }) {
+export function statusForNewRegistration({ capacity, confirmed, requested = 1 }) {
   if (capacity == null) return "confirmed";
-  return confirmed < capacity ? "confirmed" : "waitlist";
+  return Number(confirmed || 0) + Number(requested || 0) <= capacity ? "confirmed" : "waitlist";
 }
 
 /** Unambiguous characters only (no 0/O, 1/I/L), so a code can be read aloud at the door. */

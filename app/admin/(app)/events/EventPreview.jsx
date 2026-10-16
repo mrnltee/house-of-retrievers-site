@@ -63,6 +63,7 @@ function draftEvent(form, saved) {
     gallery: json(get("gallery"), []),
     registration: f.get("registration") === "required" ? "required" : "none",
     capacity: get("capacity") ? Number(get("capacity")) : null,
+    capacity_basis: get("capacityBasis") || "registration",
     rsvp_open: f.get("rsvpOpen") === "on",
     rsvp_label: get("rsvpLabel"),
     vaccination_record_required: f.get("vaccinationRecordRequired") === "on",

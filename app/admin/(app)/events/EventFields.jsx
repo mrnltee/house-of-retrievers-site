@@ -503,7 +503,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, date, rsvpOpensAt, rsvpFormConfig }) {
+export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, date, rsvpOpensAt, rsvpFormConfig }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
@@ -546,7 +546,17 @@ export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vacc
       </label>
       {on ? (
         <div className="row-2 indent">
-          <label className="field"><span>Capacity <small>Empty for no limit. When full, new sign-ups join the waitlist.</small></span><input type="number" name="capacity" min={1} max={5000} defaultValue={capacity ?? ""} /></label>
+          <div className="form">
+            <label className="field"><span>Capacity <small>Empty for no limit. When full, new sign-ups join the waitlist.</small></span><input type="number" name="capacity" min={1} max={5000} defaultValue={capacity ?? ""} /></label>
+            <label className="field"><span>Capacity counts as <small>Separate from price. This decides how many venue slots one registration uses.</small></span>
+              <select name="capacityBasis" defaultValue={capacityBasis || "registration"}>
+                <option value="registration">One slot per registration</option>
+                <option value="human">One slot per hooman</option>
+                <option value="furbaby">One slot per furbaby</option>
+              </select>
+            </label>
+            <p className="small muted" style={{ margin: 0 }}>Example: 3 hoomans in one registration use 3 hooman slots. A furbaby-capacity event needs at least one furbaby in each registration. The amount is still decided below under Pricing.</p>
+          </div>
           <div className="form">
             <input type="hidden" name="rsvpOpenSent" value="1" />
             <label className="switch"><input type="checkbox" name="rsvpOpen" checked={open} onChange={(e) => setOpen(e.target.checked)} /><span><strong>Registration is open</strong><small>Switch off to close RSVP while keeping the event page visible.</small></span></label>
@@ -577,6 +587,7 @@ export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vacc
         <>
           {/* Kept as they were, for when sign-ups are switched back on. */}
           <input type="hidden" name="capacity" value={capacity ?? ""} />
+          <input type="hidden" name="capacityBasis" value={capacityBasis || "registration"} />
           <input type="hidden" name="rsvpOpenSent" value="1" />
           {(rsvpOpen ?? true) && <input type="hidden" name="rsvpOpen" value="on" />}
           <input type="hidden" name="rsvpLabel" value={rsvpLabel || ""} />

@@ -7,6 +7,7 @@ import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWind
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
 import { cleanFurbabyPricing, cleanPricingBasis } from "../registrationPricing.mjs";
+import { cleanCapacityBasis } from "../eventCapacity.mjs";
 
 export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
 
@@ -271,6 +272,7 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     imageFit: cleanFit(input?.imageFit),
     registration: input?.registration === "required" ? "required" : "none",
     capacity: input?.capacity === "" || input?.capacity == null ? null : Number(input.capacity),
+    capacityBasis: cleanCapacityBasis(input?.capacityBasis),
     // Older editor posts did not send this field when open, so preserve their
     // open default. Current forms send rsvpOpenSent, making a deliberate
     // closed-registration choice unambiguous.
@@ -440,6 +442,7 @@ export function toPublicEvent(row, confirmed = 0) {
     isCharity: Boolean(row.is_charity),
     onsitePayment: Boolean(row.onsite_payment),
     pricingBasis: cleanPricingBasis(row.pricing_basis),
+    capacityBasis: cleanCapacityBasis(row.capacity_basis),
     includedFurbabiesPerHuman: row.included_furbabies_per_human || 0,
     additionalFurbabyFee: row.additional_furbaby_fee || 0,
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
