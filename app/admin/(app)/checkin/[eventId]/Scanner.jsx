@@ -33,6 +33,51 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
   const [result, setResult] = useState(null);
   const [checked, setChecked] = useState(initialChecked);
   const [manual, setManual] = useState("");
+  const [successOpen, setSuccessOpen] = useState(false);
+
+  function playSuccessSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const context = new AudioContext();
+      const now = context.currentTime;
+      [[659.25, 0], [783.99, 0.1], [1046.5, 0.2]].forEach(([frequency, offset]) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.32);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start(now + offset);
+        oscillator.stop(now + offset + 0.34);
+      });
+      setTimeout(() => context.close(), 900);
+    } catch { /* Sound is a welcome extra; check-in must still work without it. */ }
+  }
+
+  function playFailureSound() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const context = new AudioContext();
+      const now = context.currentTime;
+      [220, 174.61].forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, now + index * 0.13);
+        gain.gain.exponentialRampToValueAtTime(0.09, now + index * 0.13 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.13 + 0.22);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start(now + index * 0.13);
+        oscillator.stop(now + index * 0.13 + 0.24);
+      });
+      setTimeout(() => context.close(), 700);
+    } catch { /* Sound is optional feedback; the visible result is authoritative. */ }
+  }
 
   const submit = useCallback(async (code) => {
     if (!code || busy.current) return;
@@ -40,7 +85,11 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
     try {
       const response = await checkInByCode(eventId, code);
       setResult(response);
-      if (response.outcome === "ok") setChecked((n) => n + 1);
+      if (response.outcome === "ok") {
+        setChecked((n) => n + 1);
+        setSuccessOpen(true);
+        playSuccessSound();
+      } else playFailureSound();
       if (navigator.vibrate) navigator.vibrate(response.outcome === "ok" ? 80 : [60, 60, 60]);
     } finally {
       // A short pause so one QR held in view isn't read twice.
@@ -101,6 +150,17 @@ export default function Scanner({ eventId, title, confirmed, initialChecked }) {
         <span className="muted" aria-live="polite">{checked} of {confirmed} checked in</span>
       </div>
       <div className="checkin-body">
+        {successOpen && result?.outcome === "ok" && (
+          <div className="checkin-success" role="dialog" aria-modal="true" aria-labelledby="checkin-success-title">
+            <div className="checkin-success-card">
+              <span className="checkin-success-star" aria-hidden="true">✦</span>
+              <p className="tag">WELCOME IN</p>
+              <h2 id="checkin-success-title">You&apos;re checked in!</h2>
+              <p>{result.person?.name || "This guest"} is all set. Have a wonderful time together.</p>
+              <button type="button" className="btn gold" onClick={() => setSuccessOpen(false)}>Ready for the next guest</button>
+            </div>
+          </div>
+        )}
         <div className="viewfinder">
           {camera === "on" ? (
             <>

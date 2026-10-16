@@ -200,6 +200,13 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 
 /* Confirm before an event change goes live (ConfirmSave.jsx). */
 .confirm-dialog { width: min(460px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: 20px; background: #fff; color: var(--a-ink); box-shadow: 0 30px 80px -30px rgba(13,13,13,.5); }
+.checkin-success { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px; background: rgba(13,13,13,.58); }
+.checkin-success-card { width: min(460px, 100%); padding: 42px 32px 32px; border: 2px solid var(--a-gold); border-radius: 24px; background: var(--a-ink); color: var(--a-ivory); text-align: center; box-shadow: 0 30px 80px -30px rgba(13,13,13,.7); }
+.checkin-success-card h2 { margin: 8px 0 12px; color: var(--a-ivory); font: 700 34px/1.05 var(--serif); }
+.checkin-success-card p:not(.tag) { margin: 0 auto 24px; max-width: 32ch; color: var(--a-ivory); }
+.checkin-success-star { display: block; color: var(--a-gold); font-size: 42px; line-height: 1; }
+@media (prefers-reduced-motion: no-preference) { .checkin-success-card { animation: checkin-success-in .24s ease-out; } }
+@keyframes checkin-success-in { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .confirm-dialog::backdrop { background: rgba(13,13,13,.45); backdrop-filter: blur(2px); }
 .confirm-body { display: grid; gap: 12px; padding: 28px; }
 .confirm-body h2 { margin: 0; }
