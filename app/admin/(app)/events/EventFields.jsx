@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { searchPlaces } from "../../eventTools";
-import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, cleanNames, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
+import { MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, RSVP_FORM_DEFAULT, cleanNames, cleanRsvpFormConfig, isPastDate, manilaDate, parseHashtags } from "../../../lib/admin/events.mjs";
 import { PRICING_BASES, ticketLimitUnitLabel } from "../../../lib/registrationPricing.mjs";
 import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierLeft, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
@@ -503,7 +503,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, date, rsvpOpensAt }) {
+export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, date, rsvpOpensAt, rsvpFormConfig }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
@@ -557,6 +557,7 @@ export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vacc
           </div>
           <label className="field indent-full"><span>RSVP button label <small>Optional. For example, “Reserve my spot”. The usual “RSVP” stays when this is empty.</small></span><input name="rsvpLabel" maxLength={40} defaultValue={rsvpLabel || ""} placeholder="RSVP" /></label>
           <label className="switch indent-full"><input type="checkbox" name="vaccinationRecordRequired" defaultChecked={Boolean(vaccinationRecordRequired)} /><span><strong>Show an optional vaccination record upload</strong><small>Use this only when the event asks participants for a vaccination card. The photo is optional and only authorised admins can view it.</small></span></label>
+          <RsvpFormSettings initial={rsvpFormConfig} vaccinationRecordRequired={vaccinationRecordRequired} />
           <div className="form indent-full" style={{ gap: 10 }}>
             <input type="hidden" name="rsvpOpensSent" value="1" />
             <label className="check">
@@ -586,6 +587,17 @@ export function SignupFields({ registration, capacity, rsvpOpen, rsvpLabel, vacc
       {!(on && paid) && feeRequired && <input type="hidden" name="feeRequired" value="on" />}
     </div>
   );
+}
+
+export function RsvpFormSettings({ initial, vaccinationRecordRequired }) {
+  const parsed = cleanRsvpFormConfig(initial || RSVP_FORM_DEFAULT);
+  const startingOptional = vaccinationRecordRequired && !parsed.optional.includes("vaccination") ? [...parsed.optional, "vaccination"] : parsed.optional;
+  const [optional, setOptional] = useState(startingOptional);
+  const [order, setOrder] = useState(parsed.order);
+  const labels = { identity: "Name, email and furbaby name", attendees: "Hoomans and furbabies", photoConsent: "Photo consent", under18: "Age and guardian", vaccination: "Vaccination record" };
+  const move = (key, direction) => setOrder((current) => { const index = current.indexOf(key); const next = index + direction; if (index < 0 || next < 0 || next >= current.length) return current; const copy = [...current]; [copy[index], copy[next]] = [copy[next], copy[index]]; return copy; });
+  const toggle = (key) => setOptional((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
+  return <fieldset className="rsvp-form-settings indent-full"><legend>Participant form</legend><p className="small muted">Required identity and attendee details stay in the form. Choose optional questions, then arrange the blocks with the arrows.</p><div className="check-row">{["photoConsent", "under18", "vaccination"].map((key) => <label key={key} className="check"><input type="checkbox" checked={optional.includes(key)} disabled={key === "vaccination" && !vaccinationRecordRequired} onChange={() => toggle(key)} /> {labels[key]}{key === "vaccination" && !vaccinationRecordRequired ? " (turn it on above first)" : ""}</label>)}</div><ol className="rsvp-order-list">{order.filter((key) => key === "identity" || key === "attendees" || optional.includes(key)).map((key, index, list) => <li key={key}><span>{labels[key]}{key === "identity" || key === "attendees" ? " · required" : ""}</span><span><button type="button" className="linkish" disabled={index === 0} onClick={() => move(key, -1)} aria-label={`Move ${labels[key]} up`}>↑</button><button type="button" className="linkish" disabled={index === list.length - 1} onClick={() => move(key, 1)} aria-label={`Move ${labels[key]} down`}>↓</button></span></li>)}</ol><input type="hidden" name="rsvpFormConfig" value={JSON.stringify({ optional, order })} /></fieldset>;
 }
 
 /** Settings most events never touch: the web address, and who may add photos later. */

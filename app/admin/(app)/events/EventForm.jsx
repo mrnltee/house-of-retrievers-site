@@ -8,7 +8,7 @@ import EventPreview from "./EventPreview";
 import { sql } from "../../../lib/db";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
-import { CharityField, HashtagField, MoreOptions, PriceField, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
+import { CharityField, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
 /** Names to suggest: confirmed-or-not Partners and Sponsors from People (organisation first). */
@@ -98,6 +98,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           onsitePayment={event?.onsite_payment}
           date={event ? isoDate(event.date) : ""}
           rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}
+          rsvpFormConfig={event?.rsvp_form_config}
         />
       </section>
 

@@ -122,7 +122,7 @@ export async function saveEvent(data) {
     if (intent === "unpublish") status = "draft";
     if (intent === "cancel") status = "cancelled";
 
-    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment];
+    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, form(data, "rsvpFormConfig") || "{}"];
     let eventId = id;
     let unpublished = false;
     if (isUuid(id) && !status && missing.length) {
@@ -152,9 +152,9 @@ export async function saveEvent(data) {
       const rows = await sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
            image=$11, image_alt=$12, registration=$13, capacity=$14, rsvp_open=$15, rsvp_label=$16, vaccination_record_required=$17,
-           fee_required=$18, pricing_basis=$19, included_furbabies_per_human=$20, additional_furbaby_fee=$21, onsite_payment=$22,
-           status=COALESCE($23, status), updated_at=now()
-         WHERE id=$24 RETURNING id`,
+           fee_required=$18, pricing_basis=$19, included_furbabies_per_human=$20, additional_furbaby_fee=$21, onsite_payment=$22, rsvp_form_config=$23::jsonb,
+           status=COALESCE($24, status), updated_at=now()
+         WHERE id=$25 RETURNING id`,
         [...fields, status, id],
       );
       if (!rows.length) await backWith("/events", "error", "That event no longer exists.");
@@ -164,8 +164,8 @@ export async function saveEvent(data) {
       if (taken.length) slug = `${slug}-${taken.length + 1}`;
       const rows = await sql(
         `INSERT INTO events (title, category, date, start_time, end_time, venue, city, cost, supports, summary, image, image_alt,
-           registration, capacity, rsvp_open, rsvp_label, vaccination_record_required, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, onsite_payment, status, slug)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,COALESCE($23,'draft'),$24) RETURNING id`,
+           registration, capacity, rsvp_open, rsvp_label, vaccination_record_required, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, onsite_payment, rsvp_form_config, status, slug)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb,COALESCE($24,'draft'),$25) RETURNING id`,
         [...fields, status, slug],
       );
       eventId = rows[0].id;

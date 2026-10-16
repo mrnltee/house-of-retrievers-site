@@ -34,6 +34,7 @@ export default function RsvpModal({ event, onClose }) {
   const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
   const humanOnly = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "human_only";
   const furbabyPackage = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "furbaby_package";
+  const formConfig = event.rsvpFormConfig || { optional: ["photoConsent", "under18"] };
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
 
   useEffect(() => {
@@ -191,23 +192,23 @@ export default function RsvpModal({ event, onClose }) {
             {humanOnly && <p id="no-furbabies-note" className="form-note">This Hooman only ticket is for people attending without a furbaby.</p>}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong><small>{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0)} Early Bird unit{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0) === 1 ? "" : "s"} used for this ticket</small></div>}
-            {event.vaccinationRecordRequired && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
-            <fieldset className="furbaby-question">
+            {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
+            {formConfig.optional.includes("photoConsent") && <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
               <p className="furbaby-hint">We share event photos on Instagram and Facebook.</p>
               <div className="furbaby-options">
                 <label><input type="radio" name="photoConsent" value="yes" required /> <span>Yes, that&apos;s fine</span></label>
                 <label><input type="radio" name="photoConsent" value="no" /> <span>No photos of me</span></label>
               </div>
-            </fieldset>
-            <fieldset className="furbaby-question">
+            </fieldset>}
+            {formConfig.optional.includes("under18") && <fieldset className="furbaby-question">
               <legend>Are you under 18?</legend>
               <div className="furbaby-options">
                 <label><input type="radio" name="under18" value="no" defaultChecked onChange={() => setUnder18(false)} /> <span>No</span></label>
                 <label><input type="radio" name="under18" value="yes" onChange={() => setUnder18(true)} /> <span>Yes, with a guardian</span></label>
               </div>
-            </fieldset>
-            {under18 && <label>Parent or guardian&apos;s name (they come with you)<input required name="guardianName" maxLength={120} /></label>}
+            </fieldset>}
+            {under18 && formConfig.optional.includes("under18") && <label>Parent or guardian&apos;s name (they come with you)<input required name="guardianName" maxLength={120} /></label>}
             {!waitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>

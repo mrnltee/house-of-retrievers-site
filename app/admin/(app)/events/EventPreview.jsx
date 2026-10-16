@@ -66,6 +66,7 @@ function draftEvent(form, saved) {
     rsvp_open: f.get("rsvpOpen") === "on",
     rsvp_label: get("rsvpLabel"),
     vaccination_record_required: f.get("vaccinationRecordRequired") === "on",
+    rsvp_form_config: json(get("rsvpFormConfig"), {}),
     rsvp_opens_at: f.get("rsvpOpensOn") === "on" ? manilaInstant(get("rsvpOpensDate"), get("rsvpOpensTime")) : null,
     fee_required: f.get("feeRequired") === "on",
     onsite_payment: f.get("onsitePayment") === "on",
@@ -102,6 +103,7 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
       <dialog ref={dialog} className="preview-dialog" aria-label="Preview of the event page">
         <div className="preview-bar">
           <div className="segmented small" role="tablist" aria-label="What to preview">
+            <button type="button" role="tab" aria-selected={view === "form"} className={view === "form" ? "is-on" : undefined} onClick={() => setView("form")}>RSVP form</button>
             {[["page", "Event page"], ["card", "Card in the list"]].map(([key, label]) => (
               <button key={key} type="button" role="tab" aria-selected={view === key} className={view === key ? "is-on" : undefined} onClick={() => setView(key)}>{label}</button>
             ))}
@@ -123,7 +125,9 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
                 if (e.target.closest("a, .event-rsvp, .share-toggle")) e.preventDefault();
               }}
             >
-              {view === "page" ? (
+              {view === "form" ? (
+                <div className="preview-form-card"><p className="eyebrow">RSVP form</p><h2>{draft.event.title}</h2><p className="small muted">This is the order participants will see. Required fields are marked.</p><RsvpFormPreview config={draft.event.rsvpFormConfig} vaccination={draft.event.vaccinationRecordRequired} /></div>
+              ) : view === "page" ? (
                 <EventDetailPage event={draft.event} past={draft.past} photos={[]} onRsvp={() => {}} base="" />
               ) : (
                 <ul className="event-grid preview-card">
@@ -136,4 +140,10 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
       </dialog>
     </>
   );
+}
+
+function RsvpFormPreview({ config, vaccination }) {
+  const optional = config?.optional || ["photoConsent", "under18"];
+  const labels = { identity: ["Name, email and furbaby name", true], attendees: ["Hoomans and furbabies", true], photoConsent: ["Photo consent", false], under18: ["Age and guardian", false], vaccination: ["Vaccination record photo", false] };
+  return <ol className="rsvp-preview-list">{(config?.order || ["identity", "attendees", "photoConsent", "under18", "vaccination"]).filter((key) => (key === "identity" || key === "attendees" || optional.includes(key)) && (key !== "vaccination" || vaccination)).map((key) => <li key={key}><span>{labels[key][0]}</span><small>{labels[key][1] ? "Required" : "Optional"}</small></li>)}</ol>;
 }

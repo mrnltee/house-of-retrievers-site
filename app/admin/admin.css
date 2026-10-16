@@ -216,6 +216,15 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .event-form .card > h2 { margin-bottom: 4px; }
 .event-form .section-lead { max-width: 760px; margin: -6px 0 2px; line-height: 1.55; }
 .event-form .tier-preview { margin: -4px 0 0; color: var(--a-muted); font-size: 13px; line-height: 1.45; }
+.rsvp-form-settings { border: 1px solid var(--a-line); padding: 14px; margin: 0; }
+.rsvp-form-settings legend { font-weight: 700; padding: 0 6px; }
+.rsvp-order-list { margin: 12px 0 0; padding-left: 0; list-style: none; max-width: 520px; }
+.rsvp-order-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px; border-top: 1px solid var(--a-line); }
+.rsvp-order-list button { margin-left: 8px; font-size: 16px; }
+.preview-form-card { width: min(560px, 100%); margin: 32px auto; background: var(--a-surface); border: 1px solid var(--a-line); padding: 28px; }
+.rsvp-preview-list { list-style: none; padding: 0; margin: 20px 0 0; }
+.rsvp-preview-list li { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid var(--a-line); }
+.rsvp-preview-list small { color: var(--a-muted); }
 
 /* Hashtag badges with their own remove button. */
 .tag-input { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 48px; padding: 6px 8px; border: 1px solid var(--a-field); border-radius: 10px; background: white; cursor: text; }

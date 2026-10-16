@@ -29,6 +29,17 @@ export const cleanFit = (value) => (FIT_KEYS.includes(value) ? value : "fit");
 /** Up to this many "What's included" lines. */
 export const MAX_INCLUDED = 10;
 
+export const RSVP_FORM_DEFAULT = { optional: ["photoConsent", "under18"], order: ["identity", "attendees", "photoConsent", "under18", "vaccination"] };
+export function cleanRsvpFormConfig(input) {
+  let value = input;
+  if (typeof input === "string") { try { value = JSON.parse(input || "{}"); } catch { value = {}; } }
+  const optional = ["photoConsent", "under18", "vaccination"].filter((key) => Array.isArray(value?.optional) && value.optional.includes(key));
+  const allowed = new Set(["identity", "attendees", "photoConsent", "under18", "vaccination"]);
+  const order = Array.isArray(value?.order) ? value.order.filter((key, i, list) => allowed.has(key) && list.indexOf(key) === i) : [];
+  for (const key of ["identity", "attendees", ...optional]) if (!order.includes(key)) order.push(key);
+  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order };
+}
+
 /** "TBA", "To be named" and the like: not a beneficiary, so never shown or published. */
 export const isPlaceholder = (text) =>
   /^(t\.?b\.?[adc]\.?|to be (named|announced|confirmed|decided|followed)|to follow|n\/?a|none|pending|-+|\?+)$/i.test(String(text || "").trim());
@@ -419,6 +430,7 @@ export function toPublicEvent(row, confirmed = 0) {
     rsvp: row.registration === "required",
     rsvpLabel: row.rsvp_label || undefined,
     vaccinationRecordRequired: Boolean(row.vaccination_record_required),
+    rsvpFormConfig: cleanRsvpFormConfig(row.rsvp_form_config),
     feeRequired: row.fee_required,
     isCharity: Boolean(row.is_charity),
     onsitePayment: Boolean(row.onsite_payment),
