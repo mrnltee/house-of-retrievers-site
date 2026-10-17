@@ -89,6 +89,12 @@ export function ticketLimitUnitLabel(basis, tier = {}) {
   return "registrations";
 }
 
+/** The RSVP's line for a first-N ticket: "First 20 registrants · 3 left". */
+export function ticketLimitLine(basis, tier = {}, left) {
+  const unit = ticketLimitUnitLabel(basis, tier);
+  return `First ${tier.limit} ${unit === "registrations" ? "registrants" : unit} · ${left} left`;
+}
+
 /** Returns the total in whole pesos, or an error when a bundle is incomplete. */
 export function calculateAmountDue({ basis = "registration", tier = {}, humans = 1, furbabies = 0, includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 } = {}) {
   if (cleanPricingBasis(basis) === "tiered") {

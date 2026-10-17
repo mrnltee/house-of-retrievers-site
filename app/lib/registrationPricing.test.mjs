@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitLine, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
 
 test("Early Bird units follow the ticket's attendance basis", () => {
   assert.equal(ticketLimitUnits("human", {}, 3, 0), 3);
@@ -63,4 +63,11 @@ test("allows a paid registration correction when the existing payment matches th
 test("keeps paid amount changes blocked when the payment does not match", () => {
   assert.equal(paidAmountChangeAllowed({ oldDue: 695, nextDue: 2085, payAmount: 695 }), false);
   assert.equal(paidAmountChangeAllowed({ oldDue: 695, nextDue: 2085, payAmount: null }), false);
+});
+
+test("the RSVP's Early Bird line speaks to guests, never in units", () => {
+  assert.equal(ticketLimitLine("registration", { limit: 20 }, 20), "First 20 registrants · 20 left");
+  assert.equal(ticketLimitLine("registration", { limit: 20 }, 1), "First 20 registrants · 1 left");
+  assert.equal(ticketLimitLine("human", { limit: 30 }, 4), "First 30 hoomans · 4 left");
+  assert.equal(ticketLimitLine("tiered", { limit: 10, attendanceBasis: "furbaby_package" }, 10), "First 10 furbabies · 10 left");
 });

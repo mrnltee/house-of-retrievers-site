@@ -5,7 +5,7 @@ import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { paymentNotice } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
-import { calculateAmountDue, ticketLimitUnits } from "../lib/registrationPricing.mjs";
+import { calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImage } from "../lib/resizeImage";
@@ -176,7 +176,7 @@ export default function RsvpModal({ event, onClose }) {
                     const ticketDue = calculateAmountDue({ basis: event.pricingBasis, tier: t, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee });
                     return <label key={t.i} className={ticket === t.i ? "selected" : ""}>
                       <input type="radio" name="ticket" value={t.i} required checked={ticket === t.i} onChange={() => selectTicket(t.i)} />
-                      <span>{t.label || `Ticket ${t.i + 1}`}{ticketRuleNote(t) && <small className="ticket-until">{ticketRuleNote(t)}</small>}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? `First ${t.limit} units · ${t.left} left` : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
+                      <span>{t.label || `Ticket ${t.i + 1}`}{ticketRuleNote(t) && <small className="ticket-until">{ticketRuleNote(t)}</small>}{(t.until || t.limit) && <small className="ticket-until">{[t.limit ? ticketLimitLine(event.pricingBasis, t, t.left) : "", tierWindow(t)].filter(Boolean).join(" · ")}</small>}</span>
                       <strong>{ticketDue.error ? peso(t.amount) : peso(ticketDue.amount)}</strong>
                     </label>;
                   })}

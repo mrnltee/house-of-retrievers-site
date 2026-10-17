@@ -11,7 +11,7 @@ export default async function CheckInPage({ params }) {
   if (!/^[0-9a-f-]{36}$/i.test(eventId)) notFound();
   const [event] = await sql(
     `SELECT e.id, e.title, e.checkin_success_message, e.checkin_sound_preset, e.checkin_failure_sound_preset, (e.checkin_sound_data IS NOT NULL) AS has_custom_sound,
-       (SELECT count(*)::int FROM registrations r WHERE r.event_id=e.id AND r.status='confirmed' AND r.deleted_at IS NULL) AS confirmed,
+       (SELECT count(*)::int FROM registrations r WHERE r.event_id=e.id AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.checked_in_at IS NOT NULL OR r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())) AS confirmed,
        (SELECT count(*)::int FROM registrations r WHERE r.event_id=e.id AND r.status='confirmed' AND r.deleted_at IS NULL AND r.checked_in_at IS NOT NULL) AS checked
      FROM events e WHERE e.id=$1`,
     [eventId],
