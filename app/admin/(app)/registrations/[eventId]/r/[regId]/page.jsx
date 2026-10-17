@@ -131,7 +131,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 <span className="small">{WELCOME_PHOTO_SOURCE_LABELS[welcome.source]}</span>
               </div>
               {canEdit && (
-                <WelcomePhotoField registrationId={reg.id} name={reg.name} source={welcome.source} hasMatch={Boolean(welcome.personId)} canSaveToPerson={can(admin.roles, "people:edit")} />
+                <WelcomePhotoField registrationId={reg.id} name={reg.name} source={welcome.source} hasMatch={Boolean(welcome.personId)} matchPhotoId={welcome.matchPhotoId} canSaveToPerson={can(admin.roles, "people:edit")} />
               )}
             </section>
           )}

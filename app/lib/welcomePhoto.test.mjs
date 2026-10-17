@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canSeeWelcomePhoto, initialsFor, pickPeopleMatch, pickWelcomePhoto, welcomeMessageLine } from "./welcomePhoto.mjs";
+import { canSeeWelcomePhoto, initialsFor, pickPeopleMatch, pickWelcomePhoto, welcomeMessageLine, welcomePhotoOptions } from "./welcomePhoto.mjs";
 
 const person = (id, kind, name, photo = null, email = "ana@x.test") => ({ id, kind, name, email, photo_id: photo });
 
@@ -20,8 +20,8 @@ test("name match ignores case and spacing", () => {
 test("email-only match needs exactly one record", () => {
   const ana = person("p1", "Member", "Ana Reyes", "ph1");
   const ben = person("p2", "Volunteer", "Ben Reyes", "ph2");
-  assert.equal(pickPeopleMatch({ name: "A. Reyes", email: "ana@x.test" }, [ana]), ana);
-  assert.equal(pickPeopleMatch({ name: "A. Reyes", email: "ana@x.test" }, [ana, ben]), null);
+  assert.equal(pickPeopleMatch({ name: "Ana R.", email: "ana@x.test" }, [ana]), ana);
+  assert.equal(pickPeopleMatch({ name: "Ana R.", email: "ana@x.test" }, [ana, ben]), null);
   assert.equal(pickPeopleMatch({ name: "Ana Reyes", email: "other@x.test" }, [ana]), null);
 });
 
@@ -29,6 +29,21 @@ test("shared email at this event blocks the email-only match", () => {
   const ana = person("p1", "Member", "Ana Reyes", "ph1");
   assert.equal(pickPeopleMatch({ name: "Ben Reyes", email: "ana@x.test" }, [ana], { sharedEmail: true }), null);
   assert.equal(pickPeopleMatch({ name: "Ana Reyes", email: "ana@x.test" }, [ana], { sharedEmail: true }), ana);
+});
+
+test("a lone RSVP on a household email matches only the same first name or the same furbaby", () => {
+  const ana = { ...person("p1", "Member", "Ana Reyes", "ph1"), furbaby_name: "Mochi" };
+  assert.equal(pickPeopleMatch({ name: "Ben Reyes", email: "ana@x.test", furbaby_name: "Coco" }, [ana]), null);
+  assert.equal(pickPeopleMatch({ name: "Ben Reyes", email: "ana@x.test" }, [ana]), null);
+  assert.equal(pickPeopleMatch({ name: "Ben Reyes", email: "ana@x.test", furbaby_name: " mochi " }, [ana]), ana);
+  assert.equal(pickPeopleMatch({ name: "ana dela cruz-reyes", email: "ana@x.test" }, [ana]), ana);
+});
+
+test("the People-photo choice is offered only when the match has a photo", () => {
+  assert.deepEqual(welcomePhotoOptions({ source: "initials", matchPhotoId: null }), { useProfile: false, showInitials: false });
+  assert.deepEqual(welcomePhotoOptions({ source: "initials", matchPhotoId: "ph1" }), { useProfile: true, showInitials: false });
+  assert.deepEqual(welcomePhotoOptions({ source: "own", matchPhotoId: "ph1" }), { useProfile: true, showInitials: true });
+  assert.deepEqual(welcomePhotoOptions({ source: "people", matchPhotoId: "ph1" }), { useProfile: false, showInitials: true });
 });
 
 test("match preference: a photo first, then Member, then Volunteer", () => {

@@ -20,14 +20,20 @@ export function initialsFor(name) {
   return letters.map((word) => Array.from(word)[0].toLocaleUpperCase()).join("");
 }
 
+const firstName = (name) => normalizedIdentity(name).split(" ")[0];
+
 /**
  * The People record an RSVP belongs to: same email and name; else the only
- * record with that email, unless another RSVP at this event shares the email.
+ * record with that email when it's plausibly the same household member (same
+ * first name, or the same furbaby), and no other RSVP at this event shares it.
  */
-export function pickPeopleMatch({ name, email }, candidates, { sharedEmail = false } = {}) {
+export function pickPeopleMatch({ name, email, furbaby_name: furbaby }, candidates, { sharedEmail = false } = {}) {
   const sameEmail = (candidates || []).filter((c) => normalizedIdentity(c.email) === normalizedIdentity(email));
   const named = sameEmail.filter((c) => normalizedIdentity(c.name) === normalizedIdentity(name));
-  const pool = named.length ? named : !sharedEmail && sameEmail.length === 1 ? sameEmail : [];
+  const lone = !sharedEmail && sameEmail.length === 1 ? sameEmail[0] : null;
+  const plausible = lone && (firstName(lone.name) === firstName(name)
+    || (normalizedIdentity(furbaby) && normalizedIdentity(furbaby) === normalizedIdentity(lone.furbaby_name)));
+  const pool = named.length ? named : plausible ? [lone] : [];
   if (!pool.length) return null;
   return [...pool].sort((a, b) => (a.photo_id ? 0 : 1) - (b.photo_id ? 0 : 1) || (KIND_RANK[a.kind] ?? 2) - (KIND_RANK[b.kind] ?? 2))[0];
 }
@@ -44,6 +50,11 @@ export function pickWelcomePhoto({ choice, ownPhotoId, match }) {
 export function welcomeMessageLine(message) {
   if (message == null) return DEFAULT_WELCOME_MESSAGE;
   return String(message).trim();
+}
+
+/** Which changes make sense from here; "use their People photo" only when that photo exists. */
+export function welcomePhotoOptions({ source, matchPhotoId }) {
+  return { useProfile: Boolean(matchPhotoId) && source !== "people", showInitials: source !== "initials" };
 }
 
 export const canSeeWelcomePhoto = (roles) => can(roles, "checkin") || can(roles, "registrations:view");

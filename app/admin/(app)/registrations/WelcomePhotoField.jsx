@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { loadBitmap } from "../../../lib/resizeImage";
 import { uploadWelcomePhoto, useInitialsWelcomePhoto, useProfileWelcomePhoto } from "../../registrationActions";
+import { welcomePhotoOptions } from "../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../ConfirmButton";
 
 /** Longest side sent up; the server keeps a 480 px WebP copy. */
@@ -12,7 +13,8 @@ const EDGE = 960;
  * Sets the photo the check-in welcome card shows for one RSVP: upload one,
  * go back to their People profile photo, or show initials.
  */
-export default function WelcomePhotoField({ registrationId, name, source, hasMatch, canSaveToPerson }) {
+export default function WelcomePhotoField({ registrationId, name, source, hasMatch, matchPhotoId, canSaveToPerson }) {
+  const options = welcomePhotoOptions({ source, matchPhotoId });
   const [preview, setPreview] = useState("");
   const [data, setData] = useState("");
   const [toProfile, setToProfile] = useState(false);
@@ -76,7 +78,7 @@ export default function WelcomePhotoField({ registrationId, name, source, hasMat
             {source === "own" ? "Change photo" : "Upload a photo"}
             <input ref={input} type="file" accept="image/*" onChange={pick} hidden />
           </label>
-          {hasMatch && source !== "people" && (
+          {options.useProfile && (
             <form action={useProfileWelcomePhoto}>
               <input type="hidden" name="id" value={registrationId} />
               <ConfirmButton
@@ -87,7 +89,7 @@ export default function WelcomePhotoField({ registrationId, name, source, hasMat
               >Use the photo from their People profile</ConfirmButton>
             </form>
           )}
-          {source !== "initials" && (
+          {options.showInitials && (
             <form action={useInitialsWelcomePhoto}>
               <input type="hidden" name="id" value={registrationId} />
               <ConfirmButton

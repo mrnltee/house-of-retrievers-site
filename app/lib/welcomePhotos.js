@@ -5,15 +5,15 @@ import { initialsFor, pickPeopleMatch, pickWelcomePhoto } from "./welcomePhoto.m
 
 /**
  * The check-in welcome photo for registrations, resolved from the database.
- * Rows need id, event_id, name, email, status, deleted_at, welcome_photo and
+ * Rows need id, event_id, name, email, furbaby_name, status, deleted_at, welcome_photo and
  * welcome_photo_id; pass every live RSVP of the event that could share an
  * email, so a household email is noticed.
- * @returns {Promise<Map<string, { source: string, photoId: string|null, personId: string|null, initials: string, version: string }>>}
+ * @returns {Promise<Map<string, { source: string, photoId: string|null, personId: string|null, matchPhotoId: string|null, initials: string, version: string }>>}
  */
 export async function welcomePhotosFor(registrations) {
   const rows = registrations || [];
   const emails = [...new Set(rows.map((r) => normalizedIdentity(r.email)).filter(Boolean))];
-  const people = emails.length ? await sql("SELECT id, kind, name, email, photo_id FROM people WHERE lower(email) = ANY($1::text[])", [emails]) : [];
+  const people = emails.length ? await sql("SELECT id, kind, name, email, photo_id, furbaby_name FROM people WHERE lower(email) = ANY($1::text[])", [emails]) : [];
   const live = rows.filter((r) => !r.deleted_at && r.status !== "cancelled");
   const result = new Map();
   for (const reg of rows) {
@@ -21,7 +21,7 @@ export async function welcomePhotosFor(registrations) {
     const sharedEmail = live.some((other) => other.id !== reg.id && other.event_id === reg.event_id && normalizedIdentity(other.email) === email);
     const match = pickPeopleMatch(reg, people, { sharedEmail });
     const { source, photoId } = pickWelcomePhoto({ choice: reg.welcome_photo, ownPhotoId: reg.welcome_photo_id, match });
-    result.set(reg.id, { source, photoId, personId: match?.id || null, initials: initialsFor(reg.name), version: `${source}-${photoId || "none"}` });
+    result.set(reg.id, { source, photoId, personId: match?.id || null, matchPhotoId: match?.photo_id || null, initials: initialsFor(reg.name), version: `${source}-${photoId || "none"}` });
   }
   return result;
 }
@@ -29,7 +29,7 @@ export async function welcomePhotosFor(registrations) {
 /** One registration of one event (not deleted), or null. */
 export async function welcomePhotoFor(registrationId, eventId) {
   const rows = await sql(
-    `SELECT id, event_id, name, email, status, deleted_at, welcome_photo, welcome_photo_id FROM registrations
+    `SELECT id, event_id, name, email, furbaby_name, status, deleted_at, welcome_photo, welcome_photo_id FROM registrations
       WHERE event_id = $2 AND deleted_at IS NULL
         AND (id = $1 OR (status <> 'cancelled' AND lower(email) = (SELECT lower(email) FROM registrations WHERE id = $1)))`,
     [registrationId, eventId],
