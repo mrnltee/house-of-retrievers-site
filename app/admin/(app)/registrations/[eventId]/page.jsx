@@ -14,8 +14,8 @@ import WelcomeAvatar from "../WelcomeAvatar";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 
-const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
-const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
+const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
+const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
 
 /**
@@ -56,6 +56,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       : r.deleted_at ? false
       : filter === "all" ? r.status !== "cancelled"
       : filter === "checked" ? r.checked_in_at
+      : filter === "notchecked" ? r.status === "confirmed" && !r.checked_in_at
         : filter === "check" ? r.status === "confirmed" && r.fee_status === "review"
           : filter === "pending" ? r.status === "confirmed" && (r.fee_status === "waiting" || r.fee_status === "rejected")
             : filter === "paid" ? r.status === "confirmed" && r.fee_status === "paid"
@@ -69,7 +70,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const canEdit = can(admin.roles, "registrations:edit");
   const canFees = can(admin.roles, "registrations:fees");
   const counts = {
-    all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
+    all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, notchecked: confirmed.length - checked.length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
     check: toCheck.length, pending: pending.length, paid: paid.length,
   };
   const waitPosition = new Map(waitlist.map((r, i) => [r.id, i + 1]));
