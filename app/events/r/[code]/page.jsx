@@ -5,6 +5,7 @@ import { normalizeCode } from "../../../lib/admin/registrations.mjs";
 import { publicMethods } from "../../../lib/admin/payments.mjs";
 import { EVENTS_URL } from "../../../lib/eventsHost.mjs";
 import { PAY_METHODS, passState, paymentNotice } from "../../../lib/eventPayments.mjs";
+import { isActiveRegistrationHold } from "../../../lib/registrationHolds.mjs";
 import PassPayment from "./PassPayment";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export default async function RsvpPass({ params }) {
   const code = normalizeCode(raw);
   if (!code || !hasDatabase()) notFound();
   const [reg] = await sql(
-    `SELECT r.id, r.name, r.status, r.fee_status, r.checked_in_at, r.created_at, r.event_id, r.consent_completed_at, r.consent_name,
+    `SELECT r.id, r.name, r.status, r.fee_status, r.checked_in_at, r.created_at, r.event_id, r.consent_completed_at, r.consent_name, r.hold_expires_at,
        r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.proof_at, r.fee_note,
        e.title, e.date, e.start_time, e.end_time, e.venue, e.city, e.fee_required, e.cost, e.is_charity, e.onsite_payment, e.rsvp_form_config
      FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
@@ -43,6 +44,7 @@ export default async function RsvpPass({ params }) {
     position = ahead + 1;
   }
   const state = passState(reg);
+  const holdExpired = state === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at });
   const acknowledgementRequired = Boolean(reg.rsvp_form_config?.consentEnabled);
   const acknowledgementComplete = Boolean(reg.consent_completed_at);
   const canViewQr = state === "pass" && (!acknowledgementRequired || acknowledgementComplete);
@@ -62,7 +64,7 @@ export default async function RsvpPass({ params }) {
       <section className="rsvp-pass-card">
         <p className={`eyebrow pass-state pass-state-${state}`}>
           {state === "pass" ? (reg.checked_in_at ? "Checked in" : "You're in")
-            : state === "waiting" ? "Payment pending · your spot is held"
+            : state === "waiting" ? (holdExpired ? "Hold expired" : "Payment pending · your spot is held")
               : state === "review" ? "Payment under review"
                 : state === "rejected" ? "We need another look"
                   : state === "waitlist" ? "On the waitlist" : "Cancelled"}
@@ -83,7 +85,8 @@ export default async function RsvpPass({ params }) {
             <a className="button dark" href={`${EVENTS_URL}/r/${code}/consent`}>Review and acknowledge</a>
           </div>
         )}
-        {state === "waiting" && <p>Hi {firstName}! Your spot is held. Pay below, then upload your reference number and confirmation screenshot. Your QR pass comes by email once the team has matched your payment.</p>}
+        {state === "waiting" && !holdExpired && <p>Hi {firstName}! Your spot is held. Pay below, then upload your reference number and confirmation screenshot. Your QR pass comes by email once the team has matched your payment.</p>}
+        {state === "waiting" && holdExpired && <p>Hi {firstName}, your payment hold has expired. If there&apos;s still room, you can pay below and upload your receipt and we&apos;ll do our best — message us on Instagram or Facebook if you run into trouble.</p>}
         {state === "review" && <p>Thanks, {firstName}. Your spot is held. We&apos;ll email your QR pass as soon as the team has matched your payment.</p>}
         {state === "rejected" && <p>Your spot is still held, {firstName}. Please upload a new screenshot.</p>}
         {paying && (

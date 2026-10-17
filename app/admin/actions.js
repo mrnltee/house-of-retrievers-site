@@ -125,7 +125,9 @@ export async function saveEvent(data) {
     if (intent === "unpublish") status = "draft";
     if (intent === "cancel") status = "cancelled";
 
-    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, value.capacityBasis, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, form(data, "rsvpFormConfig") || "{}"];
+    // An editor tab from before these fields existed sends neither: keep whatever the event already has
+    // (COALESCE in the SQL below) instead of overwriting it with validateEvent's fallback default.
+    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, data.has("capacityBasis") ? value.capacityBasis : null, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, data.has("rsvpFormConfig") ? (form(data, "rsvpFormConfig") || "{}") : null];
     let eventId = id;
     let unpublished = false;
     if (isUuid(id) && !status && missing.length) {
@@ -154,8 +156,8 @@ export async function saveEvent(data) {
     if (isUuid(id)) {
       const rows = await sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
-           image=$11, image_alt=$12, registration=$13, capacity=$14, capacity_basis=$15, rsvp_open=$16, rsvp_label=$17, vaccination_record_required=$18,
-           fee_required=$19, pricing_basis=$20, included_furbabies_per_human=$21, additional_furbaby_fee=$22, onsite_payment=$23, rsvp_form_config=$24::jsonb,
+           image=$11, image_alt=$12, registration=$13, capacity=$14, capacity_basis=COALESCE($15, capacity_basis), rsvp_open=$16, rsvp_label=$17, vaccination_record_required=$18,
+           fee_required=$19, pricing_basis=$20, included_furbabies_per_human=$21, additional_furbaby_fee=$22, onsite_payment=$23, rsvp_form_config=COALESCE($24::jsonb, rsvp_form_config),
            status=COALESCE($25, status), updated_at=now()
          WHERE id=$26 RETURNING id`,
         [...fields, status, id],
@@ -168,7 +170,7 @@ export async function saveEvent(data) {
       const rows = await sql(
         `INSERT INTO events (title, category, date, start_time, end_time, venue, city, cost, supports, summary, image, image_alt,
            registration, capacity, capacity_basis, rsvp_open, rsvp_label, vaccination_record_required, fee_required, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, onsite_payment, rsvp_form_config, status, slug)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24::jsonb,COALESCE($25,'draft'),$26) RETURNING id`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,COALESCE($15,'registration'),$16,$17,$18,$19,$20,$21,$22,$23,COALESCE($24::jsonb,'{}'::jsonb),COALESCE($25,'draft'),$26) RETURNING id`,
         [...fields, status, slug],
       );
       eventId = rows[0].id;
@@ -194,6 +196,7 @@ export async function saveEvent(data) {
     if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
     if (data.has("allDaySent")) await sql("UPDATE events SET all_day=$1 WHERE id=$2", [value.allDay, eventId]);
     if (data.has("rsvpOpensSent")) await sql("UPDATE events SET rsvp_opens_at=$1 WHERE id=$2", [value.rsvpOpensAt, eventId]);
+    if (data.has("paymentHoldMinutes")) await sql("UPDATE events SET payment_hold_minutes=$1 WHERE id=$2", [value.paymentHoldMinutes, eventId]);
     if (data.has("emailTemplateId")) {
       const tid = form(data, "emailTemplateId");
       await sql("UPDATE events SET email_template_id = (SELECT id FROM custom_email_templates WHERE id::text = $1 AND kind = 'event') WHERE id = $2", [tid, eventId]);

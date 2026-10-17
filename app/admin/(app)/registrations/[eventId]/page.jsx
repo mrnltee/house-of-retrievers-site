@@ -123,7 +123,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
                         {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
-                        {r.fee_status === "waiting" && <><br /><span className="small muted">No proof yet</span></>}
+                        {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span></>)}
                         {twins.length > 0 && <><br /><span className="small danger-text">⚠ Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
                       </td>
                     </>
@@ -203,7 +203,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       <div className="banner note small">
         {paidEvent ? (
           <span>
-            <strong>How payments work.</strong> “To check” rows have a reference number and screenshot: open Check, find the reference and amount in HOR&apos;s GCash, Maya or GoTyme history, then Approve, and their QR pass is emailed. Ask for a new receipt when it can&apos;t be matched or read; their spot stays held. Held spots have no time limit: if someone backs out, Cancel them, then Confirm the next person on the waitlist. Payments are non-refundable.
+            <strong>How payments work.</strong> “To check” rows have a reference number and screenshot: open Check, find the reference and amount in HOR&apos;s GCash, Maya or GoTyme history, then Approve, and their QR pass is emailed. Ask for a new receipt when it can&apos;t be matched or read; their spot stays held. A held spot&apos;s payment window is set in the event editor (default 24 hours); once it expires the slot frees up, though a late payment can still be approved if there&apos;s room. If someone backs out, Cancel them, then Confirm the next person on the waitlist. Payments are non-refundable.
           </span>
         ) : (
           <span>When someone cancels, offer their slot to the first person on the waitlist, then press Confirm on their row. Under 18s come with the guardian named here. “No photos” also shows on the check-in screen.</span>

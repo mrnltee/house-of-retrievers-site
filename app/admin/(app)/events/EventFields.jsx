@@ -6,6 +6,7 @@ import { CONSENT_TEMPLATES, MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, RSVP_
 import { PRICING_BASES, ticketLimitUnitLabel } from "../../../lib/registrationPricing.mjs";
 import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierLeft, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
+import { PAYMENT_HOLD_OPTIONS } from "../../../lib/registrationHolds.mjs";
 
 /**
  * Date and times. "All day" hides the times (and saves none), for events
@@ -503,7 +504,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, date, rsvpOpensAt, rsvpFormConfig }) {
+export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, paymentHoldMinutes, date, rsvpOpensAt, rsvpFormConfig }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
@@ -563,6 +564,14 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
             {paid && <>
               <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> They pay by QR before the day (track it per person)</label>
               {feeRequired && <label className="check"><input type="checkbox" name="onsitePayment" defaultChecked={Boolean(onsitePayment)} /> On-site payment is available <span className="small muted">The regular rate applies on site; leave this off until the venue confirms.</span></label>}
+              {feeRequired && (
+                <label className="field"><span>Payment hold length <small>How long a "Payment pending" spot stays held before it frees up for someone else.</small></span>
+                  <select name="paymentHoldMinutes" defaultValue={paymentHoldMinutes ?? ""}>
+                    <option value="">Default (24 hours)</option>
+                    {PAYMENT_HOLD_OPTIONS.map(([minutes, label]) => <option key={minutes} value={minutes}>{label}</option>)}
+                  </select>
+                </label>
+              )}
             </>}
           </div>
           <label className="field indent-full"><span>RSVP button label <small>Optional. For example, “Reserve my spot”. The usual “RSVP” stays when this is empty.</small></span><input name="rsvpLabel" maxLength={40} defaultValue={rsvpLabel || ""} placeholder="RSVP" /></label>
@@ -588,6 +597,7 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
           {/* Kept as they were, for when sign-ups are switched back on. */}
           <input type="hidden" name="capacity" value={capacity ?? ""} />
           <input type="hidden" name="capacityBasis" value={capacityBasis || "registration"} />
+          <input type="hidden" name="paymentHoldMinutes" value={paymentHoldMinutes ?? ""} />
           <input type="hidden" name="rsvpOpenSent" value="1" />
           {(rsvpOpen ?? true) && <input type="hidden" name="rsvpOpen" value="on" />}
           <input type="hidden" name="rsvpLabel" value={rsvpLabel || ""} />
@@ -596,6 +606,7 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
         </>
       )}
       {!(on && paid) && feeRequired && <input type="hidden" name="feeRequired" value="on" />}
+      {on && !paid && feeRequired && <input type="hidden" name="paymentHoldMinutes" value={paymentHoldMinutes ?? ""} />}
     </div>
   );
 }

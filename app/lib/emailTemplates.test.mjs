@@ -97,5 +97,6 @@ test("paid events: spot held, then the pass with QR and the matched payment, or 
   assert.doesNotMatch(no.html, /<read>/);
   assert.match(no.text, /Your spot is still held/);
   assert.match(spotHeld({ name: "Ana Reyes", event: { ...event, isCharity: true, onsitePayment: false }, passUrl: "p", ticket: "Regular · ₱995" }).text, /fundraising event/);
+  assert.match(spotHeld({ name: "Ana Reyes", event, passUrl: "p", deadline: "Sat, Oct 18 · 1:00 PM" }).text, /by Sat, Oct 18/);
   assert.equal(passQrImage("7KQ2MPX4RT").caption, "Code 7KQ2M PX4RT");
 });

@@ -184,6 +184,15 @@ test("an upcoming event keeps its sign-up settings", () => {
   assert.equal(value.capacityBasis, "registration");
 });
 
+test("furbaby capacity refuses a Hooman only ticket, which has no furbaby to count", () => {
+  const base = { title: "Bedazzle Barkdate", date: "2026-11-15", registration: "required", capacityBasis: "furbaby", pricingBasis: "tiered", feeRequired: "on" };
+  const humanOnly = validateEvent({ ...base, priceTiers: JSON.stringify([{ label: "Hooman", amount: 500, attendanceBasis: "human_only" }]) });
+  assert.match(humanOnly.error, /no furbaby to count/);
+  const furbabyPackage = validateEvent({ ...base, priceTiers: JSON.stringify([{ label: "With furbaby", amount: 795, attendanceBasis: "furbaby_package" }]) });
+  assert.equal(furbabyPackage.error, undefined);
+  assert.equal(furbabyPackage.value.capacityBasis, "furbaby");
+});
+
 test("event RSVP controls preserve the usual label and support a deliberate closure", () => {
   const base = { title: "Vaccination drive", date: "2026-11-15", registration: "required", rsvpOpenSent: "1" };
   const { value } = validateEvent({ ...base, rsvpLabel: " Reserve my spot ", vaccinationRecordRequired: "on" }, { today: "2026-10-10" });

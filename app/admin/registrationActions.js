@@ -11,6 +11,7 @@ import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../
 import { deletionState } from "../lib/registrationRecovery.mjs";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
+import { ACTIVE_REGISTRATION_SQL, isActiveRegistrationHold } from "../lib/registrationHolds.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -46,6 +47,29 @@ async function registration(id, { includeDeleted = false } = {}) {
 const pagePath = (reg) => `/registrations/${reg.event_id}/r/${reg.id}`;
 const emailNote = (sent, what) => (sent.ok ? ` ${what} emailed.` : sent.skipped ? " Email isn't set up yet, so nothing was emailed." : ` The email didn't go through; use “Resend QR pass”.`);
 
+/**
+ * Flips a registration to Paid, but only after rechecking capacity when its
+ * hold had expired (an expired "waiting" hold doesn't count toward capacity,
+ * so someone else may have taken the slot since). Returns false, with
+ * nothing changed, when the event is now full.
+ */
+async function capacityCheckedUpdate(reg, run) {
+  const expiredHold = reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at });
+  return transaction(async (tx) => {
+    await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
+    if (expiredHold && reg.capacity != null) {
+      const [{ used }] = await tx.sql(
+        `SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.id<>$2 AND r.status='confirmed' AND r.deleted_at IS NULL AND ${ACTIVE_REGISTRATION_SQL}`,
+        [reg.event_id, reg.id],
+      );
+      const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+      if (request.error || Number(used || 0) + request.units > reg.capacity) return false;
+    }
+    await run(tx);
+    return true;
+  });
+}
+
 /** Saves a receipt picture from the admin form (a data URL the browser resized). */
 async function storeProof(tx, regId, dataUrl, who) {
   if (!dataUrl) return null;
@@ -69,7 +93,10 @@ export async function approvePayment(data) {
     if (reg.status !== "confirmed" || !UNPAID.includes(reg.fee_status)) await backWith(back, "error", "This payment isn't waiting for a check.");
     if (!reg.fee_reference) await backWith(back, "error", "There's no reference number to match. Use “Mark paid” and type the reference.");
     if (form(data, "matched") !== "on") await backWith(back, "error", "Tick the box once you've found the reference and amount in HOR's payment history.");
-    await sql("UPDATE registrations SET fee_status = 'paid', fee_checked_by = $2, fee_checked_at = now(), fee_note = NULL WHERE id = $1", [reg.id, admin.email]);
+    const approved = await capacityCheckedUpdate(reg, async (tx) => {
+      await tx.sql("UPDATE registrations SET fee_status = 'paid', fee_checked_by = $2, fee_checked_at = now(), fee_note = NULL WHERE id = $1", [reg.id, admin.email]);
+    });
+    if (!approved) await backWith(back, "error", "This hold expired and the event has filled up since. There's no room to confirm this payment — message them before approving.");
     await logActivity(admin.email, "registration.approve", reg.title, { registrationId: reg.id, reference: reg.fee_reference });
     const sent = await sendPass(reg.id, { paid: true });
     revalidatePath("/events", "layout");
@@ -87,11 +114,14 @@ export async function markPaid(data) {
     if (reg.status !== "confirmed" || reg.fee_status === "paid") await backWith(back, "error", "This registration isn't waiting for a payment.");
     const { value, error } = validateProof({ method: form(data, "method"), reference: form(data, "reference"), amount: form(data, "amount") }, { admin: true });
     if (error) await backWith(back, "error", error);
-    await sql(
-      `UPDATE registrations SET fee_status = 'paid', pay_method = $2, fee_reference = NULLIF($3, ''), pay_amount = $4,
-         fee_checked_by = $5, fee_checked_at = now(), fee_note = NULL WHERE id = $1`,
-      [reg.id, value.method, value.reference, value.amount, admin.email],
-    );
+    const marked = await capacityCheckedUpdate(reg, async (tx) => {
+      await tx.sql(
+        `UPDATE registrations SET fee_status = 'paid', pay_method = $2, fee_reference = NULLIF($3, ''), pay_amount = $4,
+           fee_checked_by = $5, fee_checked_at = now(), fee_note = NULL WHERE id = $1`,
+        [reg.id, value.method, value.reference, value.amount, admin.email],
+      );
+    });
+    if (!marked) await backWith(back, "error", "This hold expired and the event has filled up since. There's no room to confirm this payment — message them before marking it paid.");
     await logActivity(admin.email, "registration.paid", reg.title, { registrationId: reg.id, method: value.method });
     const sent = await sendPass(reg.id, { paid: true });
     revalidatePath("/events", "layout");

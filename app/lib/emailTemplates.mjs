@@ -437,7 +437,7 @@ export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLin
 }
 
 /** Paid event: sent straight after the RSVP. The spot is held; the pass comes once the payment is approved. */
-export function spotHeld({ name, event, passUrl, ticket = "" }) {
+export function spotHeld({ name, event, passUrl, ticket = "", deadline = "" }) {
   return build({
     subject: `Your spot is held: ${event.title}`,
     preheader: "Pay and upload your receipt to get your QR pass.",
@@ -445,7 +445,9 @@ export function spotHeld({ name, event, passUrl, ticket = "" }) {
     paragraphs: [
       eventBox(event),
       `To confirm it, pay${ticket ? ` <strong style="white-space:nowrap">${esc(ticket)}</strong>` : ""} using one of the approved payment methods on your RSVP page, then upload your reference number and confirmation screenshot there.`,
-      "We'll email your QR pass once the team has matched your payment. Your spot stays held in the meantime.",
+      deadline
+        ? `Please do this by <strong>${esc(deadline)}</strong>, or the spot may go to someone else. We'll email your QR pass once the team has matched your payment.`
+        : "We'll email your QR pass once the team has matched your payment. Your spot stays held in the meantime.",
     ],
     button: { label: "Pay and upload proof", href: passUrl },
     after: [paymentNotice(event), "Can't make it after all? Reply to this email so someone else can have the spot."],

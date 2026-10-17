@@ -8,6 +8,7 @@ import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
 import { cleanFurbabyPricing, cleanPricingBasis } from "../registrationPricing.mjs";
 import { cleanCapacityBasis } from "../eventCapacity.mjs";
+import { cleanPaymentHoldMinutes } from "../registrationHolds.mjs";
 
 export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
 
@@ -286,6 +287,7 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     pricingBasis: cleanPricingBasis(input?.pricingBasis),
     includedFurbabiesPerHuman: 0,
     additionalFurbabyFee: 0,
+    paymentHoldMinutes: cleanPaymentHoldMinutes(input?.paymentHoldMinutes),
     rsvpOpensAt: null,
   };
 
@@ -302,6 +304,10 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     if (error) return { error };
     value.priceTiers = tiers;
     value.cost = priceSummary(tiers) || value.cost;
+  }
+  // A furbaby-capacity event counts slots by furbaby; a Hooman only ticket has none to count.
+  if (value.capacityBasis === "furbaby" && value.pricingBasis === "tiered" && value.priceTiers.some((t) => t.attendanceBasis === "human_only")) {
+    return { error: "This event counts capacity by furbaby, but a Hooman only ticket has no furbaby to count. Pick a different capacity basis, or make every ticket a Furbaby package." };
   }
   const companionPricing = cleanFurbabyPricing(input?.includedFurbabiesPerHuman, input?.additionalFurbabyFee);
   if (companionPricing.error) return { error: companionPricing.error };

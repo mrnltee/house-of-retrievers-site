@@ -3,6 +3,7 @@ import { sql } from "../../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
 import { can } from "../../../../../../lib/admin/roles.mjs";
 import { ADMIN_PAY_METHODS, FEE_STATUS, REJECT_REASONS, UNPAID, payMethodLabel, referenceKey, ticketLine } from "../../../../../../lib/eventPayments.mjs";
+import { isActiveRegistrationHold } from "../../../../../../lib/registrationHolds.mjs";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { approvePayment, attachReceipt, correctPaidAmount, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
@@ -48,6 +49,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const tiers = reg.fee_required ? eventTiers(reg) : [];
   const selectedTier = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
   const amountOk = due == null || reg.pay_amount == null ? null : reg.pay_amount === due;
+  const holdExpired = reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at });
   const back = `${base}/registrations/${eventId}${reg.fee_status === "review" ? "?show=check" : ""}`;
 
   return (
@@ -92,6 +94,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.under_18 && <div><dt>Under 18</dt><dd>Guardian: {reg.guardian_name}</dd></div>}
               {reg.rsvp_form_config?.consentEnabled && <div><dt>Event acknowledgement</dt><dd>{reg.consent_completed_at ? `Completed ${formatWhen(reg.consent_completed_at)}${reg.consent_name ? ` · ${reg.consent_name}` : ""}` : "Not completed"}</dd></div>}
             </dl>
+            {holdExpired && <p className="banner alert small" style={{ margin: 0 }}><span>This payment hold expired, so the slot no longer counts toward capacity. Approving or marking it paid will recheck that there's still room.</span></p>}
             {reg.fee_status === "rejected" && reg.fee_note && <p className="banner note small" style={{ margin: 0 }}><span>Asked for a new receipt: “{reg.fee_note}”</span></p>}
             {reg.fee_reference && (twins.length ? (
               <p className="banner alert small" style={{ margin: 0 }}><span>⚠ Same reference as {twins.map((t, i) => <span key={t.id}>{i ? ", " : ""}<a href={`${base}/registrations/${eventId}/r/${t.id}`}>{t.name}</a></span>)}. One payment may have been sent twice.</span></p>

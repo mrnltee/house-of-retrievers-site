@@ -97,6 +97,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           vaccinationRecordRequired={event?.vaccination_record_required}
           feeRequired={event?.fee_required}
           onsitePayment={event?.onsite_payment}
+          paymentHoldMinutes={event?.payment_hold_minutes}
           date={event ? isoDate(event.date) : ""}
           rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}
           rsvpFormConfig={event?.rsvp_form_config}

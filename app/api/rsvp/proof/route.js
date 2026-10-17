@@ -5,6 +5,12 @@ import { logActivity } from "../../../lib/admin/log";
 import { alertAdmins } from "../../../lib/admin/notify";
 import { clientIp, createRateLimiter } from "../../../lib/spamGuard.mjs";
 import { UNPAID, payMethodLabel, readProofImage, validateProof } from "../../../lib/eventPayments.mjs";
+import { ACTIVE_REGISTRATION_SQL, isActiveRegistrationHold, lateProofFits } from "../../../lib/registrationHolds.mjs";
+import { CAPACITY_USED_SQL, validateCapacityCounts } from "../../../lib/eventCapacity.mjs";
+import { eventTiers } from "../../../lib/admin/events.mjs";
+import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
+import { tierLeft } from "../../../lib/prices.mjs";
+import { ticketLimitUnits } from "../../../lib/registrationPricing.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +46,9 @@ export async function POST(request) {
 
   const result = await transaction(async (tx) => {
     const [reg] = await tx.sql(
-      `SELECT r.id, r.name, r.status, r.fee_status, r.hold_expires_at, e.title, e.fee_required FROM registrations r JOIN events e ON e.id = r.event_id
+      `SELECT r.id, r.name, r.status, r.fee_status, r.hold_expires_at, r.event_id, r.human_count, r.furbaby_count, r.ticket_label, r.ticket_amount,
+              e.title, e.fee_required, e.capacity, e.capacity_basis, e.pricing_basis, e.price_tiers, e.cost
+         FROM registrations r JOIN events e ON e.id = r.event_id
         WHERE r.check_in_code = $1 AND r.deleted_at IS NULL FOR UPDATE OF r`,
       [code],
     );
@@ -48,8 +56,32 @@ export async function POST(request) {
     if (reg.status !== "confirmed" || !reg.fee_required) return { error: "This RSVP doesn't need a payment.", status: 409 };
     if (reg.fee_status === "paid") return { error: "Your payment is already confirmed. Your QR pass is on this page.", status: 409 };
     if (!UNPAID.includes(reg.fee_status)) return { error: "This RSVP doesn't need a payment.", status: 409 };
-    if (reg.fee_status === "waiting" && reg.hold_expires_at && new Date(reg.hold_expires_at).getTime() <= Date.now()) {
-      return { error: "This payment hold has expired. Please start the RSVP again so someone else can use the slot.", status: 409 };
+    // A late receipt, after the hold expired, is still accepted if there's still room.
+    if (reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at })) {
+      await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
+      const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+      let capacityUsed = 0;
+      if (!capacityRequest.error && reg.capacity != null) {
+        const [{ used }] = await tx.sql(
+          `SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.id<>$2 AND r.status='confirmed' AND r.deleted_at IS NULL AND ${ACTIVE_REGISTRATION_SQL}`,
+          [reg.event_id, reg.id],
+        );
+        capacityUsed = Number(used || 0);
+      }
+      let tierLimit = null;
+      let tierLeftCount = null;
+      let tierUnits = 0;
+      if (!capacityRequest.error) {
+        const selectedTier = eventTiers(reg).find((t) => t.label === reg.ticket_label && Number(t.amount) === Number(reg.ticket_amount));
+        if (selectedTier?.limit) {
+          const counts = countsFromRows(await tx.sql(TICKET_COUNTS_SQL, [reg.event_id]));
+          tierLimit = selectedTier.limit;
+          tierLeftCount = tierLeft(selectedTier, counts);
+          tierUnits = ticketLimitUnits(reg.pricing_basis, selectedTier, reg.human_count ?? 1, reg.furbaby_count ?? 0);
+        }
+      }
+      const fits = !capacityRequest.error && lateProofFits({ capacity: reg.capacity, capacityUsed, capacityUnits: capacityRequest.units, tierLimit, tierLeft: tierLeftCount, tierUnits });
+      if (!fits) return { error: "This payment hold expired, and the event has filled up since. Message us on Instagram or Facebook and we'll see what we can do.", status: 409 };
     }
     const [proof] = await tx.sql(
       "INSERT INTO payment_proofs (registration_id, mime, data, bytes, uploaded_by) VALUES ($1, $2, $3, $4, 'Registrant') RETURNING id",

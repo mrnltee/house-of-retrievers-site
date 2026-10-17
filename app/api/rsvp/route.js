@@ -11,7 +11,7 @@ import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCo
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, ticketLimitUnits } from "../../lib/registrationPricing.mjs";
 import { tierLeft } from "../../lib/prices.mjs";
-import { holdExpiresAt } from "../../lib/registrationHolds.mjs";
+import { holdExpiresAt, isActiveRegistrationHold, resolveHoldMinutes } from "../../lib/registrationHolds.mjs";
 import { CAPACITY_USED_SQL, cleanCapacityBasis, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
 
 export const runtime = "nodejs";
@@ -49,7 +49,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -60,11 +60,13 @@ export async function POST(request) {
         return { error: "This event has already happened.", status: 409 };
       }
       const [duplicate] = await tx.sql(
-        `SELECT id FROM registrations WHERE event_id=$1 AND deleted_at IS NULL
+        `SELECT id, fee_status, hold_expires_at FROM registrations WHERE event_id=$1 AND deleted_at IS NULL
            AND lower(email)=lower($2) AND lower(regexp_replace(trim(name), '[[:space:]]+', ' ', 'g'))=lower(regexp_replace(trim($3), '[[:space:]]+', ' ', 'g')) LIMIT 1`,
         [event.id, value.email, value.name],
       );
-      if (duplicate) return { error: "This name and email are already registered for this event. Check the confirmation link, or message us to change it.", status: 409 };
+      // An expired payment hold doesn't block a re-RSVP: it's cancelled once the new one is ready to save.
+      const staleDuplicateId = duplicate && !isActiveRegistrationHold({ feeStatus: duplicate.fee_status, holdExpiresAt: duplicate.hold_expires_at }) ? duplicate.id : null;
+      if (duplicate && !staleDuplicateId) return { error: "This name and email are already registered for this event. Check the confirmation link, or message us to change it.", status: 409 };
       // The ticket they picked (paid events with several prices); one price needs no choice.
       const tiers = event.fee_required ? eventTiers(event) : [];
       // Tiers for the first N registrants: count under the event lock, so the 20th place goes once.
@@ -90,9 +92,10 @@ export async function POST(request) {
       const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units });
       const code = newCheckInCode();
-      // A paid RSVP gets a short payment window; once proof is under review it stays active.
+      // A paid RSVP gets a payment window (per-event, default 24h); once proof is under review it stays active.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";
-      const holdExpiry = feeStatus === "waiting" ? holdExpiresAt() : null;
+      const holdExpiry = feeStatus === "waiting" ? holdExpiresAt(new Date(), resolveHoldMinutes(event.payment_hold_minutes)) : null;
+      if (staleDuplicateId) await tx.sql("UPDATE registrations SET status='cancelled' WHERE id=$1", [staleDuplicateId]);
       const [row] = await tx.sql(
         `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,

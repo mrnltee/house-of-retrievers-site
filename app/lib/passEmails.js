@@ -4,6 +4,7 @@ import { loadCustomTemplate, loadTemplate } from "./emailSettings";
 import { receiptRejected, rsvpConfirmed, spotHeld } from "./emailTemplates.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
 import { payMethodLabel, paymentNotice, ticketLine } from "./eventPayments.mjs";
+import { formatOpens } from "./rsvpOpens.mjs";
 
 /**
  * The emails a registration gets, built from the database row so the RSVP
@@ -13,7 +14,7 @@ import { payMethodLabel, paymentNotice, ticketLine } from "./eventPayments.mjs";
 
 async function load(registrationId) {
   const [row] = await sql(
-    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note,
+    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at,
             e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment, e.rsvp_form_config
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
@@ -79,7 +80,8 @@ export async function sendPass(registrationId, { paid = false, again = false } =
 export async function sendSpotHeld(registrationId) {
   const row = await load(registrationId);
   if (!row) return { ok: false };
-  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount) });
+  const deadline = row.hold_expires_at ? formatOpens(new Date(row.hold_expires_at).toISOString()) : "";
+  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount), deadline });
   return safeSend({ to: row.email, ...mail, idempotencyKey: `held/${row.check_in_code}` });
 }
 
