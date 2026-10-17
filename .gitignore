@@ -29,3 +29,6 @@ public/3-giveback/*
 
 # Camera originals for the timeline; only the compressed copies in public/journey/ ship.
 public/timeline images/
+
+# Brainstorm mockups (local only)
+.superpowers/
