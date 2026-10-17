@@ -23,6 +23,7 @@ export const ACTION_LABELS = {
   "registration.delete": "Moved a registration to Recently deleted",
   "registration.restore": "Restored a registration",
   "registration.purge": "Permanently deleted a registration",
+  "registration.photo": "Changed a welcome photo",
   "person.update": "Updated a person's status",
   "person.join": "Joined through the form",
   "person.rejoin": "Sent the Join form again",

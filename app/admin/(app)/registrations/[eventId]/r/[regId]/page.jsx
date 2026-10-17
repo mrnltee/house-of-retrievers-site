@@ -4,6 +4,10 @@ import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
 import { can } from "../../../../../../lib/admin/roles.mjs";
 import { ADMIN_PAY_METHODS, FEE_STATUS, REJECT_REASONS, UNPAID, payMethodLabel, referenceKey, ticketLine } from "../../../../../../lib/eventPayments.mjs";
 import { isActiveRegistrationHold } from "../../../../../../lib/registrationHolds.mjs";
+import { WELCOME_PHOTO_SOURCE_LABELS } from "../../../../../../lib/welcomePhoto.mjs";
+import { welcomePhotoFor } from "../../../../../../lib/welcomePhotos";
+import WelcomeAvatar from "../../../WelcomeAvatar";
+import WelcomePhotoField from "../../../WelcomePhotoField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { approvePayment, attachReceipt, correctPaidAmount, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
@@ -32,12 +36,13 @@ export default async function RegistrationDetail({ params, searchParams }) {
   );
   if (!reg) notFound();
   const base = await adminBase();
-  const [proofs, twins, vaccinationRows] = await Promise.all([
+  const [proofs, twins, vaccinationRows, welcome] = await Promise.all([
     sql("SELECT id, uploaded_by, created_at, bytes FROM payment_proofs WHERE registration_id = $1 ORDER BY created_at DESC", [regId]),
     reg.fee_reference
       ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
     sql("SELECT uploaded_at, bytes FROM registration_vaccination_records WHERE registration_id = $1", [regId]),
+    reg.deleted_at ? null : welcomePhotoFor(regId, eventId),
   ]);
   const proof = proofs[0];
   const vaccination = vaccinationRows[0];
@@ -114,6 +119,20 @@ export default async function RegistrationDetail({ params, searchParams }) {
                   <p className="small muted">Uploaded {formatWhen(vaccination.uploaded_at)} · <a href={`${base}/registrations/vaccination/${reg.id}`} target="_blank" rel="noreferrer">Open full size</a></p>
                 </>
               ) : <p className="muted">No vaccination record was uploaded.</p>}
+            </section>
+          )}
+
+          {welcome && (
+            <section className="card form" style={{ gap: 12 }} aria-label="Welcome photo">
+              <h2 style={{ margin: 0 }}>Welcome photo</h2>
+              <p className="small muted" style={{ margin: 0 }}>What the door screen shows when {reg.name} checks in.</p>
+              <div className="actions" style={{ alignItems: "center" }}>
+                <WelcomeAvatar base={base} eventId={eventId} registrationId={reg.id} resolved={welcome} size={96} />
+                <span className="small">{WELCOME_PHOTO_SOURCE_LABELS[welcome.source]}</span>
+              </div>
+              {canEdit && (
+                <WelcomePhotoField registrationId={reg.id} name={reg.name} source={welcome.source} hasMatch={Boolean(welcome.personId)} canSaveToPerson={can(admin.roles, "people:edit")} />
+              )}
             </section>
           )}
 

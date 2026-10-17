@@ -218,6 +218,8 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .checkin-success-card p.checkin-welcome-furbaby { margin: 0 auto; font-size: 16px; opacity: .9; }
 .checkin-success-card p.checkin-welcome-message { margin: 14px auto 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .checkin-success-card .btn { margin-top: 24px; }
+.welcome-name { display: inline-flex; align-items: center; gap: 10px; }
+.welcome-avatar { flex: none; object-fit: cover; }
 @media (prefers-reduced-motion: no-preference) { .checkin-success-card { animation: checkin-success-in .24s ease-out; } }
 @keyframes checkin-success-in { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .confirm-dialog::backdrop { background: rgba(13,13,13,.45); backdrop-filter: blur(2px); }

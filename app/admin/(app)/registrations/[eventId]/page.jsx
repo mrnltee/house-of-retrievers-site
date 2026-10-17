@@ -7,6 +7,8 @@ import { changeRegistration } from "../../../actions";
 import { deleteRegistration, restoreRegistration } from "../../../registrationActions";
 import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
 import { isActiveRegistrationHold } from "../../../../lib/registrationHolds.mjs";
+import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
+import WelcomeAvatar from "../WelcomeAvatar";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../ui";
 
@@ -34,6 +36,7 @@ export default async function EventRegistrations({ params, searchParams }) {
 
   const current = all.filter((r) => !r.deleted_at);
   const deleted = all.filter((r) => r.deleted_at);
+  const welcome = await welcomePhotosFor(current);
   const live = current.filter((r) => r.status !== "cancelled");
   const confirmed = current.filter((r) => r.status === "confirmed");
   const waitlist = current.filter((r) => r.status === "waitlist");
@@ -115,7 +118,7 @@ export default async function EventRegistrations({ params, searchParams }) {
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
                 <tr key={r.id}>
-                  <td><a className="strong" href={detail}>{r.name}</a>{paidEvent && r.furbaby_name && <><br /><span className="small muted">Furbaby: {r.furbaby_name}</span></>}{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                  <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span>{paidEvent && r.furbaby_name && <><br /><span className="small muted">Furbaby: {r.furbaby_name}</span></>}{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
                   {paidEvent ? (
                     <>
                       <td>{ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>

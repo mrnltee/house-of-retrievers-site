@@ -29,6 +29,19 @@ test("every native admin submit button declares a confirmation path", () => {
   assert.deepEqual(missing, [], `Persisted admin actions must confirm first:\n${missing.join("\n")}`);
 });
 
+test("welcome photo actions authorize before reading a registration", () => {
+  const source = readFileSync(join(ROOT, "app", "admin", "registrationActions.js"), "utf8");
+  for (const name of ["uploadWelcomePhoto", "useProfileWelcomePhoto", "useInitialsWelcomePhoto"]) {
+    const start = source.indexOf(`export async function ${name}`);
+    assert.ok(start >= 0, `${name} exists`);
+    const rest = source.slice(start + 1);
+    const end = rest.indexOf("\nexport ");
+    const body = end >= 0 ? rest.slice(0, end) : rest;
+    assert.ok(body.includes("await actionAdmin(\"registrations:edit\")"), `${name} needs registrations:edit`);
+    assert.ok(body.indexOf("await actionAdmin(") < body.indexOf("await registration("), `${name} must authorize before reading the registration`);
+  }
+});
+
 test("registration payment actions authorize before reading a registration", () => {
   const source = readFileSync(join(ROOT, "app", "admin", "registrationActions.js"), "utf8");
   const names = ["approvePayment", "markPaid", "rejectPayment", "attachReceipt", "resendPass"];

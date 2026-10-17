@@ -12,6 +12,9 @@ import { deletionState } from "../lib/registrationRecovery.mjs";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
 import { ACTIVE_REGISTRATION_SQL, isActiveRegistrationHold } from "../lib/registrationHolds.mjs";
+import { can } from "../lib/admin/roles.mjs";
+import { savePersonPhoto } from "../lib/personPhotos";
+import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -397,5 +400,55 @@ export async function restoreRegistration(data) {
     await logActivity(admin.email, "registration.restore", reg.title, { registrationId: id });
     revalidatePath("/events", "layout");
     await backWith(back, "ok", `${reg.name}'s registration was restored.`);
+  });
+}
+
+/**
+ * The photo the check-in welcome card shows for one RSVP. Upload one, go back
+ * to the People profile photo (automatic), or show initials. With "also save",
+ * the upload replaces the matched People profile photo too.
+ */
+export async function uploadWelcomePhoto(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
+    const dataUrl = form(data, "photoData");
+    if (!dataUrl || dataUrl.length > 4 * 1024 * 1024) await backWith(back, "error", "Pick a photo first (JPG or PNG).");
+    // The People match is worked out here, never taken from the form.
+    const match = await welcomePhotoFor(reg.id, reg.event_id);
+    const saved = await saveRegistrationPhoto(reg.id, dataUrl, admin.email);
+    if (!saved) await backWith(back, "error", "That photo couldn't be saved. Try another one.");
+    const toProfile = form(data, "saveToPerson") === "on" && can(admin.roles, "people:edit") && match?.personId
+      ? Boolean(await savePersonPhoto(match.personId, dataUrl))
+      : false;
+    await logActivity(admin.email, "registration.photo", reg.title, { registrationId: reg.id, source: "own", personId: toProfile ? match.personId : undefined });
+    await backWith(back, "ok", `Welcome photo saved for ${reg.name}.${toProfile ? " It's on their People profile too." : ""}`);
+  });
+}
+
+export async function useProfileWelcomePhoto(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    await sql("UPDATE registrations SET welcome_photo = NULL WHERE id = $1", [reg.id]);
+    await logActivity(admin.email, "registration.photo", reg.title, { registrationId: reg.id, source: "people" });
+    await backWith(pagePath(reg), "ok", `The door will use the photo from ${reg.name}'s People profile.`);
+  });
+}
+
+export async function useInitialsWelcomePhoto(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    await sql("UPDATE registrations SET welcome_photo = 'initials' WHERE id = $1", [reg.id]);
+    await logActivity(admin.email, "registration.photo", reg.title, { registrationId: reg.id, source: "initials" });
+    await backWith(pagePath(reg), "ok", `The door will show ${reg.name}'s initials.`);
   });
 }
