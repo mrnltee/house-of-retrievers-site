@@ -108,18 +108,19 @@ export default async function EventRegistrations({ params, searchParams }) {
       <div className="table-wrap">
         <table className="registrations-table">
           <thead>
-            <tr><th>Name</th>{paidEvent ? <><th>Ticket</th><th>Payment</th></> : <th>Furbaby</th>}<th>Email</th><th>Notes</th><th>Acknowledged</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
+            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th><th>Notes</th><th>Acknowledged</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
           <tbody>
-            {shown.length === 0 && <tr><td colSpan={paidEvent ? 9 : 8} className="empty">Nobody here yet.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={paidEvent ? 10 : 8} className="empty">Nobody here yet.</td></tr>}
             {shown.map((r) => {
               const fee = FEE_STATUS[r.fee_status] || FEE_STATUS.not_due;
               const twins = sameRef(r);
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
                 <tr key={r.id}>
-                  <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span>{paidEvent && r.furbaby_name && <><br /><span className="small muted">Furbaby: {r.furbaby_name}</span></>}{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
-                  {paidEvent ? (
+                  <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span>{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                  <td>{r.furbaby_name || "—"}</td>
+                  {paidEvent && (
                     <>
                       <td>{ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
                       <td>
@@ -130,8 +131,6 @@ export default async function EventRegistrations({ params, searchParams }) {
                         {twins.length > 0 && <><br /><span className="small danger-text">⚠ Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
                       </td>
                     </>
-                  ) : (
-                    <td>{r.furbaby_name || "—"}</td>
                   )}
                   <td><a href={`mailto:${r.email}`}>{r.email}</a></td>
                   <td className="small">
