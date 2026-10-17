@@ -505,7 +505,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
-export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, paymentHoldMinutes, date, rsvpOpensAt, rsvpFormConfig }) {
+export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, paymentHoldMinutes, maxFurbabiesPerRegistration, maxHumansPerFurbaby, date, rsvpOpensAt, rsvpFormConfig }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
@@ -557,6 +557,12 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
                 <option value="furbaby">One slot per furbaby</option>
               </select>
             </label>
+            <input type="hidden" name="attendeeLimitsSent" value="1" />
+            <div className="row-2">
+              <label className="field"><span>Most furbabies per registration <small>Empty for no limit</small></span><input type="number" name="maxFurbabiesPerRegistration" min={1} max={20} defaultValue={maxFurbabiesPerRegistration ?? ""} /></label>
+              <label className="field"><span>Most people per furbaby <small>Empty for no limit</small></span><input type="number" name="maxHumansPerFurbaby" min={1} max={20} defaultValue={maxHumansPerFurbaby ?? ""} /></label>
+            </div>
+            <p className="small muted" style={{ margin: 0 }}>Example: 2 and 2 means one RSVP can bring up to 2 furbabies, with up to 2 people each. Going over is refused, not charged. Per-furbaby pricing always needs at least one furbaby.</p>
             <p className="small muted" style={{ margin: 0 }}>Example: 3 hoomans in one registration use 3 hooman slots. A furbaby-capacity event needs at least one furbaby in each registration. The amount is still decided below under Pricing.</p>
           </div>
           <div className="form">
@@ -599,6 +605,9 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
           <input type="hidden" name="capacity" value={capacity ?? ""} />
           <input type="hidden" name="capacityBasis" value={capacityBasis || "registration"} />
           <input type="hidden" name="paymentHoldMinutes" value={paymentHoldMinutes ?? ""} />
+          <input type="hidden" name="attendeeLimitsSent" value="1" />
+          <input type="hidden" name="maxFurbabiesPerRegistration" value={maxFurbabiesPerRegistration ?? ""} />
+          <input type="hidden" name="maxHumansPerFurbaby" value={maxHumansPerFurbaby ?? ""} />
           <input type="hidden" name="rsvpOpenSent" value="1" />
           {(rsvpOpen ?? true) && <input type="hidden" name="rsvpOpen" value="on" />}
           <input type="hidden" name="rsvpLabel" value={rsvpLabel || ""} />

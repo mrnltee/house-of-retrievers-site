@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`037_…sql`**).
+     number (the next one is **`038_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -189,6 +189,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 034 | per-event payment hold length (`events.payment_hold_minutes`); NULL inherits the 24-hour default, 0 is no limit |
 | 035 | per-RSVP check-in welcome photos (`registration_photos`) and the photo choice on `registrations` |
 | 036 | who checked someone in and how (`checked_in_by`, `checked_in_source` scan/manual) |
+| 037 | per-event attendee limits: most furbabies per registration, most people per furbaby |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.

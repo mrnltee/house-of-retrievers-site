@@ -22,7 +22,7 @@ export default function RsvpModal({ event, onClose }) {
   const openedAt = useRef(Date.now());
   const [under18, setUnder18] = useState(false);
   const [humanCount, setHumanCount] = useState(1);
-  const [furbabyCount, setFurbabyCount] = useState(0);
+  const [furbabyCount, setFurbabyCount] = useState(event.pricingBasis === "furbaby" ? 1 : 0);
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [proofSent, setProofSent] = useState(false);
   const [holdRemaining, setHoldRemaining] = useState(null);
@@ -188,11 +188,14 @@ export default function RsvpModal({ event, onClose }) {
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
             {!humanOnly && <label>Furbabies&apos; names (optional)<input name="furbabyName" maxLength={240} placeholder={furbabyCount > 1 ? "e.g. Mochi, Fudge and Pao" : "e.g. Mochi"} /></label>}
             <div className="row-2">
-              <label>People attending<input required type="number" name="humanCount" min="1" max="100" value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
-              {!humanOnly && <label>Furbabies attending<input type="number" name="furbabyCount" min="0" max="100" value={furbabyCount} onChange={(e) => setFurbabyCount(e.target.value)} /></label>}
+              <label>People attending<input required type="number" name="humanCount" min="1" max={event.maxHumansPerFurbaby && Number(furbabyCount) > 0 ? event.maxHumansPerFurbaby * Number(furbabyCount) : 100} value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
+              {!humanOnly && <label>Furbabies attending<input type="number" name="furbabyCount" min={event.pricingBasis === "furbaby" ? 1 : 0} max={event.maxFurbabiesPerRegistration || 100} value={furbabyCount} onChange={(e) => setFurbabyCount(e.target.value)} /></label>}
             </div>
+            {(event.maxFurbabiesPerRegistration || event.maxHumansPerFurbaby) && !humanOnly && (
+                <p className="form-note">{[event.maxFurbabiesPerRegistration ? `Up to ${event.maxFurbabiesPerRegistration} ${event.maxFurbabiesPerRegistration === 1 ? "furbaby" : "furbabies"} per RSVP` : "", event.maxHumansPerFurbaby ? `up to ${event.maxHumansPerFurbaby} ${event.maxHumansPerFurbaby === 1 ? "person" : "people"} per furbaby` : ""].filter(Boolean).join(", ")}.</p>
+              )}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
-            {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong><small>{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0)} Early Bird unit{ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0) === 1 ? "" : "s"} used for this ticket</small></div>}
+            {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
             {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
             {formConfig.optional.includes("photoConsent") && <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>

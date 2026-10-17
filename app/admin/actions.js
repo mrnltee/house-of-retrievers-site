@@ -199,6 +199,7 @@ export async function saveEvent(data) {
     if (data.has("allDaySent")) await sql("UPDATE events SET all_day=$1 WHERE id=$2", [value.allDay, eventId]);
     if (data.has("rsvpOpensSent")) await sql("UPDATE events SET rsvp_opens_at=$1 WHERE id=$2", [value.rsvpOpensAt, eventId]);
     if (data.has("paymentHoldMinutes")) await sql("UPDATE events SET payment_hold_minutes=$1 WHERE id=$2", [value.paymentHoldMinutes, eventId]);
+    if (data.has("attendeeLimitsSent")) await sql("UPDATE events SET max_furbabies_per_registration=$1, max_humans_per_furbaby=$2 WHERE id=$3", [value.maxFurbabiesPerRegistration, value.maxHumansPerFurbaby, eventId]);
     if (data.has("emailTemplateId")) {
       const tid = form(data, "emailTemplateId");
       await sql("UPDATE events SET email_template_id = (SELECT id FROM custom_email_templates WHERE id::text = $1 AND kind = 'event') WHERE id = $2", [tid, eventId]);

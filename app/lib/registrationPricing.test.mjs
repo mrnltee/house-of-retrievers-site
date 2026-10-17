@@ -71,3 +71,29 @@ test("the RSVP's Early Bird line speaks to guests, never in units", () => {
   assert.equal(ticketLimitLine("human", { limit: 30 }, 4), "First 30 hoomans · 4 left");
   assert.equal(ticketLimitLine("tiered", { limit: 10, attendanceBasis: "furbaby_package" }, 10), "First 10 furbabies · 10 left");
 });
+
+test("attendee limits: most furbabies per registration and most people per furbaby", async () => {
+  const { checkAttendeeLimits } = await import("./registrationPricing.mjs");
+  const limits = { maxFurbabies: 2, maxHumansPerFurbaby: 2 };
+  assert.deepEqual(checkAttendeeLimits({ basis: "furbaby", humans: 2, furbabies: 1, ...limits }), {});
+  assert.deepEqual(checkAttendeeLimits({ basis: "furbaby", humans: 4, furbabies: 2, ...limits }), {});
+  assert.match(checkAttendeeLimits({ basis: "furbaby", humans: 2, furbabies: 3, ...limits }).error, /up to 2 furbabies per RSVP/);
+  assert.match(checkAttendeeLimits({ basis: "furbaby", humans: 3, furbabies: 1, ...limits }).error, /up to 2 people for 1 furbaby/);
+  assert.match(checkAttendeeLimits({ basis: "furbaby", humans: 5, furbabies: 2, ...limits }).error, /up to 4 people for 2 furbabies/);
+});
+
+test("per-furbaby pricing needs at least one furbaby, so no one pays ₱0", async () => {
+  const { checkAttendeeLimits } = await import("./registrationPricing.mjs");
+  assert.match(checkAttendeeLimits({ basis: "furbaby", humans: 1, furbabies: 0 }).error, /at least one furbaby/);
+  assert.deepEqual(checkAttendeeLimits({ basis: "registration", humans: 1, furbabies: 0, maxHumansPerFurbaby: 2 }), {});
+});
+
+test("events without limits behave as before", async () => {
+  const { checkAttendeeLimits, cleanAttendeeLimit } = await import("./registrationPricing.mjs");
+  assert.deepEqual(checkAttendeeLimits({ basis: "registration", humans: 30, furbabies: 10 }), {});
+  assert.equal(cleanAttendeeLimit(""), null);
+  assert.equal(cleanAttendeeLimit("2"), 2);
+  assert.equal(cleanAttendeeLimit("0"), null);
+  assert.equal(cleanAttendeeLimit("abc"), null);
+  assert.equal(cleanAttendeeLimit("50"), 20);
+});

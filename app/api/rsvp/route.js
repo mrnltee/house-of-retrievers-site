@@ -9,7 +9,7 @@ import { chooseTicket, owesPayment, readProofImage } from "../../lib/eventPaymen
 import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, ticketLimitUnits } from "../../lib/registrationPricing.mjs";
+import { calculateAmountDue, checkAttendeeLimits, cleanAttendeeCounts, cleanPricingBasis, ticketLimitUnits } from "../../lib/registrationPricing.mjs";
 import { tierLeft } from "../../lib/prices.mjs";
 import { holdExpiresAt, isActiveRegistrationHold, resolveHoldMinutes } from "../../lib/registrationHolds.mjs";
 import { CAPACITY_USED_SQL, cleanCapacityBasis, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
@@ -49,7 +49,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -75,6 +75,8 @@ export async function POST(request) {
       if (ticket.error) return { error: ticket.error, status: 422 };
       const attendees = cleanAttendeeCounts(body?.humanCount ?? 1, body?.furbabyCount ?? 0);
       if (attendees.error) return { error: attendees.error, status: 422 };
+      const limits = checkAttendeeLimits({ basis: event.pricing_basis, humans: attendees.humans, furbabies: attendees.furbabies, maxFurbabies: event.max_furbabies_per_registration, maxHumansPerFurbaby: event.max_humans_per_furbaby });
+      if (limits.error) return { error: limits.error, status: 422 };
       const capacityRequest = validateCapacityCounts(cleanCapacityBasis(event.capacity_basis), attendees.humans, attendees.furbabies);
       if (capacityRequest.error) return { error: capacityRequest.error, status: 422 };
       const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });

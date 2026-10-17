@@ -6,7 +6,7 @@
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
-import { cleanFurbabyPricing, cleanPricingBasis } from "../registrationPricing.mjs";
+import { cleanAttendeeLimit, cleanFurbabyPricing, cleanPricingBasis } from "../registrationPricing.mjs";
 import { cleanCapacityBasis } from "../eventCapacity.mjs";
 import { cleanPaymentHoldMinutes } from "../registrationHolds.mjs";
 
@@ -288,6 +288,8 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
     includedFurbabiesPerHuman: 0,
     additionalFurbabyFee: 0,
     paymentHoldMinutes: cleanPaymentHoldMinutes(input?.paymentHoldMinutes),
+    maxFurbabiesPerRegistration: cleanAttendeeLimit(input?.maxFurbabiesPerRegistration),
+    maxHumansPerFurbaby: cleanAttendeeLimit(input?.maxHumansPerFurbaby),
     rsvpOpensAt: null,
   };
 
@@ -449,6 +451,8 @@ export function toPublicEvent(row, confirmed = 0) {
     onsitePayment: Boolean(row.onsite_payment),
     pricingBasis: cleanPricingBasis(row.pricing_basis),
     capacityBasis: cleanCapacityBasis(row.capacity_basis),
+    maxFurbabiesPerRegistration: row.max_furbabies_per_registration ?? undefined,
+    maxHumansPerFurbaby: row.max_humans_per_furbaby ?? undefined,
     includedFurbabiesPerHuman: row.included_furbabies_per_human || 0,
     additionalFurbabyFee: row.additional_furbaby_fee || 0,
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.

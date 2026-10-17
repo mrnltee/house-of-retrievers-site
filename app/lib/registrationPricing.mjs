@@ -89,6 +89,30 @@ export function ticketLimitUnitLabel(basis, tier = {}) {
   return "registrations";
 }
 
+/** An event's "most per registration" setting from the editor → 1–20, or null for no limit. */
+export function cleanAttendeeLimit(value) {
+  const n = Number(value);
+  if (value === "" || value == null || !Number.isInteger(n) || n < 1) return null;
+  return Math.min(n, 20);
+}
+
+/**
+ * The public RSVP's attendee rules: per-furbaby pricing needs a furbaby, and
+ * an event can cap furbabies per registration and people per furbaby.
+ * @returns {{ error?: string }}
+ */
+export function checkAttendeeLimits({ basis, humans, furbabies, maxFurbabies = null, maxHumansPerFurbaby = null }) {
+  if (cleanPricingBasis(basis) === "furbaby" && furbabies < 1) return { error: "Add at least one furbaby. This event's price is per furbaby." };
+  if (maxFurbabies && furbabies > maxFurbabies) {
+    return { error: `You can register up to ${maxFurbabies} ${maxFurbabies === 1 ? "furbaby" : "furbabies"} per RSVP. For more, please send another RSVP.` };
+  }
+  if (maxHumansPerFurbaby && furbabies > 0 && humans > maxHumansPerFurbaby * furbabies) {
+    const most = maxHumansPerFurbaby * furbabies;
+    return { error: `This event allows up to ${most} ${most === 1 ? "person" : "people"} for ${furbabies} ${furbabies === 1 ? "furbaby" : "furbabies"}.` };
+  }
+  return {};
+}
+
 /** The RSVP's line for a first-N ticket: "First 20 registrants · 3 left". */
 export function ticketLimitLine(basis, tier = {}, left) {
   const unit = ticketLimitUnitLabel(basis, tier);
