@@ -1,9 +1,10 @@
 export const RECOVERY_DAYS = 30;
 
-const normalized = (value) => String(value || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("en");
+/** Trimmed, single-spaced, lower-case: how names and emails are compared. */
+export const normalizedIdentity = (value) => String(value || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("en");
 
 export function sameRegistrant(a, b) {
-  return normalized(a?.email) === normalized(b?.email) && normalized(a?.name) === normalized(b?.name);
+  return normalizedIdentity(a?.email) === normalizedIdentity(b?.email) && normalizedIdentity(a?.name) === normalizedIdentity(b?.name);
 }
 
 export function deletionState(registration, now = new Date()) {
