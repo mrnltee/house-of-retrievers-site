@@ -5,11 +5,8 @@ const EDGE = 480;
 /** Without sharp (it ships with Next.js, but just in case), keep the upload only if it's this small. */
 const RAW_LIMIT = 900 * 1024;
 
-/**
- * Stores a small copy of a Join-form photo (a data URL) for one person and
- * points the person at it. Best effort: returns null rather than throwing.
- */
-export async function savePersonPhoto(personId, dataUrl) {
+/** A photo as a data URL → the small private copy we keep ({ mime, bytes }), or null. */
+export async function shrinkPhoto(dataUrl) {
   const match = String(dataUrl || "").match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
   if (!match) return null;
   let bytes = Buffer.from(match[2], "base64");
@@ -21,6 +18,17 @@ export async function savePersonPhoto(personId, dataUrl) {
   } catch {
     if (bytes.length > RAW_LIMIT) return null;
   }
+  return { mime, bytes };
+}
+
+/**
+ * Stores a small copy of a Join-form photo (a data URL) for one person and
+ * points the person at it. Best effort: returns null rather than throwing.
+ */
+export async function savePersonPhoto(personId, dataUrl) {
+  const small = await shrinkPhoto(dataUrl);
+  if (!small) return null;
+  const { mime, bytes } = small;
   const [row] = await sql(
     "INSERT INTO person_photos (person_id, mime, data, bytes) VALUES ($1, $2, $3, $4) RETURNING id",
     [personId, mime, bytes, bytes.length],
