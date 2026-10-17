@@ -4,7 +4,9 @@ import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { FEE_STATUS, payMethodLabel, referenceKey, ticketLine } from "../../../../lib/eventPayments.mjs";
 import { changeRegistration } from "../../../actions";
-import { deleteRegistration, restoreRegistration } from "../../../registrationActions";
+import { deleteRegistration, manualCheckIn, restoreRegistration, undoCheckIn } from "../../../registrationActions";
+import { manualCheckInWarnings } from "../../../../lib/manualCheckIn.mjs";
+import { manilaParts } from "../../../../lib/rsvpOpens.mjs";
 import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
 import { isActiveRegistrationHold } from "../../../../lib/registrationHolds.mjs";
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
@@ -37,6 +39,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const current = all.filter((r) => !r.deleted_at);
   const deleted = all.filter((r) => r.deleted_at);
   const welcome = await welcomePhotosFor(current);
+  const nowParts = manilaParts(new Date().toISOString());
   const live = current.filter((r) => r.status !== "cancelled");
   const confirmed = current.filter((r) => r.status === "confirmed");
   const waitlist = current.filter((r) => r.status === "waitlist");
@@ -141,7 +144,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       : r.consent_completed_at ? <span className="chip good" title={new Date(r.consent_completed_at).toLocaleString("en-PH")}>Yes</span>
                         : <span className="chip warn">Needed</span>}
                   </td>
-                  <td className="small">{r.checked_in_at ? <span className="chip good" title={formatWhen(r.checked_in_at)}>Yes · {new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}</span> : <span className="muted">Not yet</span>}</td>
+                  <td className="small">{r.checked_in_at ? <span className="chip good" title={formatWhen(r.checked_in_at)}>Yes · {new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}</span> : <span className="muted">Not yet</span>}{r.checked_in_source === "manual" && <><br /><span className="small muted">Added by hand</span></>}</td>
                   <td>
                     {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? "Checked in" : "Confirmed"}</span>}
                     {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
@@ -181,6 +184,30 @@ export default async function EventRegistrations({ params, searchParams }) {
                             yes="Yes, cancel it"
                             tone="danger"
                           >Cancel</ConfirmButton>
+                        </form>
+                      )}
+                      {canEdit && !r.deleted_at && r.status === "confirmed" && !r.checked_in_at && (
+                        <details className="manual-checkin">
+                          <summary className="linkish">Check in</summary>
+                          <form action={manualCheckIn} className="form" style={{ gap: 8 }}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <label className="field"><span>Arrived on</span><input type="date" name="checkinDate" required defaultValue={nowParts.date} /></label>
+                            <label className="field"><span>At <small>Manila time</small></span><input type="time" name="checkinTime" required defaultValue={nowParts.time} /></label>
+                            <ConfirmButton
+                              className="btn small gold"
+                              title={`Check in ${r.name}?`}
+                              echo={[{ name: "checkinDate", label: "Arrived on" }, { name: "checkinTime", label: "At (Manila)" }]}
+                              items={["They're marked as checked in at that time", "It's recorded as added by hand, under your name", "Nothing is emailed"]}
+                              note={(() => { const warn = manualCheckInWarnings({ ...r, fee_required: paidEvent, rsvp_form_config: event.rsvp_form_config }); return warn.length ? `${warn.join(" · ")}. They'll still be checked in, since they were there; follow up separately.` : ""; })()}
+                              yes="Yes, check them in"
+                            >Check in</ConfirmButton>
+                          </form>
+                        </details>
+                      )}
+                      {canEdit && !r.deleted_at && r.checked_in_at && (
+                        <form action={undoCheckIn}>
+                          <input type="hidden" name="id" value={r.id} />
+                          <ConfirmButton className="linkish" title={`Undo ${r.name}'s check-in?`} items={["Their check-in time is cleared", "Their registration, payment and QR pass stay unchanged"]} yes="Yes, undo it" tone="ghost">Undo check-in</ConfirmButton>
                         </form>
                       )}
                       {canEdit && !r.deleted_at && r.fee_status !== "paid" && !r.checked_in_at && (

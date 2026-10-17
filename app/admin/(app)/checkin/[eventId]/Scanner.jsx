@@ -2,7 +2,8 @@
 
 import jsQR from "jsqr";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { checkInByCode } from "../../../actions";
+import { checkInByCode, checkedInList } from "../../../actions";
+import { WELCOME_COUNTDOWN_SECONDS } from "../../../../lib/manualCheckIn.mjs";
 import { welcomeMessageLine } from "../../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../../ConfirmButton";
 
@@ -31,6 +32,12 @@ function codeFrom(text) {
  */
 function WelcomeCard({ base, eventId, title, person, message, onClose }) {
   const [photoShown, setPhotoShown] = useState(false);
+  const [left, setLeft] = useState(WELCOME_COUNTDOWN_SECONDS);
+  useEffect(() => {
+    if (left <= 0) { onClose(); return undefined; }
+    const timer = window.setTimeout(() => setLeft((n) => n - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [left, onClose]);
   const line = welcomeMessageLine(message);
   const photo = person?.photo?.source && person.photo.source !== "initials"
     ? `${base}/checkin/photo/${eventId}/${person.id}?v=${encodeURIComponent(person.photo.version)}`
@@ -48,6 +55,7 @@ function WelcomeCard({ base, eventId, title, person, message, onClose }) {
         {person?.furbaby && <p className="checkin-welcome-furbaby">with {person.furbaby}</p>}
         {line && <p className="checkin-welcome-message">{line}</p>}
         <button type="button" className="btn gold" autoFocus onClick={onClose}>Ready for the next guest</button>
+        <p className="checkin-welcome-countdown" aria-hidden="true">Next guest in {left}…</p>
       </div>
     </div>
   );
@@ -63,6 +71,22 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
   const [checked, setChecked] = useState(initialChecked);
   const [manual, setManual] = useState("");
   const [successOpen, setSuccessOpen] = useState(false);
+  const [list, setList] = useState(null);
+  const [search, setSearch] = useState("");
+  const closeSuccess = useCallback(() => setSuccessOpen(false), []);
+
+  // Who's in: on open, after each good scan here, and every 30 s so door phones agree.
+  const loadList = useCallback(async () => {
+    try {
+      const response = await checkedInList(eventId);
+      setList(response.rows || []);
+    } catch { /* The list is a convenience; scanning keeps working without it. */ }
+  }, [eventId]);
+  useEffect(() => {
+    loadList();
+    const timer = window.setInterval(loadList, 30_000);
+    return () => window.clearInterval(timer);
+  }, [loadList]);
 
   function playSuccessSound() {
     if (soundPreset === "silent") return;
@@ -124,6 +148,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
       setResult(response);
       if (response.outcome === "ok") {
         setChecked((n) => n + 1);
+        loadList();
       setSuccessOpen(true);
         playSuccessSound();
       } else playFailureSound();
@@ -132,7 +157,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
       // A short pause so one QR held in view isn't read twice.
       setTimeout(() => { busy.current = false; }, 1500);
     }
-  }, [eventId]);
+  }, [eventId, loadList]);
 
   useEffect(() => {
     if (camera !== "on") return undefined;
@@ -188,7 +213,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
       </div>
       <div className="checkin-body">
         {successOpen && result?.outcome === "ok" && (
-          <WelcomeCard key={result.person?.id} base={base} eventId={eventId} title={title} person={result.person} message={successMessage} onClose={() => setSuccessOpen(false)} />
+          <WelcomeCard key={result.person?.id} base={base} eventId={eventId} title={title} person={result.person} message={successMessage} onClose={closeSuccess} />
         )}
         <div className="viewfinder">
           {camera === "on" ? (
@@ -240,6 +265,31 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
           >Check in</ConfirmButton>
         </form>
         <p className="small muted">Someone who said no to photos shows a “No photos” flag here. Let the photographers know.</p>
+
+        <section className="card checkin-list" aria-labelledby="checkin-list-title">
+          <div className="actions" style={{ justifyContent: "space-between" }}>
+            <h2 id="checkin-list-title" style={{ margin: 0 }}>Checked in{list ? ` · ${list.length}` : ""}</h2>
+          </div>
+          <label className="field"><span className="visually-hidden">Search who's checked in</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or furbaby" /></label>
+          {list === null ? <p className="small muted">Loading…</p> : (() => {
+            const q = search.trim().toLowerCase();
+            const shown = q ? list.filter((row) => row.name.toLowerCase().includes(q) || row.furbaby.toLowerCase().includes(q)) : list;
+            if (!shown.length) return <p className="small muted">{list.length ? "No one by that name has checked in yet." : "No one has checked in yet."}</p>;
+            return (
+              <ol>
+                {shown.map((row) => (
+                  <li key={row.id}>
+                    {row.photo.source !== "initials"
+                      ? <img className="person-avatar" src={`${base}/checkin/photo/${eventId}/${row.id}?v=${encodeURIComponent(row.photo.version)}`} alt="" width={36} height={36} style={{ width: 36, height: 36 }} loading="lazy" />
+                      : <span className="person-avatar is-empty" style={{ width: 36, height: 36, fontSize: 13 }} aria-hidden="true">{row.initials}</span>}
+                    <span><strong>{row.name}</strong>{row.furbaby && <span className="small muted"> · {row.furbaby}</span>}{row.manual && <><br /><span className="small muted">Added by hand</span></>}</span>
+                    <span className="small checkin-list-time">{new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at))}</span>
+                  </li>
+                ))}
+              </ol>
+            );
+          })()}
+        </section>
       </div>
     </div>
   );

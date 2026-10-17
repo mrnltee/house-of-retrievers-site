@@ -22,7 +22,7 @@ import { sendPass, sendSpotHeld } from "../lib/passEmails";
 import { ticketLine } from "../lib/eventPayments.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
 import { initialsFor } from "../lib/welcomePhoto.mjs";
-import { welcomePhotoFor } from "../lib/welcomePhotos";
+import { welcomePhotoFor, welcomePhotosFor } from "../lib/welcomePhotos";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -313,7 +313,7 @@ export async function checkInByCode(eventId, rawCode) {
       ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, consentCompleted: Boolean(reg.consent_completed_at), ticket: reg.fee_required ? ticketLine(reg.ticket_label, reg.amount_due ?? reg.ticket_amount) : "" }
       : null;
     if (outcome === "ok") {
-      await sql("UPDATE registrations SET checked_in_at = now() WHERE id = $1 AND checked_in_at IS NULL", [reg.id]);
+      await sql("UPDATE registrations SET checked_in_at = now(), checked_in_by = $2, checked_in_source = 'scan' WHERE id = $1 AND checked_in_at IS NULL", [reg.id, admin.email]);
       await logActivity(admin.email, "registration.checkin", null, { registrationId: reg.id });
       // The welcome card's photo; a lookup failure must never block the check-in.
       const welcome = await welcomePhotoFor(reg.id, eventId).catch(() => null);
@@ -322,6 +322,31 @@ export async function checkInByCode(eventId, rawCode) {
     return { outcome, person };
   } catch (error) {
     if (error instanceof Forbidden) return { outcome: "forbidden", message: error.message };
+    throw error;
+  }
+}
+
+/** Everyone checked in to this event, newest first, for the bottom of the door screen. */
+export async function checkedInList(eventId) {
+  try {
+    await actionAdmin("checkin");
+    if (!isUuid(eventId)) return { rows: [] };
+    const live = await sql(
+      `SELECT id, event_id, name, email, furbaby_name, status, deleted_at, welcome_photo, welcome_photo_id, checked_in_at, checked_in_source
+         FROM registrations WHERE event_id = $1 AND deleted_at IS NULL AND status <> 'cancelled'`,
+      [eventId],
+    );
+    const photos = await welcomePhotosFor(live).catch(() => new Map());
+    const rows = live
+      .filter((r) => r.status === "confirmed" && r.checked_in_at)
+      .sort((a, b) => new Date(b.checked_in_at) - new Date(a.checked_in_at))
+      .map((r) => {
+        const photo = photos.get(r.id);
+        return { id: r.id, name: r.name, furbaby: r.furbaby_name || "", at: new Date(r.checked_in_at).toISOString(), manual: r.checked_in_source === "manual", initials: initialsFor(r.name), photo: photo ? { source: photo.source, version: photo.version } : { source: "initials", version: "initials-none" } };
+      });
+    return { rows };
+  } catch (error) {
+    if (error instanceof Forbidden) return { rows: [], forbidden: true };
     throw error;
   }
 }

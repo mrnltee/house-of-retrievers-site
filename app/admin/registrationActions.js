@@ -15,6 +15,7 @@ import { ACTIVE_REGISTRATION_SQL, isActiveRegistrationHold } from "../lib/regist
 import { can } from "../lib/admin/roles.mjs";
 import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
+import { readCheckInTime } from "../lib/manualCheckIn.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -41,7 +42,7 @@ async function guarded(path, work) {
 async function registration(id, { includeDeleted = false } = {}) {
   if (!isUuid(id)) return null;
   const [row] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.capacity, e.capacity_basis FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1${includeDeleted ? "" : " AND r.deleted_at IS NULL"}`,
+    `SELECT r.*, e.title, e.date AS event_date, e.fee_required, e.capacity, e.capacity_basis, e.rsvp_form_config FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1${includeDeleted ? "" : " AND r.deleted_at IS NULL"}`,
     [id],
   );
   return row || null;
@@ -450,5 +451,43 @@ export async function useInitialsWelcomePhoto(data) {
     await sql("UPDATE registrations SET welcome_photo = 'initials' WHERE id = $1", [reg.id]);
     await logActivity(admin.email, "registration.photo", reg.title, { registrationId: reg.id, source: "initials" });
     await backWith(pagePath(reg), "ok", `The door will show ${reg.name}'s initials.`);
+  });
+}
+
+/** Check in someone the door missed (forgot to scan, internet down), at the time they actually arrived. */
+export async function manualCheckIn(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = `/registrations/${reg.event_id}`;
+    if (reg.status !== "confirmed") await backWith(back, "error", `${reg.name} isn't confirmed (waitlist or cancelled), so they can't be checked in.`);
+    if (reg.checked_in_at) await backWith(back, "error", `${reg.name} is already checked in.`);
+    const time = readCheckInTime({ date: form(data, "checkinDate"), time: form(data, "checkinTime") }, { eventDate: String(reg.event_date).slice(0, 10) });
+    if (time.error) await backWith(back, "error", time.error);
+    const rows = await sql(
+      "UPDATE registrations SET checked_in_at = $2, checked_in_by = $3, checked_in_source = 'manual' WHERE id = $1 AND checked_in_at IS NULL RETURNING id",
+      [reg.id, time.value, admin.email],
+    );
+    if (!rows.length) await backWith(back, "error", `${reg.name} is already checked in.`);
+    await logActivity(admin.email, "registration.checkin", reg.title, { registrationId: reg.id, manual: true, at: time.value });
+    const at = new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(time.value));
+    await backWith(back, "ok", `${reg.name} is checked in at ${at}.`);
+  });
+}
+
+/** Clears a check-in entered by mistake. Nothing else about the registration changes. */
+export async function undoCheckIn(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = `/registrations/${reg.event_id}`;
+    if (!reg.checked_in_at) await backWith(back, "error", `${reg.name} isn't checked in.`);
+    await sql("UPDATE registrations SET checked_in_at = NULL, checked_in_by = NULL, checked_in_source = NULL WHERE id = $1", [reg.id]);
+    await logActivity(admin.email, "registration.uncheckin", reg.title, { registrationId: reg.id, was: reg.checked_in_at });
+    await backWith(back, "ok", `${reg.name}'s check-in was undone.`);
   });
 }

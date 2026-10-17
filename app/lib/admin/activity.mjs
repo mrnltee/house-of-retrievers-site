@@ -11,6 +11,7 @@ export const ACTION_LABELS = {
   "registration.cancel": "Cancelled a registration",
   "registration.confirm": "Moved someone off the waitlist",
   "registration.checkin": "Checked someone in",
+  "registration.uncheckin": "Undid a check-in",
   "registration.proof": "Uploaded a payment receipt",
   "registration.approve": "Approved a payment",
   "registration.paid": "Marked a payment paid",

@@ -29,9 +29,9 @@ test("every native admin submit button declares a confirmation path", () => {
   assert.deepEqual(missing, [], `Persisted admin actions must confirm first:\n${missing.join("\n")}`);
 });
 
-test("welcome photo actions authorize before reading a registration", () => {
+test("welcome photo and hand check-in actions authorize before reading a registration", () => {
   const source = readFileSync(join(ROOT, "app", "admin", "registrationActions.js"), "utf8");
-  for (const name of ["uploadWelcomePhoto", "useProfileWelcomePhoto", "useInitialsWelcomePhoto"]) {
+  for (const name of ["uploadWelcomePhoto", "useProfileWelcomePhoto", "useInitialsWelcomePhoto", "manualCheckIn", "undoCheckIn"]) {
     const start = source.indexOf(`export async function ${name}`);
     assert.ok(start >= 0, `${name} exists`);
     const rest = source.slice(start + 1);

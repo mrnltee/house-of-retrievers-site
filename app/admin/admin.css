@@ -219,6 +219,14 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .checkin-success-card p.checkin-welcome-message { margin: 14px auto 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .checkin-success-card .btn { margin-top: 24px; }
 .welcome-name { display: inline-flex; align-items: center; gap: 10px; }
+.manual-checkin summary { cursor: pointer; list-style: none; }
+.manual-checkin summary::-webkit-details-marker { display: none; }
+.manual-checkin[open] form { min-width: 200px; margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--a-sand); }
+.checkin-welcome-countdown { margin: 12px 0 0; font-size: 14px; opacity: .8; }
+.checkin-list { display: grid; gap: 12px; }
+.checkin-list ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.checkin-list li { display: flex; align-items: center; gap: 12px; }
+.checkin-list li .checkin-list-time { margin-left: auto; white-space: nowrap; }
 .welcome-avatar { flex: none; object-fit: cover; }
 @media (prefers-reduced-motion: no-preference) { .checkin-success-card { animation: checkin-success-in .24s ease-out; } }
 @keyframes checkin-success-in { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
