@@ -8,7 +8,9 @@ test("every listed breed has its icon in public/breeds", () => {
     if (!breed.icon) continue;
     assert.ok(existsSync(new URL(`../../public/breeds/${breed.key}.svg`, import.meta.url)), `${breed.key}.svg`);
   }
-  assert.equal(BREEDS.filter((b) => b.icon).length, 16);
+  assert.equal(BREEDS.filter((b) => b.icon).length, 29);
+  assert.equal(new Set(BREEDS.map((b) => b.key)).size, BREEDS.length);
+  assert.equal(BREEDS[BREEDS.length - 1].key, "other");
   assert.ok(BREEDS.some((b) => b.key === "other" && !b.icon));
 });
 

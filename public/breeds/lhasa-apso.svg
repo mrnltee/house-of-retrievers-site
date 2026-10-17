@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Lhasa Apso"><title>Lhasa Apso</title>
+    <path d="M13.4 31Q11 47 15 55.4Q18.4 51.8 21.6 56Q24.8 52 28 55.8H36Q39.2 52 42.4 56Q45.6 51.8 49 55.4Q53 47 50.6 31Q48.6 16.6 32 16.6Q15.4 16.6 13.4 31Z" fill="#D9B27A"/>
+    <path d="M14.4 31Q12.6 43 15 51.6Q17.6 50 19.6 51Q20.4 40 18.6 30Z" fill="#8A6A45" /><g transform="translate(64 0) scale(-1 1)"><path d="M14.4 31Q12.6 43 15 51.6Q17.6 50 19.6 51Q20.4 40 18.6 30Z" fill="#8A6A45" /></g>
+    <path d="M32 17.4V27" stroke="#B48C55" stroke-width="1.2" stroke-linecap="round"/>
+    <ellipse cx="32" cy="35.6" rx="12.4" ry="12" fill="#E8CA97"/>
+    <path d="M32 40.6Q25.6 41 24.4 48.4Q28.8 49.6 32 45.4Q35.2 49.6 39.6 48.4Q38.4 41 32 40.6Z" fill="#8A6A45"/>
+    <ellipse cx="25.8" cy="33.6" rx="2.7" ry="3.0240000000000005" fill="#2B2118"/><circle cx="26.745" cy="32.466" r="0.972" fill="#fff"/><ellipse cx="38.2" cy="33.6" rx="2.7" ry="3.0240000000000005" fill="#2B2118"/><circle cx="39.145" cy="32.466" r="0.972" fill="#fff"/><path d="M32 42.6v1.4m0 0q-1.7600000000000002 1.6 -3.3600000000000003 .7m4.2 -.7q1.7600000000000002 1.6 3.3600000000000003 .7" stroke="#F6E6CC" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M29.3 39.4q2.7 -1.3 5.4 0q0 2.6 -2.7 3.4q-2.7 -.8 -2.7 -3.4z" fill="#2B2118"/></svg>

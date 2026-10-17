@@ -16,6 +16,7 @@ import PersonAvatar from "../PersonAvatar";
 import PersonPhotoField from "../PersonPhotoField";
 import ConfirmMembership from "../ConfirmMembership";
 import ConfirmButton from "../../ConfirmButton";
+import BreedIcons from "../../registrations/BreedIcons";
 
 const REG_STATUS = { confirmed: "Going", waitlist: "Waitlist", cancelled: "Cancelled" };
 
@@ -75,6 +76,7 @@ export default async function PersonPage({ params, searchParams }) {
             {person.social_profile && <div><dt>Social</dt><dd>{person.social_url ? <a href={person.social_url} target="_blank" rel="noreferrer">{person.social_profile}</a> : person.social_profile}</dd></div>}
             {person.organization && <div><dt>Organization</dt><dd>{person.organization}</dd></div>}
             {person.furbaby_name && <div><dt>Furbaby</dt><dd>{person.furbaby_name}</dd></div>}
+            {person.furbaby_breeds?.some(Boolean) && <div><dt>Breed</dt><dd><BreedIcons breeds={person.furbaby_breeds} size={24} withNames /></dd></div>}
             <div><dt>Joined</dt><dd>{formatWhen(person.created_at)}{person.joined_count > 1 && <> · sent the form {person.joined_count} times, last {formatWhen(person.last_joined_at)}</>}</dd></div>
             {others.length > 0 && <div><dt>Also</dt><dd>{others.map((o) => <a key={o.id} href={`${base}/people/${o.id}`} className="chip" style={{ marginRight: 6 }}>{o.kind}</a>)}</dd></div>}
           </dl>

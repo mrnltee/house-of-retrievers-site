@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Yorkshire Terrier"><title>Yorkshire Terrier</title>
+    <path d="M20.2 27Q15 36 16.4 51.6Q19.8 49.6 22.6 52.4Q23.8 46 24 38Z" fill="#66737F"/>
+    <g transform="translate(64 0) scale(-1 1)"><path d="M20.2 27Q15 36 16.4 51.6Q19.8 49.6 22.6 52.4Q23.8 46 24 38Z" fill="#66737F"/></g>
+    <path d="M21.5 23.5L19.2 11Q25.8 13 28.2 20Z" fill="#B67F45" /><g transform="translate(64 0) scale(-1 1)"><path d="M21.5 23.5L19.2 11Q25.8 13 28.2 20Z" fill="#B67F45" /></g>
+    <path d="M21.8 21L20.4 14.4Q24.4 15.8 26 19.4Z" fill="#E6B98A" /><g transform="translate(64 0) scale(-1 1)"><path d="M21.8 21L20.4 14.4Q24.4 15.8 26 19.4Z" fill="#E6B98A" /></g>
+    <ellipse cx="32" cy="34.5" rx="12.6" ry="12.2" fill="#D7A46A"/>
+    <path d="M29.6 23Q29 16.2 32 14.8Q35 16.2 34.4 23Z" fill="#C9935A"/>
+    <path d="M32 39.4Q25 39.8 23.6 47.6Q28.4 49.2 32 44.6Q35.6 49.2 40.4 47.6Q39 39.8 32 39.4Z" fill="#E7BE8A"/>
+    <ellipse cx="25.8" cy="33" rx="2.7" ry="3.0240000000000005" fill="#2B2118"/><circle cx="26.745" cy="31.866" r="0.972" fill="#fff"/><ellipse cx="38.2" cy="33" rx="2.7" ry="3.0240000000000005" fill="#2B2118"/><circle cx="39.145" cy="31.866" r="0.972" fill="#fff"/><path d="M32 41.800000000000004v1.4m0 0q-1.7600000000000002 1.6 -3.3600000000000003 .7m4.2 -.7q1.7600000000000002 1.6 3.3600000000000003 .7" stroke="#2B2118" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M29.4 38.6q2.6 -1.3 5.2 0q0 2.6 -2.6 3.4q-2.6 -.8 -2.6 -3.4z" fill="#2B2118"/></svg>

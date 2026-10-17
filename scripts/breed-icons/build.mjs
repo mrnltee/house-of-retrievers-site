@@ -135,6 +135,94 @@ const BREEDS = [
     <path d="M31 21.6Q32 20.6 33 21.6L34.6 35H29.4Z" fill="#FBF3EA"/>
     <ellipse cx="32" cy="42.4" rx="9.4" ry="6.4" fill="#F1DFCD"/>
     ${eyes({ y: 32.6, dx: 7.4, r: 2.6 })}${face({ y: 40, w: 3.3, nose: "#8C4C30", smile: 1.2, tongue: true })}`],
+  ["yorkshire-terrier", "Yorkshire Terrier", () => `
+    <path d="M20.2 27Q15 36 16.4 51.6Q19.8 49.6 22.6 52.4Q23.8 46 24 38Z" fill="#66737F"/>
+    <g transform="translate(64 0) scale(-1 1)"><path d="M20.2 27Q15 36 16.4 51.6Q19.8 49.6 22.6 52.4Q23.8 46 24 38Z" fill="#66737F"/></g>
+    ${both("M21.5 23.5L19.2 11Q25.8 13 28.2 20Z", "#B67F45")}
+    ${both("M21.8 21L20.4 14.4Q24.4 15.8 26 19.4Z", "#E6B98A")}
+    <ellipse cx="32" cy="34.5" rx="12.6" ry="12.2" fill="#D7A46A"/>
+    <path d="M29.6 23Q29 16.2 32 14.8Q35 16.2 34.4 23Z" fill="#C9935A"/>
+    <path d="M32 39.4Q25 39.8 23.6 47.6Q28.4 49.2 32 44.6Q35.6 49.2 40.4 47.6Q39 39.8 32 39.4Z" fill="#E7BE8A"/>
+    ${eyes({ y: 33, dx: 6.2, r: 2.7 })}${face({ y: 38.6, w: 2.6, smile: 0.8 })}`],
+  ["maltese", "Maltese", () => `
+    ${both("M18.6 26Q12 28 12.4 40Q12.6 50 17.6 54.6Q22.4 54 24.6 49.6Q24.6 38 22 29Z", "#F3EEE6", outline)}
+    <path d="M28.8 21.4Q28 13.4 32 12Q36 13.4 35.2 21.4Z" fill="#FFFFFF" ${outline}/>
+    <ellipse cx="32" cy="35" rx="12.4" ry="12.4" fill="#FFFFFF" ${outline}/>
+    <path d="M32 40Q26 40.4 24.6 47Q28.8 48.2 32 44.6Q35.2 48.2 39.4 47Q38 40.4 32 40Z" fill="#FBF8F3" ${outline}/>
+    ${eyes({ y: 33.2, dx: 6, r: 2.8 })}${face({ y: 39, w: 2.6, smile: 0.8 })}`],
+  ["bichon-frise", "Bichon Frise", () => `
+    ${scallop(32, 33.5, 18.5, 16, 3, "#FFFFFF", outline)}
+    <ellipse cx="32" cy="35" rx="12.6" ry="11.6" fill="#FBF8F2"/>
+    ${scallop(32, 41.6, 6.6, 9, 1.2, "#FFFFFF", outline)}
+    ${eyes({ y: 32.4, dx: 6.2, r: 2.9, ring: "#EDE4D8" })}${face({ y: 39.6, w: 2.6, smile: 0.8 })}`],
+  ["chow-chow", "Chow Chow", () => `
+    ${scallop(32, 35, 20, 15, 3.4, "#B9622A")}
+    ${both("M20.5 20.4Q19.6 13.6 25.6 15.4Q27 18.4 25.8 21Z", "#9E5222")}
+    <ellipse cx="32" cy="35" rx="13" ry="12" fill="#C9763A"/>
+    <ellipse cx="32" cy="41.6" rx="8.4" ry="5.8" fill="#D88E52"/>
+    <path d="M23 31.6q2.6 -1.4 5.2 0M35.8 31.6q2.6 -1.4 5.2 0" stroke="${INK}" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <path d="M30.2 44.6q1.8 4 3.6 0z" fill="#3B3F63"/>
+    ${face({ y: 39.4, w: 3.2, smile: 0.9 })}`],
+  ["belgian-malinois", "Belgian Malinois", () => `
+    ${both("M20 25L16.8 7.5Q25.4 10 28.4 20Z", "#2A2420", 'stroke="#5A4A3C" stroke-width="1"')}
+    ${both("M20.4 21.6L18.6 12Q23.6 14 25.4 19Z", "#6B4A2E")}
+    <ellipse cx="32" cy="34" rx="14" ry="15" fill="#D6A15C"/>
+    <path d="M28.4 30Q32 28.6 35.6 30L36.4 37H27.6Z" fill="#3A2F27"/><ellipse cx="32" cy="42.4" rx="8" ry="6.4" fill="#3A2F27"/>
+    ${eyes()}${face({ nose: "#0D0D0D", line: "#0D0D0D" })}`],
+  ["cocker-spaniel", "Cocker Spaniel", () => `
+    ${both("M18.6 24C11 23.6 8 34 8.6 44Q8.2 50 12 51.6Q12.6 48.4 15.4 50.6Q16.6 47 19.4 47.6Q21.4 40 20.6 32Z", "#A9672E")}
+    ${both("M11 37q2 2 4.4 1.2M10.4 43q2.2 2 4.8 1", "none", 'stroke="#8C5424" stroke-width="1.1" stroke-linecap="round"')}
+    <path d="M18 34Q17.6 17 32 17Q46.4 17 46 34Q45.6 45 39 48.6Q32 51.4 25 48.6Q18.4 45 18 34Z" fill="#C58642"/>
+    <ellipse cx="32" cy="42.6" rx="7.6" ry="5.8" fill="#DCA368"/>
+    ${eyes({ y: 33.4, dx: 6.6, r: 3 })}${face({ y: 40.4, w: 3 })}`],
+  ["shiba-inu", "Shiba Inu", () => `
+    ${both("M20.5 25L17.4 12.5Q24.4 14.2 28 21Z", "#C9692A")}
+    ${both("M20.8 22L19 15.4Q23.4 16.8 25.4 20.2Z", "#F4E2C6")}
+    <ellipse cx="32" cy="34" rx="15" ry="14.4" fill="#D77A35"/>
+    <path d="M17.2 36Q22 34 26 37Q29 40 32 40Q35 40 38 37Q42 34 46.8 36Q46.4 45.6 39 48.8Q32 51.2 25 48.8Q17.6 45.6 17.2 36Z" fill="#FBF0DF"/>
+    <circle cx="25" cy="28.2" r="1.6" fill="#FBF0DF"/><circle cx="39" cy="28.2" r="1.6" fill="#FBF0DF"/>
+    ${eyes()}${face()}`],
+  ["akita", "Akita", () => `
+    ${both("M18.4 25.6L16.6 14.2Q24.2 15 27.6 21.6Z", "#B9824E")}
+    <path d="M13.8 33.5Q13.8 19.6 32 19.6Q50.2 19.6 50.2 33.5Q50.2 46.6 32 50Q13.8 46.6 13.8 33.5Z" fill="#CF9A64"/>
+    <path d="M15.6 37Q21 35 25.6 38.6Q29 41.6 32 41.6Q35 41.6 38.4 38.6Q43 35 48.4 37Q47.4 46.8 32 49.4Q16.6 46.8 15.6 37Z" fill="#FAF1E4"/>
+    <ellipse cx="32" cy="42" rx="8.6" ry="5.6" fill="#FAF1E4"/>
+    ${eyes({ y: 32.6, dx: 7.6, r: 2.3 })}${face({ y: 39.8, w: 3.3 })}`],
+  ["jack-russell-terrier", "Jack Russell Terrier", () => `
+    ${both("M19.2 21.2Q12.6 20.6 12.6 26.6Q16 25.6 20.6 28.6Z", "#B9742F")}
+    <ellipse cx="32" cy="34" rx="14.4" ry="14.4" fill="#FBF7F0" ${outline}/>
+    ${both("M18.6 30Q19.6 23.2 26 22.6Q30 24.4 29.4 31Q28 37.4 22 37Q18.4 35.4 18.6 30Z", "#C98339")}
+    <ellipse cx="32" cy="42.4" rx="7.6" ry="5.8" fill="#FFFFFF" ${outline}/>
+    ${eyes()}${face()}`],
+  ["samoyed", "Samoyed", () => `
+    ${scallop(32, 36, 19, 15, 3.4, "#FFFFFF", outline)}
+    ${both("M21 23L18.6 10.6Q25.6 12.6 28.4 19.6Z", "#FFFFFF", outline)}
+    ${both("M21.4 20.4L20 13.6Q24.4 15.2 26 18.8Z", "#F2DCDA")}
+    <ellipse cx="32" cy="35" rx="12.4" ry="11.6" fill="#FAF7F1"/>
+    <ellipse cx="32" cy="42" rx="7" ry="5.2" fill="#FFFFFF" ${outline}/>
+    ${eyes({ y: 33, dx: 6.4, r: 2.6 })}${face({ y: 39.6, w: 2.8, smile: 1.25, tongue: true })}`],
+  ["dalmatian", "Dalmatian", () => `
+    ${both("M18.4 23.6C11.4 24.6 9.6 33 11.4 40C13.2 43.6 18 41.6 19.6 36.6Z", "#FFFFFF", outline)}
+    ${both("M13.2 30a1.8 1.8 0 1 0 0.01 0ZM15.4 36.4a1.5 1.5 0 1 0 0.01 0Z", "#2B2724")}
+    <ellipse cx="32" cy="33.5" rx="15" ry="14.8" fill="#FFFFFF" ${outline}/>
+    <circle cx="22.4" cy="24.6" r="1.9" fill="#2B2724"/><circle cx="41" cy="23.4" r="1.6" fill="#2B2724"/><circle cx="28" cy="21.4" r="1.2" fill="#2B2724"/>
+    <circle cx="44.6" cy="34.4" r="1.6" fill="#2B2724"/><circle cx="19.4" cy="36.6" r="1.4" fill="#2B2724"/><circle cx="37.2" cy="27.2" r="1.1" fill="#2B2724"/>
+    <ellipse cx="32" cy="42.2" rx="8" ry="6" fill="#FBF9F6"/>
+    <circle cx="25.6" cy="45.4" r="1" fill="#2B2724"/><circle cx="38.6" cy="45" r="1" fill="#2B2724"/>
+    ${eyes()}${face()}`],
+  ["lhasa-apso", "Lhasa Apso", () => `
+    <path d="M13.4 31Q11 47 15 55.4Q18.4 51.8 21.6 56Q24.8 52 28 55.8H36Q39.2 52 42.4 56Q45.6 51.8 49 55.4Q53 47 50.6 31Q48.6 16.6 32 16.6Q15.4 16.6 13.4 31Z" fill="#D9B27A"/>
+    ${both("M14.4 31Q12.6 43 15 51.6Q17.6 50 19.6 51Q20.4 40 18.6 30Z", "#8A6A45")}
+    <path d="M32 17.4V27" stroke="#B48C55" stroke-width="1.2" stroke-linecap="round"/>
+    <ellipse cx="32" cy="35.6" rx="12.4" ry="12" fill="#E8CA97"/>
+    <path d="M32 40.6Q25.6 41 24.4 48.4Q28.8 49.6 32 45.4Q35.2 49.6 39.6 48.4Q38.4 41 32 40.6Z" fill="#8A6A45"/>
+    ${eyes({ y: 33.6, dx: 6.2, r: 2.7 })}${face({ y: 39.4, w: 2.7, smile: 0.8, line: "#F6E6CC" })}`],
+  ["borzoi", "Borzoi", () => `
+    ${both("M22.6 20.6Q15.6 17.4 13.6 22.4Q18.4 23 21.6 25.6Z", "#D8B583")}
+    <path d="M21.4 26Q21.4 16.6 32 16.6Q42.6 16.6 42.6 26Q42.6 38 37 47Q33.6 53.6 32 53.6Q30.4 53.6 27 47Q21.4 38 21.4 26Z" fill="#FBF6EE" ${outline}/>
+    <path d="M23 24Q24 17.6 31 17Q34.6 20 33.6 25.6Q31.4 30.4 26 30Q22.8 28.4 23 24Z" fill="#D8B583"/>
+    ${eyes({ y: 27.6, dx: 5, r: 2.2 })}
+    <path d="M30 49.6q2 -1.1 4 0q0 2.2 -2 2.9q-2 -.7 -2 -2.9z" fill="${INK}"/>`],
 ];
 
 const svg = (inner, title) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="${title}"><title>${title}</title>${inner.replace(/\s+\n\s*/g, "")}</svg>\n`;
@@ -148,5 +236,5 @@ writeFileSync(`${OUT}/preview.html`, `<!doctype html><meta charset="utf-8"><titl
 <style>body{margin:0;padding:24px;font:14px/1.3 system-ui,sans-serif;background:#F6F1E7;color:#2B2118}h1{font-size:18px;margin:0 0 4px}p{margin:0 0 18px;color:#6b5d4f}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}figure{margin:0;background:#fff;border-radius:14px;padding:12px;display:grid;justify-items:center;gap:6px}
 .big svg{width:112px;height:112px}.small{display:flex;gap:10px;align-items:center}.small span:first-child svg{width:32px;height:32px}.small span:last-child{background:#1c1a17;border-radius:6px;padding:3px;display:flex}.small span:last-child svg{width:24px;height:24px}figcaption{font-weight:600;text-align:center}</style>
-<h1>Breed icons — 16 · head only · transparent</h1><p>Each shown at 112 px, 32 px (list size) and 24 px on a dark chip.</p><div class="grid">${cells.join("")}</div>`);
+<h1>Breed icons — ${BREEDS.length} · head only · transparent</h1><p>Each shown at 112 px, 32 px (list size) and 24 px on a dark chip.</p><div class="grid">${cells.join("")}</div>`);
 console.log(`wrote ${BREEDS.length} icons + preview.html to ${OUT}`);

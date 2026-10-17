@@ -10,7 +10,7 @@
  *
  * Reads a payload shaped by app/api/join/route.js:
  *   { secret, submission: { joinType, name, email, socialProfile, socialUrl,
- *                           organization, furbabyName, photo, photoName, message } }
+ *                           organization, furbabyName, furbabyBreed, photo, photoName, message } }
  * `photo` is a base64 data URL; it is filed in Drive, never in the sheet.
  * Renaming a field here means renaming it there too.
  *
@@ -56,6 +56,7 @@ function doPost(e) {
     const photo = String(form.photo || '');
     const photoName = clean(form.photoName, 120);
     const furbabyName = clean(form.furbabyName, 120);
+    const furbabyBreed = clean(form.furbabyBreed, 60);
     const message = clean(form.message, 2000);
 
     if (!['Member', 'Volunteer', 'Partner', 'Sponsor'].includes(joinType)) {
@@ -94,7 +95,8 @@ function doPost(e) {
       furbabyName,
       message,
       'New',
-      ''
+      '',
+      furbabyBreed
     ]);
 
     const row = sheet.getLastRow();
@@ -152,6 +154,7 @@ function doPost(e) {
           <p><strong>Organization:</strong> ${escapeHtml(organization || '—')}</p>
           <p><strong>Social profile:</strong> ${escapeHtml(socialProfile || '—')}</p>
           <p><strong>Furbaby name:</strong> ${escapeHtml(furbabyName || '—')}</p>
+          <p><strong>Breed:</strong> ${escapeHtml(furbabyBreed || '—')}</p>
           <p><strong>Message:</strong><br>
           ${escapeHtml(message || '—').replace(/\n/g, '<br>')}</p>
         `

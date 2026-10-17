@@ -8,6 +8,7 @@ import { WELCOME_PHOTO_SOURCE_LABELS } from "../../../../../../lib/welcomePhoto.
 import { welcomePhotoFor } from "../../../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../../../WelcomeAvatar";
 import BreedIcons from "../../../BreedIcons";
+import BreedFields from "../../../BreedFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { approvePayment, attachReceipt, correctPaidAmount, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
@@ -155,6 +156,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                     <label className="field"><span>Furbabies</span><input name="furbabyCount" type="number" min="0" max="100" required defaultValue={reg.furbaby_count ?? 0} /></label>
                   </div>
                 </div>
+                <BreedFields initial={reg.furbaby_breeds || []} count={Math.min(4, Math.max(1, reg.furbaby_count ?? 1))} />
                 {reg.fee_required && tiers.length > 0 && <label className="field"><span>Ticket</span>
                   <select name="ticket" defaultValue={selectedTier >= 0 ? String(selectedTier) : ""} required={tiers.length > 1}>
                     {tiers.length > 1 && <option value="">Choose…</option>}

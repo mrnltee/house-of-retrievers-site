@@ -3,6 +3,7 @@ import { parseSocialProfile } from "../../lib/socialProfile";
 import { hasDatabase, sql } from "../../lib/db";
 import { logActivity } from "../../lib/admin/log";
 import { savePersonPhoto } from "../../lib/personPhotos";
+import { breedLabel, cleanBreeds } from "../../lib/breeds.mjs";
 import { sendEmail } from "../../lib/email";
 import { applicationReceived, receivedKey } from "../../lib/emailTemplates.mjs";
 import { loadTemplate } from "../../lib/emailSettings";
@@ -123,6 +124,8 @@ export async function POST(request) {
       socialUrl: social ? social.url : "",
       organization: clean(body?.organization, LIMITS.organization),
       furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
+      // Older copies of the Apps Script ignore this; the current one adds it as the last column.
+      furbabyBreed: breedLabel(cleanBreeds(body?.furbabyBreed, 1)?.[0] || ""),
       photo,
       photoName: clean(body?.photoName, LIMITS.photoName),
       message: clean(body?.message, LIMITS.message),
@@ -169,14 +172,15 @@ export async function POST(request) {
         // One record per person and kind: joining again updates it, keeps the
         // follow-up status and adds the new message under the old one.
         const [person] = await sql(
-          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END)
+          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership, furbaby_breeds)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END, $9)
            ON CONFLICT (kind, lower(email)) DO UPDATE SET
              name = EXCLUDED.name,
              social_profile = COALESCE(EXCLUDED.social_profile, people.social_profile),
              social_url = COALESCE(EXCLUDED.social_url, people.social_url),
              organization = COALESCE(EXCLUDED.organization, people.organization),
              furbaby_name = COALESCE(EXCLUDED.furbaby_name, people.furbaby_name),
+             furbaby_breeds = COALESCE(EXCLUDED.furbaby_breeds, people.furbaby_breeds),
              message = CASE WHEN EXCLUDED.message IS NULL THEN people.message
                             WHEN people.message IS NULL THEN EXCLUDED.message
                             ELSE people.message || E'\n\n' || EXCLUDED.message END,
@@ -184,7 +188,7 @@ export async function POST(request) {
              last_joined_at = now(),
              updated_at = now()
            RETURNING id, joined_count`,
-          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null],
+          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null, cleanBreeds(body?.furbabyBreed, 1)],
         );
         joined = person;
         await logActivity("Join form", person.joined_count > 1 ? "person.rejoin" : "person.join", s.name, { personId: person.id, kind: s.joinType });

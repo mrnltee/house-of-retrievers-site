@@ -1,26 +1,39 @@
 /**
- * Breeds a registrant can pick for each furbaby. Icons live in
- * public/breeds/<key>.svg (built by scripts/breed-icons/build.mjs). Keys are
+ * Breeds a registrant can pick for each furbaby (29 with icons, plus "Other"). Icons live in
+ * public/breeds/<key>.svg (built by scripts/breed-icons/build.mjs). Listed Aspin first (the most common here), then A–Z, then "Other". Keys are
  * what's stored, so change labels freely but keep the keys.
  */
 
 export const BREEDS = [
   { key: "aspin", label: "Aspin / Asong Pinoy", icon: true },
-  { key: "shih-tzu", label: "Shih Tzu", icon: true },
+  { key: "akita", label: "Akita", icon: true },
+  { key: "american-bully", label: "American Bully", icon: true },
+  { key: "beagle", label: "Beagle", icon: true },
+  { key: "belgian-malinois", label: "Belgian Malinois", icon: true },
+  { key: "bichon-frise", label: "Bichon Frise", icon: true },
+  { key: "borzoi", label: "Borzoi", icon: true },
   { key: "chihuahua", label: "Chihuahua", icon: true },
+  { key: "chow-chow", label: "Chow Chow", icon: true },
+  { key: "cocker-spaniel", label: "Cocker Spaniel", icon: true },
+  { key: "corgi", label: "Corgi", icon: true },
+  { key: "dachshund", label: "Dachshund", icon: true },
+  { key: "dalmatian", label: "Dalmatian", icon: true },
+  { key: "french-bulldog", label: "French Bulldog", icon: true },
+  { key: "german-shepherd", label: "German Shepherd", icon: true },
+  { key: "golden-retriever", label: "Golden Retriever", icon: true },
+  { key: "jack-russell-terrier", label: "Jack Russell Terrier", icon: true },
+  { key: "labrador-retriever", label: "Labrador Retriever", icon: true },
+  { key: "lhasa-apso", label: "Lhasa Apso", icon: true },
+  { key: "maltese", label: "Maltese", icon: true },
+  { key: "pit-bull", label: "Pit Bull–type dog", icon: true },
   { key: "pomeranian", label: "Pomeranian", icon: true },
   { key: "poodle", label: "Poodle", icon: true },
-  { key: "toy-poodle", label: "Toy Poodle", icon: true },
-  { key: "golden-retriever", label: "Golden Retriever", icon: true },
-  { key: "labrador-retriever", label: "Labrador Retriever", icon: true },
+  { key: "samoyed", label: "Samoyed", icon: true },
+  { key: "shiba-inu", label: "Shiba Inu", icon: true },
+  { key: "shih-tzu", label: "Shih Tzu", icon: true },
   { key: "siberian-husky", label: "Siberian Husky", icon: true },
-  { key: "german-shepherd", label: "German Shepherd", icon: true },
-  { key: "beagle", label: "Beagle", icon: true },
-  { key: "dachshund", label: "Dachshund", icon: true },
-  { key: "french-bulldog", label: "French Bulldog", icon: true },
-  { key: "corgi", label: "Corgi", icon: true },
-  { key: "american-bully", label: "American Bully", icon: true },
-  { key: "pit-bull", label: "Pit Bull–type dog", icon: true },
+  { key: "toy-poodle", label: "Toy Poodle", icon: true },
+  { key: "yorkshire-terrier", label: "Yorkshire Terrier", icon: true },
   { key: "other", label: "Other / not sure", icon: false },
 ];
 

@@ -16,6 +16,7 @@ import { can } from "../lib/admin/roles.mjs";
 import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
 import { readCheckInTime } from "../lib/manualCheckIn.mjs";
+import { cleanBreeds } from "../lib/breeds.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -48,6 +49,7 @@ async function registration(id, { includeDeleted = false } = {}) {
   return row || null;
 }
 
+const formBreeds = (data, furbabies) => cleanBreeds([0, 1, 2, 3].map((i) => form(data, `furbabyBreed${i}`)), furbabies);
 const pagePath = (reg) => `/registrations/${reg.event_id}/r/${reg.id}`;
 const emailNote = (sent, what) => (sent.ok ? ` ${what} emailed.` : sent.skipped ? " Email isn't set up yet, so nothing was emailed." : ` The email didn't go through; use “Resend QR pass”.`);
 
@@ -244,12 +246,12 @@ export async function addRegistration(data) {
         }
         const [row] = await tx.sql(
           `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code,
-             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21) RETURNING id`,
+             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22) RETURNING id`,
           [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, feeStatus, newCheckInCode(),
             ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
             feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email,
-            Boolean(duplicate && form(data, "allowDuplicate") === "yes")],
+            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies)],
         );
         const receipt = form(data, "receipt");
         if (receipt) {
@@ -315,9 +317,9 @@ export async function updateRegistration(data) {
       await tx.sql(
         `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
            ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
-           fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END WHERE id=$1`,
+           fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END WHERE id=$1`,
         [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
-          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged],
+          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent")],
       );
       return true;
     });
