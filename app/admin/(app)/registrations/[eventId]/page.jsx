@@ -10,7 +10,7 @@ import { isActiveRegistrationHold } from "../../../../lib/registrationHolds.mjs"
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
 import ConfirmButton from "../../ConfirmButton";
-import { Flash, NotAllowed, PageHead, formatDay } from "../../ui";
+import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -108,7 +108,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       <div className="table-wrap">
         <table className="registrations-table">
           <thead>
-            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th><th>Notes</th><th>Acknowledged</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
+            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th><th>Notes</th><th>Acknowledged</th><th>Checked in</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
           <tbody>
             {shown.length === 0 && <tr><td colSpan={paidEvent ? 10 : 8} className="empty">Nobody here yet.</td></tr>}
@@ -141,6 +141,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       : r.consent_completed_at ? <span className="chip good" title={new Date(r.consent_completed_at).toLocaleString("en-PH")}>Yes</span>
                         : <span className="chip warn">Needed</span>}
                   </td>
+                  <td className="small">{r.checked_in_at ? <span className="chip good" title={formatWhen(r.checked_in_at)}>Yes · {new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}</span> : <span className="muted">Not yet</span>}</td>
                   <td>
                     {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? "Checked in" : "Confirmed"}</span>}
                     {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
