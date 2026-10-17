@@ -3,6 +3,7 @@
 import jsQR from "jsqr";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { checkInByCode } from "../../../actions";
+import { welcomeMessageLine } from "../../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../../ConfirmButton";
 
 const MESSAGES = {
@@ -24,7 +25,35 @@ function codeFrom(text) {
   return match ? match[1] : "";
 }
 
-export default function Scanner({ eventId, title, confirmed, initialChecked, successTitle, successMessage, soundPreset, failureSoundPreset, hasCustomSound }) {
+/**
+ * The welcome card after a good scan: their furbaby's photo over their
+ * initials (so the card never waits for the photo), the event, their name.
+ */
+function WelcomeCard({ base, eventId, title, person, message, onClose }) {
+  const [photoShown, setPhotoShown] = useState(false);
+  const line = welcomeMessageLine(message);
+  const photo = person?.photo?.source && person.photo.source !== "initials"
+    ? `${base}/checkin/photo/${eventId}/${person.id}?v=${encodeURIComponent(person.photo.version)}`
+    : null;
+  return (
+    <div className="checkin-success" role="dialog" aria-modal="true" aria-labelledby="checkin-success-title">
+      <div className="checkin-success-card">
+        <span className="checkin-welcome-photo" aria-hidden="true">
+          <span className="checkin-welcome-initials">{person?.initials || "?"}</span>
+          {photo && <img src={photo} alt="" className={photoShown ? "is-shown" : ""} onLoad={() => setPhotoShown(true)} onError={() => setPhotoShown(false)} />}
+        </span>
+        <p className="tag">Welcome to</p>
+        <h2 id="checkin-success-title" className="checkin-welcome-event">{title}</h2>
+        <p className="checkin-welcome-name">{person?.name || "Our guest"}</p>
+        {person?.furbaby && <p className="checkin-welcome-furbaby">with {person.furbaby}</p>}
+        {line && <p className="checkin-welcome-message">{line}</p>}
+        <button type="button" className="btn gold" autoFocus onClick={onClose}>Ready for the next guest</button>
+      </div>
+    </div>
+  );
+}
+
+export default function Scanner({ base = "", eventId, title, confirmed, initialChecked, successMessage, soundPreset, failureSoundPreset, hasCustomSound }) {
   const video = useRef(null);
   const canvas = useRef(null);
   const busy = useRef(false);
@@ -159,15 +188,7 @@ export default function Scanner({ eventId, title, confirmed, initialChecked, suc
       </div>
       <div className="checkin-body">
         {successOpen && result?.outcome === "ok" && (
-          <div className="checkin-success" role="dialog" aria-modal="true" aria-labelledby="checkin-success-title">
-            <div className="checkin-success-card">
-              <span className="checkin-success-star" aria-hidden="true">✦</span>
-              <p className="tag">WELCOME IN</p>
-              <h2 id="checkin-success-title">{successTitle || "You’re checked in!"}</h2>
-              <p>{result.person?.name || "This guest"} {successMessage || "is all set. Have a wonderful time together."}</p>
-              <button type="button" className="btn gold" onClick={() => setSuccessOpen(false)}>Ready for the next guest</button>
-            </div>
-          </div>
+          <WelcomeCard key={result.person?.id} base={base} eventId={eventId} title={title} person={result.person} message={successMessage} onClose={() => setSuccessOpen(false)} />
         )}
         <div className="viewfinder">
           {camera === "on" ? (

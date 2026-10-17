@@ -21,6 +21,8 @@ import { savePersonPhoto } from "../lib/personPhotos";
 import { sendPass, sendSpotHeld } from "../lib/passEmails";
 import { ticketLine } from "../lib/eventPayments.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
+import { initialsFor } from "../lib/welcomePhoto.mjs";
+import { welcomePhotoFor } from "../lib/welcomePhotos";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -209,8 +211,10 @@ export async function saveEvent(data) {
     if (data.has("gallery")) await sql("UPDATE events SET gallery=$1 WHERE id=$2", [JSON.stringify(value.gallery), eventId]);
     if (data.has("photoUploadsSent")) await sql("UPDATE events SET photo_uploads=$1 WHERE id=$2", [value.photoUploads, eventId]);
     if (data.has("checkinSuccessTitle") || data.has("checkinSoundPreset")) {
-      const title = form(data, "checkinSuccessTitle").trim().slice(0, 120) || "You’re checked in!";
-      const message = form(data, "checkinSuccessMessage").trim().slice(0, 300) || "Welcome in. Have a wonderful time together.";
+      // The welcome card no longer shows a title; an older tab that still sends one may update it.
+      const title = data.has("checkinSuccessTitle") ? form(data, "checkinSuccessTitle").trim().slice(0, 120) || "You’re checked in!" : null;
+      // Empty is a choice (no line under the name); a form without the field keeps what's saved.
+      const message = data.has("checkinSuccessMessage") ? form(data, "checkinSuccessMessage").trim().slice(0, 300) : null;
       const preset = ["dazzle", "celebration", "soft", "silent", "custom"].includes(form(data, "checkinSoundPreset")) ? form(data, "checkinSoundPreset") : "dazzle";
       const failurePreset = ["warning", "short", "silent"].includes(form(data, "checkinFailureSoundPreset")) ? form(data, "checkinFailureSoundPreset") : "warning";
       const soundData = form(data, "checkinSoundData");
@@ -223,9 +227,9 @@ export async function saveEvent(data) {
         sound = [match[1], bytes, bytes.length];
       }
       if (sound || data.get("checkinSoundRemove") === "on") {
-        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3, checkin_failure_sound_preset=$4, checkin_sound_mime=$5, checkin_sound_data=$6, checkin_sound_bytes=$7 WHERE id=$8", [title, message, sound ? "custom" : (data.get("checkinSoundRemove") === "on" && preset === "custom" ? "dazzle" : preset), failurePreset, sound?.[0] || null, sound?.[1] || null, sound?.[2] || null, eventId]);
+        await sql("UPDATE events SET checkin_success_title=COALESCE($1, checkin_success_title), checkin_success_message=COALESCE($2, checkin_success_message), checkin_sound_preset=$3, checkin_failure_sound_preset=$4, checkin_sound_mime=$5, checkin_sound_data=$6, checkin_sound_bytes=$7 WHERE id=$8", [title, message, sound ? "custom" : (data.get("checkinSoundRemove") === "on" && preset === "custom" ? "dazzle" : preset), failurePreset, sound?.[0] || null, sound?.[1] || null, sound?.[2] || null, eventId]);
       } else {
-        await sql("UPDATE events SET checkin_success_title=$1, checkin_success_message=$2, checkin_sound_preset=$3, checkin_failure_sound_preset=$4 WHERE id=$5", [title, message, preset, failurePreset, eventId]);
+        await sql("UPDATE events SET checkin_success_title=COALESCE($1, checkin_success_title), checkin_success_message=COALESCE($2, checkin_success_message), checkin_sound_preset=$3, checkin_failure_sound_preset=$4 WHERE id=$5", [title, message, preset, failurePreset, eventId]);
       }
     }
     if (photo) {
@@ -299,7 +303,7 @@ export async function checkInByCode(eventId, rawCode) {
     const code = normalizeCode(rawCode);
     if (!isUuid(eventId) || !code) return { outcome: "unknown" };
     const rows = await sql(
-      `SELECT r.id, r.event_id, r.name, r.furbaby_name, r.status, r.checked_in_at, r.consent_completed_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required, (e.rsvp_form_config->>'consentRequiredBeforeCheckin')::boolean AS consent_required_before_checkin
+      `SELECT r.id, r.event_id, r.name, r.email, r.furbaby_name, r.status, r.checked_in_at, r.consent_completed_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required, (e.rsvp_form_config->>'consentRequiredBeforeCheckin')::boolean AS consent_required_before_checkin
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
       [code],
     );
@@ -311,6 +315,9 @@ export async function checkInByCode(eventId, rawCode) {
     if (outcome === "ok") {
       await sql("UPDATE registrations SET checked_in_at = now() WHERE id = $1 AND checked_in_at IS NULL", [reg.id]);
       await logActivity(admin.email, "registration.checkin", null, { registrationId: reg.id });
+      // The welcome card's photo; a lookup failure must never block the check-in.
+      const welcome = await welcomePhotoFor(reg.id, eventId).catch(() => null);
+      Object.assign(person, { id: reg.id, initials: initialsFor(reg.name), photo: welcome ? { source: welcome.source, version: welcome.version } : { source: "initials", version: "initials-none" } });
     }
     return { outcome, person };
   } catch (error) {

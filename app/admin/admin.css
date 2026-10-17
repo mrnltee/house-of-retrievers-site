@@ -204,9 +204,20 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .confirm-dialog { width: min(460px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: 20px; background: #fff; color: var(--a-ink); box-shadow: 0 30px 80px -30px rgba(13,13,13,.5); }
 .checkin-success { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px; background: rgba(13,13,13,.58); }
 .checkin-success-card { width: min(460px, 100%); padding: 42px 32px 32px; border: 2px solid var(--a-gold); border-radius: 24px; background: var(--a-ink); color: var(--a-ivory); text-align: center; box-shadow: 0 30px 80px -30px rgba(13,13,13,.7); }
-.checkin-success-card h2 { margin: 8px 0 12px; color: var(--a-ivory); font: 700 34px/1.05 var(--serif); }
+.checkin-success-card h2 { margin: 8px 0 12px; color: var(--a-ivory); font: 400 34px/1.05 "DM Serif Display", serif; }
 .checkin-success-card p:not(.tag) { margin: 0 auto 24px; max-width: 32ch; color: var(--a-ivory); }
 .checkin-success-star { display: block; color: var(--a-gold); font-size: 42px; line-height: 1; }
+.checkin-welcome-photo { position: relative; display: grid; place-items: center; width: 128px; height: 128px; margin: 0 auto 18px; border: 3px solid var(--a-gold); border-radius: 50%; overflow: hidden; background: #2a2620; }
+.checkin-welcome-initials { color: #d4b26a; font: 400 46px/1 "DM Serif Display", serif; letter-spacing: .02em; }
+.checkin-welcome-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+.checkin-welcome-photo img.is-shown { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) { .checkin-welcome-photo img { transition: opacity .2s ease-out; } }
+.checkin-success-card .tag { margin: 0; color: var(--a-gold); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.checkin-success-card h2.checkin-welcome-event { margin: 4px 0 0; font-size: 24px; line-height: 1.15; }
+.checkin-success-card p.checkin-welcome-name { margin: 12px auto 2px; font: 400 clamp(30px, 8vw, 40px)/1.05 "DM Serif Display", serif; }
+.checkin-success-card p.checkin-welcome-furbaby { margin: 0 auto; font-size: 16px; opacity: .9; }
+.checkin-success-card p.checkin-welcome-message { margin: 14px auto 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.checkin-success-card .btn { margin-top: 24px; }
 @media (prefers-reduced-motion: no-preference) { .checkin-success-card { animation: checkin-success-in .24s ease-out; } }
 @keyframes checkin-success-in { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .confirm-dialog::backdrop { background: rgba(13,13,13,.45); backdrop-filter: blur(2px); }
