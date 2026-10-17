@@ -11,6 +11,7 @@ import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.
 import { isActiveRegistrationHold } from "../../../../lib/registrationHolds.mjs";
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
+import BreedIcons from "../BreedIcons";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 
@@ -123,7 +124,7 @@ export default async function EventRegistrations({ params, searchParams }) {
               return (
                 <tr key={r.id}>
                   <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span>{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
-                  <td>{r.furbaby_name || "—"}</td>
+                  <td>{r.furbaby_name || (r.furbaby_breeds?.some(Boolean) ? "" : "—")}<BreedIcons breeds={r.furbaby_breeds} /></td>
                   {paidEvent && (
                     <>
                       <td>{ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>

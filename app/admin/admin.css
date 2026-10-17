@@ -485,3 +485,6 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .tier-period-pair { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px; }
 .tier-period-note { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 640px) { .tier-main, .tier-period-fields { grid-template-columns: 1fr; } .tier-remove { justify-self: start; } }
+.breed-icons { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-left: 6px; vertical-align: middle; }
+.breed-icon { display: inline-flex; align-items: center; gap: 6px; }
+.breed-icon img { display: block; }

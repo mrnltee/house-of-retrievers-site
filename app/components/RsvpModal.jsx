@@ -7,6 +7,7 @@ import { paymentNotice } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
+import BreedSelect from "./BreedSelect";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImage } from "../lib/resizeImage";
 
@@ -24,6 +25,7 @@ export default function RsvpModal({ event, onClose }) {
   const [humanCount, setHumanCount] = useState(1);
   const [furbabyCount, setFurbabyCount] = useState(event.pricingBasis === "furbaby" ? 1 : 0);
   const [state, setState] = useState({ sending: false, error: "", result: null });
+  const [breeds, setBreeds] = useState([]);
   const [proofSent, setProofSent] = useState(false);
   const [holdRemaining, setHoldRemaining] = useState(null);
   const waitlist = event.status === "full";
@@ -109,6 +111,7 @@ export default function RsvpModal({ event, onClose }) {
           furbabyName: form.get("furbabyName"),
           humanCount: form.get("humanCount"),
           furbabyCount: form.get("furbabyCount"),
+          furbabyBreeds: breeds.slice(0, Number(form.get("furbabyCount")) || 0),
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
@@ -194,6 +197,13 @@ export default function RsvpModal({ event, onClose }) {
             {(event.maxFurbabiesPerRegistration || event.maxHumansPerFurbaby) && !humanOnly && (
                 <p className="form-note">{[event.maxFurbabiesPerRegistration ? `Up to ${event.maxFurbabiesPerRegistration} ${event.maxFurbabiesPerRegistration === 1 ? "furbaby" : "furbabies"} per RSVP` : "", event.maxHumansPerFurbaby ? `up to ${event.maxHumansPerFurbaby} ${event.maxHumansPerFurbaby === 1 ? "person" : "people"} per furbaby` : ""].filter(Boolean).join(", ")}.</p>
               )}
+            {!humanOnly && Number(furbabyCount) > 0 && (
+              <div className="breed-selects">
+                {Array.from({ length: Math.min(Number(furbabyCount) || 0, 4) }, (_, i) => (
+                  <BreedSelect key={i} name={`furbabyBreed${i}`} label={Number(furbabyCount) > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setBreeds((list) => { const next = [...list]; next[i] = key; return next; })} />
+                ))}
+              </div>
+            )}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
             {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}

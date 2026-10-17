@@ -459,6 +459,20 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .form-note { display: block; text-align: center; color: var(--muted-on-light); font-size: var(--text-caption); line-height: 1.6; }
 .form-note a { color: #6f7268; text-decoration: underline; text-underline-offset: 2px; }
 .form-note a:hover { color: var(--ink); }
+.breed-selects { display: grid; gap: 12px; }
+.breed-select { position: relative; display: grid; gap: 6px; }
+.breed-select-label { font-size: var(--text-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.breed-select-button { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.breed-select-button:focus-visible { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(167,133,63,.18); }
+.breed-select-placeholder { color: var(--muted-on-light); }
+.breed-select-caret { margin-left: auto; color: var(--muted-on-light); }
+.breed-select-icon { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; }
+.breed-select-icon img { width: 28px; height: 28px; display: block; }
+.breed-select-list { position: absolute; z-index: 5; top: 100%; left: 0; right: 0; max-height: 280px; overflow: auto; margin: 4px 0 0; padding: 4px; list-style: none; border: 1px solid var(--line); background: white; box-shadow: 0 18px 40px -18px rgba(13,13,13,.35); }
+.breed-select-list:focus { outline: none; }
+.breed-select-list li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; cursor: pointer; }
+.breed-select-list li.is-active { background: #f4eee2; }
+.breed-select-list li.is-selected { font-weight: 700; }
 .rsvp-total { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 18px 0; padding: 15px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fbf8f1; }
 .rsvp-total span { font-weight: 700; }
 .rsvp-total strong { font-size: 20px; }

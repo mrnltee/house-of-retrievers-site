@@ -13,6 +13,7 @@ import { calculateAmountDue, checkAttendeeLimits, cleanAttendeeCounts, cleanPric
 import { tierLeft } from "../../lib/prices.mjs";
 import { holdExpiresAt, isActiveRegistrationHold, resolveHoldMinutes } from "../../lib/registrationHolds.mjs";
 import { CAPACITY_USED_SQL, cleanCapacityBasis, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
+import { cleanBreeds } from "../../lib/breeds.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,9 +100,9 @@ export async function POST(request) {
       const holdExpiry = feeStatus === "waiting" ? holdExpiresAt(new Date(), resolveHoldMinutes(event.payment_hold_minutes)) : null;
       if (staleDuplicateId) await tx.sql("UPDATE registrations SET status='cancelled' WHERE id=$1", [staleDuplicateId]);
       const [row] = await tx.sql(
-        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
-        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount],
+        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due, furbaby_breeds)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
+        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, cleanBreeds(body?.furbabyBreeds, attendees.furbabies)],
       );
       if (vaccination?.value) {
         const bytes = Buffer.from(vaccination.value.base64, "base64");
