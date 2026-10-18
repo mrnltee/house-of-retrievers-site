@@ -23,6 +23,8 @@ import { ticketLine } from "../lib/eventPayments.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
 import { initialsFor } from "../lib/welcomePhoto.mjs";
 import { welcomePhotoFor, welcomePhotosFor } from "../lib/welcomePhotos";
+import { parseSocialProfile } from "../lib/socialProfile";
+import { cleanBreeds } from "../lib/breeds.mjs";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -353,6 +355,31 @@ export async function checkedInList(eventId) {
 }
 
 // ---------- People ----------
+
+/** Correct a person's details (not their email, which is how Join and events find them). */
+export async function updatePersonDetails(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/people/${id}` : "/people";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const [person] = isUuid(id) ? await sql("SELECT id, name, kind FROM people WHERE id=$1", [id]) : [];
+    if (!person) await backWith("/people", "error", "That person no longer exists.");
+    const name = form(data, "name").trim().replace(/\s+/g, " ").slice(0, 120);
+    if (!name) await backWith(back, "error", "Their name can't be empty.");
+    const { profile, error } = parseSocialProfile(form(data, "socialProfile"), form(data, "socialPlatform"));
+    if (error) await backWith(back, "error", error);
+    const organization = form(data, "organization").trim().replace(/\s+/g, " ").slice(0, 160) || null;
+    const furbabyName = form(data, "furbabyName").trim().replace(/\s+/g, " ").slice(0, 120) || null;
+    const breeds = cleanBreeds([form(data, "furbabyBreed0")], 1);
+    await sql(
+      `UPDATE people SET name=$2, social_profile=$3, social_url=$4, organization=$5, furbaby_name=$6,
+         furbaby_breeds=CASE WHEN $8 THEN $7 ELSE furbaby_breeds END, updated_at=now() WHERE id=$1`,
+      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent")],
+    );
+    await logActivity(admin.email, "person.details", person.kind, { personId: id });
+    await backWith(back, "ok", `Saved ${name}'s details.`);
+  });
+}
 
 export async function updatePerson(data) {
   const id = form(data, "id");

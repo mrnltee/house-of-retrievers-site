@@ -17,6 +17,8 @@ import PersonPhotoField from "../PersonPhotoField";
 import ConfirmMembership from "../ConfirmMembership";
 import ConfirmButton from "../../ConfirmButton";
 import BreedIcons from "../../registrations/BreedIcons";
+import BreedFields from "../../registrations/BreedFields";
+import { updatePersonDetails } from "../../../actions";
 
 const REG_STATUS = { confirmed: "Going", waitlist: "Waitlist", cancelled: "Cancelled" };
 
@@ -81,6 +83,24 @@ export default async function PersonPage({ params, searchParams }) {
             {others.length > 0 && <div><dt>Also</dt><dd>{others.map((o) => <a key={o.id} href={`${base}/people/${o.id}`} className="chip" style={{ marginRight: 6 }}>{o.kind}</a>)}</dd></div>}
           </dl>
           {!person.photo_id && <p className="small muted">No photo yet. Use “Add a photo” at the top. Photos sent with the Join form before 11 Oct 2026 are in the "HOR Member photos" Drive folder, linked from the sheet.</p>}
+          {canEdit && (
+            <details className="disclosure-card person-edit">
+              <summary><h3>Edit details</h3></summary>
+              <form action={updatePersonDetails} className="form" style={{ gap: 12, marginTop: 12 }}>
+                <input type="hidden" name="id" value={person.id} />
+                <label className="field"><span>Name</span><input name="name" required maxLength={120} defaultValue={person.name} /></label>
+                <label className="field"><span>Email <small>Can't be changed here: it's how their Join form and events find this record</small></span><input value={person.email} readOnly disabled /></label>
+                <div className="row-2">
+                  <label className="field"><span>Social profile <small>Handle or link; empty to remove</small></span><input name="socialProfile" maxLength={300} defaultValue={person.social_url || person.social_profile || ""} /></label>
+                  <label className="field"><span>On</span><select name="socialPlatform" defaultValue={/facebook/i.test(person.social_url || "") ? "Facebook" : "Instagram"}><option>Instagram</option><option>Facebook</option></select></label>
+                </div>
+                {(person.kind === "Partner" || person.kind === "Sponsor" || person.organization) && <label className="field"><span>Organization</span><input name="organization" maxLength={160} defaultValue={person.organization || ""} /></label>}
+                <label className="field"><span>Furbaby name <small>Optional</small></span><input name="furbabyName" maxLength={120} defaultValue={person.furbaby_name || ""} /></label>
+                <BreedFields initial={person.furbaby_breeds || []} count={1} label="Breed (optional)" />
+                <div className="actions"><ConfirmButton title={`Save ${person.name}'s details?`} items={["Their name, social profile, furbaby and breed are updated", "Their email, membership, number and history stay the same", "Nothing is emailed"]} yes="Yes, save details">Save details</ConfirmButton></div>
+              </form>
+            </details>
+          )}
           {person.message && (
             <>
               <h3>What they wrote</h3>
