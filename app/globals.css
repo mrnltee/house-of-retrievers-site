@@ -460,6 +460,7 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .form-note a { color: #6f7268; text-decoration: underline; text-underline-offset: 2px; }
 .form-note a:hover { color: var(--ink); }
 .breed-selects { display: grid; gap: 12px; }
+.custom-question-choices { display: flex; flex-wrap: wrap; gap: 8px 24px; }
 .rsvp-stepper-row { display: flex; gap: 8px; align-items: stretch; }
 .rsvp-stepper-row input { flex: 1; min-width: 0; }
 .rsvp-stepper-row button { flex: none; width: 48px; min-height: 48px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; font-size: 1.25rem; cursor: pointer; }

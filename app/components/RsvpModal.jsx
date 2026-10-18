@@ -133,6 +133,7 @@ export default function RsvpModal({ event, onClose }) {
           name: form.get("name"),
           email: form.get("email"),
           furbabyName: joinFurbabyNames(furbabyNames, Number(form.get("furbabyCount")) || 0),
+          customAnswers: Object.fromEntries((formConfig.questions || []).map((q) => [q.id, form.get(`custom_${q.id}`)])),
           guestNames: guestNames.slice(0, Math.max(0, (Number(form.get("humanCount")) || 1) - 1)),
           humanCount: form.get("humanCount"),
           furbabyCount: form.get("furbabyCount"),
@@ -241,6 +242,15 @@ export default function RsvpModal({ event, onClose }) {
             {(event.maxFurbabiesPerRegistration || event.maxHumansPerFurbaby) && !humanOnly && (
                 <p className="form-note">{[event.maxFurbabiesPerRegistration ? `Up to ${event.maxFurbabiesPerRegistration} ${event.maxFurbabiesPerRegistration === 1 ? "furbaby" : "furbabies"} per RSVP` : "", event.maxHumansPerFurbaby ? `up to ${event.maxHumansPerFurbaby} ${event.maxHumansPerFurbaby === 1 ? "person" : "people"} per furbaby` : ""].filter(Boolean).join(", ")}.</p>
               )}
+            {(formConfig.questions || []).map((q) => (
+              <fieldset key={q.id} className="furbaby-question custom-question">
+                <legend>{q.label}</legend>
+                <div className="custom-question-choices">
+                  <label className="check"><input type="radio" name={`custom_${q.id}`} value="yes" required /> Yes</label>
+                  <label className="check"><input type="radio" name={`custom_${q.id}`} value="no" /> No</label>
+                </div>
+              </fieldset>
+            ))}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
             {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}

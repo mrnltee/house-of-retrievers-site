@@ -1,3 +1,4 @@
+import { cleanCustomQuestions, readCustomAnswers } from "../../lib/customQuestions.mjs";
 import { cleanGuestNames } from "../../lib/attendeeNames.mjs";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
@@ -51,7 +52,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -89,6 +90,8 @@ export async function POST(request) {
         const units = ticketLimitUnits(event.pricing_basis, selectedTier, attendees.humans, attendees.furbabies);
         if (units > left) return { error: `That rate has ${left} Early Bird ${left === 1 ? "slot" : "slots"} left, but this registration needs ${units}. Choose the next available rate.`, status: 409 };
       }
+      const answers = readCustomAnswers(cleanCustomQuestions(event.rsvp_form_config?.questions), body?.customAnswers);
+      if (answers.error) return { error: answers.error, status: 422 };
       const vaccination = event.vaccination_record_required && body?.vaccinationRecord
         ? readProofImage(body.vaccinationRecord, { label: "vaccination record photo" })
         : null;
@@ -101,9 +104,9 @@ export async function POST(request) {
       const holdExpiry = feeStatus === "waiting" ? holdExpiresAt(new Date(), resolveHoldMinutes(event.payment_hold_minutes)) : null;
       if (staleDuplicateId) await tx.sql("UPDATE registrations SET status='cancelled' WHERE id=$1", [staleDuplicateId]);
       const [row] = await tx.sql(
-        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due, furbaby_breeds, guest_names)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`,
-        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, cleanBreeds(body?.furbabyBreeds, attendees.furbabies), cleanGuestNames(body?.guestNames, attendees.humans)],
+        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due, furbaby_breeds, guest_names, custom_answers)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
+        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, cleanBreeds(body?.furbabyBreeds, attendees.furbabies), cleanGuestNames(body?.guestNames, attendees.humans), answers.value ? JSON.stringify(answers.value) : null],
       );
       if (vaccination?.value) {
         const bytes = Buffer.from(vaccination.value.base64, "base64");

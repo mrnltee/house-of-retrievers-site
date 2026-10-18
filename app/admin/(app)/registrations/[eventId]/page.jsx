@@ -1,3 +1,4 @@
+import { answerText, cleanCustomQuestions } from "../../../../lib/customQuestions.mjs";
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
@@ -36,6 +37,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const all = await sql("SELECT * FROM registrations WHERE event_id=$1 ORDER BY created_at", [eventId]);
   const paidEvent = event.fee_required;
   const acknowledgementEnabled = Boolean(event.rsvp_form_config?.consentEnabled);
+  const tableQuestions = cleanCustomQuestions(event.rsvp_form_config?.questions).filter((q) => q.showInTable);
 
   const current = all.filter((r) => !r.deleted_at);
   const deleted = all.filter((r) => r.deleted_at);
@@ -113,10 +115,10 @@ export default async function EventRegistrations({ params, searchParams }) {
       <div className="table-wrap">
         <table className="registrations-table">
           <thead>
-            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th><th>Notes</th><th>Acknowledged</th><th>Checked in</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
+            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th>{tableQuestions.map((q) => <th key={q.id} title={q.label}>{q.label.length > 28 ? `${q.label.slice(0, 27)}…` : q.label}</th>)}<th>Notes</th><th>Acknowledged</th><th>Checked in</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
           <tbody>
-            {shown.length === 0 && <tr><td colSpan={paidEvent ? 10 : 8} className="empty">Nobody here yet.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={(paidEvent ? 10 : 8) + tableQuestions.length} className="empty">Nobody here yet.</td></tr>}
             {shown.map((r) => {
               const fee = FEE_STATUS[r.fee_status] || FEE_STATUS.not_due;
               const twins = sameRef(r);
@@ -138,6 +140,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                     </>
                   )}
                   <td><a href={`mailto:${r.email}`}>{r.email}</a></td>
+                  {tableQuestions.map((q) => <td key={q.id}>{answerText(r.custom_answers?.[q.id]) || <span className="muted">—</span>}</td>)}
                   <td className="small">
                     {!r.photo_consent && <span className="chip">No photos</span>} {r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}
                   </td>

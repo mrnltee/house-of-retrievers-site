@@ -1,3 +1,4 @@
+import { answerText, cleanCustomQuestions } from "../../../../../../lib/customQuestions.mjs";
 import { notFound } from "next/navigation";
 import { sql } from "../../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
@@ -99,6 +100,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.pass_sent_at && <div><dt>QR pass emailed</dt><dd>{formatWhen(reg.pass_sent_at)}</dd></div>}
               {reg.furbaby_name && <div><dt>Furbaby</dt><dd>{reg.furbaby_name}</dd></div>}
               {reg.furbaby_breeds?.some(Boolean) && <div><dt>{reg.furbaby_breeds.filter(Boolean).length > 1 ? "Breeds" : "Breed"}</dt><dd><BreedIcons breeds={reg.furbaby_breeds} size={24} withNames /></dd></div>}
+              {cleanCustomQuestions(reg.rsvp_form_config?.questions).map((q) => <div key={q.id}><dt>{q.label}</dt><dd>{answerText(reg.custom_answers?.[q.id]) || "Not asked"}</dd></div>)}
               <div><dt>Photos</dt><dd>{reg.photo_consent ? "OK" : "No photos"}</dd></div>
               {reg.under_18 && <div><dt>Under 18</dt><dd>Guardian: {reg.guardian_name}</dd></div>}
               {reg.rsvp_form_config?.consentEnabled && <div><dt>Event acknowledgement</dt><dd>{reg.consent_completed_at ? `Completed ${formatWhen(reg.consent_completed_at)}${reg.consent_name ? ` · ${reg.consent_name}` : ""}` : "Not completed"}</dd></div>}

@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanCustomQuestions } from "../lib/customQuestions.mjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql, transaction } from "../lib/db";
@@ -74,6 +75,13 @@ function parseCrop(raw) {
   }
 }
 
+/** The editor's participant-form JSON with its custom questions cleaned (labels, ids, at most 10). */
+function withCleanQuestions(text) {
+  let config = {};
+  try { config = JSON.parse(text || "{}") || {}; } catch { config = {}; }
+  return JSON.stringify({ ...config, questions: cleanCustomQuestions(config.questions) });
+}
+
 export async function saveEvent(data) {
   const id = form(data, "id");
   const intent = form(data, "intent");
@@ -131,7 +139,7 @@ export async function saveEvent(data) {
 
     // An editor tab from before these fields existed sends neither: keep whatever the event already has
     // (COALESCE in the SQL below) instead of overwriting it with validateEvent's fallback default.
-    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, data.has("capacityBasis") ? value.capacityBasis : null, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, data.has("rsvpFormConfig") ? (form(data, "rsvpFormConfig") || "{}") : null];
+    const fields = [value.title, value.category || "", value.date, value.startTime, value.endTime, value.venue, value.city, value.cost, value.supports, value.summary, value.image, value.imageAlt, value.registration, value.capacity, data.has("capacityBasis") ? value.capacityBasis : null, value.rsvpOpen, value.rsvpLabel, value.vaccinationRecordRequired, value.feeRequired, value.pricingBasis, value.includedFurbabiesPerHuman, value.additionalFurbabyFee, value.onsitePayment, data.has("rsvpFormConfig") ? withCleanQuestions(form(data, "rsvpFormConfig")) : null];
     let eventId = id;
     let unpublished = false;
     if (isUuid(id) && !status && missing.length) {

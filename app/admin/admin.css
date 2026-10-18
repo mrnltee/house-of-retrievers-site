@@ -491,3 +491,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .breed-icons-table img { display: block; }
 .breed-icon-field { display: inline-grid; gap: 4px; }
 .breed-icon-preview { border-radius: 8px; background: var(--a-sand); }
+
+.custom-questions { display: grid; gap: 10px; margin: 12px 0; }
+.custom-question-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; }
+@media (max-width: 640px) { .custom-question-row { grid-template-columns: 1fr auto; } .custom-question-row .field { grid-column: 1 / -1; } }

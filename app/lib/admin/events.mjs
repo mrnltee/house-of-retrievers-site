@@ -3,6 +3,7 @@
  * events page reads (the HorEvent typedef in app/content/events.js).
  */
 
+import { cleanCustomQuestions } from "../customQuestions.mjs";
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
@@ -44,7 +45,7 @@ export function cleanRsvpFormConfig(input) {
   const allowed = new Set(["identity", "attendees", "photoConsent", "under18", "vaccination"]);
   const order = Array.isArray(value?.order) ? value.order.filter((key, i, list) => allowed.has(key) && list.indexOf(key) === i) : [];
   for (const key of ["identity", "attendees", ...optional]) if (!order.includes(key)) order.push(key);
-  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order };
+  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions) };
 }
 
 /** "TBA", "To be named" and the like: not a beneficiary, so never shown or published. */
