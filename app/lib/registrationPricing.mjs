@@ -135,14 +135,17 @@ export function calculateAmountDue({ basis = "registration", tier = {}, humans =
     return { quantity: humans, amount: Math.round(Number(tier.amount || 0) * humans) };
   }
   if (cleanPricingBasis(basis) === "base_plus") {
-    // The base covers one hooman and one furbaby; each extra uses this tier's own fee.
-    const extraHumans = Math.max(0, humans - 1);
-    const extraFurbabies = Math.max(0, furbabies - 1);
+    // Priced by pairs: every hooman + furbaby pair pays the tier amount (so registering
+    // together never costs more than separately); hoomans or furbabies without a
+    // partner pay this tier's add-on fee. The first pair is charged even with no furbaby.
+    const pairs = Math.max(1, Math.min(humans, furbabies));
+    const extraHumans = Math.max(0, humans - pairs);
+    const extraFurbabies = Math.max(0, furbabies - pairs);
     return {
-      quantity: 1,
+      quantity: pairs,
       extraHumans,
       extraFurbabies,
-      amount: Math.round(Number(tier.amount || 0)) + extraHumans * Number(tier.extraHumanFee || 0) + extraFurbabies * Number(tier.extraFurbabyFee || 0),
+      amount: pairs * Math.round(Number(tier.amount || 0)) + extraHumans * Number(tier.extraHumanFee || 0) + extraFurbabies * Number(tier.extraFurbabyFee || 0),
     };
   }
   if (cleanPricingBasis(basis) === "tiered") {
@@ -191,4 +194,10 @@ export function pricingLabel(basis, tier = {}) {
   if (key === "tiered") return tier.attendanceBasis === "human_only" ? "Hooman only" : "Furbaby package";
   if (key === "base_plus") return tier.attendanceBasis === "human_only" ? "Hooman only" : "1 hooman + 1 furbaby, extras added";
   return "Per registration";
+}
+
+/** What a paid registration paid over what it owes now (after any refund already recorded), or 0. */
+export function overpaidBy({ payAmount, due, refunded = 0 } = {}) {
+  if (payAmount == null || due == null) return 0;
+  return Math.max(0, Number(payAmount) - Number(refunded || 0) - Number(due));
 }

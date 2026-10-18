@@ -346,7 +346,7 @@ function tierPreview(row, basis, counts) {
   } else if (basis === "base_plus") {
     const h = parsePeso(row.extraHumanFee || "0") || 0;
     const f = parsePeso(row.extraFurbabyFee || "0") || 0;
-    parts[0] += ` for 1 hooman + 1 furbaby · +₱${h.toLocaleString("en-PH")} per extra hooman · +₱${f.toLocaleString("en-PH")} per extra furbaby`;
+    parts[0] += ` per pair (1 hooman + 1 furbaby) · +₱${h.toLocaleString("en-PH")} per extra hooman · +₱${f.toLocaleString("en-PH")} per extra furbaby`;
   }
   if (tier.limit) {
     const unit = ticketLimitUnitLabel(basis, row);
@@ -407,7 +407,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
         </select>
       </label>
       {basis === "tiered" && <p className="small muted" style={{ margin: 0 }}>Set the rule on each ticket below: Hooman only charges per person and cannot include a furbaby. A Furbaby package charges per dog, includes a set number of people, then adds an extra-person fee.</p>}
-      {basis === "base_plus" && <p className="small muted" style={{ margin: 0 }}>Each ticket's amount covers 1 hooman and 1 furbaby. Set what each extra hooman and furbaby adds on every ticket below, e.g. Early Bird ₱1,750 + ₱900 per extra hooman + ₱850 per extra furbaby. A first-N limit counts registrations.</p>}
+      {basis === "base_plus" && <p className="small muted" style={{ margin: 0 }}>Priced by pairs: each hooman + furbaby pair pays the ticket's amount, and a hooman or furbaby without a partner pays the add-on below. E.g. Early Bird ₱1,750 per pair + ₱1,750 per extra hooman + ₱750 per extra furbaby: 2 hoomans + 2 furbabies = ₱3,500. A first-N limit can count registrations, furbabies or hoomans.</p>}
       {basis === "human_plus_furbaby" && <div className="card inset form" style={{ gap: 10 }}>
         <strong>Dog companion pricing</strong>
         <p className="small muted" style={{ margin: 0 }}>Each human ticket includes the number of furbabies below. Additional furbabies use the extra fee.</p>

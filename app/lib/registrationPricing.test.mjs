@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateAmountDue, checkAttendeeLimits, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitLine, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
+import { calculateAmountDue, checkAttendeeLimits, overpaidBy, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitLine, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
 
 test("Early Bird units follow the ticket's attendance basis", () => {
   assert.equal(ticketLimitUnits("human", {}, 3, 0), 3);
@@ -132,4 +132,29 @@ test("checkAttendeeLimits: the public RSVP's own maximum (20 hoomans, 10 furbabi
   assert.match(checkAttendeeLimits({ basis: "base_plus", humans: 21, furbabies: 1 }).error, /20 hoomans/);
   assert.match(checkAttendeeLimits({ basis: "base_plus", humans: 1, furbabies: 11 }).error, /10 furbabies/);
   assert.deepEqual(checkAttendeeLimits({ basis: "base_plus", humans: 20, furbabies: 10 }), {});
+});
+
+test("base_plus prices by pairs: every hooman + furbaby pair pays the pair price, leftovers pay their add-on", () => {
+  const early = { label: "Early Bird", amount: 1750, extraHumanFee: 1750, extraFurbabyFee: 750 };
+  const regular = { label: "Regular", amount: 1950, extraHumanFee: 1850, extraFurbabyFee: 750 };
+  const due = (tier, h, f) => calculateAmountDue({ basis: "base_plus", tier, humans: h, furbabies: f }).amount;
+  assert.equal(due(early, 1, 1), 1750);
+  assert.equal(due(early, 2, 2), 3500);
+  assert.equal(due(early, 2, 1), 3500);
+  assert.equal(due(early, 3, 1), 5250);
+  assert.equal(due(early, 1, 2), 2500);
+  assert.equal(due(early, 3, 2), 5250);
+  assert.equal(due(early, 1, 0), 1750);
+  assert.equal(due(regular, 2, 2), 3900);
+  assert.equal(due(regular, 2, 1), 3800);
+  assert.equal(due(regular, 1, 2), 2700);
+  assert.equal(due(regular, 3, 3), 5850);
+});
+
+test("overpaidBy: how much a paid registration paid over what it owes now", () => {
+  assert.equal(overpaidBy({ payAmount: 4250, due: 3500 }), 750);
+  assert.equal(overpaidBy({ payAmount: 3500, due: 3500 }), 0);
+  assert.equal(overpaidBy({ payAmount: 3000, due: 3500 }), 0);
+  assert.equal(overpaidBy({ payAmount: null, due: 3500 }), 0);
+  assert.equal(overpaidBy({ payAmount: 4250, due: 3500, refunded: 750 }), 0);
 });

@@ -100,7 +100,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
     if (event.pricingBasis === "base_plus") {
       const h = Number(ticketOption.extraHumanFee || 0);
       const f = Number(ticketOption.extraFurbabyFee || 0);
-      return `Includes 1 hooman + 1 furbaby${h ? ` · ${peso(h)} per extra hooman` : ""}${f ? ` · ${peso(f)} per extra furbaby` : ""}`;
+      return `${peso(ticketOption.amount)} per pair (1 hooman + 1 furbaby)${h ? ` · ${peso(h)} per extra hooman` : ""}${f ? ` · ${peso(f)} per extra furbaby` : ""}`;
     }
     if (event.pricingBasis !== "tiered") return "";
     if (ticketOption.attendanceBasis === "human_only") return "Hooman only · no furbabies";

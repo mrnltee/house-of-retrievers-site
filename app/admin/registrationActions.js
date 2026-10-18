@@ -7,10 +7,10 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { newCheckInCode, validateRsvp } from "../lib/admin/registrations.mjs";
 import { eventTiers } from "../lib/admin/events.mjs";
-import { UNPAID, chooseTicket, owesPayment, parsePeso, readProofImage, validateProof } from "../lib/eventPayments.mjs";
+import { ADMIN_PAY_METHODS, UNPAID, chooseTicket, cleanReference, owesPayment, parsePeso, readProofImage, validateProof } from "../lib/eventPayments.mjs";
 import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../lib/passEmails";
 import { deletionState } from "../lib/registrationRecovery.mjs";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
+import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, overpaidBy, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
 import { ACTIVE_REGISTRATION_SQL, isActiveRegistrationHold } from "../lib/registrationHolds.mjs";
 import { can } from "../lib/admin/roles.mjs";
@@ -362,6 +362,43 @@ export async function correctPaidAmount(data) {
     await logActivity(admin.email, "registration.edit", reg.title, { registrationId: reg.id, amountCorrection: true, previousAmount: oldDue, amount });
     revalidatePath("/events", "layout");
     await backWith(back, "ok", `${reg.name}'s saved amount was corrected. Their payment, reference and QR pass were left unchanged.`);
+  });
+}
+
+/**
+ * Record a refund on a paid registration that paid more than it owes now (e.g. 2
+ * hoomans + 2 furbabies paid ₱4,250 before pair pricing; it owes ₱3,500). HOR sends
+ * the money back itself; this records how much, how and the reference, sets the
+ * amount due to today's price, and keeps it Paid with its QR pass. Nothing is emailed.
+ */
+export async function recordRefund(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:fees");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
+    if (reg.fee_status !== "paid") await backWith(back, "error", "Only a paid registration can have a refund recorded.");
+    const [event] = await sql("SELECT fee_required, pricing_basis, price_tiers, cost, included_furbabies_per_human, additional_furbaby_fee FROM events WHERE id=$1", [reg.event_id]);
+    const tier = eventTiers(event).find((t) => t.label === reg.ticket_label && Number(t.amount) === Number(reg.ticket_amount));
+    if (!tier) await backWith(back, "error", "This registration's ticket isn't in the event's prices any more, so today's amount can't be worked out.");
+    const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier, humans: reg.human_count ?? 1, furbabies: reg.furbaby_count ?? 0, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
+    if (due.error) await backWith(back, "error", due.error);
+    const refund = overpaidBy({ payAmount: reg.pay_amount, due: due.amount, refunded: reg.refund_amount });
+    if (!refund) await backWith(back, "error", "This registration didn't pay more than it owes, so there's nothing to refund.");
+    const method = Object.hasOwn(ADMIN_PAY_METHODS, form(data, "method")) ? form(data, "method") : null;
+    if (!method) await backWith(back, "error", "Pick how the refund was sent.");
+    const reference = cleanReference(form(data, "reference"));
+    if (!reference) await backWith(back, "error", "Enter the refund's reference number.");
+    if (data.get("sent") !== "on") await backWith(back, "error", "Tick that the refund has been sent first.");
+    await sql(
+      `UPDATE registrations SET refund_amount = coalesce(refund_amount, 0) + $2, refund_method = $3, refund_reference = $4, refunded_at = now(), refunded_by = $5, amount_due = $6
+       WHERE id = $1 AND fee_status = 'paid'`,
+      [reg.id, refund, method, reference, admin.email, due.amount],
+    );
+    await logActivity(admin.email, "registration.refund", reg.title, { registrationId: reg.id, refund, method, reference, previousAmount: reg.amount_due, amount: due.amount });
+    revalidatePath("/events", "layout");
+    await backWith(back, "ok", `Refund of ₱${refund.toLocaleString("en-PH")} recorded for ${reg.name}. They stay Paid with their QR pass; nothing was emailed.`);
   });
 }
 

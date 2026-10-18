@@ -14,7 +14,8 @@ import BreedFields from "../../../BreedFields";
 import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
-import { approvePayment, attachReceipt, correctPaidAmount, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
+import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../../../lib/registrationPricing.mjs";
+import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
 import ReasonPicker from "../../../ReasonPicker";
@@ -36,7 +37,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(regId)) notFound();
   const [reg] = await sql(
-    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.date, e.vaccination_record_required, e.rsvp_form_config FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
+    `SELECT r.*, e.title, e.fee_required, e.pricing_basis, e.price_tiers, e.cost, e.included_furbabies_per_human, e.additional_furbaby_fee, e.date, e.vaccination_record_required, e.rsvp_form_config FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.event_id = $2`,
     [regId, eventId],
   );
   if (!reg) notFound();
@@ -59,7 +60,13 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const due = reg.amount_due ?? reg.ticket_amount;
   const tiers = reg.fee_required ? eventTiers(reg) : [];
   const selectedTier = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
-  const amountOk = due == null || reg.pay_amount == null ? null : reg.pay_amount === due;
+  // A refund already recorded comes off what they paid before comparing with the amount due.
+  const netPaid = reg.pay_amount == null ? null : Number(reg.pay_amount) - Number(reg.refund_amount || 0);
+  const amountOk = due == null || netPaid == null ? null : netPaid === Number(due);
+  // What today's prices say they owe (e.g. pair pricing), to spot an overpayment to refund.
+  const currentTier = tiers[selectedTier];
+  const currentDue = currentTier ? calculateAmountDue({ basis: cleanPricingBasis(reg.pricing_basis), tier: currentTier, humans: reg.human_count ?? 1, furbabies: reg.furbaby_count ?? 0, includedFurbabiesPerHuman: reg.included_furbabies_per_human, additionalFurbabyFee: reg.additional_furbaby_fee }) : null;
+  const overpaid = reg.fee_status === "paid" && currentDue && !currentDue.error ? overpaidBy({ payAmount: reg.pay_amount, due: currentDue.amount, refunded: reg.refund_amount }) : 0;
   const holdExpired = reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at });
   const back = `${base}/registrations/${eventId}${reg.fee_status === "review" ? "?show=check" : ""}`;
 
@@ -99,6 +106,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.pay_method && <div><dt>Paid with</dt><dd>{payMethodLabel(reg.pay_method)}</dd></div>}
               {reg.fee_reference && <div><dt>Reference number</dt><dd><strong className="mono">{reg.fee_reference}</strong></dd></div>}
               {reg.pay_amount != null && <div><dt>They entered</dt><dd className={amountOk === false ? "danger-text" : amountOk ? "good-text" : ""}>{peso(reg.pay_amount)}{amountOk === false ? " · doesn't match" : ""}</dd></div>}
+              {reg.refund_amount && <div><dt>Refunded</dt><dd>{peso(reg.refund_amount)} · {payMethodLabel(reg.refund_method)} · Ref <span className="mono">{reg.refund_reference}</span><br /><span className="small muted">{reg.refunded_by} · {formatWhen(reg.refunded_at)}</span></dd></div>}
               {reg.fee_checked_by && <div><dt>{reg.fee_status === "paid" ? "Approved by" : "Last checked by"}</dt><dd>{reg.fee_checked_by} · {formatWhen(reg.fee_checked_at)}</dd></div>}
               {reg.pass_sent_at && <div><dt>QR pass emailed</dt><dd>{formatWhen(reg.pass_sent_at)}</dd></div>}
               {reg.furbaby_name && <div><dt>Furbaby</dt><dd>{reg.furbaby_name}</dd></div>}
@@ -181,7 +189,28 @@ export default async function RegistrationDetail({ params, searchParams }) {
             </section>
           )}
 
-          {canFees && reg.fee_status === "paid" && amountOk === false && (
+          {canFees && overpaid > 0 && (
+            <section className="card form" style={{ gap: 12 }}>
+              <h2 style={{ margin: 0 }}>Overpaid {peso(overpaid)}</h2>
+              <p className="small muted">They paid {peso(reg.pay_amount)}{reg.refund_amount ? ` (${peso(reg.refund_amount)} already refunded)` : ""}, but today&apos;s prices make it {peso(currentDue.amount)} for {reg.human_count ?? 1} {(reg.human_count ?? 1) === 1 ? "hooman" : "hoomans"} and {reg.furbaby_count ?? 0} {(reg.furbaby_count ?? 0) === 1 ? "furbaby" : "furbabies"}. Send {peso(overpaid)} back to them first, then record it here.</p>
+              <form action={recordRefund} className="form" style={{ gap: 12 }}>
+                <input type="hidden" name="id" value={reg.id} />
+                <div className="row-2">
+                  <label className="field"><span>Sent back with</span>
+                    <select name="method" required defaultValue={reg.pay_method || ""}>
+                      <option value="" disabled>Choose…</option>
+                      {Object.entries(ADMIN_PAY_METHODS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                    </select>
+                  </label>
+                  <label className="field"><span>Refund reference number</span><input name="reference" required maxLength={60} /></label>
+                </div>
+                <label className="check"><input type="checkbox" name="sent" required /> <span>I&apos;ve sent {peso(overpaid)} back to {reg.name}</span></label>
+                <div className="actions"><ConfirmButton className="btn ghost" title={`Record a ${peso(overpaid)} refund for ${reg.name}?`} items={[`Refund: ${peso(overpaid)}`, `Amount due: ${peso(due)} → ${peso(currentDue.amount)}`, "They stay Paid; their payment record, receipt and QR pass are kept", "Nothing is emailed"]} yes="Yes, record refund">Record refund</ConfirmButton></div>
+              </form>
+            </section>
+          )}
+
+          {canFees && reg.fee_status === "paid" && amountOk === false && overpaid === 0 && (
             <section className="card form" style={{ gap: 12 }}>
               <h2 style={{ margin: 0 }}>Correct the saved amount</h2>
               <p className="small muted">The payment record says {peso(reg.pay_amount)}, but this registration saved a different amount due. This changes only the saved amount due so the records agree.</p>
