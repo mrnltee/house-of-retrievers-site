@@ -72,6 +72,8 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
   const [manual, setManual] = useState("");
   const [successOpen, setSuccessOpen] = useState(false);
   const [list, setList] = useState(null);
+  const [waiting, setWaiting] = useState(null);
+  const [view, setView] = useState("in");
   const [search, setSearch] = useState("");
   const closeSuccess = useCallback(() => setSuccessOpen(false), []);
 
@@ -80,6 +82,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
     try {
       const response = await checkedInList(eventId);
       setList(response.rows || []);
+      setWaiting(response.waiting || []);
     } catch { /* The list is a convenience; scanning keeps working without it. */ }
   }, [eventId]);
   useEffect(() => {
@@ -266,15 +269,17 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
         </form>
         <p className="small muted">Someone who said no to photos shows a “No photos” flag here. Let the photographers know.</p>
 
-        <section className="card checkin-list" aria-labelledby="checkin-list-title">
-          <div className="actions" style={{ justifyContent: "space-between" }}>
-            <h2 id="checkin-list-title" style={{ margin: 0 }}>Checked in{list ? ` · ${list.length}` : ""}</h2>
-          </div>
-          <label className="field"><span className="visually-hidden">Search who's checked in</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or furbaby" /></label>
-          {list === null ? <p className="small muted">Loading…</p> : (() => {
+        <section className="card checkin-list" aria-label="Guests">
+          <nav className="tabs" aria-label="Show">
+            <button type="button" aria-pressed={view === "in"} aria-current={view === "in" ? "page" : undefined} onClick={() => setView("in")}>Checked in{list ? ` · ${list.length}` : ""}</button>
+            <button type="button" aria-pressed={view === "waiting"} aria-current={view === "waiting" ? "page" : undefined} onClick={() => setView("waiting")}>Not checked in{waiting ? ` · ${waiting.length}` : ""}</button>
+          </nav>
+          <label className="field"><span className="visually-hidden">Search guests</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or furbaby" /></label>
+          {(view === "in" ? list : waiting) === null ? <p className="small muted">Loading…</p> : (() => {
+            const all = view === "in" ? list : waiting;
             const q = search.trim().toLowerCase();
-            const shown = q ? list.filter((row) => row.name.toLowerCase().includes(q) || row.furbaby.toLowerCase().includes(q)) : list;
-            if (!shown.length) return <p className="small muted">{list.length ? "No one by that name has checked in yet." : "No one has checked in yet."}</p>;
+            const shown = q ? all.filter((row) => row.name.toLowerCase().includes(q) || row.furbaby.toLowerCase().includes(q)) : all;
+            if (!shown.length) return <p className="small muted">{q ? "No one by that name here." : view === "in" ? "No one has checked in yet." : "Everyone confirmed is in."}</p>;
             return (
               <ol>
                 {shown.map((row) => (
@@ -283,7 +288,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                       ? <img className="person-avatar" src={`${base}/checkin/photo/${eventId}/${row.id}?v=${encodeURIComponent(row.photo.version)}`} alt="" width={36} height={36} style={{ width: 36, height: 36 }} loading="lazy" />
                       : <span className="person-avatar is-empty" style={{ width: 36, height: 36, fontSize: 13 }} aria-hidden="true">{row.initials}</span>}
                     <span><strong>{row.name}</strong>{row.furbaby && <span className="small muted"> · {row.furbaby}</span>}{row.manual && <><br /><span className="small muted">Added by hand</span></>}</span>
-                    <span className="small checkin-list-time">{new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at))}</span>
+                    {row.at && <span className="small checkin-list-time">{new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at))}</span>}
                   </li>
                 ))}
               </ol>

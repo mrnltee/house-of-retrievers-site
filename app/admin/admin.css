@@ -80,8 +80,8 @@
 .admin .empty { padding: 24px 16px; color: var(--a-muted); }
 
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.tabs a { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--a-line); background: white; font-size: 13px; font-weight: 600; }
-.tabs a[aria-current="page"] { background: var(--a-ink); color: white; border-color: var(--a-ink); }
+.tabs a, .tabs button { font: inherit; cursor: pointer; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--a-line); background: white; font-size: 13px; font-weight: 600; }
+.tabs a[aria-current="page"], .tabs button[aria-pressed="true"] { background: var(--a-ink); color: white; border-color: var(--a-ink); }
 
 .form { display: grid; gap: 16px; }
 .field { display: grid; gap: 6px; }

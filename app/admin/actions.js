@@ -333,23 +333,24 @@ export async function checkInByCode(eventId, rawCode) {
 export async function checkedInList(eventId) {
   try {
     await actionAdmin("checkin");
-    if (!isUuid(eventId)) return { rows: [] };
+    if (!isUuid(eventId)) return { rows: [], waiting: [] };
     const live = await sql(
       `SELECT id, event_id, name, email, furbaby_name, status, deleted_at, welcome_photo, welcome_photo_id, checked_in_at, checked_in_source
          FROM registrations WHERE event_id = $1 AND deleted_at IS NULL AND status <> 'cancelled'`,
       [eventId],
     );
     const photos = await welcomePhotosFor(live).catch(() => new Map());
-    const rows = live
-      .filter((r) => r.status === "confirmed" && r.checked_in_at)
-      .sort((a, b) => new Date(b.checked_in_at) - new Date(a.checked_in_at))
-      .map((r) => {
-        const photo = photos.get(r.id);
-        return { id: r.id, name: r.name, furbaby: r.furbaby_name || "", at: new Date(r.checked_in_at).toISOString(), manual: r.checked_in_source === "manual", initials: initialsFor(r.name), photo: photo ? { source: photo.source, version: photo.version } : { source: "initials", version: "initials-none" } };
-      });
-    return { rows };
+    const row = (r) => {
+      const photo = photos.get(r.id);
+      return { id: r.id, name: r.name, furbaby: r.furbaby_name || "", at: r.checked_in_at ? new Date(r.checked_in_at).toISOString() : null, manual: r.checked_in_source === "manual", initials: initialsFor(r.name), photo: photo ? { source: photo.source, version: photo.version } : { source: "initials", version: "initials-none" } };
+    };
+    const confirmed = live.filter((r) => r.status === "confirmed");
+    const rows = confirmed.filter((r) => r.checked_in_at).sort((a, b) => new Date(b.checked_in_at) - new Date(a.checked_in_at)).map(row);
+    // Still expected: confirmed and not here yet, A–Z, so the door can read names off quickly.
+    const waiting = confirmed.filter((r) => !r.checked_in_at).sort((a, b) => a.name.localeCompare(b.name)).map(row);
+    return { rows, waiting };
   } catch (error) {
-    if (error instanceof Forbidden) return { rows: [], forbidden: true };
+    if (error instanceof Forbidden) return { rows: [], waiting: [], forbidden: true };
     throw error;
   }
 }
