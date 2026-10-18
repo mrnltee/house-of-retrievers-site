@@ -189,3 +189,9 @@ export function visibleTiers(tiers, counts = {}, now = Date.now()) {
   const last = Math.max(...open.map((t) => list.indexOf(t)));
   return list.slice(0, last + 1);
 }
+
+/** Every ticket that brings a furbaby is sold out or ended (the dog waitlist can open). */
+export function dogTicketsSoldOut(tiers, counts = {}, now = Date.now()) {
+  const dogTiers = (tiers || []).filter((t) => t.attendanceBasis !== "human_only");
+  return dogTiers.length > 0 && dogTiers.every((t) => !tierAvailable(t, now, counts));
+}

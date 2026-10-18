@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chooseTicket, cleanReference, inOrderTiers, nextTierNote, openTiers, visibleTiers, owesPayment, parsePeso, passState, paymentNotice, readProofImage, referenceKey, ticketLine, validateProof } from "./eventPayments.mjs";
+import { chooseTicket, cleanReference, dogTicketsSoldOut, inOrderTiers, nextTierNote, openTiers, visibleTiers, owesPayment, parsePeso, passState, paymentNotice, readProofImage, referenceKey, ticketLine, validateProof } from "./eventPayments.mjs";
 
 test("payment notices match the event policy", () => {
   assert.match(paymentNotice({ isCharity: true }), /fundraising event/);
@@ -89,4 +89,13 @@ test("visibleTiers: later prices stay hidden until they open; closed ones stay l
   assert.deepEqual(visibleTiers(tiers, { "Early Bird|1750": 20, "Regular|1950": 5 }).map((t) => t.label), ["Early Bird", "Regular", "Hooman only"]);
   assert.deepEqual(openTiers(tiers, {}).map((t) => t.label), ["Early Bird"]);
   assert.deepEqual(openTiers(tiers, { "Early Bird|1750": 20 }).map((t) => t.label), ["Regular", "Hooman only"]);
+});
+
+test("dogTicketsSoldOut: true only when every ticket with a furbaby is closed", () => {
+  const tiers = [{ label: "Early Bird", amount: 1750, limit: 20, limitUnit: "furbabies" }, { label: "Regular", amount: 1950, limit: 5, limitUnit: "furbabies" }, { label: "Hooman only", amount: 1850, attendanceBasis: "human_only", withPrevious: true }];
+  assert.equal(dogTicketsSoldOut(tiers, {}), false);
+  assert.equal(dogTicketsSoldOut(tiers, { "Early Bird|1750": 20 }), false);
+  assert.equal(dogTicketsSoldOut(tiers, { "Early Bird|1750": 20, "Regular|1950": 5 }), true);
+  assert.equal(dogTicketsSoldOut([], {}), false);
+  assert.equal(dogTicketsSoldOut([{ label: "Hooman only", amount: 1, attendanceBasis: "human_only" }], {}), false);
 });

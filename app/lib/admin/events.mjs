@@ -5,7 +5,7 @@
 
 import { cleanCustomQuestions } from "../customQuestions.mjs";
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
-import { openTiers, visibleTiers } from "../eventPayments.mjs";
+import { dogTicketsSoldOut, openTiers, visibleTiers } from "../eventPayments.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
 import { cleanAttendeeLimit, cleanFurbabyPricing, cleanPricingBasis, ticketLimitUnitLabel } from "../registrationPricing.mjs";
@@ -46,7 +46,7 @@ export function cleanRsvpFormConfig(input) {
   const allowed = new Set(["identity", "attendees", "photoConsent", "under18", "vaccination"]);
   const order = Array.isArray(value?.order) ? value.order.filter((key, i, list) => allowed.has(key) && list.indexOf(key) === i) : [];
   for (const key of ["identity", "attendees", ...optional]) if (!order.includes(key)) order.push(key);
-  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions), vaccinationRequired: value?.vaccinationRequired === true };
+  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions), vaccinationRequired: value?.vaccinationRequired === true, dogWaitlist: value?.dogWaitlist === true };
 }
 
 /** "TBA", "To be named" and the like: not a beneficiary, so never shown or published. */
@@ -460,6 +460,8 @@ export function toPublicEvent(row, confirmed = 0) {
     capacityBasis: cleanCapacityBasis(row.capacity_basis),
     maxFurbabiesPerRegistration: row.max_furbabies_per_registration ?? undefined,
     ticketsInOrder: Boolean(row.tiers_in_order) || undefined,
+    // The dog waitlist is offered once every ticket with a furbaby is sold out.
+    dogWaitlistOpen: (row.fee_required && row.rsvp_form_config?.dogWaitlist === true && dogTicketsSoldOut(tiers, counts)) || undefined,
     maxHumansPerFurbaby: row.max_humans_per_furbaby ?? undefined,
     includedFurbabiesPerHuman: row.included_furbabies_per_human || 0,
     additionalFurbabyFee: row.additional_furbaby_fee || 0,

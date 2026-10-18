@@ -10,6 +10,9 @@ import PayStep from "./PayStep";
 import BreedSelect from "./BreedSelect";
 import { joinFurbabyNames } from "../lib/attendeeNames.mjs";
 
+/** The ticket value for "Join the dog waitlist" (not an index into the price list). */
+const DOG_WAITLIST = -2;
+
 /** A number field with − / + buttons on one row. */
 function Stepper({ label, name, value, min, max, onChange }) {
   const n = Number(value) || 0;
@@ -55,7 +58,10 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   // "Offer prices in order": only the first ticket still on sale, with a note on what comes next.
   const tickets = event.ticketsInOrder ? inOrderTiers(ticketsOnSale) : ticketsOnSale;
   const nextNote = event.ticketsInOrder && tickets[0] ? nextTierNote(event.tickets, tickets[0].i) : "";
-  const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
+  // The dog waitlist: offered beside Hooman only once every ticket with a furbaby is sold out.
+  const offerDogWaitlist = Boolean(event.dogWaitlistOpen);
+  const [ticket, setTicket] = useState(tickets.length === 1 && !offerDogWaitlist ? tickets[0].i : -1);
+  const onDogWaitlist = offerDogWaitlist && ticket === DOG_WAITLIST;
   const chosen = tickets.find((t) => t.i === ticket);
   const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
   // Use the selected ticket rule directly. This keeps the public form correct even
@@ -78,6 +84,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   function selectTicket(nextTicket) {
     const next = tickets.find((item) => item.i === nextTicket);
     setTicket(nextTicket);
+    if (nextTicket === DOG_WAITLIST) { if (Number(furbabyCount) < 1) setFurbabyCount(1); return; }
     if (event.pricingBasis === "base_plus") {
       if (next?.attendanceBasis === "human_only") setFurbabyCount(0);
       else if (Number(furbabyCount) < 1) setFurbabyCount(1);
@@ -156,6 +163,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
           guardianName: form.get("guardianName"),
           vaccinationRecords,
           ticket: ticket >= 0 ? ticket : undefined,
+          dogWaitlist: onDogWaitlist || undefined,
           [HONEYPOT_FIELD]: form.get(HONEYPOT_FIELD),
           elapsedMs: Date.now() - openedAt.current,
         }),
@@ -209,7 +217,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
             <h2 id="rsvp-title">{event.title}</h2>
             {waitlist && <p className="modal-lead">It&apos;s full right now. Add your name and we&apos;ll offer you a slot if one opens.</p>}
             <div className="join-trap" aria-hidden="true"><label>Website<input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" defaultValue="" /></label></div>
-            {event.feeRequired && tickets.length > 1 && (
+            {event.feeRequired && tickets.length + (offerDogWaitlist ? 1 : 0) > 1 && (
               <fieldset className="furbaby-question ticket-question">
                 <legend>Choose your ticket</legend>
                 <p className="furbaby-hint">This decides what is included and how your amount is calculated.</p>
@@ -222,10 +230,15 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                       <strong>{ticketDue.error ? peso(t.amount) : peso(ticketDue.amount)}</strong>
                     </label>;
                   })}
+                  {offerDogWaitlist && <label className={onDogWaitlist ? "selected" : ""}>
+                    <input type="radio" name="ticket" value={DOG_WAITLIST} required checked={onDogWaitlist} onChange={() => selectTicket(DOG_WAITLIST)} />
+                    <span>Join the dog waitlist<small className="ticket-until">Dog slots are full. No payment now: we&apos;ll message you if a slot opens.</small></span>
+                    <strong>—</strong>
+                  </label>}
                 </div>
               </fieldset>
             )}
-            {event.feeRequired && tickets.length === 1 && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small>{tickets[0].limit ? <small className="ticket-until">{ticketLimitLine(event.pricingBasis, tickets[0], tickets[0].left)}</small> : null}{nextNote && <small className="ticket-next">{nextNote}</small>}</div>}
+            {event.feeRequired && tickets.length === 1 && !offerDogWaitlist && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small>{tickets[0].limit ? <small className="ticket-until">{ticketLimitLine(event.pricingBasis, tickets[0], tickets[0].left)}</small> : null}{nextNote && <small className="ticket-next">{nextNote}</small>}</div>}
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" value={yourName} onChange={(e) => setYourName(e.target.value)} /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
             {(() => {
@@ -284,10 +297,10 @@ export default function RsvpModal({ event, onClose, preview = false }) {
               </div>
             </fieldset>}
             {under18 && formConfig.optional.includes("under18") && <label>Parent or guardian&apos;s name (they come with you)<input required name="guardianName" maxLength={120} /></label>}
-            {!waitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
+            {!waitlist && !onDogWaitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
-            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : event.rsvpLabel || "Send my RSVP"}</button>
+            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : onDogWaitlist ? "Join the dog waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : event.rsvpLabel || "Send my RSVP"}</button>
           </form>
         )}
       </section>

@@ -8,7 +8,7 @@ import { hasDatabase, transaction } from "../../lib/db";
 import { newCheckInCode, statusForNewRegistration, validateRsvp } from "../../lib/admin/registrations.mjs";
 import { HONEYPOT_FIELD, RATE_LIMIT, checkFillTime, clientIp, createRateLimiter, isHoneypotTripped } from "../../lib/spamGuard.mjs";
 import { eventTiers } from "../../lib/admin/events.mjs";
-import { chooseTicket, owesPayment, readProofImage } from "../../lib/eventPayments.mjs";
+import { chooseTicket, owesPayment, readProofImage, dogTicketsSoldOut } from "../../lib/eventPayments.mjs";
 import { formatOpens, opensLater } from "../../lib/rsvpOpens.mjs";
 import { TICKET_COUNTS_SQL, countsFromRows, hasLimits } from "../../lib/ticketCounts.mjs";
 import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
@@ -75,17 +75,22 @@ export async function POST(request) {
       const tiers = event.fee_required ? eventTiers(event) : [];
       // Tiers for the first N registrants: count under the event lock, so the 20th place goes once.
       const counts = hasLimits(tiers) ? countsFromRows(await tx.sql(TICKET_COUNTS_SQL, [event.id])) : {};
-      const ticket = chooseTicket(tiers, body?.ticket, { counts, inOrder: event.tiers_in_order });
+      // The dog waitlist (rsvp_form_config.dogWaitlist): once every ticket with a furbaby is sold out,
+      // dog owners can leave their details with no ticket, no payment and no slot taken.
+      const dogWaitlist = Boolean(body?.dogWaitlist);
+      if (dogWaitlist && !(event.rsvp_form_config?.dogWaitlist && dogTicketsSoldOut(tiers, counts))) return { error: "The dog waitlist isn't open. Pick a ticket instead.", status: 409 };
+      const ticket = dogWaitlist ? { value: { label: null, amount: null } } : chooseTicket(tiers, body?.ticket, { counts, inOrder: event.tiers_in_order });
       if (ticket.error) return { error: ticket.error, status: 422 };
       const attendees = cleanAttendeeCounts(body?.humanCount ?? 1, body?.furbabyCount ?? 0);
       if (attendees.error) return { error: attendees.error, status: 422 };
+      if (dogWaitlist && attendees.furbabies < 1) return { error: "The dog waitlist is for furbabies. Add at least one, or pick Hooman only.", status: 422 };
       const limits = checkAttendeeLimits({ basis: event.pricing_basis, humans: attendees.humans, furbabies: attendees.furbabies, maxFurbabies: event.max_furbabies_per_registration, maxHumansPerFurbaby: event.max_humans_per_furbaby });
       if (limits.error) return { error: limits.error, status: 422 };
       const capacityRequest = validateCapacityCounts(cleanCapacityBasis(event.capacity_basis), attendees.humans, attendees.furbabies, { allowNoFurbaby: ticket.value.attendanceBasis === "human_only" });
       if (capacityRequest.error) return { error: capacityRequest.error, status: 422 };
-      const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
+      const due = dogWaitlist ? { amount: null } : calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
       if (due.error) return { error: due.error, status: 422 };
-      const selectedTier = tiers[Number(body?.ticket)];
+      const selectedTier = dogWaitlist ? null : tiers[Number(body?.ticket)];
       if (selectedTier?.limit) {
         const left = tierLeft(selectedTier, counts);
         const units = ticketLimitUnits(event.pricing_basis, selectedTier, attendees.humans, attendees.furbabies);
@@ -107,7 +112,7 @@ export async function POST(request) {
       const [{ used, humansUsed }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used, ${PUBLIC_HUMANS_USED_SQL} AS "humansUsed" FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
       // Over the capacity, or over "Most hoomans from public RSVPs": the waitlist.
       const fitsHumans = hoomanLimitFits({ limit: event.max_public_humans, used: humansUsed, requested: attendees.humans });
-      const status = fitsHumans ? statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units }) : "waitlist";
+      const status = dogWaitlist ? "waitlist" : fitsHumans ? statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units }) : "waitlist";
       const code = newCheckInCode();
       // A paid RSVP gets a payment window (per-event, default 24h); once proof is under review it stays active.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";
