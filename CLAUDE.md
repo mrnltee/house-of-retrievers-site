@@ -184,6 +184,7 @@ the sheet cell to it.
 
 - Story media lives in per-section folders under `public/`: `1-purpaws/`, `2-better/`, `3-giveback/`.
 - Camera originals stay local. `.gitignore` keeps `public/**/*.JPEG` and `public/**/MBY.mp4` out of the repo, so committed media is always the web-ready copy.
+- **Background videos live on Cloudinary, not in `public/` (19 Oct 2026):** the hero, "Join the pack" and "Give back" videos are served from the HOR Cloudinary account (cloud `dgelskqx`, folder `site-videos`, public IDs `hero-1080p`, `cta-join-us`, `mby-give-back`) through `app/lib/siteVideos.mjs`, delivered untouched (no transformation, so no processing credits), so each Vercel deployment no longer carries ~15 MB of video. Posters stay in `public/`. To replace a video, upload the new H.264 file in Cloudinary with the same Public ID. The local copies are git-ignored.
 - Encode video as H.264 (`libx264`, yuv420p, `+faststart`). HEVC is hardware-gated and silently fails on Windows Chrome and Firefox, so it must not ship. Background loops sit at 1280–1600 wide, CRF 23–28, no audio track.
 - Poster images are pulled from the video's own first frame, so the still does not jump to a different scene when playback starts.
 - Keep photos near their rendered size: the family cards render around 410px wide, so the longest side belongs at 1440, not 4096.

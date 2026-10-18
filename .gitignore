@@ -11,6 +11,9 @@ upload
 .env.local
 .vercel
 public/house-of-retrievers-hero-1080p-old.mp4
+# Background videos are served from Cloudinary (app/lib/siteVideos.mjs); keep local copies out of deployments.
+public/house-of-retrievers-hero-1080p.mp4
+public/CTA-join-us.MP4
 .env*
 !.env.example
 
@@ -21,7 +24,6 @@ public/1-purpaws/*
 public/2-better/*
 !public/2-better/better[0-9].jpg
 public/3-giveback/*
-!public/3-giveback/mby-give-back.mp4
 !public/3-giveback/mby-give-back-poster.jpg
 
 # Browser-tool artifacts

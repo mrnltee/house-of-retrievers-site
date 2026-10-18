@@ -1,3 +1,4 @@
+import { SITE_VIDEOS } from "../lib/siteVideos.mjs";
 /**
  * @typedef {Object} ActivityPhoto
  * @property {string} src   Path to an image in `public/`.
@@ -64,7 +65,7 @@ export const activities = [
     eyebrow: "Activities for a cause",
     title: "Every gathering can give back",
     copy: "The fun kind of fundraising: a day the whole pack looks forward to, for a beneficiary we name up front so everyone sees where it goes.",
-    video: "/3-giveback/mby-give-back.mp4",
+    video: SITE_VIDEOS.giveBack,
     image: "/3-giveback/mby-give-back-poster.jpg",
     alt: "Two golden retrievers beside a car boot loaded with donated dog food",
   },

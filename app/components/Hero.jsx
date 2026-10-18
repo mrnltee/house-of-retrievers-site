@@ -1,3 +1,4 @@
+import { SITE_VIDEOS } from "../lib/siteVideos.mjs";
 import { Heart } from "lucide-react";
 import Icon from "./Icon";
 import { preload } from "react-dom";
@@ -9,7 +10,7 @@ export default function Hero({ onJoin }) {
   preload("/house-of-retrievers-hero-poster.jpg", { as: "image", fetchPriority: "high" });
   return (
     <section className="hero" id="top">
-      <BackgroundVideo className="hero-photo" src="/house-of-retrievers-hero-1080p.mp4" poster="/house-of-retrievers-hero-poster.jpg" aria-hidden="true" controlLabel="hero video" controlClassName="video-toggle-hero" />
+      <BackgroundVideo className="hero-photo" src={SITE_VIDEOS.hero} poster="/house-of-retrievers-hero-poster.jpg" aria-hidden="true" controlLabel="hero video" controlClassName="video-toggle-hero" />
       <div className="hero-shade" />
       <div className="hero-copy reveal-now">
         <div className="eyebrow light">A community with heart</div>
