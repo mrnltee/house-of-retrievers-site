@@ -15,7 +15,7 @@ import { sendPass, sendSpotHeld, sendWaitlisted } from "../../lib/passEmails";
 import { calculateAmountDue, checkAttendeeLimits, cleanAttendeeCounts, cleanPricingBasis, ticketLimitUnits } from "../../lib/registrationPricing.mjs";
 import { tierLeft } from "../../lib/prices.mjs";
 import { holdExpiresAt, isActiveRegistrationHold, resolveHoldMinutes } from "../../lib/registrationHolds.mjs";
-import { CAPACITY_USED_SQL, cleanCapacityBasis, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
+import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL, cleanCapacityBasis, hoomanLimitFits, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
 import { cleanBreeds } from "../../lib/breeds.mjs";
 
 export const runtime = "nodejs";
@@ -53,7 +53,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config, tiers_in_order FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config, tiers_in_order, max_public_humans FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -104,8 +104,10 @@ export async function POST(request) {
         const missing = event.rsvp_form_config?.vaccinationRequired ? missingVaccinationCards(vaccinations, attendees.furbabies) : [];
         if (missing.length) return { error: attendees.furbabies > 1 ? `Add a vaccination card photo for furbaby ${missing.map((i) => i + 1).join(", ")}.` : "Add a photo of your furbaby's vaccination card.", status: 422 };
       }
-      const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
-      const status = statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units });
+      const [{ used, humansUsed }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used, ${PUBLIC_HUMANS_USED_SQL} AS "humansUsed" FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
+      // Over the capacity, or over "Most hoomans from public RSVPs": the waitlist.
+      const fitsHumans = hoomanLimitFits({ limit: event.max_public_humans, used: humansUsed, requested: attendees.humans });
+      const status = fitsHumans ? statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units }) : "waitlist";
       const code = newCheckInCode();
       // A paid RSVP gets a payment window (per-event, default 24h); once proof is under review it stays active.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";

@@ -99,6 +99,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           onsitePayment={event?.onsite_payment}
           paymentHoldMinutes={event?.payment_hold_minutes}
           maxFurbabiesPerRegistration={event?.max_furbabies_per_registration}
+          maxPublicHumans={event?.max_public_humans}
           maxHumansPerFurbaby={event?.max_humans_per_furbaby}
           date={event ? isoDate(event.date) : ""}
           rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { capacityUnitLabel, capacityUnits, cleanCapacityBasis, validateCapacityCounts } from "./eventCapacity.mjs";
+import { capacityUnitLabel, capacityUnits, cleanCapacityBasis, cleanHoomanLimit, hoomanLimitFits, validateCapacityCounts } from "./eventCapacity.mjs";
 
 test("capacity defaults to one slot per registration", () => {
   assert.equal(cleanCapacityBasis("unknown"), "registration");
@@ -24,4 +24,14 @@ test("a furbaby-capacity event requires a furbaby in each registration", () => {
 test("validateCapacityCounts: a Hooman only ticket may bring no furbaby on a furbaby-capacity event", () => {
   assert.match(validateCapacityCounts("furbaby", 1, 0).error, /at least one furbaby/);
   assert.deepEqual(validateCapacityCounts("furbaby", 2, 0, { allowNoFurbaby: true }), { units: 0 });
+});
+
+test("hoomanLimitFits: public RSVPs stay within the event's hooman limit", () => {
+  assert.equal(hoomanLimitFits({ limit: null, used: 500, requested: 20 }), true);
+  assert.equal(hoomanLimitFits({ limit: 40, used: 37, requested: 3 }), true);
+  assert.equal(hoomanLimitFits({ limit: 40, used: 38, requested: 3 }), false);
+  assert.equal(cleanHoomanLimit(""), null);
+  assert.equal(cleanHoomanLimit("40"), 40);
+  assert.equal(cleanHoomanLimit("0"), null);
+  assert.equal(cleanHoomanLimit("abc"), null);
 });

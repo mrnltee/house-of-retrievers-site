@@ -374,6 +374,8 @@ export function publicStatus(row, confirmed = 0, now = Date.now()) {
   if (!row.rsvp_open) return "closed";
   // A scheduled opening still ahead: the pages count down to it.
   if (opensLater(row.rsvp_opens_at instanceof Date ? row.rsvp_opens_at.toISOString() : row.rsvp_opens_at, now)) return "soon";
+  // "Most hoomans from public RSVPs" reached: full (new RSVPs join the waitlist).
+  if (row.max_public_humans && Number(row.humans_used || 0) >= row.max_public_humans) return "full";
   if (row.capacity) {
     const left = row.capacity - confirmed;
     if (left <= 0) return "full";

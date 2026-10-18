@@ -42,6 +42,7 @@ const LABELS = {
   capacityBasis: "Capacity counts as",
   maxFurbabiesPerRegistration: "Most furbabies per registration",
   maxHumansPerFurbaby: "Most people per furbaby",
+  maxPublicHumans: "Most hoomans from public RSVPs",
   paymentHoldMinutes: "Payment hold length",
   tiersInOrder: "Offer prices in order",
   rsvpFormConfig: "Participant form",

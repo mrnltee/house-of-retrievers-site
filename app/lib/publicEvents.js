@@ -4,13 +4,14 @@ import { hasDatabase, sql } from "./db";
 import { toPublicEvent } from "./admin/events.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { supporterLinks } from "./publicSupporters";
-import { CAPACITY_USED_SQL } from "./eventCapacity.mjs";
+import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL } from "./eventCapacity.mjs";
 
 export function manilaToday() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 }
 
 const PUBLIC_EVENTS = `SELECT e.*, (SELECT ${CAPACITY_USED_SQL} FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())) AS confirmed,
+  (SELECT ${PUBLIC_HUMANS_USED_SQL} FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())) AS humans_used,
   ${TICKET_COUNTS_COLUMN}
   FROM events e WHERE e.status IN ('published', 'cancelled')`;
 

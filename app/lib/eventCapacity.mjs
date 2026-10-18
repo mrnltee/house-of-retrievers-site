@@ -50,3 +50,24 @@ export const CAPACITY_UNITS_SQL = `CASE WHEN coalesce(e.capacity_basis, 'registr
 export const CAPACITY_USED_SQL = `coalesce(sum(${CAPACITY_UNITS_SQL}), 0)::int`;
 
 export const CAPACITY_USED_AGGREGATE_SQL = `coalesce(sum(${CAPACITY_UNITS_SQL}) FILTER (WHERE r.id IS NOT NULL AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())), 0)::int`;
+
+/**
+ * "Most hoomans from public RSVPs" (events.max_public_humans, migration 046): a
+ * people limit next to the dog/registration capacity. It counts hoomans on
+ * confirmed public RSVPs (not ones an admin added by hand, e.g. VIPs and
+ * organizers), with expired payment holds left out. Over it, a new RSVP goes
+ * on the waitlist, as with capacity.
+ */
+export function cleanHoomanLimit(value) {
+  const n = Number(value);
+  if (value === "" || value == null || !Number.isInteger(n) || n < 1) return null;
+  return Math.min(n, 10000);
+}
+
+export function hoomanLimitFits({ limit, used = 0, requested = 1 }) {
+  if (!limit) return true;
+  return Number(used) + Number(requested) <= Number(limit);
+}
+
+/** Hoomans on confirmed public RSVPs (`r` registrations), for the limit above. */
+export const PUBLIC_HUMANS_USED_SQL = `coalesce(sum(CASE WHEN r.added_by IS NULL THEN coalesce(r.human_count, 1) ELSE 0 END), 0)::int`;
