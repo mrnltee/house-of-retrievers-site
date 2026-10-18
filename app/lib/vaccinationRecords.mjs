@@ -20,3 +20,9 @@ export function vaccinationUploads(body, furbabies) {
     .map((dataUrl, index) => ({ index, dataUrl }))
     .filter((item) => typeof item.dataUrl === "string" && item.dataUrl);
 }
+
+/** Furbaby positions (0-based) without a card, when the event requires one for each furbaby. */
+export function missingVaccinationCards(uploads, furbabies) {
+  const have = new Set((uploads || []).map((u) => u.index));
+  return Array.from({ length: Math.min(MAX_VACCINATION_PHOTOS, Math.max(0, Number(furbabies) || 0)) }, (_, i) => i).filter((i) => !have.has(i));
+}

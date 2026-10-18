@@ -104,7 +104,13 @@ export function cleanAttendeeLimit(value) {
  * an event can cap furbabies per registration and people per furbaby.
  * @returns {{ error?: string }}
  */
+/** The public RSVP's own ceiling per registration (the form's − / + stop here too); admins adding by hand may go over. */
+export const PUBLIC_MAX_HUMANS = 20;
+export const PUBLIC_MAX_FURBABIES = 10;
+
 export function checkAttendeeLimits({ basis, humans, furbabies, maxFurbabies = null, maxHumansPerFurbaby = null }) {
+  if (humans > PUBLIC_MAX_HUMANS) return { error: `One RSVP can bring up to ${PUBLIC_MAX_HUMANS} hoomans. For a bigger group, please message us.` };
+  if (furbabies > PUBLIC_MAX_FURBABIES) return { error: `One RSVP can bring up to ${PUBLIC_MAX_FURBABIES} furbabies. For more, please message us.` };
   if (cleanPricingBasis(basis) === "furbaby" && furbabies < 1) return { error: "Add at least one furbaby. This event's price is per furbaby." };
   if (maxFurbabies && furbabies > maxFurbabies) {
     return { error: `You can register up to ${maxFurbabies} ${maxFurbabies === 1 ? "furbaby" : "furbabies"} per RSVP. For more, please send another RSVP.` };

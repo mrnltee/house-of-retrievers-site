@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { MAX_VACCINATION_PHOTOS, vaccinationBudget, vaccinationUploads } from "./vaccinationRecords.mjs";
+import { MAX_VACCINATION_PHOTOS, missingVaccinationCards, vaccinationBudget, vaccinationUploads } from "./vaccinationRecords.mjs";
 
 test("vaccinationUploads: one optional photo per furbaby, by position; the old single field is furbaby 1", () => {
   assert.deepEqual(vaccinationUploads({ vaccinationRecords: ["data:a", null, "data:c"] }, 2), [{ index: 0, dataUrl: "data:a" }]);
@@ -14,4 +14,10 @@ test("vaccinationUploads: one optional photo per furbaby, by position; the old s
 test("vaccinationBudget keeps all photos together under the request limit", () => {
   assert.equal(vaccinationBudget(1), 700_000);
   assert.ok(vaccinationBudget(8) * 8 * 1.37 < 4_000_000);
+});
+
+test("missingVaccinationCards: when required, every furbaby needs its own card", () => {
+  assert.deepEqual(missingVaccinationCards([{ index: 0 }, { index: 2 }], 3), [1]);
+  assert.deepEqual(missingVaccinationCards([], 0), []);
+  assert.deepEqual(missingVaccinationCards([{ index: 0 }], 1), []);
 });

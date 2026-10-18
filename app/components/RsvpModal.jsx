@@ -5,7 +5,7 @@ import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { inOrderTiers, nextTierNote, paymentNotice } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
-import { calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
+import { PUBLIC_MAX_FURBABIES, PUBLIC_MAX_HUMANS, calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import BreedSelect from "./BreedSelect";
 import { joinFurbabyNames } from "../lib/attendeeNames.mjs";
@@ -229,8 +229,8 @@ export default function RsvpModal({ event, onClose, preview = false }) {
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" value={yourName} onChange={(e) => setYourName(e.target.value)} /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
             {(() => {
-              const maxHumans = event.maxHumansPerFurbaby && Number(furbabyCount) > 0 ? event.maxHumansPerFurbaby * Number(furbabyCount) : 20;
-              const maxDogs = event.maxFurbabiesPerRegistration || 10;
+              const maxHumans = event.maxHumansPerFurbaby && Number(furbabyCount) > 0 ? event.maxHumansPerFurbaby * Number(furbabyCount) : PUBLIC_MAX_HUMANS;
+              const maxDogs = event.maxFurbabiesPerRegistration || PUBLIC_MAX_FURBABIES;
               const humans = Math.min(Number(humanCount) || 0, maxHumans);
               const dogs = humanOnly ? 0 : Math.min(Number(furbabyCount) || 0, maxDogs);
               const setAt = (setter, i, v) => setter((list) => { const next = [...list]; next[i] = v; return next; });
@@ -247,10 +247,10 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                     <div key={i} className="rsvp-furbaby-row">
                       <label>{askVaccination ? (dogs > 1 ? `Furbaby ${i + 1} name` : "Furbaby name") : dogs > 1 ? `Furbaby ${i + 1} name (optional)` : "Furbaby name (optional)"}<input maxLength={60} placeholder="e.g. Mochi" value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
                       <BreedSelect name={`furbabyBreed${i}`} label={askVaccination ? "Breed" : dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
-                      {askVaccination && <label className="rsvp-vaccination">Vaccination card<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" /></label>}
+                      {askVaccination && <label className="rsvp-vaccination">Vaccination card<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" required={Boolean(formConfig.vaccinationRequired)} /></label>}
                     </div>
                   ))}
-                  {askVaccination && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>Name, breed and vaccination card are all optional. If you have it handy, add a clear photo of each furbaby&apos;s card; only authorised HOR admins can view them.</p>}
+                  {askVaccination && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>{formConfig.vaccinationRequired ? <>A clear photo of each furbaby&apos;s vaccination card is required. Name and breed are optional. Only authorised HOR admins can view the cards.</> : <>Name, breed and vaccination card are all optional. If you have it handy, add a clear photo of each furbaby&apos;s card; only authorised HOR admins can view them.</>}</p>}
                 </div>}
               </>;
             })()}

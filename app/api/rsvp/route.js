@@ -1,4 +1,4 @@
-import { vaccinationUploads } from "../../lib/vaccinationRecords.mjs";
+import { missingVaccinationCards, vaccinationUploads } from "../../lib/vaccinationRecords.mjs";
 import { cleanCustomQuestions, readCustomAnswers } from "../../lib/customQuestions.mjs";
 import { cleanGuestNames } from "../../lib/attendeeNames.mjs";
 import { NextResponse } from "next/server";
@@ -100,6 +100,9 @@ export async function POST(request) {
           if (image.error) return { error: image.error, status: 422 };
           vaccinations.push({ index: upload.index, ...image.value });
         }
+        // "Require a vaccination card for each furbaby" (rsvp_form_config.vaccinationRequired).
+        const missing = event.rsvp_form_config?.vaccinationRequired ? missingVaccinationCards(vaccinations, attendees.furbabies) : [];
+        if (missing.length) return { error: attendees.furbabies > 1 ? `Add a vaccination card photo for furbaby ${missing.map((i) => i + 1).join(", ")}.` : "Add a photo of your furbaby's vaccination card.", status: 422 };
       }
       const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units });

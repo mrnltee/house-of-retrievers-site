@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitLine, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
+import { calculateAmountDue, checkAttendeeLimits, cleanAttendeeCounts, cleanPricingBasis, cleanTieredTicketRule, paidAmountChangeAllowed, ticketLimitLine, ticketLimitUnits, ticketLimitUnitLabel } from "./registrationPricing.mjs";
 
 test("Early Bird units follow the ticket's attendance basis", () => {
   assert.equal(ticketLimitUnits("human", {}, 3, 0), 3);
@@ -90,7 +90,7 @@ test("per-furbaby pricing needs at least one furbaby, so no one pays ₱0", asyn
 
 test("events without limits behave as before", async () => {
   const { checkAttendeeLimits, cleanAttendeeLimit } = await import("./registrationPricing.mjs");
-  assert.deepEqual(checkAttendeeLimits({ basis: "registration", humans: 30, furbabies: 10 }), {});
+  assert.deepEqual(checkAttendeeLimits({ basis: "registration", humans: 20, furbabies: 10 }), {});
   assert.equal(cleanAttendeeLimit(""), null);
   assert.equal(cleanAttendeeLimit("2"), 2);
   assert.equal(cleanAttendeeLimit("0"), null);
@@ -126,4 +126,10 @@ test("base_plus limits can count furbabies or hoomans per ticket", () => {
   assert.equal(ticketLimitUnits("base_plus", {}, 3, 2), 1);
   assert.equal(ticketLimitUnitLabel("base_plus", { limitUnit: "furbabies" }), "furbabies");
   assert.equal(ticketLimitLine("base_plus", { limit: 20, limitUnit: "furbabies" }, 5), "First 20 furbabies · 5 left");
+});
+
+test("checkAttendeeLimits: the public RSVP's own maximum (20 hoomans, 10 furbabies) holds without an event limit", () => {
+  assert.match(checkAttendeeLimits({ basis: "base_plus", humans: 21, furbabies: 1 }).error, /20 hoomans/);
+  assert.match(checkAttendeeLimits({ basis: "base_plus", humans: 1, furbabies: 11 }).error, /10 furbabies/);
+  assert.deepEqual(checkAttendeeLimits({ basis: "base_plus", humans: 20, furbabies: 10 }), {});
 });
