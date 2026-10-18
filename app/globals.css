@@ -1103,6 +1103,8 @@ main:focus { outline: none; }
    admin preview at phone width gets the phone layout inside a desktop window. */
 .event-detail-wrap { position: relative; isolation: isolate; container: eventpage / inline-size; padding: 120px 0 72px; background: linear-gradient(var(--ink) 0 260px, transparent 0); }
 .event-detail-wrap:has(.event-detail-backdrop) { background: none; }
+/* No cover photo: keep the dark band to the header strip, so the title stays on the light page and reads. */
+.event-detail-wrap:not(:has(.event-detail-backdrop)) { background: linear-gradient(var(--ink) 0 96px, transparent 0); }
 /* The cover, blurred, behind the header; it fades fully into the page before it ends, so no edge shows. */
 .event-detail-backdrop { position: absolute; inset: 0 0 auto; height: 380px; z-index: -1; overflow: hidden; background: var(--ink); }
 .event-detail-backdrop img { position: absolute; inset: -80px; width: calc(100% + 160px); height: calc(100% + 160px); object-fit: cover; filter: blur(48px) saturate(1.2); }
