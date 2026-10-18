@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { resizeImage } from "../lib/resizeImage";
-import { PAY_METHODS, READABLE, ticketLine } from "../lib/eventPayments.mjs";
+import { PAY_METHODS, READABLE, parsePeso, ticketLine } from "../lib/eventPayments.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
@@ -160,7 +160,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
               {(ticketLabel || amount != null) && <div><dt>Ticket</dt><dd>{ticketLine(ticketLabel, amount)}</dd></div>}
               <div><dt>Paid with</dt><dd>{PAY_METHODS[pending.method]}</dd></div>
               <div><dt>Reference</dt><dd>{pending.reference.toUpperCase()}</dd></div>
-              {pending.amount && <div><dt>Amount</dt><dd>₱{pending.amount}</dd></div>}
+              {pending.amount && <div><dt>Amount</dt><dd>{parsePeso(pending.amount) != null ? peso(parsePeso(pending.amount)) : `₱${pending.amount}`}</dd></div>}
               <div><dt>Screenshot</dt><dd>{file?.name} ✓</dd></div>
             </dl>
             <p>The team matches the reference with HOR&apos;s payment history, then emails your QR pass. {paymentNotice}</p>
