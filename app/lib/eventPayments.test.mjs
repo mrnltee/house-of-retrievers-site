@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chooseTicket, cleanReference, owesPayment, parsePeso, passState, paymentNotice, readProofImage, referenceKey, ticketLine, validateProof } from "./eventPayments.mjs";
+import { chooseTicket, cleanReference, inOrderTiers, nextTierNote, owesPayment, parsePeso, passState, paymentNotice, readProofImage, referenceKey, ticketLine, validateProof } from "./eventPayments.mjs";
 
 test("payment notices match the event policy", () => {
   assert.match(paymentNotice({ isCharity: true }), /fundraising event/);
@@ -50,4 +50,21 @@ test("pass page: no QR until a payment is approved", () => {
   assert.equal(passState({ ...reg, fee_status: "waiting" }), "waiting");
   assert.equal(passState({ ...reg, status: "waitlist", fee_status: "not_due" }), "waitlist");
   assert.equal(passState({ status: "confirmed", fee_required: false, fee_status: "waiting" }), "pass");
+});
+
+test("chooseTicket inOrder: only the first tier on sale is offered; the next opens when it sells out", () => {
+  const tiers = [{ label: "Early Bird", amount: 1750, limit: 20 }, { label: "Regular", amount: 1950 }];
+  assert.equal(chooseTicket(tiers, undefined, { inOrder: true }).value.label, "Early Bird");
+  assert.match(chooseTicket(tiers, "1", { inOrder: true }).error, /Early Bird/);
+  const full = { "Early Bird|1750": 20 };
+  assert.equal(chooseTicket(tiers, undefined, { inOrder: true, counts: full }).value.label, "Regular");
+  assert.equal(chooseTicket(tiers, "1", { inOrder: true, anyTier: true }).value.label, "Regular");
+});
+
+test("inOrderTiers / nextTierNote", () => {
+  const tiers = [{ label: "Early Bird", amount: 1750, limit: 20 }, { label: "Regular", amount: 1950 }];
+  assert.deepEqual(inOrderTiers(tiers.map((t, i) => ({ ...t, i }))).map((t) => t.label), ["Early Bird"]);
+  assert.equal(nextTierNote(tiers, 0), "Regular ₱1,950 once the first 20 are taken");
+  assert.equal(nextTierNote(tiers, 1), "");
+  assert.equal(nextTierNote([{ label: "Early", amount: 1, until: "2026-11-10T15:59:00.000Z" }, { label: "Regular", amount: 2 }], 0), "Regular ₱2 after Nov 10, 11:59 PM");
 });

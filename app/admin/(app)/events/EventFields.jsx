@@ -355,7 +355,7 @@ function tierPreview(row, basis, counts) {
   return parts.join(" · ");
 }
 
-export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration", includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 }) {
+export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "registration", includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0, tiersInOrder = false }) {
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
@@ -416,6 +416,8 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
       </div>}
       {mode === "paid" && (
         <>
+          <input type="hidden" name="tiersInOrderSent" value="1" />
+          <label className="switch"><input type="checkbox" name="tiersInOrder" defaultChecked={tiersInOrder} /><span><strong>Offer prices in order</strong><small>The RSVP shows only the first price still on sale (e.g. Early Bird). The next one appears when it sells out or its sale period ends, with a note saying what comes next. The event page still lists every price.</small></span></label>
           {legacyCost && !tiers?.length && <p className="small muted">It used to say "{legacyCost}". Enter it as prices below.</p>}
           <ul className="tier-list">
             {rows.map((row, i) => (

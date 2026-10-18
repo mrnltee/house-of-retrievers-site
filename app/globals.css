@@ -495,6 +495,8 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .rsvp-total small { grid-column: 1 / -1; color: var(--muted-on-light); }
 .rsvp-ticket-summary { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 16px 0; padding: 14px 16px; border-left: 3px solid var(--gold); background: #fbf8f1; }
 .rsvp-ticket-summary small { grid-column: 2; color: var(--muted-on-light); }
+.rsvp-ticket-summary .ticket-until { color: var(--gold-on-light); font-weight: 600; }
+.rsvp-ticket-summary .ticket-next { font-style: italic; }
 .form-error { margin: 4px 0 0; text-align: center; color: #9c2f2f; font-size: 12px; line-height: 1.4; }
 .join-modal form button[type="submit"][disabled] { opacity: 0.6; cursor: not-allowed; }
 .success-state { min-height: 460px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }

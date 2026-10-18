@@ -43,6 +43,7 @@ const LABELS = {
   maxFurbabiesPerRegistration: "Most furbabies per registration",
   maxHumansPerFurbaby: "Most people per furbaby",
   paymentHoldMinutes: "Payment hold length",
+  tiersInOrder: "Offer prices in order",
   rsvpFormConfig: "Participant form",
   checkinSuccessMessage: "Check-in message",
   rsvpOpen: "RSVPs open",

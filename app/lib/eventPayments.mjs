@@ -12,7 +12,7 @@
  * Pure functions: shared by the routes, the admin and the tests.
  */
 
-import { tierAvailable } from "./prices.mjs";
+import { formatPeso, tierAvailable, tierWindow } from "./prices.mjs";
 
 export const FEE_STATUS = {
   not_due: { label: "No fee", tone: "" },
@@ -80,7 +80,7 @@ export const referenceKey = (value) => String(value || "").toUpperCase().replace
  * before the cutoff.
  * @returns {{ value?: {label: string|null, amount: number|null}, error?: string }}
  */
-export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, counts = {} } = {}) {
+export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, counts = {}, inOrder = false } = {}) {
   const list = Array.isArray(tiers) ? tiers : [];
   if (list.length === 0) return { value: { label: null, amount: null } };
   const pick = (t) => {
@@ -90,11 +90,14 @@ export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, 
     }
     return { value };
   };
-  const onSale = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now, counts));
-  if (onSale.length === 0) return { error: "Tickets for this event aren't on sale right now." };
+  const available = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now, counts));
+  if (available.length === 0) return { error: "Tickets for this event aren't on sale right now." };
+  // "Offer prices in order" (events.tiers_in_order): only the first tier still on sale is offered.
+  const onSale = inOrder && !anyTier ? available.slice(0, 1) : available;
   const i = index === undefined || index === null || index === "" ? NaN : Number(index);
   if (Number.isInteger(i) && list[i]) {
     if (onSale.some(([, j]) => j === i)) return pick(list[i]);
+    if (available.some(([, j]) => j === i)) return { error: `The ${onSale[0][0].label || "first"} rate is still open, so it comes first. Pick that one.` };
     const name = list[i].label || "chosen";
     if (list[i].limit && tierAvailable({ ...list[i], limit: undefined }, now)) {
       return { error: `The ${name} rate is sold out (it was for the first ${list[i].limit} registrants). Pick another ticket.` };
@@ -144,4 +147,16 @@ export function passState(reg) {
   if (reg.status !== "confirmed") return reg.status;
   if (!reg.fee_required || !UNPAID.includes(reg.fee_status)) return "pass";
   return reg.fee_status; // waiting | review | rejected
+}
+
+/** "Offer prices in order": of the tickets on sale now (list order), only the first. */
+export const inOrderTiers = (onSale) => (Array.isArray(onSale) ? onSale.slice(0, 1) : []);
+
+/** The RSVP's note about what comes after tier `i`: "Regular ₱1,950 once the first 20 are taken". */
+export function nextTierNote(tiers, i) {
+  const current = tiers?.[i];
+  const next = tiers?.[i + 1];
+  if (!current || !next) return "";
+  const when = current.limit ? `once the first ${current.limit} are taken` : current.until ? `after ${tierWindow({ until: current.until }, 0).replace(/^Until /, "")}` : "";
+  return when ? `${next.label || "The next rate"} ${next.amount === 0 ? "Free" : formatPeso(next.amount)} ${when}` : "";
 }

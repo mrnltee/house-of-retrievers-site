@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
-import { paymentNotice } from "../lib/eventPayments.mjs";
+import { inOrderTiers, nextTierNote, paymentNotice } from "../lib/eventPayments.mjs";
 import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
@@ -50,7 +50,10 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const [holdRemaining, setHoldRemaining] = useState(null);
   const waitlist = event.status === "full";
   // Tickets on sale now (an early bird rate drops off at its cutoff), keeping each one's place in the full list.
-  const tickets = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0 && (!t.limit || ticketLimitUnits(event.pricingBasis, t, Number(humanCount) || 1, Number(furbabyCount) || 0) <= t.left)) : [];
+  const ticketsOnSale = event.feeRequired && Array.isArray(event.tickets) ? event.tickets.map((t, i) => ({ ...t, i })).filter((t) => tierAvailable(t) && t.left !== 0 && (!t.limit || ticketLimitUnits(event.pricingBasis, t, Number(humanCount) || 1, Number(furbabyCount) || 0) <= t.left)) : [];
+  // "Offer prices in order": only the first ticket still on sale, with a note on what comes next.
+  const tickets = event.ticketsInOrder ? inOrderTiers(ticketsOnSale) : ticketsOnSale;
+  const nextNote = event.ticketsInOrder && tickets[0] ? nextTierNote(event.tickets, tickets[0].i) : "";
   const [ticket, setTicket] = useState(tickets.length === 1 ? tickets[0].i : -1);
   const chosen = tickets.find((t) => t.i === ticket);
   const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
@@ -215,7 +218,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                 </div>
               </fieldset>
             )}
-            {event.feeRequired && tickets.length === 1 && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small></div>}
+            {event.feeRequired && tickets.length === 1 && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small>{tickets[0].limit ? <small className="ticket-until">{ticketLimitLine(event.pricingBasis, tickets[0], tickets[0].left)}</small> : null}{nextNote && <small className="ticket-next">{nextNote}</small>}</div>}
             <label>Your name<input required name="name" maxLength={120} autoComplete="name" value={yourName} onChange={(e) => setYourName(e.target.value)} /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
             {(() => {

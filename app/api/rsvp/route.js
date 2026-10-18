@@ -52,7 +52,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config, tiers_in_order FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -74,7 +74,7 @@ export async function POST(request) {
       const tiers = event.fee_required ? eventTiers(event) : [];
       // Tiers for the first N registrants: count under the event lock, so the 20th place goes once.
       const counts = hasLimits(tiers) ? countsFromRows(await tx.sql(TICKET_COUNTS_SQL, [event.id])) : {};
-      const ticket = chooseTicket(tiers, body?.ticket, { counts });
+      const ticket = chooseTicket(tiers, body?.ticket, { counts, inOrder: event.tiers_in_order });
       if (ticket.error) return { error: ticket.error, status: 422 };
       const attendees = cleanAttendeeCounts(body?.humanCount ?? 1, body?.furbabyCount ?? 0);
       if (attendees.error) return { error: attendees.error, status: 422 };

@@ -453,6 +453,7 @@ export function toPublicEvent(row, confirmed = 0) {
     pricingBasis: cleanPricingBasis(row.pricing_basis),
     capacityBasis: cleanCapacityBasis(row.capacity_basis),
     maxFurbabiesPerRegistration: row.max_furbabies_per_registration ?? undefined,
+    ticketsInOrder: Boolean(row.tiers_in_order) || undefined,
     maxHumansPerFurbaby: row.max_humans_per_furbaby ?? undefined,
     includedFurbabiesPerHuman: row.included_furbabies_per_human || 0,
     additionalFurbabyFee: row.additional_furbaby_fee || 0,
