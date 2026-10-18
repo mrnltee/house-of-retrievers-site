@@ -25,7 +25,8 @@ function Stepper({ label, name, value, min, max, onChange }) {
   );
 }
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
-import { resizeImage } from "../lib/resizeImage";
+import { resizeImageWithin } from "../lib/resizeImage";
+import { vaccinationBudget } from "../lib/vaccinationRecords.mjs";
 
 const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
 
@@ -62,6 +63,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const humanOnly = chosen?.attendanceBasis === "human_only";
   const furbabyPackage = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "furbaby_package";
   const formConfig = event.rsvpFormConfig || { optional: ["photoConsent", "under18"] };
+  const askVaccination = Boolean(event.vaccinationRecordRequired && formConfig.optional.includes("vaccination"));
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
 
   useEffect(() => {
@@ -131,12 +133,11 @@ export default function RsvpModal({ event, onClose, preview = false }) {
     const form = new FormData(e.currentTarget);
     setState({ sending: true, error: "", result: null });
     try {
-      const picked = form.get("vaccinationRecord");
-      let vaccinationRecord = null;
-      if (event.vaccinationRecordRequired && picked instanceof File && picked.size) {
-        const resized = await resizeImage(picked);
-        vaccinationRecord = resized.dataUrl;
-      }
+      // One optional vaccination photo per furbaby row, shrunk so they all fit in one request.
+      const dogTotal = Number(form.get("furbabyCount")) || 0;
+      const picks = Array.from({ length: dogTotal }, (_, i) => form.get(`vaccinationRecord${i}`)).map((f) => (f instanceof File && f.size ? f : null));
+      const budget = vaccinationBudget(picks.filter(Boolean).length);
+      const vaccinationRecords = askVaccination ? await Promise.all(picks.map(async (f) => (f ? (await resizeImageWithin(f, budget)).dataUrl : null))) : [];
       const response = await fetch("/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -153,7 +154,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
-          vaccinationRecord,
+          vaccinationRecords,
           ticket: ticket >= 0 ? ticket : undefined,
           [HONEYPOT_FIELD]: form.get(HONEYPOT_FIELD),
           elapsedMs: Date.now() - openedAt.current,
@@ -241,13 +242,15 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                     : <label key={i}>Hooman {i + 1} name (optional)<input maxLength={120} autoComplete="off" value={guestNames[i - 1] || ""} onChange={(e) => setAt(setGuestNames, i - 1, e.target.value)} /></label>)}
                 </div>
                 {!humanOnly && <Stepper label="Furbabies attending" name="furbabyCount" value={furbabyCount} min={event.pricingBasis === "furbaby" || furbabyPackage ? 1 : 0} max={maxDogs} onChange={setFurbabyCount} />}
-                {dogs > 0 && <div className="rsvp-people">
+                {dogs > 0 && <div className={`rsvp-people${askVaccination ? " with-vaccination" : ""}`}>
                   {Array.from({ length: dogs }, (_, i) => (
                     <div key={i} className="rsvp-furbaby-row">
-                      <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : "Furbaby name (optional)"}<input maxLength={60} placeholder="e.g. Mochi" value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
-                      <BreedSelect name={`furbabyBreed${i}`} label={dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
+                      <label>{askVaccination ? (dogs > 1 ? `Furbaby ${i + 1} name` : "Furbaby name") : dogs > 1 ? `Furbaby ${i + 1} name (optional)` : "Furbaby name (optional)"}<input maxLength={60} placeholder="e.g. Mochi" value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
+                      <BreedSelect name={`furbabyBreed${i}`} label={askVaccination ? "Breed" : dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
+                      {askVaccination && <label className="rsvp-vaccination">Vaccination card<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" /></label>}
                     </div>
                   ))}
+                  {askVaccination && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>Name, breed and vaccination card are all optional. If you have it handy, add a clear photo of each furbaby&apos;s card; only authorised HOR admins can view them.</p>}
                 </div>}
               </>;
             })()}
@@ -265,7 +268,6 @@ export default function RsvpModal({ event, onClose, preview = false }) {
             ))}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
-            {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}
             {formConfig.optional.includes("photoConsent") && <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
               <p className="furbaby-hint">We share event photos on Instagram and Facebook.</p>

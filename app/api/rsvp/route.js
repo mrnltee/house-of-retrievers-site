@@ -1,3 +1,4 @@
+import { vaccinationUploads } from "../../lib/vaccinationRecords.mjs";
 import { cleanCustomQuestions, readCustomAnswers } from "../../lib/customQuestions.mjs";
 import { cleanGuestNames } from "../../lib/attendeeNames.mjs";
 import { NextResponse } from "next/server";
@@ -92,10 +93,14 @@ export async function POST(request) {
       }
       const answers = readCustomAnswers(cleanCustomQuestions(event.rsvp_form_config?.questions), body?.customAnswers);
       if (answers.error) return { error: answers.error, status: 422 };
-      const vaccination = event.vaccination_record_required && body?.vaccinationRecord
-        ? readProofImage(body.vaccinationRecord, { label: "vaccination record photo" })
-        : null;
-      if (vaccination?.error) return { error: vaccination.error, status: 422 };
+      const vaccinations = [];
+      if (event.vaccination_record_required) {
+        for (const upload of vaccinationUploads(body, attendees.furbabies)) {
+          const image = readProofImage(upload.dataUrl, { label: "vaccination record photo" });
+          if (image.error) return { error: image.error, status: 422 };
+          vaccinations.push({ index: upload.index, ...image.value });
+        }
+      }
       const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
       const status = statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units });
       const code = newCheckInCode();
@@ -108,11 +113,11 @@ export async function POST(request) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
         [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, cleanBreeds(body?.furbabyBreeds, attendees.furbabies), cleanGuestNames(body?.guestNames, attendees.humans), answers.value ? JSON.stringify(answers.value) : null],
       );
-      if (vaccination?.value) {
-        const bytes = Buffer.from(vaccination.value.base64, "base64");
+      for (const record of vaccinations) {
+        const bytes = Buffer.from(record.base64, "base64");
         await tx.sql(
-          "INSERT INTO registration_vaccination_records (registration_id, mime, data, bytes) VALUES ($1, $2, $3, $4)",
-          [row.id, vaccination.value.mime, bytes, bytes.length],
+          "INSERT INTO registration_vaccination_records (registration_id, furbaby_index, mime, data, bytes) VALUES ($1, $2, $3, $4, $5)",
+          [row.id, record.index, record.mime, bytes, bytes.length],
         );
       }
       return { id: row.id, status, code, feeStatus, holdExpiresAt: holdExpiry?.toISOString() || null, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };

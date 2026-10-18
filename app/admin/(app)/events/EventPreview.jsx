@@ -2,7 +2,8 @@
 
 import { manilaInstant } from "../../../lib/rsvpOpens.mjs";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { EventCard, EventDetailPage } from "../../../components/EventsView";
 import RsvpModal from "../../../components/RsvpModal";
 import { isPastDate, parseHashtags, toPublicEvent } from "../../../lib/admin/events.mjs";
@@ -90,6 +91,9 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
   const anchor = useRef(null);
   const dialog = useRef(null);
   const [draft, setDraft] = useState(null);
+  // The dialog lives outside the event form (a portal to <body>): the RSVP form preview is a real <form>, and forms can't nest.
+  const [host, setHost] = useState(null);
+  useEffect(() => setHost(document.body), []);
   const [view, setView] = useState("page");
   const [width, setWidth] = useState("desktop");
   // While RSVPs open later, registrants see a countdown; "Once RSVPs open" shows the page as it will be after.
@@ -107,7 +111,7 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
   return (
     <>
       <button type="button" className="btn ghost" ref={anchor} onClick={open}>Preview</button>
-      <dialog ref={dialog} className="preview-dialog" aria-label="Preview of the event page">
+      {host && createPortal(<dialog ref={dialog} className="preview-dialog admin" aria-label="Preview of the event page">
         <div className="preview-bar">
           <div className="segmented small" role="tablist" aria-label="What to preview">
             <button type="button" role="tab" aria-selected={view === "form"} className={view === "form" ? "is-on" : undefined} onClick={() => setView("form")}>RSVP form</button>
@@ -151,7 +155,7 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
             </div>
           </div>
         )}
-      </dialog>
+      </dialog>, host)}
     </>
   );
 }

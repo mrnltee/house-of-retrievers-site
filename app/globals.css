@@ -475,7 +475,11 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .rsvp-stepper-row input { -moz-appearance: textfield; appearance: textfield; }
 .rsvp-stepper-row input::-webkit-outer-spin-button, .rsvp-stepper-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .rsvp-furbaby-row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; }
-@media (max-width: 600px) { .rsvp-furbaby-row { grid-template-columns: 1fr; } }
+.with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr 1fr 1fr; }
+.with-vaccination .breed-select-button span:not(.breed-select-icon):not(.breed-select-caret) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.rsvp-vaccination input[type="file"] { padding: 10px; font-size: 13px; text-transform: none; letter-spacing: 0; }
+@media (max-width: 760px) { .with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr 1fr; } .with-vaccination .rsvp-vaccination { grid-column: 1 / -1; } }
+@media (max-width: 600px) { .rsvp-furbaby-row, .with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr; } .with-vaccination .rsvp-vaccination { grid-column: auto; } }
 .breed-select { position: relative; display: grid; gap: 6px; }
 .breed-select-label { font-size: var(--text-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
 .breed-select-button { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }

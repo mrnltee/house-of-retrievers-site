@@ -1,3 +1,4 @@
+import { breedLabel } from "../../../../../../lib/breeds.mjs";
 import { answerText, cleanCustomQuestions } from "../../../../../../lib/customQuestions.mjs";
 import { notFound } from "next/navigation";
 import { sql } from "../../../../../../lib/db";
@@ -45,11 +46,12 @@ export default async function RegistrationDetail({ params, searchParams }) {
     reg.fee_reference
       ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
-    sql("SELECT uploaded_at, bytes FROM registration_vaccination_records WHERE registration_id = $1", [regId]),
+    sql("SELECT furbaby_index, uploaded_at, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index", [regId]),
     reg.deleted_at ? null : welcomePhotoFor(regId, eventId),
   ]);
   const proof = proofs[0];
-  const vaccination = vaccinationRows[0];
+  const dogNames = String(reg.furbaby_name || "").split(/,\s*/);
+  const dogLabel = (i) => [dogNames[i] || (reg.furbaby_count > 1 ? `Furbaby ${i + 1}` : "Furbaby"), breedLabel(reg.furbaby_breeds?.[i] || "")].filter(Boolean).join(" · ");
   const canFees = can(admin.roles, "registrations:fees");
   const canEdit = can(admin.roles, "registrations:edit");
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
@@ -115,17 +117,19 @@ export default async function RegistrationDetail({ params, searchParams }) {
             ))}
           </section>
 
-          {(reg.vaccination_record_required || vaccination) && (
-            <section className="card receipt-card" aria-label="Vaccination record">
-              <h2>Vaccination record</h2>
-              {vaccination ? (
-                <>
-                  <a href={`${base}/registrations/vaccination/${reg.id}`} target="_blank" rel="noreferrer" className="receipt-shot">
-                    <img src={`${base}/registrations/vaccination/${reg.id}`} alt={`Vaccination record uploaded by ${reg.name}`} />
-                  </a>
-                  <p className="small muted">Uploaded {formatWhen(vaccination.uploaded_at)} · <a href={`${base}/registrations/vaccination/${reg.id}`} target="_blank" rel="noreferrer">Open full size</a></p>
-                </>
-              ) : <p className="muted">No vaccination record was uploaded.</p>}
+          {(reg.vaccination_record_required || vaccinationRows.length > 0) && (
+            <section className="card receipt-card" aria-label="Vaccination records">
+              <h2>{vaccinationRows.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
+              {vaccinationRows.length ? vaccinationRows.map((v) => {
+                const src = `${base}/registrations/vaccination/${reg.id}?i=${v.furbaby_index}`;
+                return (
+                  <figure key={v.furbaby_index} style={{ margin: "0 0 16px" }}>
+                    <figcaption className="strong">{dogLabel(v.furbaby_index)}</figcaption>
+                    <a href={src} target="_blank" rel="noreferrer" className="receipt-shot"><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} /></a>
+                    <p className="small muted">Uploaded {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer">Open full size</a></p>
+                  </figure>
+                );
+              }) : <p className="muted">No vaccination record was uploaded.</p>}
             </section>
           )}
 

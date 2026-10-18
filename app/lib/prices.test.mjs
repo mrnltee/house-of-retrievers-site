@@ -163,3 +163,11 @@ test("cleanTiers base_plus keeps the limit unit, Hooman only rule and 'opens wit
   assert.equal(tiers[2].extraFurbabyFee, undefined);
   assert.equal(tiers[0].withPrevious, undefined);
 });
+
+test("toPublicEvent keeps each ticket's limit unit and 'opens together' flag for the RSVP form", () => {
+  const row = { slug: "x", title: "X", date: "2026-12-20", registration: "required", status: "published", fee_required: true, pricing_basis: "base_plus",
+    price_tiers: [{ label: "Early Bird", amount: 1750, limit: 20, limitUnit: "furbabies" }, { label: "Hooman only", amount: 1850, attendanceBasis: "human_only", withPrevious: true }] };
+  const { tickets } = toPublicEvent(row);
+  assert.equal(tickets[0].limitUnit, "furbabies");
+  assert.equal(tickets[1].withPrevious, true);
+});

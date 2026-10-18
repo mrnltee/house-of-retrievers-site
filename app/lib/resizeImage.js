@@ -117,3 +117,20 @@ export async function encodeJpegWithin(canvas, maxBytes) {
   }
   throw new Error("We could not make that photo small enough. Try another one?");
 }
+
+/**
+ * Shrink a photo to the usual longest edge, then keep it under `maxBytes`
+ * (used when several vaccination records travel in one RSVP).
+ * @param {File} file
+ * @param {number} maxBytes
+ */
+export async function resizeImageWithin(file, maxBytes) {
+  const bitmap = await loadBitmap(file);
+  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  return encodeJpegWithin(canvas, maxBytes);
+}
