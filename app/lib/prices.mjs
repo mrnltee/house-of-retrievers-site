@@ -61,7 +61,9 @@ export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
       tier.bundleHumans = bundleHumans;
       tier.bundleFurbabies = bundleFurbabies;
     }
-    if (pricingBasis === "base_plus") {
+    if (pricingBasis === "base_plus" && row?.attendanceBasis === "human_only") {
+      tier.attendanceBasis = "human_only";
+    } else if (pricingBasis === "base_plus") {
       for (const key of ["extraFurbabyFee", "extraHumanFee"]) {
         const fee = row?.[key] === "" || row?.[key] == null ? 0 : parsePeso(row[key]);
         if (fee == null || !Number.isInteger(fee) || fee < 0 || fee > MAX_AMOUNT) {
@@ -69,6 +71,10 @@ export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
         }
         tier[key] = fee;
       }
+    }
+    if (pricingBasis === "base_plus") {
+      if (tier.attendanceBasis !== "human_only" && ["furbabies", "hoomans"].includes(row?.limitUnit)) tier.limitUnit = row.limitUnit;
+      if (row?.withPrevious === true || row?.withPrevious === "true") tier.withPrevious = true;
     }
     // Free events do not present a ticket choice, so they need no attendance rule.
     if (pricingBasis === "tiered" && amount > 0) {

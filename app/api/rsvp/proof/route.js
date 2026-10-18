@@ -59,7 +59,7 @@ export async function POST(request) {
     // A late receipt, after the hold expired, is still accepted if there's still room.
     if (reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at })) {
       await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
-      const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+      const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
       let capacityUsed = 0;
       if (!capacityRequest.error && reg.capacity != null) {
         const [{ used }] = await tx.sql(

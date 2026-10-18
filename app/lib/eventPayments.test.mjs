@@ -68,3 +68,16 @@ test("inOrderTiers / nextTierNote", () => {
   assert.equal(nextTierNote(tiers, 1), "");
   assert.equal(nextTierNote([{ label: "Early", amount: 1, until: "2026-11-10T15:59:00.000Z" }, { label: "Regular", amount: 2 }], 0), "Regular ₱2 after Nov 10, 11:59 PM");
 });
+
+test("chooseTicket inOrder: a tier marked withPrevious opens together with the one above", () => {
+  const tiers = [{ label: "Early Bird", amount: 1750, limit: 20, limitUnit: "furbabies" }, { label: "Regular", amount: 1950, limit: 5, limitUnit: "furbabies" }, { label: "Hooman only", amount: 1850, attendanceBasis: "human_only", withPrevious: true }];
+  assert.equal(chooseTicket(tiers, undefined, { inOrder: true }).value.label, "Early Bird");
+  assert.match(chooseTicket(tiers, "2", { inOrder: true }).error, /Early Bird/);
+  const ebFull = { "Early Bird|1750": 20 };
+  assert.equal(chooseTicket(tiers, "1", { inOrder: true, counts: ebFull }).value.label, "Regular");
+  assert.equal(chooseTicket(tiers, "2", { inOrder: true, counts: ebFull }).value.label, "Hooman only");
+  assert.match(chooseTicket(tiers, undefined, { inOrder: true, counts: ebFull }).error, /Pick a ticket/);
+  const bothFull = { "Early Bird|1750": 20, "Regular|1950": 5 };
+  assert.equal(chooseTicket(tiers, undefined, { inOrder: true, counts: bothFull }).value.label, "Hooman only");
+  assert.deepEqual(inOrderTiers(tiers.slice(1).map((t, i) => ({ ...t, i: i + 1 }))).map((t) => t.label), ["Regular", "Hooman only"]);
+});

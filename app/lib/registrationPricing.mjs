@@ -79,6 +79,7 @@ export function ticketLimitUnits(basis, tier = {}, humans = 1, furbabies = 0) {
   if (key === "human_plus_furbaby" || key === "human") return humans;
   if (key === "furbaby") return furbabies;
   if (key === "tiered") return tier.attendanceBasis === "furbaby_package" ? furbabies : humans;
+  if (key === "base_plus") return tier.limitUnit === "furbabies" ? furbabies : tier.limitUnit === "hoomans" ? humans : 1;
   return 1;
 }
 
@@ -87,6 +88,7 @@ export function ticketLimitUnitLabel(basis, tier = {}) {
   if (key === "human_plus_furbaby" || key === "human") return "hoomans";
   if (key === "furbaby") return "furbabies";
   if (key === "tiered") return tier.attendanceBasis === "furbaby_package" ? "furbabies" : "hoomans";
+  if (key === "base_plus" && (tier.limitUnit === "furbabies" || tier.limitUnit === "hoomans")) return tier.limitUnit;
   return "registrations";
 }
 
@@ -122,6 +124,10 @@ export function ticketLimitLine(basis, tier = {}, left) {
 
 /** Returns the total in whole pesos, or an error when a bundle is incomplete. */
 export function calculateAmountDue({ basis = "registration", tier = {}, humans = 1, furbabies = 0, includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 } = {}) {
+  if (cleanPricingBasis(basis) === "base_plus" && tier.attendanceBasis === "human_only") {
+    if (furbabies > 0) return { error: "This Hooman only ticket cannot include a furbaby. Choose a ticket with a furbaby instead." };
+    return { quantity: humans, amount: Math.round(Number(tier.amount || 0) * humans) };
+  }
   if (cleanPricingBasis(basis) === "base_plus") {
     // The base covers one hooman and one furbaby; each extra uses this tier's own fee.
     const extraHumans = Math.max(0, humans - 1);
@@ -177,6 +183,6 @@ export function pricingLabel(basis, tier = {}) {
   if (key === "furbaby") return "Per furbaby";
   if (key === "bundle") return `${tier.bundleHumans || 0} person + ${tier.bundleFurbabies || 0} furbaby bundle`;
   if (key === "tiered") return tier.attendanceBasis === "human_only" ? "Hooman only" : "Furbaby package";
-  if (key === "base_plus") return "1 hooman + 1 furbaby, extras added";
+  if (key === "base_plus") return tier.attendanceBasis === "human_only" ? "Hooman only" : "1 hooman + 1 furbaby, extras added";
   return "Per registration";
 }

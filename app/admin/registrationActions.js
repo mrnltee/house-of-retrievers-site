@@ -69,7 +69,7 @@ async function capacityCheckedUpdate(reg, run) {
         `SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.id<>$2 AND r.status='confirmed' AND r.deleted_at IS NULL AND ${ACTIVE_REGISTRATION_SQL}`,
         [reg.event_id, reg.id],
       );
-      const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+      const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
       if (request.error || Number(used || 0) + request.units > reg.capacity) return false;
     }
     await run(tx);
@@ -224,7 +224,7 @@ export async function addRegistration(data) {
     if (ticket.error) await backWith(back, "error", ticket.error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
-    const capacityRequest = validateCapacityCounts(event.capacity_basis, attendees.humans, attendees.furbabies);
+    const capacityRequest = validateCapacityCounts(event.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true });
     if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const payment = ["paid", "pending", "none"].includes(form(data, "payment")) ? form(data, "payment") : "none";
     const owes = owesPayment(event.fee_required, ticket.value);
@@ -301,7 +301,7 @@ export async function updateRegistration(data) {
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
     const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config FROM events WHERE id=$1", [reg.event_id]);
-    const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies);
+    const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true });
     if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const tiers = event?.fee_required ? eventTiers(event) : [];
     const currentIndex = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
@@ -395,7 +395,7 @@ export async function restoreRegistration(data) {
       await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
       if (reg.deleted_previous_status === "confirmed" && reg.capacity != null) {
         const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [reg.event_id]);
-        const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+        const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
         if (request.error || Number(used || 0) + request.units > reg.capacity) return false;
       }
       const [duplicate] = await tx.sql(

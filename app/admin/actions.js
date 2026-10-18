@@ -284,7 +284,7 @@ export async function changeRegistration(data) {
       // Re-count inside a transaction so two admins can't both fill the last slot.
       const moved = await transaction(async (tx) => {
         await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
-        const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count);
+        const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
         if (capacityRequest.error) return false;
         const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [reg.event_id]);
         if (reg.capacity != null && Number(used || 0) + capacityRequest.units > reg.capacity) return false;

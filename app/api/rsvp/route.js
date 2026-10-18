@@ -80,7 +80,7 @@ export async function POST(request) {
       if (attendees.error) return { error: attendees.error, status: 422 };
       const limits = checkAttendeeLimits({ basis: event.pricing_basis, humans: attendees.humans, furbabies: attendees.furbabies, maxFurbabies: event.max_furbabies_per_registration, maxHumansPerFurbaby: event.max_humans_per_furbaby });
       if (limits.error) return { error: limits.error, status: 422 };
-      const capacityRequest = validateCapacityCounts(cleanCapacityBasis(event.capacity_basis), attendees.humans, attendees.furbabies);
+      const capacityRequest = validateCapacityCounts(cleanCapacityBasis(event.capacity_basis), attendees.humans, attendees.furbabies, { allowNoFurbaby: ticket.value.attendanceBasis === "human_only" });
       if (capacityRequest.error) return { error: capacityRequest.error, status: 422 };
       const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
       if (due.error) return { error: due.error, status: 422 };
@@ -88,7 +88,7 @@ export async function POST(request) {
       if (selectedTier?.limit) {
         const left = tierLeft(selectedTier, counts);
         const units = ticketLimitUnits(event.pricing_basis, selectedTier, attendees.humans, attendees.furbabies);
-        if (units > left) return { error: `That rate has ${left} Early Bird ${left === 1 ? "slot" : "slots"} left, but this registration needs ${units}. Choose the next available rate.`, status: 409 };
+        if (units > left) return { error: `The ${selectedTier.label || "chosen"} rate has ${left} ${left === 1 ? "slot" : "slots"} left, but this registration needs ${units}. Choose the next available rate.`, status: 409 };
       }
       const answers = readCustomAnswers(cleanCustomQuestions(event.rsvp_form_config?.questions), body?.customAnswers);
       if (answers.error) return { error: answers.error, status: 422 };

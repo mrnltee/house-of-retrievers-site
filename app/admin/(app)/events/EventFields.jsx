@@ -341,7 +341,9 @@ function tierPreview(row, basis, counts) {
   if (amount == null) return "Enter an amount to preview this tier.";
   const tier = { label: row.label.trim().replace(/\s+/g, " "), amount, limit: row.limited && row.limit !== "" ? Number(row.limit) : null, until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null, attendanceBasis: row.attendanceBasis };
   const parts = [`₱${amount.toLocaleString("en-PH")}`];
-  if (basis === "base_plus") {
+  if (basis === "base_plus" && row.plusKind === "human_only") {
+    parts[0] += " per hooman · no furbaby";
+  } else if (basis === "base_plus") {
     const h = parsePeso(row.extraHumanFee || "0") || 0;
     const f = parsePeso(row.extraFurbabyFee || "0") || 0;
     parts[0] += ` for 1 hooman + 1 furbaby · +₱${h.toLocaleString("en-PH")} per extra hooman · +₱${f.toLocaleString("en-PH")} per extra furbaby`;
@@ -359,13 +361,13 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
-  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", attendanceBasis: "human_only", includedHumansPerFurbaby: "2", additionalHumanFee: "100", extraHumanFee: "", extraFurbabyFee: "", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
+  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", attendanceBasis: "human_only", includedHumansPerFurbaby: "2", additionalHumanFee: "100", extraHumanFee: "", extraFurbabyFee: "", plusKind: "package", limitUnit: "registrations", withPrevious: false, dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
   const [basis, setBasis] = useState(pricingBasis);
   const [includedDogs, setIncludedDogs] = useState(String(includedFurbabiesPerHuman));
   const [extraDogFee, setExtraDogFee] = useState(additionalFurbabyFee ? String(additionalFurbabyFee) : "");
   const [rows, setRows] = useState(
     tiers?.length && initialMode === "paid"
-      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), attendanceBasis: t.attendanceBasis ?? "human_only", includedHumansPerFurbaby: String(t.includedHumansPerFurbaby ?? 2), additionalHumanFee: String(t.additionalHumanFee ?? 100), extraHumanFee: t.extraHumanFee ? String(t.extraHumanFee) : "", extraFurbabyFee: t.extraFurbabyFee ? String(t.extraFurbabyFee) : "", dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
+      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), attendanceBasis: t.attendanceBasis ?? "human_only", includedHumansPerFurbaby: String(t.includedHumansPerFurbaby ?? 2), additionalHumanFee: String(t.additionalHumanFee ?? 100), extraHumanFee: t.extraHumanFee ? String(t.extraHumanFee) : "", extraFurbabyFee: t.extraFurbabyFee ? String(t.extraFurbabyFee) : "", plusKind: t.attendanceBasis === "human_only" ? "human_only" : "package", limitUnit: t.limitUnit || "registrations", withPrevious: Boolean(t.withPrevious), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
       : [blank],
   );
   const toSend = (row) => ({
@@ -373,7 +375,9 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
     amount: row.amount,
     ...(basis === "bundle" ? { bundleHumans: row.bundleHumans, bundleFurbabies: row.bundleFurbabies } : {}),
     ...(basis === "tiered" ? { attendanceBasis: row.attendanceBasis, includedHumansPerFurbaby: row.includedHumansPerFurbaby, additionalHumanFee: row.additionalHumanFee } : {}),
-    ...(basis === "base_plus" ? { extraHumanFee: row.extraHumanFee, extraFurbabyFee: row.extraFurbabyFee } : {}),
+    ...(basis === "base_plus" ? row.plusKind === "human_only"
+      ? { attendanceBasis: "human_only", withPrevious: row.withPrevious }
+      : { extraHumanFee: row.extraHumanFee, extraFurbabyFee: row.extraFurbabyFee, limitUnit: row.limitUnit, withPrevious: row.withPrevious } : {}),
     from: row.dated ? manilaInstant(row.from.date, row.from.time || "00:00") : null,
     until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null,
     limit: row.limited && row.limit !== "" ? row.limit : null,
@@ -443,7 +447,14 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                   <label className="field"><span>People included</span><input type="number" min={0} max={100} value={row.bundleHumans} onChange={(e) => update(i, { bundleHumans: e.target.value })} /></label>
                   <label className="field"><span>Furbabies included</span><input type="number" min={0} max={100} value={row.bundleFurbabies} onChange={(e) => update(i, { bundleFurbabies: e.target.value })} /></label>
                 </div>}
-                {basis === "base_plus" && <div className="tier-rule row-2">
+                {basis === "base_plus" && <label className="field"><span>Ticket</span>
+                  <select value={row.plusKind} onChange={(e) => update(i, { plusKind: e.target.value })} aria-label={`Tier ${i + 1} ticket type`}>
+                    <option value="package">1 hooman + 1 furbaby, extras added</option>
+                    <option value="human_only">Hooman only: charged per hooman, no furbaby</option>
+                  </select>
+                </label>}
+                {basis === "base_plus" && i > 0 && <label className="check small"><input type="checkbox" checked={row.withPrevious} onChange={(e) => update(i, { withPrevious: e.target.checked })} /><span>Opens together with the ticket above <span className="muted">With "Offer prices in order", e.g. Regular and Hooman only both open once Early Bird closes</span></span></label>}
+                {basis === "base_plus" && row.plusKind !== "human_only" && <div className="tier-rule row-2">
                   <label className="field"><span>Each extra hooman</span><span className="peso-input"><span aria-hidden="true">₱</span><input type="text" inputMode="decimal" value={row.extraHumanFee} onChange={(e) => update(i, { extraHumanFee: e.target.value })} placeholder="0" aria-label={`Tier ${i + 1} fee per extra hooman`} /></span></label>
                   <label className="field"><span>Each extra furbaby</span><span className="peso-input"><span aria-hidden="true">₱</span><input type="text" inputMode="decimal" value={row.extraFurbabyFee} onChange={(e) => update(i, { extraFurbabyFee: e.target.value })} placeholder="0" aria-label={`Tier ${i + 1} fee per extra furbaby`} /></span></label>
                 </div>}
@@ -485,6 +496,15 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                     <input type="checkbox" checked={row.limited} onChange={(e) => update(i, { limited: e.target.checked })} />
                     <span>Only for the first {ticketLimitUnitLabel(basis, row)} <span className="muted">e.g. an early bird for the first 20; after that, people take the other prices</span></span>
                   </label>
+                  {row.limited && basis === "base_plus" && row.plusKind !== "human_only" && (
+                    <label className="field"><span>Count the limit by</span>
+                      <select value={row.limitUnit} onChange={(e) => update(i, { limitUnit: e.target.value })} aria-label={`Tier ${i + 1} limit counts`}>
+                        <option value="registrations">Registrations</option>
+                        <option value="furbabies">Furbabies (dog slots)</option>
+                        <option value="hoomans">Hoomans</option>
+                      </select>
+                    </label>
+                  )}
                   {row.limited && (
                     <div className="tier-period-fields">
                       <label className="field"><span>How many</span>

@@ -76,12 +76,18 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   function selectTicket(nextTicket) {
     const next = tickets.find((item) => item.i === nextTicket);
     setTicket(nextTicket);
+    if (event.pricingBasis === "base_plus") {
+      if (next?.attendanceBasis === "human_only") setFurbabyCount(0);
+      else if (Number(furbabyCount) < 1) setFurbabyCount(1);
+      return;
+    }
     if (event.pricingBasis !== "tiered") return;
     if (next?.attendanceBasis === "human_only") setFurbabyCount(0);
     if (next?.attendanceBasis === "furbaby_package" && Number(furbabyCount) < 1) setFurbabyCount(1);
   }
 
   function ticketRuleNote(ticketOption) {
+    if (event.pricingBasis === "base_plus" && ticketOption.attendanceBasis === "human_only") return "Hooman only · per hooman · no furbaby";
     if (event.pricingBasis === "base_plus") {
       const h = Number(ticketOption.extraHumanFee || 0);
       const f = Number(ticketOption.extraFurbabyFee || 0);

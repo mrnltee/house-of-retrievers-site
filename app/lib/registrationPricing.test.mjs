@@ -113,3 +113,17 @@ test("base_plus: a first-N limit counts registrations", () => {
   assert.equal(ticketLimitUnits("base_plus", {}, 3, 2), 1);
   assert.equal(ticketLimitUnitLabel("base_plus", {}), "registrations");
 });
+
+test("base_plus Hooman only ticket: amount per hooman, no furbabies", () => {
+  const tier = { label: "Hooman only", amount: 1850, attendanceBasis: "human_only" };
+  assert.equal(calculateAmountDue({ basis: "base_plus", tier, humans: 2, furbabies: 0 }).amount, 3700);
+  assert.match(calculateAmountDue({ basis: "base_plus", tier, humans: 1, furbabies: 1 }).error, /Hooman only/);
+});
+
+test("base_plus limits can count furbabies or hoomans per ticket", () => {
+  assert.equal(ticketLimitUnits("base_plus", { limitUnit: "furbabies" }, 3, 2), 2);
+  assert.equal(ticketLimitUnits("base_plus", { limitUnit: "hoomans" }, 3, 2), 3);
+  assert.equal(ticketLimitUnits("base_plus", {}, 3, 2), 1);
+  assert.equal(ticketLimitUnitLabel("base_plus", { limitUnit: "furbabies" }), "furbabies");
+  assert.equal(ticketLimitLine("base_plus", { limit: 20, limitUnit: "furbabies" }, 5), "First 20 furbabies · 5 left");
+});

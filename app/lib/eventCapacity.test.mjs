@@ -20,3 +20,8 @@ test("a furbaby-capacity event requires a furbaby in each registration", () => {
   assert.deepEqual(validateCapacityCounts("furbaby", 3, 2), { units: 2 });
   assert.deepEqual(validateCapacityCounts("human", 3, 0), { units: 3 });
 });
+
+test("validateCapacityCounts: a Hooman only ticket may bring no furbaby on a furbaby-capacity event", () => {
+  assert.match(validateCapacityCounts("furbaby", 1, 0).error, /at least one furbaby/);
+  assert.deepEqual(validateCapacityCounts("furbaby", 2, 0, { allowNoFurbaby: true }), { units: 0 });
+});

@@ -11,7 +11,8 @@ export const TICKET_COUNTS_SQL = `SELECT coalesce(r.ticket_label, '') AS label, 
   sum(CASE WHEN e.pricing_basis IN ('human', 'human_plus_furbaby') THEN coalesce(r.human_count, 1)
     WHEN e.pricing_basis = 'furbaby' THEN coalesce(r.furbaby_count, 0)
     WHEN e.pricing_basis = 'tiered' AND EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(e.price_tiers, '[]'::jsonb)) t WHERE t->>'label' = coalesce(r.ticket_label, '') AND (t->>'amount')::numeric = r.ticket_amount AND t->>'attendanceBasis' = 'furbaby_package') THEN coalesce(r.furbaby_count, 0)
-    WHEN e.pricing_basis = 'tiered' THEN coalesce(r.human_count, 1) ELSE 1 END)::int AS n
+    WHEN e.pricing_basis = 'tiered' THEN coalesce(r.human_count, 1)
+    WHEN e.pricing_basis = 'base_plus' THEN coalesce((SELECT CASE t->>'limitUnit' WHEN 'furbabies' THEN coalesce(r.furbaby_count, 0) WHEN 'hoomans' THEN coalesce(r.human_count, 1) END FROM jsonb_array_elements(coalesce(e.price_tiers, '[]'::jsonb)) t WHERE t->>'label' = coalesce(r.ticket_label, '') AND (t->>'amount')::numeric = r.ticket_amount LIMIT 1), 1) ELSE 1 END)::int AS n
   FROM registrations r JOIN events e ON e.id = r.event_id
   WHERE r.event_id = $1 AND r.status <> 'cancelled' AND r.deleted_at IS NULL AND ${ACTIVE_REGISTRATION_SQL} GROUP BY 1, 2`;
 
@@ -21,7 +22,8 @@ export const TICKET_COUNTS_COLUMN = `(SELECT json_object_agg(x.k, x.n) FROM (
       sum(CASE WHEN e.pricing_basis IN ('human', 'human_plus_furbaby') THEN coalesce(r.human_count, 1)
         WHEN e.pricing_basis = 'furbaby' THEN coalesce(r.furbaby_count, 0)
         WHEN e.pricing_basis = 'tiered' AND EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(e.price_tiers, '[]'::jsonb)) t WHERE t->>'label' = coalesce(r.ticket_label, '') AND (t->>'amount')::numeric = r.ticket_amount AND t->>'attendanceBasis' = 'furbaby_package') THEN coalesce(r.furbaby_count, 0)
-        WHEN e.pricing_basis = 'tiered' THEN coalesce(r.human_count, 1) ELSE 1 END)::int AS n
+        WHEN e.pricing_basis = 'tiered' THEN coalesce(r.human_count, 1)
+    WHEN e.pricing_basis = 'base_plus' THEN coalesce((SELECT CASE t->>'limitUnit' WHEN 'furbabies' THEN coalesce(r.furbaby_count, 0) WHEN 'hoomans' THEN coalesce(r.human_count, 1) END FROM jsonb_array_elements(coalesce(e.price_tiers, '[]'::jsonb)) t WHERE t->>'label' = coalesce(r.ticket_label, '') AND (t->>'amount')::numeric = r.ticket_amount LIMIT 1), 1) ELSE 1 END)::int AS n
       FROM registrations r WHERE r.event_id = e.id AND r.status <> 'cancelled' AND r.deleted_at IS NULL AND r.ticket_amount IS NOT NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now()) GROUP BY 1
   ) x) AS ticket_counts`;
 

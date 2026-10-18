@@ -85,7 +85,7 @@ export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, 
   if (list.length === 0) return { value: { label: null, amount: null } };
   const pick = (t) => {
     const value = { label: t.label || null, amount: t.amount ?? null };
-    for (const key of ["attendanceBasis", "includedHumansPerFurbaby", "additionalHumanFee", "extraHumanFee", "extraFurbabyFee"]) {
+    for (const key of ["attendanceBasis", "includedHumansPerFurbaby", "additionalHumanFee", "extraHumanFee", "extraFurbabyFee", "limitUnit", "withPrevious"]) {
       if (t[key] !== undefined) value[key] = t[key];
     }
     return { value };
@@ -93,14 +93,14 @@ export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, 
   const available = list.map((t, i) => [t, i]).filter(([t]) => anyTier || tierAvailable(t, now, counts));
   if (available.length === 0) return { error: "Tickets for this event aren't on sale right now." };
   // "Offer prices in order" (events.tiers_in_order): only the first tier still on sale is offered.
-  const onSale = inOrder && !anyTier ? available.slice(0, 1) : available;
+  const onSale = inOrder && !anyTier ? openGroup(available, ([t]) => t) : available;
   const i = index === undefined || index === null || index === "" ? NaN : Number(index);
   if (Number.isInteger(i) && list[i]) {
     if (onSale.some(([, j]) => j === i)) return pick(list[i]);
     if (available.some(([, j]) => j === i)) return { error: `The ${onSale[0][0].label || "first"} rate is still open, so it comes first. Pick that one.` };
     const name = list[i].label || "chosen";
     if (list[i].limit && tierAvailable({ ...list[i], limit: undefined }, now)) {
-      return { error: `The ${name} rate is sold out (it was for the first ${list[i].limit} registrants). Pick another ticket.` };
+      return { error: `The ${name} rate is sold out (it was for the first ${list[i].limit} ${list[i].limitUnit === "furbabies" || list[i].limitUnit === "hoomans" ? list[i].limitUnit : "registrants"}). Pick another ticket.` };
     }
     return { error: `The ${name} rate has ended. Pick another ticket.` };
   }
@@ -150,7 +150,18 @@ export function passState(reg) {
 }
 
 /** "Offer prices in order": of the tickets on sale now (list order), only the first. */
-export const inOrderTiers = (onSale) => (Array.isArray(onSale) ? onSale.slice(0, 1) : []);
+export const inOrderTiers = (onSale) => (Array.isArray(onSale) ? openGroup(onSale, (t) => t) : []);
+
+/** The first item on sale, plus the ones right after it marked "opens with the one above" (withPrevious). */
+function openGroup(list, tierOf) {
+  if (!list.length) return [];
+  const group = [list[0]];
+  for (const item of list.slice(1)) {
+    if (!tierOf(item).withPrevious) break;
+    group.push(item);
+  }
+  return group;
+}
 
 /** The RSVP's note about what comes after tier `i`: "Regular ₱1,950 once the first 20 are taken". */
 export function nextTierNote(tiers, i) {

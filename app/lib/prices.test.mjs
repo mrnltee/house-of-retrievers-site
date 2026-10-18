@@ -149,3 +149,17 @@ test("cleanTiers keeps base_plus extra fees as whole pesos", () => {
   assert.deepEqual(tiers, [{ label: "Early Bird", amount: 1750, extraFurbabyFee: 850, extraHumanFee: 900, limit: 20 }]);
   assert.match(cleanTiers([{ label: "X", amount: "1", extraFurbabyFee: "abc" }], { pricingBasis: "base_plus" }).error, /extra/);
 });
+
+test("cleanTiers base_plus keeps the limit unit, Hooman only rule and 'opens with the one above'", () => {
+  const { tiers } = cleanTiers([
+    { label: "Early Bird", amount: "1750", extraHumanFee: "1750", extraFurbabyFee: "750", limit: "20", limitUnit: "furbabies" },
+    { label: "Regular", amount: "1950", extraHumanFee: "1850", extraFurbabyFee: "750", limit: "5", limitUnit: "furbabies" },
+    { label: "Hooman only", amount: "1850", attendanceBasis: "human_only", withPrevious: true, limitUnit: "bogus" },
+  ], { pricingBasis: "base_plus" });
+  assert.equal(tiers[0].limitUnit, "furbabies");
+  assert.equal(tiers[2].attendanceBasis, "human_only");
+  assert.equal(tiers[2].withPrevious, true);
+  assert.equal(tiers[2].limitUnit, undefined);
+  assert.equal(tiers[2].extraFurbabyFee, undefined);
+  assert.equal(tiers[0].withPrevious, undefined);
+});

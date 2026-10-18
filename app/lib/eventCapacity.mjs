@@ -32,8 +32,9 @@ export function capacityUnitLabel(basis, plural = true) {
 }
 
 /** A furbaby-capacity event cannot accept a registration with no furbaby. */
-export function validateCapacityCounts(basis, humans, furbabies) {
-  if (cleanCapacityBasis(basis) === "furbaby" && Number(furbabies) < 1) {
+/** `allowNoFurbaby`: a Hooman only ticket (or an existing registration being rechecked) uses no furbaby slot. */
+export function validateCapacityCounts(basis, humans, furbabies, { allowNoFurbaby = false } = {}) {
+  if (cleanCapacityBasis(basis) === "furbaby" && Number(furbabies) < 1 && !allowNoFurbaby) {
     return { error: "This event counts furbaby slots. Add at least one furbaby to continue." };
   }
   return { units: capacityUnits(basis, { humans, furbabies }) };
