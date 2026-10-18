@@ -1,17 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BreedSelect from "../../../components/BreedSelect";
 
-/** Breed pickers for the admin's add/edit registration forms; extra ones beyond the furbaby count are dropped on save. */
-export default function BreedFields({ initial = [], count = 2, label = null }) {
-  const slots = Math.max(count, (initial || []).length);
-  const [breeds, setBreeds] = useState(() => Array.from({ length: slots }, (_, i) => initial?.[i] || ""));
+const MAX_PICKERS = 10;
+
+/**
+ * Breed pickers for the admin's add/edit registration forms: one per furbaby,
+ * following the form's "Furbabies attending" field as it changes (0 shows none).
+ * Breeds already picked are kept if the count goes down and back up.
+ */
+export default function BreedFields({ initial = [], count = 1, label = null }) {
+  const box = useRef(null);
+  const [shown, setShown] = useState(Math.min(MAX_PICKERS, Math.max(0, count)));
+  const [breeds, setBreeds] = useState(() => Array.from({ length: MAX_PICKERS }, (_, i) => initial?.[i] || ""));
+
+  useEffect(() => {
+    const field = box.current?.closest("form")?.querySelector('input[name="furbabyCount"]');
+    if (!field) return undefined;
+    const sync = () => {
+      const n = Number(field.value);
+      setShown(Number.isFinite(n) ? Math.min(MAX_PICKERS, Math.max(0, Math.floor(n))) : 0);
+    };
+    sync();
+    field.addEventListener("input", sync);
+    return () => field.removeEventListener("input", sync);
+  }, []);
+
   return (
-    <div className="breed-selects">
+    <div className="breed-selects" ref={box}>
       <input type="hidden" name="breedsSent" value="1" />
-      {breeds.map((value, i) => (
-        <BreedSelect key={i} name={`furbabyBreed${i}`} label={label || `Furbaby ${i + 1} breed (optional)`} value={value} onChange={(key) => setBreeds((list) => list.map((v, j) => (j === i ? key : v)))} />
+      {breeds.slice(0, shown).map((value, i) => (
+        <BreedSelect key={i} name={`furbabyBreed${i}`} label={label || (shown > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)")} value={value} onChange={(key) => setBreeds((list) => list.map((v, j) => (j === i ? key : v)))} />
       ))}
     </div>
   );
