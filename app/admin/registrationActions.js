@@ -1,5 +1,6 @@
 "use server";
 
+import { adminCustomAnswers, cleanCustomQuestions } from "../lib/customQuestions.mjs";
 import { revalidatePath } from "next/cache";
 import { sql, transaction } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
@@ -200,12 +201,18 @@ export async function resendPass(data) {
  * Add someone by hand (Figma R3): people who paid before the system, at the
  * door, or guests. Over capacity is allowed (the dialog says so).
  */
+/** The event's own Yes / No answers from an admin form, as JSON for the column (null when none answered). */
+function answersJson(event, data) {
+  const value = adminCustomAnswers(cleanCustomQuestions(event?.rsvp_form_config?.questions), (key) => data.get(key));
+  return value ? JSON.stringify(value) : null;
+}
+
 export async function addRegistration(data) {
   const eventId = form(data, "eventId");
   const back = isUuid(eventId) ? `/registrations/${eventId}/add` : "/registrations";
   return guarded(back, async () => {
     const admin = await actionAdmin("registrations:edit");
-    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id = $1", [eventId]) : [];
+    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config FROM events WHERE id = $1", [eventId]) : [];
     if (!event) await backWith("/registrations", "error", "That event no longer exists.");
     const { value, error } = validateRsvp({
       name: form(data, "name"), email: form(data, "email"), furbabyName: form(data, "furbabyName"),
@@ -246,12 +253,12 @@ export async function addRegistration(data) {
         }
         const [row] = await tx.sql(
           `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code,
-             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22) RETURNING id`,
+             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds, custom_answers)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22,$23) RETURNING id`,
           [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, feeStatus, newCheckInCode(),
             ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
             feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email,
-            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies)],
+            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies), answersJson(event, data)],
         );
         const receipt = form(data, "receipt");
         if (receipt) {
@@ -293,7 +300,7 @@ export async function updateRegistration(data) {
     if (error) await backWith(back, "error", error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
-    const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost FROM events WHERE id=$1", [reg.event_id]);
+    const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config FROM events WHERE id=$1", [reg.event_id]);
     const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies);
     if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const tiers = event?.fee_required ? eventTiers(event) : [];
@@ -317,9 +324,9 @@ export async function updateRegistration(data) {
       await tx.sql(
         `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
            ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
-           fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END WHERE id=$1`,
+           fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END, custom_answers=CASE WHEN $18 THEN $17::jsonb ELSE custom_answers END WHERE id=$1`,
         [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
-          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent")],
+          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent"), answersJson(event, data), data.has("customAnswersSent")],
       );
       return true;
     });

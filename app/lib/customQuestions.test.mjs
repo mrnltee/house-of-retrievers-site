@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { answerText, cleanCustomQuestions, readCustomAnswers } from "./customQuestions.mjs";
+import { adminCustomAnswers, answerText, cleanCustomQuestions, readCustomAnswers } from "./customQuestions.mjs";
 
 test("cleanCustomQuestions keeps up to 10 labelled yes/no questions with stable ids", () => {
   const out = cleanCustomQuestions([{ id: "novotel", label: "  Interested in checking in at   Novotel? ", showInTable: true }, { label: "" }, { id: "BAD id!", label: "Parking?" }]);
@@ -25,4 +25,12 @@ test("answerText", () => {
   assert.equal(answerText(true), "Yes");
   assert.equal(answerText(false), "No");
   assert.equal(answerText(undefined), "");
+});
+
+test("adminCustomAnswers: answers are optional for admins; unanswered ones are left out", () => {
+  const qs = [{ id: "novotel", label: "Novotel?" }, { id: "park", label: "Parking?" }];
+  const get = (o) => (key) => o[key] ?? null;
+  assert.deepEqual(adminCustomAnswers(qs, get({ custom_novotel: "yes", custom_park: "" })), { novotel: true });
+  assert.equal(adminCustomAnswers(qs, get({})), null);
+  assert.equal(adminCustomAnswers([], get({ custom_novotel: "no" })), null);
 });

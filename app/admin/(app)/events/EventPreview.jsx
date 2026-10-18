@@ -4,6 +4,7 @@ import { manilaInstant } from "../../../lib/rsvpOpens.mjs";
 
 import { useRef, useState } from "react";
 import { EventCard, EventDetailPage } from "../../../components/EventsView";
+import RsvpModal from "../../../components/RsvpModal";
 import { isPastDate, parseHashtags, toPublicEvent } from "../../../lib/admin/events.mjs";
 import { cleanTiers } from "../../../lib/prices.mjs";
 
@@ -90,6 +91,10 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
   const [draft, setDraft] = useState(null);
   const [view, setView] = useState("page");
   const [width, setWidth] = useState("desktop");
+  // While RSVPs open later, registrants see a countdown; "Once RSVPs open" shows the page as it will be after.
+  const [stage, setStage] = useState("now");
+  const scheduled = draft?.event.status === "soon";
+  const shown = draft && scheduled && stage === "open" ? { ...draft, event: { ...draft.event, status: draft.event.openStatus, rsvpOpensAt: undefined } } : draft;
 
   function open() {
     const form = anchor.current?.closest("form");
@@ -114,6 +119,13 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
               <button key={key} type="button" aria-pressed={width === key} className={width === key ? "is-on" : undefined} onClick={() => setWidth(key)}>{label}</button>
             ))}
           </div>
+          {scheduled && view !== "form" && (
+            <div className="segmented small" aria-label="When">
+              {[["now", "Before RSVPs open"], ["open", "Once RSVPs open"]].map(([key, label]) => (
+                <button key={key} type="button" aria-pressed={stage === key} className={stage === key ? "is-on" : undefined} onClick={() => setStage(key)}>{label}</button>
+              ))}
+            </div>
+          )}
           <span className="small muted preview-note">Not saved yet. This is how it will look.</span>
           <button type="button" className="btn small" onClick={() => dialog.current?.close()} autoFocus>Back to editing</button>
         </div>
@@ -127,12 +139,12 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
               }}
             >
               {view === "form" ? (
-                <div className="preview-form-card"><p className="eyebrow">RSVP form</p><h2>{draft.event.title}</h2><p className="small muted">This is the order participants will see. Required fields are marked.</p><RsvpFormPreview config={draft.event.rsvpFormConfig} vaccination={draft.event.vaccinationRecordRequired} /></div>
+                <RsvpModal event={shown.event} onClose={() => {}} preview />
               ) : view === "page" ? (
-                <EventDetailPage event={draft.event} past={draft.past} photos={[]} onRsvp={() => {}} base="" />
+                <EventDetailPage event={shown.event} past={shown.past} photos={[]} onRsvp={() => {}} base="" />
               ) : (
                 <ul className="event-grid preview-card">
-                  <EventCard event={draft.event} past={draft.past} onRsvp={() => {}} base="" />
+                  <EventCard event={shown.event} past={shown.past} onRsvp={() => {}} base="" />
                 </ul>
               )}
             </div>
@@ -141,10 +153,4 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
       </dialog>
     </>
   );
-}
-
-function RsvpFormPreview({ config, vaccination }) {
-  const optional = config?.optional || ["photoConsent", "under18"];
-  const labels = { identity: ["Name, email and furbaby name", true], attendees: ["Hoomans and furbabies", true], photoConsent: ["Photo consent", false], under18: ["Age and guardian", false], vaccination: ["Vaccination record photo", false] };
-  return <ol className="rsvp-preview-list">{(config?.order || ["identity", "attendees", "photoConsent", "under18", "vaccination"]).filter((key) => (key === "identity" || key === "attendees" || optional.includes(key)) && (key !== "vaccination" || vaccination)).map((key) => <li key={key}><span>{labels[key][0]}</span><small>{labels[key][1] ? "Required" : "Optional"}</small></li>)}</ol>;
 }

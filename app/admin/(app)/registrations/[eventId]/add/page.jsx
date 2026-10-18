@@ -9,6 +9,7 @@ import { calculateAmountDue } from "../../../../../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, capacityUnitLabel } from "../../../../../lib/eventCapacity.mjs";
 import { emailReady } from "../../../../../lib/email";
 import BreedFields from "../../BreedFields";
+import CustomAnswerFields from "../../CustomAnswerFields";
 import { addRegistration } from "../../../../registrationActions";
 import ConfirmButton from "../../../ConfirmButton";
 import ReceiptField from "../../ReceiptField";
@@ -53,6 +54,7 @@ export default async function AddRegistration({ params, searchParams }) {
           <label className="field"><span>Furbabies attending</span><input type="number" name="furbabyCount" min={0} max={100} defaultValue="0" required /></label>
         </div>
           <BreedFields />
+          <CustomAnswerFields config={event.rsvp_form_config} />
         <div className="row-2">
           <label className="field"><span>Furbaby&apos;s name <small>Optional</small></span><input type="text" name="furbabyName" maxLength={120} /></label>
           {tiers.length > 0 ? (

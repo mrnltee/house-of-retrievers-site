@@ -10,6 +10,7 @@ import { welcomePhotoFor } from "../../../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../../../WelcomeAvatar";
 import BreedIcons from "../../../BreedIcons";
 import BreedFields from "../../../BreedFields";
+import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { approvePayment, attachReceipt, correctPaidAmount, markPaid, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
@@ -160,6 +161,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                   </div>
                 </div>
                 <BreedFields initial={reg.furbaby_breeds || []} count={Math.min(4, Math.max(1, reg.furbaby_count ?? 1))} />
+                <CustomAnswerFields config={reg.rsvp_form_config} answers={reg.custom_answers} />
                 {reg.fee_required && tiers.length > 0 && <label className="field"><span>Ticket</span>
                   <select name="ticket" defaultValue={selectedTier >= 0 ? String(selectedTier) : ""} required={tiers.length > 1}>
                     {tiers.length > 1 && <option value="">Choose…</option>}

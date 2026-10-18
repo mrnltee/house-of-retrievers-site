@@ -34,7 +34,8 @@ const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}
  * A paid event (Figma P1–P2) asks for a ticket, holds the spot, then shows
  * the payment step; the QR pass is emailed once an admin approves.
  */
-export default function RsvpModal({ event, onClose }) {
+/** `preview`: the admin editor draws the real form inline (no backdrop, no focus trap) and nothing is sent. */
+export default function RsvpModal({ event, onClose, preview = false }) {
   const dialog = useRef(null);
   const openedAt = useRef(Date.now());
   const [under18, setUnder18] = useState(false);
@@ -91,6 +92,7 @@ export default function RsvpModal({ event, onClose }) {
   }
 
   useEffect(() => {
+    if (preview) return undefined;
     const opener = document.activeElement;
     const node = dialog.current;
     node.querySelector("input, button")?.focus();
@@ -106,7 +108,7 @@ export default function RsvpModal({ event, onClose }) {
     };
     document.addEventListener("keydown", trap);
     return () => { document.removeEventListener("keydown", trap); opener?.focus?.(); };
-  }, [onClose]);
+  }, [onClose, preview]);
 
   // A single Furbaby package has no radio change to initialise the dog count.
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function RsvpModal({ event, onClose }) {
 
   async function submit(e) {
     e.preventDefault();
+    if (preview) { setState({ sending: false, error: "This is a preview. Nothing was sent.", result: null }); return; }
     const form = new FormData(e.currentTarget);
     setState({ sending: true, error: "", result: null });
     try {
@@ -157,9 +160,9 @@ export default function RsvpModal({ event, onClose }) {
 
   const done = state.result;
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <section ref={dialog} className="join-modal rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title">
-        <button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
+    <div className={preview ? "rsvp-preview" : "modal-backdrop"} role="presentation" onMouseDown={(e) => !preview && e.target === e.currentTarget && onClose()}>
+      <section ref={dialog} className={`join-modal rsvp-modal${preview ? " is-preview" : ""}`} role={preview ? "region" : "dialog"} aria-modal={preview ? undefined : "true"} aria-labelledby="rsvp-title">
+        {!preview && <button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close" /></button>}
         {done && done.feeDue && done.code ? (
           proofSent ? (
             <div className="success-state" role="status">

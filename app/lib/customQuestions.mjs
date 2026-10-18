@@ -43,3 +43,13 @@ export function readCustomAnswers(questions, input) {
 }
 
 export const answerText = (answer) => (answer === true ? "Yes" : answer === false ? "No" : "");
+
+/** An admin's add/edit form (`custom_<id>` = "yes" | "no" | "") → { id: boolean } for the answered ones, or null. */
+export function adminCustomAnswers(questions, get) {
+  const value = {};
+  for (const q of questions || []) {
+    const answer = get(`custom_${q.id}`);
+    if (answer === "yes" || answer === "no") value[q.id] = answer === "yes";
+  }
+  return Object.keys(value).length ? value : null;
+}
