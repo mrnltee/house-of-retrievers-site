@@ -5,9 +5,10 @@
 
 import { cleanCustomQuestions } from "../customQuestions.mjs";
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
+import { openTiers, visibleTiers } from "../eventPayments.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
 import { eventEndsAt } from "../eventTime.mjs";
-import { cleanAttendeeLimit, cleanFurbabyPricing, cleanPricingBasis } from "../registrationPricing.mjs";
+import { cleanAttendeeLimit, cleanFurbabyPricing, cleanPricingBasis, ticketLimitUnitLabel } from "../registrationPricing.mjs";
 import { cleanCapacityBasis } from "../eventCapacity.mjs";
 import { cleanPaymentHoldMinutes } from "../registrationHolds.mjs";
 
@@ -397,6 +398,7 @@ export function toPublicEvent(row, confirmed = 0) {
   const tiers = eventTiers(row);
   // Registrations per ticket (TICKET_COUNTS_COLUMN), for tiers limited to the first N.
   const counts = row.ticket_counts && typeof row.ticket_counts === "object" ? row.ticket_counts : {};
+  const hideLater = Boolean(row.tiers_in_order && row.tiers_hide_later);
   const gallery = Array.isArray(row.gallery) ? row.gallery : [];
   // On the event page every picture is shown whole: the cover as uploaded (before
   // it was framed for the card), then the extra photos.
@@ -418,13 +420,15 @@ export function toPublicEvent(row, confirmed = 0) {
     venue: row.venue,
     city: row.city,
     // With sale periods, the card shows what's on sale now (5-minute page cache).
-    cost: (hasTierDates(tiers) ? priceSummary(activeTiers(tiers, Date.now(), counts)) : priceSummary(tiers)) || row.cost || undefined,
-    // Listed lowest first, the order people compare them in.
+    cost: (hideLater ? priceSummary(openTiers(tiers, counts)) : hasTierDates(tiers) ? priceSummary(activeTiers(tiers, Date.now(), counts)) : priceSummary(tiers)) || row.cost || undefined,
+    // Listed lowest first, the order people compare them in; with "Show later prices only
+    // once they open", in sale order and only up to the ones open now.
     // Each tier with its sale period in words ("Until Oct 10, 11:59 PM", "Ended Oct 10").
     priceTiers: tiers.length > 1 || tiers.some((t) => t.label)
-      ? [...tiers].sort((a, b) => a.amount - b.amount).map((t) => {
+      ? (hideLater ? visibleTiers(tiers, counts) : [...tiers].sort((a, b) => a.amount - b.amount)).map((t) => {
           const left = tierLeft(t, counts);
-          const window = [t.limit ? (left === 0 ? `Sold out · it was for the first ${t.limit}` : `First ${t.limit} registrants · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
+          const unit = ticketLimitUnitLabel(row.pricing_basis, t);
+          const window = [t.limit ? (left === 0 ? `Sold out · it was for the first ${t.limit} ${unit === "registrations" ? "" : unit}`.trim() : `First ${t.limit} ${unit === "registrations" ? "registrants" : unit} · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
           return { label: t.label, amount: t.amount, window: window || undefined, ended: Boolean((t.until && Date.now() >= Date.parse(t.until)) || left === 0) || undefined };
         })
       : undefined,

@@ -71,6 +71,7 @@ function draftEvent(form, saved) {
     vaccination_record_required: f.get("vaccinationRecordRequired") === "on",
     rsvp_form_config: json(get("rsvpFormConfig"), {}),
     tiers_in_order: f.get("tiersInOrder") === "on",
+    tiers_hide_later: f.get("tiersHideLater") === "on",
     rsvp_opens_at: f.get("rsvpOpensOn") === "on" ? manilaInstant(get("rsvpOpensDate"), get("rsvpOpensTime")) : null,
     fee_required: f.get("feeRequired") === "on",
     onsite_payment: f.get("onsitePayment") === "on",

@@ -171,3 +171,21 @@ export function nextTierNote(tiers, i) {
   const when = current.limit ? `once the first ${current.limit} are taken` : current.until ? `after ${tierWindow({ until: current.until }, 0).replace(/^Until /, "")}` : "";
   return when ? `${next.label || "The next rate"} ${next.amount === 0 ? "Free" : formatPeso(next.amount)} ${when}` : "";
 }
+
+/** With "Offer prices in order": the tickets open right now (the first on sale, plus any that open with it). */
+export function openTiers(tiers, counts = {}, now = Date.now()) {
+  return openGroup((tiers || []).filter((t) => tierAvailable(t, now, counts)), (t) => t);
+}
+
+/**
+ * "Show later prices only once they open" (events.tiers_hide_later): the event page lists
+ * the tiers up to the ones open now (earlier ones as ended), never the ones still to come.
+ * With nothing on sale, every tier is listed.
+ */
+export function visibleTiers(tiers, counts = {}, now = Date.now()) {
+  const list = tiers || [];
+  const open = openTiers(list, counts, now);
+  if (!open.length) return list;
+  const last = Math.max(...open.map((t) => list.indexOf(t)));
+  return list.slice(0, last + 1);
+}

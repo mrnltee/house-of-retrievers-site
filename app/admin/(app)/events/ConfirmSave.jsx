@@ -45,6 +45,7 @@ const LABELS = {
   maxPublicHumans: "Most hoomans from public RSVPs",
   paymentHoldMinutes: "Payment hold length",
   tiersInOrder: "Offer prices in order",
+  tiersHideLater: "Show later prices only once they open",
   rsvpFormConfig: "Participant form",
   checkinSuccessMessage: "Check-in message",
   rsvpOpen: "RSVPs open",

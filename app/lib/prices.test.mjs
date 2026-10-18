@@ -171,3 +171,12 @@ test("toPublicEvent keeps each ticket's limit unit and 'opens together' flag for
   assert.equal(tickets[0].limitUnit, "furbabies");
   assert.equal(tickets[1].withPrevious, true);
 });
+
+test("toPublicEvent with 'show later prices only once they open': the card price follows what's open", () => {
+  const tiers = [{ label: "Early Bird", amount: 1750, limit: 20, limitUnit: "furbabies" }, { label: "Regular", amount: 1950, limit: 5, limitUnit: "furbabies" }, { label: "Hooman only", amount: 1850, attendanceBasis: "human_only", withPrevious: true }];
+  const row = (counts) => ({ slug: "x", title: "X", date: "2026-12-20", registration: "required", rsvp_open: true, status: "published", fee_required: true, pricing_basis: "base_plus", tiers_in_order: true, tiers_hide_later: true, price_tiers: tiers, ticket_counts: counts });
+  assert.equal(toPublicEvent(row({})).cost, "₱1,750");
+  assert.deepEqual(toPublicEvent(row({})).priceTiers.map((t) => t.label), ["Early Bird"]);
+  assert.equal(toPublicEvent(row({ "Early Bird|1750": 20 })).cost, "₱1,850 – ₱1,950");
+  assert.equal(toPublicEvent(row({ "Early Bird|1750": 20 })).priceTiers[0].window, "Sold out · it was for the first 20 furbabies");
+});
