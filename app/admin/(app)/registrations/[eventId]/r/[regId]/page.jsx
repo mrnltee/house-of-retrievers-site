@@ -90,6 +90,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.fee_required && <div><dt>Ticket</dt><dd>{ticketLine(reg.ticket_label, reg.ticket_amount) || "—"}</dd></div>}
               {reg.fee_required && <div><dt>Amount due</dt><dd>{due != null ? peso(due) : "—"}</dd></div>}
               <div><dt>People</dt><dd>{reg.human_count ?? 1}</dd></div>
+              {reg.guest_names?.some(Boolean) && <div><dt>With</dt><dd>{reg.guest_names.filter(Boolean).join(", ")}</dd></div>}
               <div><dt>Furbabies</dt><dd>{reg.furbaby_count ?? 0}</dd></div>
               {reg.pay_method && <div><dt>Paid with</dt><dd>{payMethodLabel(reg.pay_method)}</dd></div>}
               {reg.fee_reference && <div><dt>Reference number</dt><dd><strong className="mono">{reg.fee_reference}</strong></dd></div>}

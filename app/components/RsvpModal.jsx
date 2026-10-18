@@ -8,6 +8,22 @@ import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import BreedSelect from "./BreedSelect";
+import { joinFurbabyNames } from "../lib/attendeeNames.mjs";
+
+/** A number field with − / + buttons on one row. */
+function Stepper({ label, name, value, min, max, onChange }) {
+  const n = Number(value) || 0;
+  const set = (next) => onChange(String(Math.max(min, Math.min(max, next))));
+  return (
+    <label className="rsvp-stepper">{label}
+      <span className="rsvp-stepper-row">
+        <input required type="number" name={name} min={min} max={max} value={value} onChange={(e) => onChange(e.target.value)} inputMode="numeric" />
+        <button type="button" onClick={() => set(n - 1)} disabled={n <= min} aria-label={`One fewer: ${label}`}>−</button>
+        <button type="button" onClick={() => set(n + 1)} disabled={n >= max} aria-label={`One more: ${label}`}>+</button>
+      </span>
+    </label>
+  );
+}
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImage } from "../lib/resizeImage";
 
@@ -23,6 +39,9 @@ export default function RsvpModal({ event, onClose }) {
   const openedAt = useRef(Date.now());
   const [under18, setUnder18] = useState(false);
   const [humanCount, setHumanCount] = useState(1);
+  const [guestNames, setGuestNames] = useState([]);
+  const [furbabyNames, setFurbabyNames] = useState([]);
+  const [yourName, setYourName] = useState("");
   const [furbabyCount, setFurbabyCount] = useState(event.pricingBasis === "furbaby" ? 1 : 0);
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [breeds, setBreeds] = useState([]);
@@ -113,7 +132,8 @@ export default function RsvpModal({ event, onClose }) {
           slug: event.slug,
           name: form.get("name"),
           email: form.get("email"),
-          furbabyName: form.get("furbabyName"),
+          furbabyName: joinFurbabyNames(furbabyNames, Number(form.get("furbabyCount")) || 0),
+          guestNames: guestNames.slice(0, Math.max(0, (Number(form.get("humanCount")) || 1) - 1)),
           humanCount: form.get("humanCount"),
           furbabyCount: form.get("furbabyCount"),
           furbabyBreeds: breeds.slice(0, Number(form.get("furbabyCount")) || 0),
@@ -192,23 +212,35 @@ export default function RsvpModal({ event, onClose }) {
               </fieldset>
             )}
             {event.feeRequired && tickets.length === 1 && <div className="rsvp-ticket-summary"><span>Ticket</span><strong>{tickets[0].label || "Standard ticket"}</strong><small>{ticketRuleNote(tickets[0]) || "Your event ticket"}</small></div>}
-            <label>Your name<input required name="name" maxLength={120} autoComplete="name" /></label>
+            <label>Your name<input required name="name" maxLength={120} autoComplete="name" value={yourName} onChange={(e) => setYourName(e.target.value)} /></label>
             <label>Email<input required type="email" name="email" maxLength={200} autoComplete="email" spellCheck={false} /></label>
-            {!humanOnly && <label>Furbabies&apos; names (optional)<input name="furbabyName" maxLength={240} placeholder={furbabyCount > 1 ? "e.g. Mochi, Fudge and Pao" : "e.g. Mochi"} /></label>}
-            <div className="row-2">
-              <label>People attending<input required type="number" name="humanCount" min="1" max={event.maxHumansPerFurbaby && Number(furbabyCount) > 0 ? event.maxHumansPerFurbaby * Number(furbabyCount) : 100} value={humanCount} onChange={(e) => setHumanCount(e.target.value)} /></label>
-              {!humanOnly && <label>Furbabies attending<input type="number" name="furbabyCount" min={event.pricingBasis === "furbaby" ? 1 : 0} max={event.maxFurbabiesPerRegistration || 100} value={furbabyCount} onChange={(e) => setFurbabyCount(e.target.value)} /></label>}
-            </div>
+            {(() => {
+              const maxHumans = event.maxHumansPerFurbaby && Number(furbabyCount) > 0 ? event.maxHumansPerFurbaby * Number(furbabyCount) : 20;
+              const maxDogs = event.maxFurbabiesPerRegistration || 10;
+              const humans = Math.min(Number(humanCount) || 0, maxHumans);
+              const dogs = humanOnly ? 0 : Math.min(Number(furbabyCount) || 0, maxDogs);
+              const setAt = (setter, i, v) => setter((list) => { const next = [...list]; next[i] = v; return next; });
+              return <>
+                <Stepper label="Hoomans attending" name="humanCount" value={humanCount} min={1} max={maxHumans} onChange={setHumanCount} />
+                <div className="rsvp-people">
+                  {Array.from({ length: humans }, (_, i) => i === 0
+                    ? <label key={i}>Hooman 1 (you)<input value={yourName} readOnly tabIndex={-1} placeholder="Your name, above" aria-readonly="true" /></label>
+                    : <label key={i}>Hooman {i + 1} name (optional)<input maxLength={120} autoComplete="off" value={guestNames[i - 1] || ""} onChange={(e) => setAt(setGuestNames, i - 1, e.target.value)} /></label>)}
+                </div>
+                {!humanOnly && <Stepper label="Furbabies attending" name="furbabyCount" value={furbabyCount} min={event.pricingBasis === "furbaby" || furbabyPackage ? 1 : 0} max={maxDogs} onChange={setFurbabyCount} />}
+                {dogs > 0 && <div className="rsvp-people">
+                  {Array.from({ length: dogs }, (_, i) => (
+                    <div key={i} className="rsvp-furbaby-row">
+                      <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : "Furbaby name (optional)"}<input maxLength={60} placeholder="e.g. Mochi" value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
+                      <BreedSelect name={`furbabyBreed${i}`} label={dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
+                    </div>
+                  ))}
+                </div>}
+              </>;
+            })()}
             {(event.maxFurbabiesPerRegistration || event.maxHumansPerFurbaby) && !humanOnly && (
                 <p className="form-note">{[event.maxFurbabiesPerRegistration ? `Up to ${event.maxFurbabiesPerRegistration} ${event.maxFurbabiesPerRegistration === 1 ? "furbaby" : "furbabies"} per RSVP` : "", event.maxHumansPerFurbaby ? `up to ${event.maxHumansPerFurbaby} ${event.maxHumansPerFurbaby === 1 ? "person" : "people"} per furbaby` : ""].filter(Boolean).join(", ")}.</p>
               )}
-            {!humanOnly && Number(furbabyCount) > 0 && (
-              <div className="breed-selects">
-                {Array.from({ length: Math.min(Number(furbabyCount) || 0, 4) }, (_, i) => (
-                  <BreedSelect key={i} name={`furbabyBreed${i}`} label={Number(furbabyCount) > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setBreeds((list) => { const next = [...list]; next[i] = key; return next; })} />
-                ))}
-              </div>
-            )}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
             {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
             {event.vaccinationRecordRequired && formConfig.optional.includes("vaccination") && <label>Vaccination record photo <small>(optional)</small><input type="file" name="vaccinationRecord" accept="image/jpeg,image/png,image/webp" /><span className="form-note">If you have it handy, upload a clear photo of the vaccination card. Only authorised HOR admins can view it.</span></label>}

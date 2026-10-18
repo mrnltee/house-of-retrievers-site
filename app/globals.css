@@ -460,6 +460,19 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .form-note a { color: #6f7268; text-decoration: underline; text-underline-offset: 2px; }
 .form-note a:hover { color: var(--ink); }
 .breed-selects { display: grid; gap: 12px; }
+.rsvp-stepper-row { display: flex; gap: 8px; align-items: stretch; }
+.rsvp-stepper-row input { flex: 1; min-width: 0; }
+.rsvp-stepper-row button { flex: none; width: 48px; min-height: 48px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; font-size: 1.25rem; cursor: pointer; }
+.rsvp-stepper-row button:hover:not(:disabled) { border-color: var(--gold); }
+.rsvp-stepper-row button:focus-visible { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(167,133,63,.18); }
+.rsvp-stepper-row button:disabled { opacity: .4; cursor: default; }
+.rsvp-people { display: grid; gap: 12px; padding-left: 12px; border-left: 2px solid var(--line); }
+.rsvp-people input[readonly] { color: var(--muted-on-light); }
+.rsvp-people label small { display: inline; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted-on-light); }
+.rsvp-stepper-row input { -moz-appearance: textfield; appearance: textfield; }
+.rsvp-stepper-row input::-webkit-outer-spin-button, .rsvp-stepper-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.rsvp-furbaby-row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; }
+@media (max-width: 600px) { .rsvp-furbaby-row { grid-template-columns: 1fr; } }
 .breed-select { position: relative; display: grid; gap: 6px; }
 .breed-select-label { font-size: var(--text-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
 .breed-select-button { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
