@@ -523,3 +523,11 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .lightbox-close:hover { background: var(--a-sand); }
 .lightbox-close:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
 .lightbox img { display: block; width: 100%; height: 100%; max-height: calc(100dvh - 100px); object-fit: contain; background: #1a1a1a; }
+
+/* Previous / next between one event's registrations. */
+.reg-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 0 0 8px; }
+.reg-pager-steps { display: flex; align-items: center; gap: 10px; }
+.reg-pager-steps .btn { max-width: 260px; min-width: 0; }
+.reg-pager-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reg-pager-steps [aria-disabled="true"] { opacity: .4; pointer-events: none; }
+@media (max-width: 720px) { .reg-pager-name { display: none; } }

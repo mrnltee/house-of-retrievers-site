@@ -70,11 +70,30 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const overpaid = reg.fee_status === "paid" && currentDue && !currentDue.error ? overpaidBy({ payAmount: reg.pay_amount, due: currentDue.amount, refunded: reg.refund_amount }) : 0;
   const holdExpired = reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at });
   const back = `${base}/registrations/${eventId}${reg.fee_status === "review" ? "?show=check" : ""}`;
+  // Previous / next follow the registrations list's order (oldest first). Cancelled
+  // ones are skipped like the list's "All" tab, unless this one is cancelled itself.
+  const siblings = await sql(
+    `SELECT id, name FROM registrations WHERE event_id = $1 AND deleted_at IS NULL AND (status <> 'cancelled' OR id = $2) ORDER BY created_at, id`,
+    [eventId, regId],
+  );
+  const at = siblings.findIndex((r) => r.id === regId);
+  const prev = at > 0 ? siblings[at - 1] : null;
+  const next = at >= 0 && at < siblings.length - 1 ? siblings[at + 1] : null;
+  const regHref = (r) => `${base}/registrations/${eventId}/r/${r.id}`;
 
   return (
     <>
       <ImageLightbox />
-      <p className="small"><a href={back}>← {reg.title} registrations</a></p>
+      <nav className="reg-pager" aria-label="Registrations">
+        <a className="small" href={back}>← {reg.title} registrations</a>
+        {at >= 0 && siblings.length > 1 && (
+          <span className="reg-pager-steps">
+            {prev ? <a className="btn ghost small" href={regHref(prev)} rel="prev" title={prev.name}><span className="reg-pager-label">← Previous<span className="reg-pager-name">: {prev.name}</span></span></a> : <span className="btn ghost small" aria-disabled="true">← Previous</span>}
+            <span className="small muted">{at + 1} of {siblings.length}</span>
+            {next ? <a className="btn ghost small" href={regHref(next)} rel="next" title={next.name}><span className="reg-pager-label">Next<span className="reg-pager-name">: {next.name}</span> →</span></a> : <span className="btn ghost small" aria-disabled="true">Next →</span>}
+          </span>
+        )}
+      </nav>
       <PageHead title={reg.name} lead={[reg.email, `RSVP'd ${formatWhen(reg.created_at)}`, reg.added_by ? `added by ${reg.added_by}` : "", reg.proof_at ? `receipt ${formatWhen(reg.proof_at)}` : ""].filter(Boolean).join(" · ")} />
       <Flash params={query} />
 
