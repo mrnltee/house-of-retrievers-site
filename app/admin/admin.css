@@ -488,3 +488,6 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .breed-icons { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-left: 6px; vertical-align: middle; }
 .breed-icon { display: inline-flex; align-items: center; gap: 6px; }
 .breed-icon img { display: block; }
+.breed-icons-table img { display: block; }
+.breed-icon-field { display: inline-grid; gap: 4px; }
+.breed-icon-preview { border-radius: 8px; background: var(--a-sand); }

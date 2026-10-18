@@ -41,7 +41,8 @@ const KEYS = new Set(BREEDS.map((b) => b.key));
 const BY_KEY = new Map(BREEDS.map((b) => [b.key, b]));
 
 export const breedLabel = (key) => BY_KEY.get(key)?.label || "";
-export const breedIcon = (key) => (BY_KEY.get(key)?.icon ? `/breeds/${key}.svg` : null);
+/** Served by /api/breed-icon/<key>: an icon HOR uploaded, else the built-in public/breeds/<key>.svg. */
+export const breedIcon = (key) => (BY_KEY.get(key)?.icon ? `/api/breed-icon/${key}` : null);
 
 /** The breeds sent with an RSVP → one known key (or "") per furbaby, or null when none was chosen. */
 export function cleanBreeds(input, furbabies) {
