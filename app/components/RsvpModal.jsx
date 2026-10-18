@@ -43,7 +43,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const [guestNames, setGuestNames] = useState([]);
   const [furbabyNames, setFurbabyNames] = useState([]);
   const [yourName, setYourName] = useState("");
-  const [furbabyCount, setFurbabyCount] = useState(event.pricingBasis === "furbaby" ? 1 : 0);
+  const [furbabyCount, setFurbabyCount] = useState(1);
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [breeds, setBreeds] = useState([]);
   const [proofSent, setProofSent] = useState(false);
