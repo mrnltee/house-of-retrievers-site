@@ -398,7 +398,7 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .facts { margin: 0; display: grid; gap: 10px; }
 .facts > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; }
 .facts dt { font-size: 13px; font-weight: 700; color: var(--a-muted); }
-.facts dd { margin: 0; overflow-wrap: anywhere; }
+.facts dd { margin: 0; overflow-wrap: break-word; min-width: 0; }
 .person-message { white-space: pre-line; background: var(--a-ivory); border-radius: 12px; padding: 14px 16px; }
 .person-history { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .person-history li { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--a-sand); }
@@ -469,15 +469,23 @@ a.stat { color: inherit; text-decoration: none; transition: border-color .15s; }
 a.stat:hover, a.stat:focus-visible { border-color: var(--a-ink); }
 .stat.stat-warn { background: #f3e9d2; border-color: var(--a-gold); }
 .registrations-table td { vertical-align: top; }
-.check-grid { align-items: start; grid-template-columns: minmax(260px, 380px) 1fr; }
+/* The details column gets the room; the receipt shrinks first, and they stack before the details get cramped. */
+.check-grid { align-items: start; grid-template-columns: minmax(240px, 340px) minmax(380px, 1fr); }
 .receipt-card { display: grid; gap: 10px; position: sticky; top: 24px; }
+/* Vaccination cards scroll with the page (not pinned like the receipt), one tile per furbaby. */
+.vaccination-card { display: grid; gap: 12px; }
+.vaccination-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.vaccination-grid figure { margin: 0; display: grid; gap: 6px; align-content: start; }
+.vaccination-grid p { margin: 0; }
+.vaccination-shot { display: block; border-radius: 12px; overflow: hidden; border: 1px solid var(--a-line); background: #f2f2f2; }
+.vaccination-shot img { display: block; width: 100%; height: 260px; object-fit: contain; }
 .receipt-shot { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--a-line); background: #f2f2f2; }
 .receipt-shot img { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: contain; }
 .mono { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .good-text { color: var(--a-success); font-weight: 700; }
 button.tag-badge { border: 1px solid transparent; padding: 6px 12px; cursor: pointer; }
 button.tag-badge.is-on { background: var(--a-ink); color: white; }
-@media (max-width: 900px) { .check-grid { grid-template-columns: 1fr; } .receipt-card { position: static; } }
+@media (max-width: 1180px) { .check-grid { grid-template-columns: 1fr; } .receipt-card { position: static; } .receipt-card .receipt-shot img { max-height: 70vh; width: auto; margin: 0 auto; } }
 .indent-full { grid-column: 1 / -1; }
 /* Price tiers: optional sale period (early bird) */
 .tier-list li .tier-period { display: grid; gap: 8px; }
@@ -486,6 +494,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .tier-period-note { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 640px) { .tier-main, .tier-period-fields { grid-template-columns: 1fr; } .tier-remove { justify-self: start; } }
 .breed-icons { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-left: 6px; vertical-align: middle; }
+.facts .breed-icons > * { white-space: nowrap; }
 .breed-icon { display: inline-flex; align-items: center; gap: 6px; }
 .breed-icon img { display: block; }
 .breed-icons-table img { display: block; }

@@ -126,18 +126,18 @@ export default async function RegistrationDetail({ params, searchParams }) {
           </section>
 
           {(reg.vaccination_record_required || vaccinationRows.length > 0) && (
-            <section className="card receipt-card" aria-label="Vaccination records">
+            <section className="card vaccination-card" aria-label="Vaccination records">
               <h2>{vaccinationRows.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
-              {vaccinationRows.length ? vaccinationRows.map((v) => {
+              {vaccinationRows.length ? <div className="vaccination-grid">{vaccinationRows.map((v) => {
                 const src = `${base}/registrations/vaccination/${reg.id}?i=${v.furbaby_index}`;
                 return (
-                  <figure key={v.furbaby_index} style={{ margin: "0 0 16px" }}>
+                  <figure key={v.furbaby_index}>
                     <figcaption className="strong">{dogLabel(v.furbaby_index)}</figcaption>
-                    <a href={src} target="_blank" rel="noreferrer" className="receipt-shot"><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} /></a>
+                    <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot"><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} loading="lazy" /></a>
                     <p className="small muted">Uploaded {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer">Open full size</a></p>
                   </figure>
                 );
-              }) : <p className="muted">No vaccination record was uploaded.</p>}
+              })}</div> : <p className="muted">No vaccination record was uploaded.</p>}
             </section>
           )}
 
