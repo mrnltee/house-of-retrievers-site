@@ -512,3 +512,14 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .admin .rsvp-preview .ticket-options label { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .admin .rsvp-preview .furbaby-options label { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #65695f; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .admin .rsvp-preview label.check { display: flex; align-items: center; gap: 10px; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--ink); font-size: 14px; }
+
+/* Receipt and vaccination-card pictures open here instead of a new tab. */
+.lightbox { width: min(1100px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 16px; background: var(--a-ivory); color: var(--a-ink); overflow: hidden; }
+.lightbox::backdrop { background: rgba(13, 13, 13, .72); }
+.lightbox figure { margin: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: calc(100dvh - 32px); }
+.lightbox-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--a-line); }
+.lightbox-bar figcaption { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lightbox-close { width: 40px; height: 40px; border: 0; border-radius: 999px; background: transparent; color: var(--a-ink); font-size: 26px; line-height: 1; cursor: pointer; }
+.lightbox-close:hover { background: var(--a-sand); }
+.lightbox-close:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
+.lightbox img { display: block; width: 100%; height: 100%; max-height: calc(100dvh - 100px); object-fit: contain; background: #1a1a1a; }

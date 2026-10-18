@@ -18,6 +18,7 @@ import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../.
 import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
+import ImageLightbox from "../../../ImageLightbox";
 import ReasonPicker from "../../../ReasonPicker";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../../../../ui";
 import { EVENTS_URL } from "../../../../../../lib/eventsHost.mjs";
@@ -72,6 +73,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
 
   return (
     <>
+      <ImageLightbox />
       <p className="small"><a href={back}>← {reg.title} registrations</a></p>
       <PageHead title={reg.name} lead={[reg.email, `RSVP'd ${formatWhen(reg.created_at)}`, reg.added_by ? `added by ${reg.added_by}` : "", reg.proof_at ? `receipt ${formatWhen(reg.proof_at)}` : ""].filter(Boolean).join(" · ")} />
       <Flash params={query} />
@@ -80,10 +82,10 @@ export default async function RegistrationDetail({ params, searchParams }) {
         <section className="card receipt-card" aria-label="Receipt">
           {proof ? (
             <>
-              <a href={`${base}/registrations/proof/${proof.id}`} target="_blank" rel="noreferrer" className="receipt-shot">
+              <a href={`${base}/registrations/proof/${proof.id}`} target="_blank" rel="noreferrer" className="receipt-shot" data-lightbox={`${reg.name}'s payment receipt`}>
                 <img src={`${base}/registrations/proof/${proof.id}`} alt={`Payment screenshot from ${reg.name}`} />
               </a>
-              <p className="small muted">Uploaded by {proof.uploaded_by} · {formatWhen(proof.created_at)} · <a href={`${base}/registrations/proof/${proof.id}`} target="_blank" rel="noreferrer">Open full size</a>{proofs.length > 1 ? ` · ${proofs.length - 1} earlier upload${proofs.length > 2 ? "s" : ""} kept` : ""}</p>
+              <p className="small muted">Uploaded by {proof.uploaded_by} · {formatWhen(proof.created_at)} · <a href={`${base}/registrations/proof/${proof.id}`} target="_blank" rel="noreferrer" data-lightbox={`${reg.name}'s payment receipt`}>Open full size</a>{proofs.length > 1 ? ` · ${proofs.length - 1} earlier upload${proofs.length > 2 ? "s" : ""} kept` : ""}</p>
             </>
           ) : (
             <p className="muted">{reg.fee_required ? "No receipt uploaded yet." : "This event has no fee."}</p>
@@ -133,8 +135,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 return (
                   <figure key={v.furbaby_index}>
                     <figcaption className="strong">{dogLabel(v.furbaby_index)}</figcaption>
-                    <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot"><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} loading="lazy" /></a>
-                    <p className="small muted">Uploaded {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer">Open full size</a></p>
+                    <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot" data-lightbox={`Vaccination card · ${dogLabel(v.furbaby_index)}`}><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} loading="lazy" /></a>
+                    <p className="small muted">Uploaded {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer" data-lightbox={`Vaccination card · ${dogLabel(v.furbaby_index)}`}>Open full size</a></p>
                   </figure>
                 );
               })}</div> : <p className="muted">No vaccination record was uploaded.</p>}
