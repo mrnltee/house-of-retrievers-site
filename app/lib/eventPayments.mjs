@@ -85,7 +85,7 @@ export function chooseTicket(tiers, index, { now = Date.now(), anyTier = false, 
   if (list.length === 0) return { value: { label: null, amount: null } };
   const pick = (t) => {
     const value = { label: t.label || null, amount: t.amount ?? null };
-    for (const key of ["attendanceBasis", "includedHumansPerFurbaby", "additionalHumanFee"]) {
+    for (const key of ["attendanceBasis", "includedHumansPerFurbaby", "additionalHumanFee", "extraHumanFee", "extraFurbabyFee"]) {
       if (t[key] !== undefined) value[key] = t[key];
     }
     return { value };

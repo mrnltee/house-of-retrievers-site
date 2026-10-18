@@ -6,7 +6,7 @@ import { CONSENT_TEMPLATES, MAX_HASHTAGS, MAX_SUPPORTERS, PHOTO_UPLOADERS, RSVP_
 import { PRICING_BASES, ticketLimitUnitLabel } from "../../../lib/registrationPricing.mjs";
 import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, tierLeft, tierWindow } from "../../../lib/prices.mjs";
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
-import { PAYMENT_HOLD_OPTIONS } from "../../../lib/registrationHolds.mjs";
+import { MAX_PAYMENT_HOLD_MINUTES, PAYMENT_HOLD_OPTIONS, holdLabel, holdParts, isPresetHold } from "../../../lib/registrationHolds.mjs";
 import { DEFAULT_WELCOME_MESSAGE } from "../../../lib/welcomePhoto.mjs";
 
 /**
@@ -341,6 +341,11 @@ function tierPreview(row, basis, counts) {
   if (amount == null) return "Enter an amount to preview this tier.";
   const tier = { label: row.label.trim().replace(/\s+/g, " "), amount, limit: row.limited && row.limit !== "" ? Number(row.limit) : null, until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null, attendanceBasis: row.attendanceBasis };
   const parts = [`₱${amount.toLocaleString("en-PH")}`];
+  if (basis === "base_plus") {
+    const h = parsePeso(row.extraHumanFee || "0") || 0;
+    const f = parsePeso(row.extraFurbabyFee || "0") || 0;
+    parts[0] += ` for 1 hooman + 1 furbaby · +₱${h.toLocaleString("en-PH")} per extra hooman · +₱${f.toLocaleString("en-PH")} per extra furbaby`;
+  }
   if (tier.limit) {
     const unit = ticketLimitUnitLabel(basis, row);
     const left = tierLeft(tier, counts);
@@ -354,13 +359,13 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
   const initialMode = tiers?.length ? (tiers.every((t) => t.amount === 0) ? "free" : "paid") : legacyCost ? "paid" : "";
   const [mode, setMode] = useState(initialMode);
   // Each row may have a sale period (an early bird rate): Manila date + time for "from" and "until".
-  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", attendanceBasis: "human_only", includedHumansPerFurbaby: "2", additionalHumanFee: "100", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
+  const blank = { label: "", amount: "", bundleHumans: "1", bundleFurbabies: "1", attendanceBasis: "human_only", includedHumansPerFurbaby: "2", additionalHumanFee: "100", extraHumanFee: "", extraFurbabyFee: "", dated: false, from: { date: "", time: "" }, until: { date: "", time: "" }, limited: false, limit: "" };
   const [basis, setBasis] = useState(pricingBasis);
   const [includedDogs, setIncludedDogs] = useState(String(includedFurbabiesPerHuman));
   const [extraDogFee, setExtraDogFee] = useState(additionalFurbabyFee ? String(additionalFurbabyFee) : "");
   const [rows, setRows] = useState(
     tiers?.length && initialMode === "paid"
-      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), attendanceBasis: t.attendanceBasis ?? "human_only", includedHumansPerFurbaby: String(t.includedHumansPerFurbaby ?? 2), additionalHumanFee: String(t.additionalHumanFee ?? 100), dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
+      ? tiers.map((t) => ({ label: t.label, amount: String(t.amount), bundleHumans: String(t.bundleHumans ?? 1), bundleFurbabies: String(t.bundleFurbabies ?? 1), attendanceBasis: t.attendanceBasis ?? "human_only", includedHumansPerFurbaby: String(t.includedHumansPerFurbaby ?? 2), additionalHumanFee: String(t.additionalHumanFee ?? 100), extraHumanFee: t.extraHumanFee ? String(t.extraHumanFee) : "", extraFurbabyFee: t.extraFurbabyFee ? String(t.extraFurbabyFee) : "", dated: Boolean(t.from || t.until), from: manilaParts(t.from), until: manilaParts(t.until), limited: Boolean(t.limit), limit: t.limit ? String(t.limit) : "" }))
       : [blank],
   );
   const toSend = (row) => ({
@@ -368,6 +373,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
     amount: row.amount,
     ...(basis === "bundle" ? { bundleHumans: row.bundleHumans, bundleFurbabies: row.bundleFurbabies } : {}),
     ...(basis === "tiered" ? { attendanceBasis: row.attendanceBasis, includedHumansPerFurbaby: row.includedHumansPerFurbaby, additionalHumanFee: row.additionalHumanFee } : {}),
+    ...(basis === "base_plus" ? { extraHumanFee: row.extraHumanFee, extraFurbabyFee: row.extraFurbabyFee } : {}),
     from: row.dated ? manilaInstant(row.from.date, row.from.time || "00:00") : null,
     until: row.dated ? manilaInstant(row.until.date, row.until.time || "23:59") : null,
     limit: row.limited && row.limit !== "" ? row.limit : null,
@@ -397,6 +403,7 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
         </select>
       </label>
       {basis === "tiered" && <p className="small muted" style={{ margin: 0 }}>Set the rule on each ticket below: Hooman only charges per person and cannot include a furbaby. A Furbaby package charges per dog, includes a set number of people, then adds an extra-person fee.</p>}
+      {basis === "base_plus" && <p className="small muted" style={{ margin: 0 }}>Each ticket's amount covers 1 hooman and 1 furbaby. Set what each extra hooman and furbaby adds on every ticket below, e.g. Early Bird ₱1,750 + ₱900 per extra hooman + ₱850 per extra furbaby. A first-N limit counts registrations.</p>}
       {basis === "human_plus_furbaby" && <div className="card inset form" style={{ gap: 10 }}>
         <strong>Dog companion pricing</strong>
         <p className="small muted" style={{ margin: 0 }}>Each human ticket includes the number of furbabies below. Additional furbabies use the extra fee.</p>
@@ -433,6 +440,10 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
                 {basis === "bundle" && <div className="tier-rule row-2">
                   <label className="field"><span>People included</span><input type="number" min={0} max={100} value={row.bundleHumans} onChange={(e) => update(i, { bundleHumans: e.target.value })} /></label>
                   <label className="field"><span>Furbabies included</span><input type="number" min={0} max={100} value={row.bundleFurbabies} onChange={(e) => update(i, { bundleFurbabies: e.target.value })} /></label>
+                </div>}
+                {basis === "base_plus" && <div className="tier-rule row-2">
+                  <label className="field"><span>Each extra hooman</span><span className="peso-input"><span aria-hidden="true">₱</span><input type="text" inputMode="decimal" value={row.extraHumanFee} onChange={(e) => update(i, { extraHumanFee: e.target.value })} placeholder="0" aria-label={`Tier ${i + 1} fee per extra hooman`} /></span></label>
+                  <label className="field"><span>Each extra furbaby</span><span className="peso-input"><span aria-hidden="true">₱</span><input type="text" inputMode="decimal" value={row.extraFurbabyFee} onChange={(e) => update(i, { extraFurbabyFee: e.target.value })} placeholder="0" aria-label={`Tier ${i + 1} fee per extra furbaby`} /></span></label>
                 </div>}
                 {basis === "tiered" && <div className="card inset form" style={{ gap: 10 }}>
                   <label className="field"><span>Ticket rule</span>
@@ -505,6 +516,35 @@ export function PriceField({ tiers, legacyCost, counts = {}, pricingBasis = "reg
  * settings give way to a note. The server enforces the same rule. The extra
  * settings appear only once sign-ups are switched on.
  */
+/** Payment hold: a quick pick, or Custom hours + minutes (up to 7 days). Sends one paymentHoldMinutes value. */
+function HoldField({ initial }) {
+  const custom = initial != null && !isPresetHold(initial);
+  const [choice, setChoice] = useState(custom ? "custom" : initial == null ? "" : String(initial));
+  const start = holdParts(custom ? initial : 360);
+  const [hours, setHours] = useState(String(start.hours));
+  const [mins, setMins] = useState(String(start.minutes));
+  const total = (Number(hours) || 0) * 60 + (Number(mins) || 0);
+  const tooLong = total > MAX_PAYMENT_HOLD_MINUTES;
+  const value = choice === "custom" ? (total >= 1 && !tooLong ? String(total) : "") : choice;
+  return (
+    <div className="form" style={{ gap: 8 }}>
+      <label className="field"><span>Payment hold length <small>How long a "Payment pending" spot stays held before it frees up for someone else.</small></span>
+        <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+          <option value="">Default (24 hours)</option>
+          {PAYMENT_HOLD_OPTIONS.map(([minutes, label]) => <option key={minutes} value={minutes}>{label}</option>)}
+          <option value="custom">Custom…</option>
+        </select>
+      </label>
+      {choice === "custom" && <div className="row-2">
+        <label className="field"><span>Hours</span><input type="number" min={0} max={168} value={hours} onChange={(e) => setHours(e.target.value)} /></label>
+        <label className="field"><span>Minutes</span><input type="number" min={0} max={59} value={mins} onChange={(e) => setMins(e.target.value)} /></label>
+      </div>}
+      {choice === "custom" && <p className="small muted" style={{ margin: 0 }} role="status">{tooLong ? "Up to 7 days. Shorten it, or pick No limit." : total < 1 ? "Enter at least 1 minute." : `Spots are held for ${holdLabel(total)}.`}</p>}
+      <input type="hidden" name="paymentHoldMinutes" value={value} />
+    </div>
+  );
+}
+
 export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, paymentHoldMinutes, maxFurbabiesPerRegistration, maxHumansPerFurbaby, date, rsvpOpensAt, rsvpFormConfig }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
@@ -572,12 +612,7 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
               <label className="check"><input type="checkbox" name="feeRequired" defaultChecked={Boolean(feeRequired)} /> They pay by QR before the day (track it per person)</label>
               {feeRequired && <label className="check"><input type="checkbox" name="onsitePayment" defaultChecked={Boolean(onsitePayment)} /> On-site payment is available <span className="small muted">The regular rate applies on site; leave this off until the venue confirms.</span></label>}
               {feeRequired && (
-                <label className="field"><span>Payment hold length <small>How long a "Payment pending" spot stays held before it frees up for someone else.</small></span>
-                  <select name="paymentHoldMinutes" defaultValue={paymentHoldMinutes ?? ""}>
-                    <option value="">Default (24 hours)</option>
-                    {PAYMENT_HOLD_OPTIONS.map(([minutes, label]) => <option key={minutes} value={minutes}>{label}</option>)}
-                  </select>
-                </label>
+                <HoldField initial={paymentHoldMinutes} />
               )}
             </>}
           </div>

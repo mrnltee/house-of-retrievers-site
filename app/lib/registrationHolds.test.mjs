@@ -4,6 +4,8 @@ import {
   ACTIVE_REGISTRATION_SQL,
   DEFAULT_PAYMENT_HOLD_MINUTES,
   cleanPaymentHoldMinutes,
+  holdLabel,
+  holdParts,
   holdExpiresAt,
   isActiveRegistrationHold,
   lateProofFits,
@@ -26,13 +28,25 @@ test("resolveHoldMinutes: NULL inherits the default, 0 is no limit, otherwise th
   assert.equal(resolveHoldMinutes(2880), 2880);
 });
 
-test("cleanPaymentHoldMinutes: only the offered options are kept, empty inherits the default", () => {
+test("cleanPaymentHoldMinutes: empty inherits the default; any whole number of minutes up to 7 days is kept", () => {
   assert.equal(cleanPaymentHoldMinutes(""), null);
   assert.equal(cleanPaymentHoldMinutes(undefined), null);
   assert.equal(cleanPaymentHoldMinutes("10"), 10);
   assert.equal(cleanPaymentHoldMinutes("0"), 0);
   assert.equal(cleanPaymentHoldMinutes("1440"), 1440);
-  assert.equal(cleanPaymentHoldMinutes("45"), null);
+  assert.equal(cleanPaymentHoldMinutes("45"), 45);
+  assert.equal(cleanPaymentHoldMinutes("390"), 390);
+  assert.equal(cleanPaymentHoldMinutes("10080"), 10080);
+  assert.equal(cleanPaymentHoldMinutes("10081"), null);
+  assert.equal(cleanPaymentHoldMinutes("-5"), null);
+  assert.equal(cleanPaymentHoldMinutes("2.5"), null);
+});
+
+test("holdParts / holdLabel: custom hold lengths read as hours and minutes", () => {
+  assert.deepEqual(holdParts(390), { hours: 6, minutes: 30 });
+  assert.equal(holdLabel(390), "6 h 30 min");
+  assert.equal(holdLabel(120), "2 h");
+  assert.equal(holdLabel(45), "45 min");
 });
 
 test("only an expired waiting payment hold becomes inactive", () => {

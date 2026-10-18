@@ -10,6 +10,7 @@ export const PRICING_BASES = [
   ["bundle", "Human + furbaby bundle"],
   ["human_plus_furbaby", "Per person + dog companion"],
   ["tiered", "Ticket-specific attendance rules"],
+  ["base_plus", "Base (1 hooman + 1 furbaby) + extras"],
 ];
 
 const BASIS_KEYS = new Set(PRICING_BASES.map(([key]) => key));
@@ -121,6 +122,17 @@ export function ticketLimitLine(basis, tier = {}, left) {
 
 /** Returns the total in whole pesos, or an error when a bundle is incomplete. */
 export function calculateAmountDue({ basis = "registration", tier = {}, humans = 1, furbabies = 0, includedFurbabiesPerHuman = 0, additionalFurbabyFee = 0 } = {}) {
+  if (cleanPricingBasis(basis) === "base_plus") {
+    // The base covers one hooman and one furbaby; each extra uses this tier's own fee.
+    const extraHumans = Math.max(0, humans - 1);
+    const extraFurbabies = Math.max(0, furbabies - 1);
+    return {
+      quantity: 1,
+      extraHumans,
+      extraFurbabies,
+      amount: Math.round(Number(tier.amount || 0)) + extraHumans * Number(tier.extraHumanFee || 0) + extraFurbabies * Number(tier.extraFurbabyFee || 0),
+    };
+  }
   if (cleanPricingBasis(basis) === "tiered") {
     const rule = cleanTieredTicketRule(tier);
     if (rule.error) return rule;
@@ -165,5 +177,6 @@ export function pricingLabel(basis, tier = {}) {
   if (key === "furbaby") return "Per furbaby";
   if (key === "bundle") return `${tier.bundleHumans || 0} person + ${tier.bundleFurbabies || 0} furbaby bundle`;
   if (key === "tiered") return tier.attendanceBasis === "human_only" ? "Hooman only" : "Furbaby package";
+  if (key === "base_plus") return "1 hooman + 1 furbaby, extras added";
   return "Per registration";
 }

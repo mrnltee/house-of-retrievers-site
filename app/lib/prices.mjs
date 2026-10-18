@@ -61,6 +61,15 @@ export function cleanTiers(input, { pricingBasis = "registration" } = {}) {
       tier.bundleHumans = bundleHumans;
       tier.bundleFurbabies = bundleFurbabies;
     }
+    if (pricingBasis === "base_plus") {
+      for (const key of ["extraFurbabyFee", "extraHumanFee"]) {
+        const fee = row?.[key] === "" || row?.[key] == null ? 0 : parsePeso(row[key]);
+        if (fee == null || !Number.isInteger(fee) || fee < 0 || fee > MAX_AMOUNT) {
+          return { error: `${label || "A price"} needs a whole-peso extra ${key === "extraHumanFee" ? "hooman" : "furbaby"} fee.` };
+        }
+        tier[key] = fee;
+      }
+    }
     // Free events do not present a ticket choice, so they need no attendance rule.
     if (pricingBasis === "tiered" && amount > 0) {
       const attendanceBasis = row?.attendanceBasis;

@@ -143,3 +143,9 @@ test("an early bird for the first N registrants, then the regular rate", async (
   assert.equal(pub.cost, "₱795");
   assert.match(pub.priceTiers[0].window, /Sold out/);
 });
+
+test("cleanTiers keeps base_plus extra fees as whole pesos", () => {
+  const { tiers } = cleanTiers([{ label: "Early Bird", amount: "1750", extraFurbabyFee: "850", extraHumanFee: "₱900", limit: "20" }], { pricingBasis: "base_plus" });
+  assert.deepEqual(tiers, [{ label: "Early Bird", amount: 1750, extraFurbabyFee: 850, extraHumanFee: 900, limit: 20 }]);
+  assert.match(cleanTiers([{ label: "X", amount: "1", extraFurbabyFee: "abc" }], { pricingBasis: "base_plus" }).error, /extra/);
+});

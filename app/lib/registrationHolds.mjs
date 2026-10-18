@@ -19,11 +19,30 @@ const HOLD_MINUTES_VALUES = new Set(PAYMENT_HOLD_OPTIONS.map(([minutes]) => minu
 /** The hold length when an event doesn't set its own. */
 export const DEFAULT_PAYMENT_HOLD_MINUTES = 1440;
 
-/** The editor's choice (a string from the select, or the saved column) → a valid option, or null to inherit the default. */
+/** Longest custom hold: 7 days (migration 041). */
+export const MAX_PAYMENT_HOLD_MINUTES = 10080;
+
+/** The editor's choice (a quick pick or a custom hours + minutes total, or the saved column) → whole minutes 0–7 days, or null to inherit the default. */
 export function cleanPaymentHoldMinutes(input) {
   if (input === "" || input === undefined || input === null) return null;
   const minutes = Number(input);
-  return HOLD_MINUTES_VALUES.has(minutes) ? minutes : null;
+  return Number.isInteger(minutes) && minutes >= 0 && minutes <= MAX_PAYMENT_HOLD_MINUTES ? minutes : null;
+}
+
+/** Whether a saved hold length is one of the quick picks (else the editor shows it as Custom). */
+export function isPresetHold(minutes) {
+  return HOLD_MINUTES_VALUES.has(Number(minutes));
+}
+
+export function holdParts(minutes) {
+  const n = Math.max(0, Number(minutes) || 0);
+  return { hours: Math.floor(n / 60), minutes: n % 60 };
+}
+
+/** 390 → "6 h 30 min". */
+export function holdLabel(minutes) {
+  const { hours, minutes: rest } = holdParts(minutes);
+  return [hours ? `${hours} h` : "", rest ? `${rest} min` : ""].filter(Boolean).join(" ") || "0 min";
 }
 
 /** An event's saved payment_hold_minutes → the minutes to hold a new payment for, or null for no limit. */

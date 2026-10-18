@@ -456,6 +456,6 @@ export function toPublicEvent(row, confirmed = 0) {
     includedFurbabiesPerHuman: row.included_furbabies_per_human || 0,
     additionalFurbabyFee: row.additional_furbaby_fee || 0,
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
-    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, bundleHumans: t.bundleHumans, bundleFurbabies: t.bundleFurbabies, attendanceBasis: t.attendanceBasis, includedHumansPerFurbaby: t.includedHumansPerFurbaby, additionalHumanFee: t.additionalHumanFee, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
+    tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, bundleHumans: t.bundleHumans, bundleFurbabies: t.bundleFurbabies, attendanceBasis: t.attendanceBasis, includedHumansPerFurbaby: t.includedHumansPerFurbaby, additionalHumanFee: t.additionalHumanFee, extraHumanFee: t.extraHumanFee, extraFurbabyFee: t.extraFurbabyFee, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
   };
 }

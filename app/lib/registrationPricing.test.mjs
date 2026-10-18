@@ -97,3 +97,19 @@ test("events without limits behave as before", async () => {
   assert.equal(cleanAttendeeLimit("abc"), null);
   assert.equal(cleanAttendeeLimit("50"), 20);
 });
+
+test("base_plus: the base covers 1 hooman + 1 furbaby, each extra uses its tier's fee", () => {
+  const early = { label: "Early Bird", amount: 1750, extraFurbabyFee: 850, extraHumanFee: 900, limit: 20 };
+  const regular = { label: "Regular", amount: 1950, extraFurbabyFee: 950, extraHumanFee: 1000 };
+  assert.equal(cleanPricingBasis("base_plus"), "base_plus");
+  assert.equal(calculateAmountDue({ basis: "base_plus", tier: early, humans: 1, furbabies: 1 }).amount, 1750);
+  assert.equal(calculateAmountDue({ basis: "base_plus", tier: early, humans: 2, furbabies: 2 }).amount, 3500);
+  assert.equal(calculateAmountDue({ basis: "base_plus", tier: regular, humans: 2, furbabies: 2 }).amount, 3900);
+  assert.equal(calculateAmountDue({ basis: "base_plus", tier: regular, humans: 3, furbabies: 1 }).amount, 3950);
+  assert.equal(calculateAmountDue({ basis: "base_plus", tier: early, humans: 1, furbabies: 0 }).amount, 1750);
+});
+
+test("base_plus: a first-N limit counts registrations", () => {
+  assert.equal(ticketLimitUnits("base_plus", {}, 3, 2), 1);
+  assert.equal(ticketLimitUnitLabel("base_plus", {}), "registrations");
+});
