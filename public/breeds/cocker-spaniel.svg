@@ -1,6 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cocker Spaniel"><title>Cocker Spaniel</title>
-    <path d="M18.6 24C11 23.6 8 34 8.6 44Q8.2 50 12 51.6Q12.6 48.4 15.4 50.6Q16.6 47 19.4 47.6Q21.4 40 20.6 32Z" fill="#A9672E" /><g transform="translate(64 0) scale(-1 1)"><path d="M18.6 24C11 23.6 8 34 8.6 44Q8.2 50 12 51.6Q12.6 48.4 15.4 50.6Q16.6 47 19.4 47.6Q21.4 40 20.6 32Z" fill="#A9672E" /></g>
-    <path d="M11 37q2 2 4.4 1.2M10.4 43q2.2 2 4.8 1" fill="none" stroke="#8C5424" stroke-width="1.1" stroke-linecap="round"/><g transform="translate(64 0) scale(-1 1)"><path d="M11 37q2 2 4.4 1.2M10.4 43q2.2 2 4.8 1" fill="none" stroke="#8C5424" stroke-width="1.1" stroke-linecap="round"/></g>
-    <path d="M18 34Q17.6 17 32 17Q46.4 17 46 34Q45.6 45 39 48.6Q32 51.4 25 48.6Q18.4 45 18 34Z" fill="#C58642"/>
-    <ellipse cx="32" cy="42.6" rx="7.6" ry="5.8" fill="#DCA368"/>
-    <ellipse cx="25.4" cy="33.4" rx="3" ry="3.3600000000000003" fill="#2B2118"/><circle cx="26.45" cy="32.14" r="1.08" fill="#fff"/><ellipse cx="38.6" cy="33.4" rx="3" ry="3.3600000000000003" fill="#2B2118"/><circle cx="39.65" cy="32.14" r="1.08" fill="#fff"/><path d="M32 43.6v1.4m0 0q-2.2 2 -4.2 .7m4.2 -.7q2.2 2 4.2 .7" stroke="#2B2118" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M29 40.4q3 -1.3 6 0q0 2.6 -3 3.4q-3 -.8 -3 -3.4z" fill="#2B2118"/></svg>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M37 35C20 27 8 40 7 59L6 96L11 94L13 109L21 103L25 114C37 109 34 83 43 48L37 35Z" fill="#D9A24F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke="#4A403B"/>
+<path d="M91 35C108 27 120 40 121 59L122 96L117 94L115 109L107 103L103 114C91 109 94 83 85 48L91 35Z" fill="#D9A24F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke="#4A403B"/>
+<path d="M64 28C88 28 102 43 99 68L93 94C89 110 79 116 64 116C49 116 39 110 35 94L29 68C26 43 40 28 64 28Z" fill="#D9A24F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke="#4A403B"/>
+<path d="M44 69C46.651 69 48.8 66.3137 48.8 63C48.8 59.6863 46.651 57 44 57C41.349 57 39.2 59.6863 39.2 63C39.2 66.3137 41.349 69 44 69Z" fill="#322F30"/>
+<path d="M84 69C86.651 69 88.8 66.3137 88.8 63C88.8 59.6863 86.651 57 84 57C81.349 57 79.2 59.6863 79.2 63C79.2 66.3137 81.349 69 84 69Z" fill="#322F30"/>
+<path d="M42.8 62.8C43.656 62.8 44.35 61.9941 44.35 61C44.35 60.0059 43.656 59.2 42.8 59.2C41.944 59.2 41.25 60.0059 41.25 61C41.25 61.9941 41.944 62.8 42.8 62.8Z" fill="white"/>
+<path d="M85.2 62.8C84.344 62.8 83.65 61.9941 83.65 61C83.65 60.0059 84.344 59.2 85.2 59.2C86.056 59.2 86.75 60.0059 86.75 61C86.75 61.9941 86.056 62.8 85.2 62.8Z" fill="white"/>
+<path d="M55 105C62.1797 105 68 99.6274 68 93C68 86.3726 62.1797 81 55 81C47.8203 81 42 86.3726 42 93C42 99.6274 47.8203 105 55 105Z" fill="#EEDFBC"/>
+<path d="M73 105C80.1797 105 86 99.6274 86 93C86 86.3726 80.1797 81 73 81C65.8203 81 60 86.3726 60 93C60 99.6274 65.8203 105 73 105Z" fill="#EEDFBC"/>
+<path d="M56 82C61.3333 79.3333 66.6667 79.3333 72 82C74 84 73.3333 86.3333 70 89C66 92.3333 62 92.3333 58 89C54.6667 86.3333 54 84 56 82Z" fill="#322F30"/>
+<path d="M61 85.1C62.3807 85.1 63.5 84.6075 63.5 84C63.5 83.3925 62.3807 82.9 61 82.9C59.6193 82.9 58.5 83.3925 58.5 84C58.5 84.6075 59.6193 85.1 61 85.1Z" fill="white"/>
+<path d="M64 91V97M64 97C60 101 56.3333 101 53 97M64 97C68 101 71.6667 101 75 97" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" stroke="#4A403B"/>
+<path d="M59 101C62.3333 102.333 65.6667 102.333 69 101L68 106C65.3333 109.333 62.6667 109.333 60 106L59 101Z" fill="#DC9490"/>
+<path d="M22 53C18 66.3333 18 77.6667 22 87" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke="#4A403B"/>
+<path d="M106 53C110 66.3333 110 77.6667 106 87" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke="#4A403B"/>
+</svg>

@@ -14,6 +14,8 @@ public/house-of-retrievers-hero-1080p-old.mp4
 # Background videos are served from Cloudinary (app/lib/siteVideos.mjs); keep local copies out of deployments.
 public/house-of-retrievers-hero-1080p.mp4
 public/CTA-join-us.MP4
+# HOR's supplied breed icons (source): scripts/breed-icons/import.mjs copies them into public/breeds.
+public/dog-breeds-icons/
 .env*
 !.env.example
 
