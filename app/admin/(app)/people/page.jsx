@@ -1,3 +1,4 @@
+import FurbabyList from "../registrations/FurbabyList";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
@@ -120,7 +121,7 @@ export default async function PeoplePage({ searchParams }) {
                   <a href={`mailto:${p.email}`}>{p.email}</a>
                   {p.social_profile && <><br />{p.social_url ? <a href={p.social_url} target="_blank" rel="noreferrer">{p.social_profile}</a> : p.social_profile}</>}
                 </td>
-                <td>{(members ? p.furbaby_name : p.organization) || "—"}</td>
+                <td>{members ? <FurbabyList names={p.furbaby_name} breeds={p.furbaby_breeds} /> : p.organization || "—"}</td>
                 {members && (
                   <td>
                     <span className={`chip membership-${p.membership}`}>{membershipLabel(p.membership) || "—"}</span>

@@ -6,6 +6,8 @@ import { resizeImage } from "../lib/resizeImage";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import BreedSelect from "./BreedSelect";
+import Stepper from "./Stepper";
+import { joinFurbabyNames } from "../lib/attendeeNames.mjs";
 
 export default function JoinModal({ interest, setInterest, onClose }) {
   const dialog = useRef(null);
@@ -17,7 +19,12 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const [profileHelpOpen, setProfileHelpOpen] = useState(false);
   const [photo, setPhoto] = useState(null);
   const [hasFurbaby, setHasFurbaby] = useState(interest === "Member" ? "yes" : "");
-  const [breed, setBreed] = useState("");
+  // One row per furbaby: a name and a breed each (the count goes up to 10).
+  const [furbabyCount, setFurbabyCount] = useState("1");
+  const [furbabyNames, setFurbabyNames] = useState([]);
+  const [breeds, setBreeds] = useState([]);
+  const dogs = Math.min(10, Math.max(1, Number(furbabyCount) || 1));
+  const setAt = (setter, i, v) => setter((list) => { const next = [...list]; next[i] = v; return next; });
   const [photoError, setPhotoError] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -71,8 +78,9 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           organization: formData.get("organization"),
           profile: social,
           socialPlatform,
-          furbabyName: asksAboutFurbaby ? formData.get("furbabyName") : "",
-          furbabyBreed: asksAboutFurbaby && hasFurbaby === "yes" ? breed : "",
+          furbabyName: asksAboutFurbaby && hasFurbaby === "yes" ? joinFurbabyNames(furbabyNames, dogs) : "",
+          furbabyCount: asksAboutFurbaby && hasFurbaby === "yes" ? dogs : 0,
+          furbabyBreeds: asksAboutFurbaby && hasFurbaby === "yes" ? breeds.slice(0, dogs) : [],
           photo: asksAboutFurbaby && photo ? photo.dataUrl : "",
           photoName: asksAboutFurbaby && photo ? photo.name : "",
           message: formData.get("message"),
@@ -157,8 +165,15 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               </div>
               {profileHelpOpen ? <div className="profile-help" role="dialog" aria-label={`Finding your ${socialPlatform} profile URL`}><div><strong>Find your {socialPlatform} profile link</strong><button type="button" onClick={() => setProfileHelpOpen(false)} aria-label="Close profile link help"><Icon name="close" size={16} /></button></div><ol><li>Open {socialPlatform} and go to your profile.</li><li>Use the <b>Share</b> or <b>···</b> menu.</li><li>Choose <b>Copy profile link</b>, then paste it here.</li></ol><p>Example: <code>{socialPlatform === "Facebook" ? "facebook.com/yourname" : "instagram.com/yourname"}</code></p></div> : null}
               {asksAboutFurbaby ? <fieldset className="furbaby-question"><legend>Do you have a furbaby?</legend><p className="furbaby-hint">Tell us who you’ll be bringing along.</p><div className="furbaby-options"><label className={hasFurbaby === "yes" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="yes" checked={hasFurbaby === "yes"} onChange={() => setHasFurbaby("yes")} /> <span>Yes, I do</span></label><label className={hasFurbaby === "no" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="no" checked={hasFurbaby === "no"} onChange={() => { setHasFurbaby("no"); setPhoto(null); }} /> <span>Not yet</span></label></div></fieldset> : null}
-              {asksAboutFurbaby && hasFurbaby === "yes" ? <label>{fieldCopy.furbabyLabel}<input name="furbabyName" type="text" placeholder={fieldCopy.furbabyPlaceholder} /></label> : null}
-              {asksAboutFurbaby && hasFurbaby === "yes" ? <BreedSelect name="furbabyBreed" label="Breed (optional)" value={breed} onChange={setBreed} /> : null}
+              {asksAboutFurbaby && hasFurbaby === "yes" ? <Stepper label="How many furbabies?" name="furbabyCount" value={furbabyCount} min={1} max={10} onChange={setFurbabyCount} /> : null}
+              {asksAboutFurbaby && hasFurbaby === "yes" ? <div className="rsvp-people">
+                {Array.from({ length: dogs }, (_, i) => (
+                  <div key={i} className="rsvp-furbaby-row">
+                    <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : fieldCopy.furbabyLabel}<input type="text" maxLength={60} placeholder={fieldCopy.furbabyPlaceholder} value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
+                    <BreedSelect name={`furbabyBreed${i}`} label={dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
+                  </div>
+                ))}
+              </div> : null}
               {asksAboutFurbaby && hasFurbaby === "yes" ? <div className="photo-field">
                 <label htmlFor="join-photo">Furbaby photo (optional)</label>
                 {photo ? (

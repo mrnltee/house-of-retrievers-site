@@ -381,7 +381,8 @@ export async function updatePersonDetails(data) {
     if (error) await backWith(back, "error", error);
     const organization = form(data, "organization").trim().replace(/\s+/g, " ").slice(0, 160) || null;
     const furbabyName = form(data, "furbabyName").trim().replace(/\s+/g, " ").slice(0, 120) || null;
-    const breeds = cleanBreeds([form(data, "furbabyBreed0")], 1);
+    const furbabyCount = Math.min(10, Math.max(0, Number(form(data, "furbabyCount")) || 0)) || (furbabyName ? 1 : 0);
+    const breeds = cleanBreeds(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabyBreed${i}`)), furbabyCount);
     await sql(
       `UPDATE people SET name=$2, social_profile=$3, social_url=$4, organization=$5, furbaby_name=$6,
          furbaby_breeds=CASE WHEN $8 THEN $7 ELSE furbaby_breeds END, updated_at=now() WHERE id=$1`,

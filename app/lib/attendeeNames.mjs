@@ -18,3 +18,11 @@ export function joinFurbabyNames(input, furbabies) {
   const list = Array.isArray(input) ? input.slice(0, Math.max(0, Number(furbabies) || 0)) : [];
   return list.map((name) => clean(name, 60)).filter(Boolean).join(", ").slice(0, 240);
 }
+
+/** The saved furbaby line → one name per furbaby: "Khalee and Audrey", "Mochi, Fudge & Pao". */
+export function splitFurbabyNames(text) {
+  return String(text ?? "")
+    .split(/\s*,\s*(?:and\s+)?|\s+and\s+|\s*&\s*/i)
+    .map((name) => name.trim())
+    .filter(Boolean);
+}

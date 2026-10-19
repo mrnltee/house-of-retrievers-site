@@ -114,6 +114,9 @@ export async function POST(request) {
   // Field names and nesting are dictated by the Apps Script in
   // scripts/apps-script/Code.gs — change both together or submissions are
   // rejected as "Select a join type."
+  // One breed per furbaby (the form sends furbabyBreeds + furbabyCount; older forms send one furbabyBreed).
+  const joinFurbabies = Math.min(10, Math.max(1, Number(body?.furbabyCount) || 1));
+  const joinBreeds = cleanBreeds(Array.isArray(body?.furbabyBreeds) ? body.furbabyBreeds : body?.furbabyBreed, joinFurbabies);
   const payload = {
     secret,
     submission: {
@@ -125,7 +128,8 @@ export async function POST(request) {
       organization: clean(body?.organization, LIMITS.organization),
       furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
       // Older copies of the Apps Script ignore this; the current one adds it as the last column.
-      furbabyBreed: breedLabel(cleanBreeds(body?.furbabyBreed, 1)?.[0] || ""),
+      // Several furbabies: their breeds, in order, as one line ("Golden Retriever, Aspin").
+      furbabyBreed: (joinBreeds || []).filter(Boolean).map(breedLabel).join(", "),
       photo,
       photoName: clean(body?.photoName, LIMITS.photoName),
       message: clean(body?.message, LIMITS.message),
@@ -188,7 +192,7 @@ export async function POST(request) {
              last_joined_at = now(),
              updated_at = now()
            RETURNING id, joined_count`,
-          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null, cleanBreeds(body?.furbabyBreed, 1)],
+          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null, joinBreeds],
         );
         joined = person;
         await logActivity("Join form", person.joined_count > 1 ? "person.rejoin" : "person.join", s.name, { personId: person.id, kind: s.joinType });

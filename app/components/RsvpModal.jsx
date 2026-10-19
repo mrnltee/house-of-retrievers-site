@@ -8,25 +8,12 @@ import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { PUBLIC_MAX_FURBABIES, PUBLIC_MAX_HUMANS, calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import BreedSelect from "./BreedSelect";
+import Stepper from "./Stepper";
 import { joinFurbabyNames } from "../lib/attendeeNames.mjs";
 
 /** The ticket value for "Join the dog waitlist" (not an index into the price list). */
 const DOG_WAITLIST = -2;
 
-/** A number field with − / + buttons on one row. */
-function Stepper({ label, name, value, min, max, onChange }) {
-  const n = Number(value) || 0;
-  const set = (next) => onChange(String(Math.max(min, Math.min(max, next))));
-  return (
-    <label className="rsvp-stepper">{label}
-      <span className="rsvp-stepper-row">
-        <input required type="number" name={name} min={min} max={max} value={value} onChange={(e) => onChange(e.target.value)} inputMode="numeric" />
-        <button type="button" onClick={() => set(n - 1)} disabled={n <= min} aria-label={`One fewer: ${label}`}>−</button>
-        <button type="button" onClick={() => set(n + 1)} disabled={n >= max} aria-label={`One more: ${label}`}>+</button>
-      </span>
-    </label>
-  );
-}
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImageWithin } from "../lib/resizeImage";
 import { vaccinationBudget } from "../lib/vaccinationRecords.mjs";
