@@ -423,6 +423,11 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .furbaby-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .furbaby-options label { display: flex; align-items: center; gap: 9px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #65695f; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .furbaby-options label.selected { border-color: var(--forest); background: var(--gold); color: var(--ink); }
+.join-modal .furbaby-options:has(> label:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 600px) { .join-modal .furbaby-options:has(> label:nth-child(3)) { grid-template-columns: 1fr; } }
+.rainbow-note { margin: 10px 0 0; font-style: italic; }
+.rsvp-furbaby-row .rainbow-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: -4px 0 0; text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 13px; color: var(--ink); }
+.rsvp-furbaby-row .rainbow-check input { width: auto; accent-color: var(--gold); }
 .furbaby-options input { width: auto; margin: 0; accent-color: var(--gold); }
 .profile-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .profile-label-row label { margin: 0; }

@@ -59,7 +59,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`050_…sql`**).
+     number (the next one is **`051_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -202,6 +202,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 047 | `events.tiers_hide_later` (show later prices only once they open) |
 | 048 | refunds on registrations (`refund_amount`, method, reference, when, who) |
 | 049 | `registrations.hold_reminded_at` / `hold_reminders` |
+| 050 | `people.furbaby_rainbow` (furbabies over the rainbow bridge) |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.

@@ -539,3 +539,13 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .furbaby-list { display: inline-flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .furbaby-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .furbaby-item img { flex: none; display: block; }
+
+/* A furbaby who crossed the rainbow bridge: a soft gold halo floating above the icon. */
+.furbaby-icon { position: relative; display: inline-block; flex: none; }
+.furbaby-icon img { display: block; width: 100%; height: 100%; }
+.furbaby-halo { position: absolute; left: 18%; right: 18%; top: -2%; height: 24%; z-index: 1; border: 2.5px solid #d4ab45; border-radius: 50%; box-shadow: 0 0 6px rgba(212, 171, 69, .6), inset 0 0 3px rgba(212, 171, 69, .45); pointer-events: none; }
+.furbaby-item.is-remembered { padding-top: 3px; }
+.furbaby-item.is-remembered .furbaby-icon img { opacity: .9; }
+@media (prefers-reduced-motion: no-preference) { .furbaby-halo { animation: halo-glow 4s ease-in-out infinite; } }
+@keyframes halo-glow { 0%, 100% { box-shadow: 0 0 4px rgba(201, 162, 74, .4); } 50% { box-shadow: 0 0 9px rgba(201, 162, 74, .7); } }
+.breed-select-row .rainbow-check { display: flex; align-items: center; gap: 8px; font-size: 13px; }

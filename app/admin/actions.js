@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanRainbow, livingFurbabyNames } from "../lib/attendeeNames.mjs";
 import { cleanCustomQuestions } from "../lib/customQuestions.mjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -383,10 +384,12 @@ export async function updatePersonDetails(data) {
     const furbabyName = form(data, "furbabyName").trim().replace(/\s+/g, " ").slice(0, 120) || null;
     const furbabyCount = Math.min(10, Math.max(0, Number(form(data, "furbabyCount")) || 0)) || (furbabyName ? 1 : 0);
     const breeds = cleanBreeds(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabyBreed${i}`)), furbabyCount);
+    const rainbow = cleanRainbow(Array.from({ length: furbabyCount }, (_, i) => data.get(`furbabyRainbow${i}`) === "on"), furbabyCount);
     await sql(
       `UPDATE people SET name=$2, social_profile=$3, social_url=$4, organization=$5, furbaby_name=$6,
-         furbaby_breeds=CASE WHEN $8 THEN $7 ELSE furbaby_breeds END, updated_at=now() WHERE id=$1`,
-      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent")],
+         furbaby_breeds=CASE WHEN $8 THEN $7 ELSE furbaby_breeds END,
+         furbaby_rainbow=CASE WHEN $10 THEN $9 ELSE furbaby_rainbow END, updated_at=now() WHERE id=$1`,
+      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent"), rainbow, data.has("rainbowSent")],
     );
     await logActivity(admin.email, "person.details", person.kind, { personId: id });
     await backWith(back, "ok", `Saved ${name}'s details.`);
@@ -415,7 +418,7 @@ export async function updatePerson(data) {
  * kind), an Acceptance template's id, or "none".
  */
 async function welcomeFor(choice, person, number) {
-  const base = { name: person.name, memberNo: number, furbaby: person.furbaby_name || "", organization: person.organization || "", kind: person.kind };
+  const base = { name: person.name, memberNo: number, furbaby: livingFurbabyNames(person.furbaby_name, person.furbaby_rainbow), organization: person.organization || "", kind: person.kind };
   if (choice === "standard") return { mail: welcomeMember({ ...base, custom: await loadTemplate(welcomeKey(person.kind)) }), template: "welcome" };
   const own = isUuid(choice) ? await loadCustomTemplate(choice, "acceptance") : null;
   if (own) return { mail: welcomeMember({ ...base, custom: own, ref: "custom:acceptance" }), template: own.name };
@@ -435,7 +438,7 @@ export async function updateMembership(data) {
     const admin = await actionAdmin("people:edit");
     const membership = form(data, "membership");
     if (!isUuid(id) || !MEMBERSHIP_KEYS.includes(membership)) await backWith(back, "error", "Pick a membership status from the list.");
-    const [before] = await sql("SELECT name, email, kind, membership, member_no, furbaby_name, organization FROM people WHERE id=$1", [id]);
+    const [before] = await sql("SELECT name, email, kind, membership, member_no, furbaby_name, furbaby_rainbow, organization FROM people WHERE id=$1", [id]);
     if (!before || !hasMembership(before.kind)) await backWith(back, "error", "Membership applies to Members and Volunteers only.");
     // First activation takes the next number for their kind in the year they
     // registered (YY = Join form year, Manila). The lock makes two admins
@@ -484,7 +487,7 @@ export async function resendWelcome(data) {
   const back = isUuid(id) ? `/people/${id}` : "/people";
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
-    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year, furbaby_name, organization FROM people WHERE id=$1", [id]) : [];
+    const [person] = isUuid(id) ? await sql("SELECT name, email, kind, membership, member_no, member_year, furbaby_name, furbaby_rainbow, organization FROM people WHERE id=$1", [id]) : [];
     if (!person || !hasMembership(person.kind) || person.membership !== "active") await backWith(back, "error", "Only active members and volunteers get the welcome email.");
     const { mail } = await welcomeFor("standard", person, memberNumber(person));
     const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `welcome/${id}/${Date.now()}` });
@@ -504,7 +507,7 @@ export async function sendTemplateToPerson(data) {
   const back = isUuid(id) ? `/people/${id}` : "/people";
   return guarded(back, async () => {
     const admin = await actionAdmin("people:edit");
-    const [person] = isUuid(id) ? await sql("SELECT id, name, email, kind, member_no, member_year, furbaby_name, organization FROM people WHERE id=$1", [id]) : [];
+    const [person] = isUuid(id) ? await sql("SELECT id, name, email, kind, member_no, member_year, furbaby_name, furbaby_rainbow, organization FROM people WHERE id=$1", [id]) : [];
     if (!person) await backWith("/people", "error", "That person is no longer in People.");
     const template = await loadCustomTemplate(form(data, "templateId"), "acceptance");
     if (!template) await backWith(back, "error", "Pick one of your Acceptance templates.");
@@ -513,7 +516,7 @@ export async function sendTemplateToPerson(data) {
       const [rec] = await sql("SELECT code, number_year, number_no FROM supporters WHERE person_id = $1 OR lower(name) = lower($2) LIMIT 1", [id, (person.organization || person.name || "").trim()]);
       number = supporterNumber(rec);
     }
-    const mail = acceptanceEmail({ person: { name: person.name, furbaby: person.furbaby_name || "", organization: person.organization || "", kind: person.kind, memberNo: number }, custom: template });
+    const mail = acceptanceEmail({ person: { name: person.name, furbaby: livingFurbabyNames(person.furbaby_name, person.furbaby_rainbow), organization: person.organization || "", kind: person.kind, memberNo: number }, custom: template });
     const sent = await sendEmail({ to: person.email, ...mail, idempotencyKey: `custom/${template.id}/${id}/${Date.now()}` });
     if (!sent.ok) await backWith(back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The email didn't go through. Try again in a moment.");
     await logActivity(admin.email, "person.email", person.name, { personId: id, template: template.name });

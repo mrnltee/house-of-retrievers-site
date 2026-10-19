@@ -17,7 +17,7 @@ import PersonPhotoField from "../PersonPhotoField";
 import ConfirmMembership from "../ConfirmMembership";
 import ConfirmButton from "../../ConfirmButton";
 import FurbabyList from "../../registrations/FurbabyList";
-import { splitFurbabyNames } from "../../../../lib/attendeeNames.mjs";
+import { livingFurbabyNames, splitFurbabyNames } from "../../../../lib/attendeeNames.mjs";
 import BreedFields from "../../registrations/BreedFields";
 import { updatePersonDetails } from "../../../actions";
 
@@ -78,7 +78,7 @@ export default async function PersonPage({ params, searchParams }) {
             <div><dt>Email</dt><dd><a href={`mailto:${person.email}`}>{person.email}</a></dd></div>
             {person.social_profile && <div><dt>Social</dt><dd>{person.social_url ? <a href={person.social_url} target="_blank" rel="noreferrer">{person.social_profile}</a> : person.social_profile}</dd></div>}
             {person.organization && <div><dt>Organization</dt><dd>{person.organization}</dd></div>}
-            {(person.furbaby_name || person.furbaby_breeds?.some(Boolean)) && <div><dt>{splitFurbabyNames(person.furbaby_name).length > 1 || (person.furbaby_breeds || []).length > 1 ? "Furbabies" : "Furbaby"}</dt><dd><FurbabyList names={person.furbaby_name} breeds={person.furbaby_breeds} size={24} /></dd></div>}
+            {(person.furbaby_name || person.furbaby_breeds?.some(Boolean)) && <div><dt>{splitFurbabyNames(person.furbaby_name).length > 1 || (person.furbaby_breeds || []).length > 1 ? "Furbabies" : "Furbaby"}</dt><dd><FurbabyList names={person.furbaby_name} breeds={person.furbaby_breeds} rainbow={person.furbaby_rainbow} size={24} /></dd></div>}
             <div><dt>Joined</dt><dd>{formatWhen(person.created_at)}{person.joined_count > 1 && <> · sent the form {person.joined_count} times, last {formatWhen(person.last_joined_at)}</>}</dd></div>
             {others.length > 0 && <div><dt>Also</dt><dd>{others.map((o) => <a key={o.id} href={`${base}/people/${o.id}`} className="chip" style={{ marginRight: 6 }}>{o.kind}</a>)}</dd></div>}
           </dl>
@@ -99,7 +99,7 @@ export default async function PersonPage({ params, searchParams }) {
                   <label className="field"><span>Furbaby names <small>Optional. Separate with commas, e.g. Khalee, Audrey</small></span><input name="furbabyName" maxLength={120} defaultValue={person.furbaby_name || ""} /></label>
                   <label className="field"><span>Furbabies</span><input name="furbabyCount" type="number" min={0} max={10} defaultValue={Math.max(splitFurbabyNames(person.furbaby_name).length, (person.furbaby_breeds || []).length, person.furbaby_name ? 1 : 0)} /></label>
                 </div>
-                <BreedFields initial={person.furbaby_breeds || []} count={Math.max(splitFurbabyNames(person.furbaby_name).length, (person.furbaby_breeds || []).length, person.furbaby_name ? 1 : 0)} />
+                <BreedFields initial={person.furbaby_breeds || []} rainbow={person.furbaby_rainbow || []} showRainbow count={Math.max(splitFurbabyNames(person.furbaby_name).length, (person.furbaby_breeds || []).length, person.furbaby_name ? 1 : 0)} />
                 <div className="actions"><ConfirmButton title={`Save ${person.name}'s details?`} items={["Their name, social profile, furbaby and breed are updated", "Their email, membership, number and history stay the same", "Nothing is emailed"]} yes="Yes, save details">Save details</ConfirmButton></div>
               </form>
             </details>
@@ -204,7 +204,7 @@ export default async function PersonPage({ params, searchParams }) {
                   email={person.email}
                   ready={ready}
                   templates={acceptance.map((t) => ({ id: t.id, name: t.name, subject: t.subject, greeting: t.greeting, heading: t.heading, message: t.message }))}
-                  person={{ name: person.name, furbaby: person.furbaby_name || "", organization: person.organization || "", kind: person.kind, memberNo: number }}
+                  person={{ name: person.name, furbaby: livingFurbabyNames(person.furbaby_name, person.furbaby_rainbow), organization: person.organization || "", kind: person.kind, memberNo: number }}
                 />
               ) : (
                 <p className="small muted">Write an Acceptance template in <a href={`${base}/emails/new?kind=acceptance`}>Email templates</a> to send it from here, e.g. when you accept a volunteer, partner or sponsor.</p>

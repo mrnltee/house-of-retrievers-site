@@ -1,3 +1,4 @@
+import { cleanRainbow, livingFurbabyNames, sheetFurbabyNames } from "../../lib/attendeeNames.mjs";
 import { NextResponse } from "next/server";
 import { parseSocialProfile } from "../../lib/socialProfile";
 import { hasDatabase, sql } from "../../lib/db";
@@ -117,6 +118,9 @@ export async function POST(request) {
   // One breed per furbaby (the form sends furbabyBreeds + furbabyCount; older forms send one furbabyBreed).
   const joinFurbabies = Math.min(10, Math.max(1, Number(body?.furbabyCount) || 1));
   const joinBreeds = cleanBreeds(Array.isArray(body?.furbabyBreeds) ? body.furbabyBreeds : body?.furbabyBreed, joinFurbabies);
+  // Furbabies who crossed the rainbow bridge: saved per furbaby, and a 🌈 after their name on the Sheet.
+  const joinRainbow = cleanRainbow(body?.furbabyRainbow, joinFurbabies);
+  const joinNames = clean(body?.furbabyName, LIMITS.furbabyName);
   const payload = {
     secret,
     submission: {
@@ -126,7 +130,7 @@ export async function POST(request) {
       socialProfile: social ? social.display : "",
       socialUrl: social ? social.url : "",
       organization: clean(body?.organization, LIMITS.organization),
-      furbabyName: clean(body?.furbabyName, LIMITS.furbabyName),
+      furbabyName: joinRainbow && Array.isArray(body?.furbabyNames) ? sheetFurbabyNames(body.furbabyNames, joinRainbow, joinFurbabies) : joinNames,
       // Older copies of the Apps Script ignore this; the current one adds it as the last column.
       // Several furbabies: their breeds, in order, as one line ("Golden Retriever, Aspin").
       furbabyBreed: (joinBreeds || []).filter(Boolean).map(breedLabel).join(", "),
@@ -176,8 +180,8 @@ export async function POST(request) {
         // One record per person and kind: joining again updates it, keeps the
         // follow-up status and adds the new message under the old one.
         const [person] = await sql(
-          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership, furbaby_breeds)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END, $9)
+          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership, furbaby_breeds, furbaby_rainbow)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END, $9, $10)
            ON CONFLICT (kind, lower(email)) DO UPDATE SET
              name = EXCLUDED.name,
              social_profile = COALESCE(EXCLUDED.social_profile, people.social_profile),
@@ -185,6 +189,8 @@ export async function POST(request) {
              organization = COALESCE(EXCLUDED.organization, people.organization),
              furbaby_name = COALESCE(EXCLUDED.furbaby_name, people.furbaby_name),
              furbaby_breeds = COALESCE(EXCLUDED.furbaby_breeds, people.furbaby_breeds),
+             -- A new list of furbabies replaces the rainbow flags too (none ticked clears them).
+             furbaby_rainbow = CASE WHEN EXCLUDED.furbaby_name IS NOT NULL OR EXCLUDED.furbaby_breeds IS NOT NULL THEN EXCLUDED.furbaby_rainbow ELSE people.furbaby_rainbow END,
              message = CASE WHEN EXCLUDED.message IS NULL THEN people.message
                             WHEN people.message IS NULL THEN EXCLUDED.message
                             ELSE people.message || E'\n\n' || EXCLUDED.message END,
@@ -192,7 +198,7 @@ export async function POST(request) {
              last_joined_at = now(),
              updated_at = now()
            RETURNING id, joined_count`,
-          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, s.furbabyName || null, s.message || null, joinBreeds],
+          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, joinNames || null, s.message || null, joinBreeds, joinRainbow],
         );
         joined = person;
         await logActivity("Join form", person.joined_count > 1 ? "person.rejoin" : "person.join", s.name, { personId: person.id, kind: s.joinType });
@@ -205,7 +211,7 @@ export async function POST(request) {
     // "We got your application", straight away. Best effort: no email setup, no email.
     const again = (joined?.joined_count || 1) > 1;
     const custom = again ? null : await loadTemplate(receivedKey(interest));
-    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again, furbaby: payload.submission.furbabyName || "", organization: payload.submission.organization || "", custom });
+    const mail = applicationReceived({ name: payload.submission.name, kind: interest, again, furbaby: livingFurbabyNames(joinNames, joinRainbow), organization: payload.submission.organization || "", custom });
     await sendEmail({
       to: payload.submission.email,
       ...mail,
