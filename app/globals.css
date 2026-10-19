@@ -1409,3 +1409,9 @@ main:focus { outline: none; }
 .event-tier-table li.is-ended { color: var(--muted-on-light); }
 .event-tier-table li.is-ended strong { text-decoration: line-through; font-weight: 600; }
 .ticket-options .ticket-until { display: block; font-size: 12px; font-weight: 600; color: var(--gold-on-light); }
+
+/* A furbaby who crossed the rainbow bridge: a soft gold halo resting on the icon (Join form; the admin has the same in admin.css). */
+.breed-select-icon.has-halo { position: relative; }
+.breed-select-icon .furbaby-halo { position: absolute; left: 18%; right: 18%; top: -2%; height: 24%; z-index: 1; border: 2.5px solid #d4ab45; border-radius: 50%; box-shadow: 0 0 6px rgba(212, 171, 69, .6), inset 0 0 3px rgba(212, 171, 69, .45); pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) { .breed-select-icon .furbaby-halo { animation: halo-glow 4s ease-in-out infinite; } }
+@keyframes halo-glow { 0%, 100% { box-shadow: 0 0 4px rgba(212, 171, 69, .4); } 50% { box-shadow: 0 0 9px rgba(212, 171, 69, .7); } }

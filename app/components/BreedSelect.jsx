@@ -11,7 +11,8 @@ const OPTIONS = [{ key: "", label: "Choose a breed (optional)", icon: false }, .
  * typing a letter move; Enter or Space picks; Escape or Tab closes.
  * The chosen key travels in a hidden input named `name`.
  */
-export default function BreedSelect({ name, label, value = "", onChange }) {
+/** `halo`: the furbaby crossed the rainbow bridge, so the chosen breed's icon gets a soft gold halo. */
+export default function BreedSelect({ name, label, value = "", onChange, halo = false }) {
   const id = useId();
   const button = useRef(null);
   const list = useRef(null);
@@ -70,7 +71,7 @@ export default function BreedSelect({ name, label, value = "", onChange }) {
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={onButtonKey}
       >
-        <span className="breed-select-icon" aria-hidden="true">{icon ? <img src={icon} alt="" width={28} height={28} /> : null}</span>
+        <span className={`breed-select-icon${halo && icon ? " has-halo" : ""}`} aria-hidden="true">{halo && icon ? <span className="furbaby-halo" /> : null}{icon ? <img src={icon} alt="" width={28} height={28} /> : null}</span>
         <span id={`${id}-value`} className={value ? "" : "breed-select-placeholder"}>{value ? breedLabel(value) : OPTIONS[0].label}</span>
         <span className="breed-select-caret" aria-hidden="true">▾</span>
       </button>
