@@ -175,7 +175,8 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                 ))}
               </div> : null}
               {asksAboutFurbaby && hasFurbaby === "yes" ? <div className="photo-field">
-                <label htmlFor="join-photo">Furbaby photo (optional)</label>
+                <label htmlFor="join-photo">{dogs > 1 ? "A photo of your furbabies together (optional)" : "Furbaby photo (optional)"}</label>
+                {dogs > 1 && !photo ? <small className="photo-hint">One photo with {dogs === 2 ? "both" : `all ${dogs}`} of them in it.</small> : null}
                 {photo ? (
                   <div className="photo-preview">
                     <img src={photo.dataUrl} alt="" />
