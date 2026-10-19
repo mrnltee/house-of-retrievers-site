@@ -5,7 +5,7 @@ import { sql } from "../../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
 import { can } from "../../../../../../lib/admin/roles.mjs";
 import { ADMIN_PAY_METHODS, FEE_STATUS, REJECT_REASONS, UNPAID, payMethodLabel, referenceKey, ticketLine } from "../../../../../../lib/eventPayments.mjs";
-import { isActiveRegistrationHold } from "../../../../../../lib/registrationHolds.mjs";
+import { DEFAULT_REMINDER_HOLD_MINUTES, REMINDER_HOLD_OPTIONS, isActiveRegistrationHold, isExpiredHold } from "../../../../../../lib/registrationHolds.mjs";
 import { WELCOME_PHOTO_SOURCE_LABELS } from "../../../../../../lib/welcomePhoto.mjs";
 import { welcomePhotoFor } from "../../../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../../../WelcomeAvatar";
@@ -15,7 +15,7 @@ import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../../../lib/registrationPricing.mjs";
-import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, resendPass, updateRegistration } from "../../../../../registrationActions";
+import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, remindExpiredHolds, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
 import ImageLightbox from "../../../ImageLightbox";
@@ -206,6 +206,20 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 {reg.under_18 && <label className="field"><span>Guardian&apos;s name</span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
                 <label className="check"><input type="checkbox" name="sendEmail" /> <span>Send the updated confirmation or payment instructions after saving</span></label>
                 <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["The paid status, payment amount, reference and QR pass stay unchanged"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
+              </form>
+            </section>
+          )}
+
+          {canFees && isExpiredHold(reg) && (
+            <section className="card form" style={{ gap: 12 }}>
+              <h2 style={{ margin: 0 }}>Payment hold expired</h2>
+              <p className="small muted">Their time to pay ran out {formatWhen(reg.hold_expires_at)}{reg.hold_reminders ? ` · reminded ${reg.hold_reminders}× (last ${formatWhen(reg.hold_reminded_at)})` : ""}. A reminder holds the spot again if there&apos;s still room, and emails {reg.email} their payment link with the new deadline.</p>
+              <form action={remindExpiredHolds} className="form" style={{ gap: 12 }}>
+                <input type="hidden" name="id" value={reg.id} />
+                <label className="field"><span>Hold their spot again for</span>
+                  <select name="minutes" defaultValue={DEFAULT_REMINDER_HOLD_MINUTES}>{REMINDER_HOLD_OPTIONS.map(([m, label]) => <option key={m} value={m}>{label}</option>)}</select>
+                </label>
+                <div className="actions"><ConfirmButton className="btn gold" title={`Send ${reg.name} a payment reminder?`} items={["If there's still room, their spot is held again for the time you picked", `${reg.email} is emailed their payment link and the new deadline`, "If there's no room left, nothing is sent and you'll see why"]} yes="Yes, send reminder">Send payment reminder</ConfirmButton></div>
               </form>
             </section>
           )}

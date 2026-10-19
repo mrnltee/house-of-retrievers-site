@@ -78,3 +78,22 @@ export function lateProofFits({ capacity = null, capacityUsed = 0, capacityUnits
   if (tierLimit && Number(tierUnits) > (tierLeft ?? Infinity)) return false;
   return true;
 }
+
+/** A confirmed, unpaid registration whose payment hold ran out (the "Hold expired" tab). */
+export function isExpiredHold(reg, now = new Date()) {
+  return reg?.status === "confirmed" && !reg.deleted_at && reg.fee_status === "waiting" && Boolean(reg.hold_expires_at)
+    && new Date(reg.hold_expires_at).getTime() <= new Date(now).getTime();
+}
+
+/** How long a "Send payment reminder" holds the spot again. */
+export const REMINDER_HOLD_OPTIONS = [
+  [60, "1 hour"],
+  [120, "2 hours"],
+  [1440, "24 hours"],
+];
+export const DEFAULT_REMINDER_HOLD_MINUTES = 120;
+
+export function cleanReminderHoldMinutes(input) {
+  const minutes = Number(input);
+  return REMINDER_HOLD_OPTIONS.some(([m]) => m === minutes) ? minutes : DEFAULT_REMINDER_HOLD_MINUTES;
+}

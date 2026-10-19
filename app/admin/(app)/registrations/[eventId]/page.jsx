@@ -5,11 +5,11 @@ import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { FEE_STATUS, payMethodLabel, referenceKey, ticketLine } from "../../../../lib/eventPayments.mjs";
 import { changeRegistration } from "../../../actions";
-import { deleteRegistration, manualCheckIn, restoreRegistration, undoCheckIn } from "../../../registrationActions";
+import { deleteRegistration, manualCheckIn, remindExpiredHolds, restoreRegistration, undoCheckIn } from "../../../registrationActions";
 import { manualCheckInWarnings } from "../../../../lib/manualCheckIn.mjs";
 import { manilaParts } from "../../../../lib/rsvpOpens.mjs";
 import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
-import { isActiveRegistrationHold } from "../../../../lib/registrationHolds.mjs";
+import { DEFAULT_REMINDER_HOLD_MINUTES, REMINDER_HOLD_OPTIONS, isActiveRegistrationHold, isExpiredHold } from "../../../../lib/registrationHolds.mjs";
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
 import BreedIcons from "../BreedIcons";
@@ -17,7 +17,7 @@ import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
-const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
+const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
 
 /**
@@ -62,6 +62,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       : filter === "notchecked" ? r.status === "confirmed" && !r.checked_in_at
         : filter === "check" ? r.status === "confirmed" && r.fee_status === "review"
           : filter === "pending" ? r.status === "confirmed" && (r.fee_status === "waiting" || r.fee_status === "rejected")
+            : filter === "expired" ? isExpiredHold(r)
             : filter === "paid" ? r.status === "confirmed" && r.fee_status === "paid"
               : r.status === filter,
   );
@@ -74,7 +75,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const canFees = can(admin.roles, "registrations:fees");
   const counts = {
     all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, notchecked: confirmed.length - checked.length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
-    check: toCheck.length, pending: pending.length, paid: paid.length,
+    check: toCheck.length, pending: pending.length, paid: paid.length, expired: current.filter((r) => isExpiredHold(r)).length,
   };
   const waitPosition = new Map(waitlist.map((r, i) => [r.id, i + 1]));
   const publicHumans = confirmed.filter((r) => !r.added_by && isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at })).reduce((sum, r) => sum + (r.human_count ?? 1), 0);
@@ -114,6 +115,18 @@ export default async function EventRegistrations({ params, searchParams }) {
         ))}
       </nav>
 
+      {filter === "expired" && canFees && counts.expired > 0 && (
+        <form action={remindExpiredHolds} className="card form remind-all">
+          <input type="hidden" name="eventId" value={event.id} />
+          <input type="hidden" name="all" value="1" />
+          <p className="small" style={{ margin: 0 }}><strong>Their payment time ran out.</strong> A reminder holds each spot again (if there&apos;s still room) and emails their payment link with the new deadline. Anyone who no longer fits is skipped and listed.</p>
+          <label className="field"><span>Hold their spot again for</span>
+            <select name="minutes" defaultValue={DEFAULT_REMINDER_HOLD_MINUTES}>{REMINDER_HOLD_OPTIONS.map(([m, label]) => <option key={m} value={m}>{label}</option>)}</select>
+          </label>
+          <ConfirmButton className="btn gold" title={`Remind all ${counts.expired} with an expired hold?`} items={["Each one that still fits gets their spot held again and an email with their payment link and new deadline", "Anyone with no room left is skipped (no email)"]} yes="Yes, send reminders">Remind all · {counts.expired}</ConfirmButton>
+        </form>
+      )}
+
       <div className="table-wrap">
         <table className="registrations-table">
           <thead>
@@ -136,7 +149,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
                         {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
-                        {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span></>)}
+                        {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span>{r.hold_reminders ? <span className="small muted"> · reminded {r.hold_reminders}×</span> : null}</>)}
                         {twins.length > 0 && <><br /><span className="small danger-text">⚠ Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
                       </td>
                     </>

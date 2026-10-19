@@ -4,6 +4,9 @@ import {
   ACTIVE_REGISTRATION_SQL,
   DEFAULT_PAYMENT_HOLD_MINUTES,
   cleanPaymentHoldMinutes,
+  cleanReminderHoldMinutes,
+  isExpiredHold,
+  REMINDER_HOLD_OPTIONS,
   holdLabel,
   holdParts,
   holdExpiresAt,
@@ -67,4 +70,23 @@ test("lateProofFits: a late receipt is accepted only while capacity and the tick
   assert.equal(lateProofFits({ tierLimit: 20, tierLeft: 1, tierUnits: 1 }), true);
   assert.equal(lateProofFits({ tierLimit: 20, tierLeft: 0, tierUnits: 1 }), false);
   assert.equal(lateProofFits({ tierLimit: null, tierLeft: 0, tierUnits: 5 }), true);
+});
+
+test("isExpiredHold: a confirmed, unpaid registration whose payment hold ran out", () => {
+  const now = new Date("2026-10-19T03:00:00Z");
+  const base = { status: "confirmed", fee_status: "waiting", deleted_at: null, hold_expires_at: "2026-10-19T02:00:00Z" };
+  assert.equal(isExpiredHold(base, now), true);
+  assert.equal(isExpiredHold({ ...base, hold_expires_at: "2026-10-19T04:00:00Z" }, now), false);
+  assert.equal(isExpiredHold({ ...base, hold_expires_at: null }, now), false);
+  assert.equal(isExpiredHold({ ...base, fee_status: "review" }, now), false);
+  assert.equal(isExpiredHold({ ...base, status: "waitlist" }, now), false);
+  assert.equal(isExpiredHold({ ...base, deleted_at: "2026-10-19T02:30:00Z" }, now), false);
+});
+
+test("cleanReminderHoldMinutes: one of the offered second-chance holds, else 2 hours", () => {
+  assert.equal(cleanReminderHoldMinutes("60"), 60);
+  assert.equal(cleanReminderHoldMinutes("1440"), 1440);
+  assert.equal(cleanReminderHoldMinutes("7"), 120);
+  assert.equal(cleanReminderHoldMinutes(undefined), 120);
+  assert.deepEqual(REMINDER_HOLD_OPTIONS.map(([m]) => m), [60, 120, 1440]);
 });

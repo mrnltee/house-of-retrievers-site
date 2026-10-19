@@ -12,7 +12,8 @@ import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../
 import { deletionState } from "../lib/registrationRecovery.mjs";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, overpaidBy, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
-import { ACTIVE_REGISTRATION_SQL, isActiveRegistrationHold } from "../lib/registrationHolds.mjs";
+import { ACTIVE_REGISTRATION_SQL, REMINDER_HOLD_OPTIONS, cleanReminderHoldMinutes, isActiveRegistrationHold, isExpiredHold } from "../lib/registrationHolds.mjs";
+import { expiredHoldFits } from "../lib/expiredHoldFit";
 import { can } from "../lib/admin/roles.mjs";
 import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
@@ -501,6 +502,61 @@ export async function useInitialsWelcomePhoto(data) {
 }
 
 /** Check in someone the door missed (forgot to scan, internet down), at the time they actually arrived. */
+/**
+ * "Send payment reminder" on registrations whose payment hold ran out: for each
+ * one that still fits the event (capacity, its ticket's first-N units, the
+ * hooman limit; checked under the event lock), hold the spot again for the
+ * chosen time and email them their payment link with the new deadline. One
+ * registration (`id`) or every expired hold of an event (`eventId` + `all`).
+ * Ones with no room left are left as they are and listed in the result.
+ */
+export async function remindExpiredHolds(data) {
+  const id = form(data, "id");
+  const eventId = form(data, "eventId");
+  const all = form(data, "all") === "1";
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:fees");
+    const minutes = cleanReminderHoldMinutes(form(data, "minutes"));
+    const first = !all && isUuid(id) ? await registration(id) : null;
+    const event = all ? (isUuid(eventId) ? eventId : null) : first?.event_id;
+    if (!event) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = all ? `/registrations/${event}?show=expired` : pagePath(first);
+    const outcome = await transaction(async (tx) => {
+      await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [event]);
+      const rows = await tx.sql(
+        `SELECT r.*, e.title, e.capacity, e.capacity_basis, e.pricing_basis, e.price_tiers, e.cost, e.max_public_humans
+           FROM registrations r JOIN events e ON e.id = r.event_id
+          WHERE r.event_id = $1 ${all ? "" : "AND r.id = $2"} ORDER BY r.created_at`,
+        all ? [event] : [event, id],
+      );
+      const reminded = [];
+      const full = [];
+      for (const reg of rows.filter((r) => isExpiredHold(r))) {
+        if (!(await expiredHoldFits(tx, reg))) { full.push(reg.name); continue; }
+        await tx.sql(
+          "UPDATE registrations SET hold_expires_at = now() + make_interval(mins => $2), hold_reminded_at = now(), hold_reminders = hold_reminders + 1 WHERE id = $1 AND fee_status = 'waiting'",
+          [reg.id, minutes],
+        );
+        reminded.push(reg);
+      }
+      return { reminded, full, title: rows[0]?.title || "" };
+    });
+    if (!outcome.reminded.length && !outcome.full.length) await backWith(back, "error", "There's no expired payment hold to remind.");
+    let emailed = 0;
+    for (const reg of outcome.reminded) {
+      const sent = await sendSpotHeld(reg.id, { again: true });
+      if (sent.ok) emailed += 1;
+      await logActivity(admin.email, "registration.remind", outcome.title, { registrationId: reg.id, minutes, emailed: Boolean(sent.ok) });
+    }
+    revalidatePath("/events", "layout");
+    const held = REMINDER_HOLD_OPTIONS.find(([m]) => m === minutes)?.[1] || `${minutes} minutes`;
+    const parts = [];
+    if (outcome.reminded.length) parts.push(`${outcome.reminded.map((r) => r.name).join(", ")}: spot held again for ${held}. ${emailed === outcome.reminded.length ? "Reminder emailed." : emailed ? `${emailed} of ${outcome.reminded.length} reminders emailed; let the others know.` : "Email isn't sent; let them know."}`);
+    if (outcome.full.length) parts.push(`No room left for ${outcome.full.join(", ")}, so they weren't reminded. Offer Regular, Hooman only or the dog waitlist instead.`);
+    await backWith(back, outcome.reminded.length ? "ok" : "error", parts.join(" "));
+  });
+}
+
 export async function manualCheckIn(data) {
   const id = form(data, "id");
   return guarded("/registrations", async () => {

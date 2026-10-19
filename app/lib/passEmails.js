@@ -14,7 +14,7 @@ import { formatOpens } from "./rsvpOpens.mjs";
 
 async function load(registrationId) {
   const [row] = await sql(
-    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at,
+    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at, r.hold_reminders,
             e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment, e.rsvp_form_config
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
@@ -77,12 +77,13 @@ export async function sendPass(registrationId, { paid = false, again = false } =
 }
 
 /** Paid event, straight after the RSVP: the spot is held, here's how to pay. */
-export async function sendSpotHeld(registrationId) {
+export async function sendSpotHeld(registrationId, { again = false } = {}) {
   const row = await load(registrationId);
   if (!row) return { ok: false };
   const deadline = row.hold_expires_at ? formatOpens(new Date(row.hold_expires_at).toISOString()) : "";
-  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount), deadline });
-  return safeSend({ to: row.email, ...mail, idempotencyKey: `held/${row.check_in_code}` });
+  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount), deadline, again });
+  // A reminder is a new email each time (its own key), the first "spot held" note is sent once.
+  return safeSend({ to: row.email, ...mail, idempotencyKey: again ? `held/${row.check_in_code}/again/${row.hold_reminders || 0}` : `held/${row.check_in_code}` });
 }
 
 /** Waitlist note (fixed wording). */

@@ -20,6 +20,7 @@ export const ACTION_LABELS = {
   "registration.add": "Added a registration",
   "registration.edit": "Edited a registration",
   "registration.refund": "Recorded a refund",
+  "registration.remind": "Sent a payment reminder",
   "registration.pass": "Resent a QR pass",
   "registration.export": "Exported registrations",
   "registration.delete": "Moved a registration to Recently deleted",
