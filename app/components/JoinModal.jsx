@@ -178,13 +178,13 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                   <div key={i} className="rsvp-furbaby-row">
                     <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : fieldCopy.furbabyLabel}<input type="text" maxLength={60} placeholder={fieldCopy.furbabyPlaceholder} value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
                     <BreedSelect name={`furbabyBreed${i}`} label={dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} halo={rainbowAt(i)} />
-                    <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>This furbaby is now an angel</span></label>
+                    <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>This furbaby is now an angel 🌈</span></label>
                   </div>
                 ))}
               </div> : null}
               {withFurbabies ? <div className="photo-field">
-                <label htmlFor="join-photo">{dogs > 1 ? "A photo of your furbabies together (optional)" : "Furbaby photo (optional)"}</label>
-                {dogs > 1 && !photo ? <small className="photo-hint">One photo with {dogs === 2 ? "both" : `all ${dogs}`} of them in it.</small> : null}
+                <label htmlFor="join-photo">{dogs > 1 ? "A photo of you and your furbabies (optional)" : "A photo of you and your furbaby (optional)"}</label>
+                {!photo ? <small className="photo-hint">A family photo is perfect. We&apos;ll use it to welcome you at events.</small> : null}
                 {photo ? (
                   <div className="photo-preview">
                     <img src={photo.dataUrl} alt="" />

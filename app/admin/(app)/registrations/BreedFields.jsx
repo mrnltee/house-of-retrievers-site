@@ -36,7 +36,7 @@ export default function BreedFields({ initial = [], count = 1, label = null, rai
       {breeds.slice(0, shown).map((value, i) => (
         <div key={i} className="breed-select-row">
           <BreedSelect name={`furbabyBreed${i}`} label={label || (shown > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)")} value={value} onChange={(key) => setBreeds((list) => list.map((v, j) => (j === i ? key : v)))} />
-          {showRainbow && <label className="check rainbow-check"><input type="checkbox" name={`furbabyRainbow${i}`} checked={gone[i]} onChange={(e) => setGone((list) => list.map((v, j) => (j === i ? e.target.checked : v)))} /> <span>{shown > 1 ? `Furbaby ${i + 1} is now an angel` : "This furbaby is now an angel"}</span></label>}
+          {showRainbow && <label className="check rainbow-check"><input type="checkbox" name={`furbabyRainbow${i}`} checked={gone[i]} onChange={(e) => setGone((list) => list.map((v, j) => (j === i ? e.target.checked : v)))} /> <span>{shown > 1 ? `Furbaby ${i + 1} is now an angel 🌈` : "This furbaby is now an angel 🌈"}</span></label>}
         </div>
       ))}
     </div>
