@@ -1,7 +1,9 @@
 # AGENTS.md — handoff for Codex (and any other coding agent)
 
-You are continuing work that Claude Code and Codex did on this repo through 13 Oct 2026.
+You are continuing work that Claude Code and Codex did on this repo through 19 Oct 2026.
 Read this file fully before you change anything. Then read `CLAUDE.md` in full.
+Then read the latest handoff in `docs/` (`docs/handoff-2026-10-19.md`): the
+current state, the live event's settings and what's waiting on the owner.
 
 - **AGENTS.md** (this file) is *how to work here*: workflow, safety rules,
   conventions, the file map, what's open.
@@ -75,7 +77,7 @@ then built. Plain, warm language matters as much as the code (see §7).
    and upload proof, admin check, QR pass on approval`. Run `git log
    --oneline` for more.
 7. **Definition of done** (every change):
-   - `npm test` passes (Node's built-in runner; about 123 tests in `app/lib/**/*.test.mjs`).
+   - `npm test` passes (Node's built-in runner; about 205 tests in `app/lib/**/*.test.mjs`).
    - `npm run build` passes.
    - You looked at the change in a browser at desktop and at phone width
      (about 390 px), with keyboard only, and with reduced motion on where
@@ -152,7 +154,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–033 (see §6)
+db/migrations/           001–050 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -415,7 +417,10 @@ npx next dev
 - **Payment settings:** approved channels with two-Owner approval.
   `/api/support-details` shows only approved methods.
 
-## 10. Open items (as of 13 Oct 2026)
+## 10. Open items (as of 19 Oct 2026)
+
+The current list of what's waiting on the owner (Cloudinary keys in Vercel,
+two refunds to record, pricing questions) is in `docs/handoff-2026-10-19.md` §4.
 
 Things the owner/HOR does in the admin (not code):
 - Enter the GoTyme details in Payment settings. A second Owner approves.
