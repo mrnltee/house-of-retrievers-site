@@ -26,8 +26,8 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   // Furbabies who crossed the rainbow bridge are part of the pack too.
   const [rainbow, setRainbow] = useState([]);
   const dogs = Math.min(10, Math.max(1, Number(furbabyCount) || 1));
-  // "One waiting at the rainbow bridge" starts every row ticked; a row can still be changed.
-  const rainbowAt = (i) => rainbow[i] ?? hasFurbaby === "rainbow";
+  // "This furbaby is now an angel" (crossed the rainbow bridge), ticked per furbaby.
+  const rainbowAt = (i) => Boolean(rainbow[i]);
   const setAt = (setter, i, v) => setter((list) => { const next = [...list]; next[i] = v; return next; });
   const [photoError, setPhotoError] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -37,7 +37,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const fieldCopy = joinFieldCopy[interest] || joinFieldCopy.Member;
   // Sponsors and partners join as organizations, so no furbaby questions.
   const asksAboutFurbaby = interest === "Member" || interest === "Volunteer";
-  const withFurbabies = asksAboutFurbaby && (hasFurbaby === "yes" || hasFurbaby === "rainbow");
+  const withFurbabies = asksAboutFurbaby && hasFurbaby === "yes";
 
   useEffect(() => {
     const opener = document.activeElement;
@@ -171,14 +171,14 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                 </div>
               </div>
               {profileHelpOpen ? <div className="profile-help" role="dialog" aria-label={`Finding your ${socialPlatform} profile URL`}><div><strong>Find your {socialPlatform} profile link</strong><button type="button" onClick={() => setProfileHelpOpen(false)} aria-label="Close profile link help"><Icon name="close" size={16} /></button></div><ol><li>Open {socialPlatform} and go to your profile.</li><li>Use the <b>Share</b> or <b>···</b> menu.</li><li>Choose <b>Copy profile link</b>, then paste it here.</li></ol><p>Example: <code>{socialPlatform === "Facebook" ? "facebook.com/yourname" : "instagram.com/yourname"}</code></p></div> : null}
-              {asksAboutFurbaby ? <fieldset className="furbaby-question"><legend>Do you have a furbaby?</legend><p className="furbaby-hint">Tell us who you’ll be bringing along.</p><div className="furbaby-options"><label className={hasFurbaby === "yes" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="yes" checked={hasFurbaby === "yes"} onChange={() => { setHasFurbaby("yes"); setRainbow([]); }} /> <span>Yes, I do</span></label><label className={hasFurbaby === "rainbow" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="rainbow" checked={hasFurbaby === "rainbow"} onChange={() => { setHasFurbaby("rainbow"); setRainbow([]); }} /> <span>One waiting at the rainbow bridge 🌈</span></label><label className={hasFurbaby === "no" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="no" checked={hasFurbaby === "no"} onChange={() => { setHasFurbaby("no"); setPhoto(null); }} /> <span>Not yet</span></label></div><p className="furbaby-hint rainbow-note">Furbabies in heaven are part of the pack too.</p></fieldset> : null}
+              {asksAboutFurbaby ? <fieldset className="furbaby-question"><legend>Do you have a furbaby?</legend><p className="furbaby-hint">Tell us who you’ll be bringing along.</p><div className="furbaby-options"><label className={hasFurbaby === "yes" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="yes" checked={hasFurbaby === "yes"} onChange={() => { setHasFurbaby("yes"); setRainbow([]); }} /> <span>Yes, I do</span></label><label className={hasFurbaby === "no" ? "selected" : ""}><input type="radio" name="hasFurbaby" value="no" checked={hasFurbaby === "no"} onChange={() => { setHasFurbaby("no"); setPhoto(null); }} /> <span>Not yet</span></label></div><p className="furbaby-hint rainbow-note">Furbabies in heaven are part of the pack too.</p></fieldset> : null}
               {withFurbabies ? <Stepper label="How many furbabies?" name="furbabyCount" value={furbabyCount} min={1} max={10} onChange={setFurbabyCount} /> : null}
               {withFurbabies ? <div className="rsvp-people">
                 {Array.from({ length: dogs }, (_, i) => (
                   <div key={i} className="rsvp-furbaby-row">
                     <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : fieldCopy.furbabyLabel}<input type="text" maxLength={60} placeholder={fieldCopy.furbabyPlaceholder} value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
                     <BreedSelect name={`furbabyBreed${i}`} label={dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} halo={rainbowAt(i)} />
-                    <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>🌈 Over the rainbow bridge</span></label>
+                    <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>This furbaby is now an angel</span></label>
                   </div>
                 ))}
               </div> : null}
