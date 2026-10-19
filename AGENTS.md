@@ -4,6 +4,7 @@ You are continuing work that Claude Code and Codex did on this repo through 19 O
 Read this file fully before you change anything. Then read `CLAUDE.md` in full.
 Then read the latest handoff in `docs/` (`docs/handoff-2026-10-19.md`): the
 current state, the live event's settings and what's waiting on the owner.
+It ends with an alignment check: do what it says in your first reply.
 
 - **AGENTS.md** (this file) is *how to work here*: workflow, safety rules,
   conventions, the file map, what's open.
