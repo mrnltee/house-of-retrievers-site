@@ -1,4 +1,4 @@
-import Link from "next/link";
+import MediaHeader from "./MediaHeader";
 import LogoMoments from "../components/LogoMoments";
 import { hasDatabase, sql } from "../lib/db";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
@@ -63,21 +63,7 @@ export default async function MediaPage() {
   return (
     <main className="media-hub">
       <a className="skip-link media-skip" href="#media-content">Skip to content</a>
-      <header className="media-header">
-        <div className="media-masthead">
-          <Link className="media-brand" href="/" aria-label="House of Retrievers home">
-          <LogoMoments tone="dark" priority />
-          </Link>
-          <div className="media-orgname" aria-label="The House of Retrievers Society Inc.">The House of Retrievers <span>Society Inc.</span></div>
-        </div>
-        <nav aria-label="Media hub navigation" className="media-nav media-glass-dock">
-          <a href="#about">About</a>
-          <a href="#stories">Stories</a>
-          <a href="#partnerships">Partnerships</a>
-          <a href="#downloads">Downloads</a>
-          <a className="media-nav-contact" href="mailto:houseofretrieversph@gmail.com">Contact media</a>
-        </nav>
-      </header>
+      <MediaHeader />
 
       <section className="media-hero" id="media-content" aria-labelledby="media-title">
         <div className="media-hero-copy">
