@@ -30,6 +30,7 @@ const PERMISSIONS = {
   "payments:approve": ["owner"],
   "admins:manage": ["owner"],
   "log:view": ["owner"],
+  "media:edit": ["owner", "content"],
 };
 
 /** True when any of `roles` grants `capability`. Unknown capabilities are denied. */

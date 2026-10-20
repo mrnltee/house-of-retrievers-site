@@ -151,6 +151,24 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .admin details summary { list-style: none; }
 .admin details summary::-webkit-details-marker { display: none; }
 
+.media-admin-editor { display: grid; gap: 20px; }
+.media-editor-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 18px; border: 1px solid var(--a-line); border-radius: 16px; background: white; }
+.media-editor-toolbar > div:first-child { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.media-editor-toolbar small { color: var(--a-muted); }
+.media-editor-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, .8fr); gap: 24px; align-items: start; }
+.media-editor-fields { display: grid; gap: 20px; }
+.media-editor-fields .card { gap: 18px; }
+.media-editor-sticky { position: sticky; top: 24px; }
+.media-editor-preview { overflow: hidden; border: 1px solid var(--a-line); border-radius: 12px; background: var(--a-ivory); }
+.media-preview-hero { min-height: 260px; padding: 28px 22px; display: grid; align-content: end; gap: 12px; background: linear-gradient(135deg, rgba(13,13,13,.98), rgba(58,51,40,.9)); color: white; }
+.media-preview-hero p, .media-preview-label { margin: 0; color: var(--a-gold); font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.media-preview-hero h2 { margin: 0; font: 400 42px/.92 "DM Serif Display", serif; }
+.media-preview-hero div { color: rgba(255,255,255,.72); font-size: 13px; line-height: 1.5; }
+.media-preview-body { display: grid; gap: 12px; padding: 24px 22px; font-size: 13px; line-height: 1.55; }
+.media-preview-body h3 { margin: 0; font: 400 28px/1 "DM Serif Display", serif; }
+.media-preview-body p { white-space: pre-line; }
+@media (max-width: 1100px) { .media-editor-layout { grid-template-columns: 1fr; } .media-editor-sticky { position: static; } }
+
 .event-photo-preview { aspect-ratio: 16 / 10; border: 1px dashed var(--a-field); border-radius: 12px; background: var(--a-sand); display: grid; place-items: center; overflow: hidden; color: var(--a-muted); font-size: 13px; }
 .event-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 

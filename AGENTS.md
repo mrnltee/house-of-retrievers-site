@@ -207,6 +207,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 048 | refunds on registrations (`refund_amount`, method, reference, when, who) |
 | 049 | `registrations.hold_reminded_at` / `hold_reminders` |
 | 050 | `people.furbaby_rainbow` (furbabies over the rainbow bridge) |
+| 051 | Media hub document content and draft/published status (`media_hub_documents`) |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.

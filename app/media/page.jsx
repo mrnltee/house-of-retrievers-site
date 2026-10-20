@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LogoMoments from "../components/LogoMoments";
+import { hasDatabase, sql } from "../lib/db";
 
 export const metadata = {
   title: "Media hub | The House of Retrievers Society Inc.",
@@ -28,7 +29,25 @@ const downloads = [
   ["Photo and video library", "Selected, credited media for approved editorial use.", "Coming soon"],
 ];
 
-export default function MediaPage() {
+const FALLBACK_CONTENT = {
+  heroTitle: "A house with<br><em>a purpose.</em>",
+  heroLead: "The media hub for The House of Retrievers Society Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
+  about: "We&apos;re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.",
+  mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
+  stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park · Beneficiary: MBY Pet Rescue and Sanctuary\n\nPurpose to Care visit · Milagros Elderly Home Care and Services\n\nHoR × Beagle Buddies PH Community Pack Walk · 23 August 2026 · Ayala Triangle, Makati",
+  partnerships: "Partnerships are shaped around shared objectives—not a fixed price list. Possibilities include an event partnership, a Purpose program partnership, responsible-pet-ownership advocacy, product or in-kind support, educational sessions, venue collaboration, content, and CSR volunteering.",
+};
+
+function rich(value) {
+  return { __html: String(value || "").replace(/\n\n/g, "<br><br>") };
+}
+
+export default async function MediaPage() {
+  let content = FALLBACK_CONTENT;
+  if (hasDatabase()) {
+    const [document] = await sql("SELECT content FROM media_hub_documents WHERE id=true AND status='published'");
+    if (document?.content && Object.keys(document.content).length) content = { ...content, ...document.content };
+  }
   return (
     <main className="media-hub">
       <a className="skip-link media-skip" href="#media-content">Skip to content</a>
@@ -48,8 +67,8 @@ export default function MediaPage() {
       <section className="media-hero" id="media-content" aria-labelledby="media-title">
         <div className="media-hero-copy">
           <p className="media-kicker">Press · partnerships · stories</p>
-          <h1 id="media-title">A house with<br /><em>a purpose.</em></h1>
-          <p className="media-lead">The media hub for The House of Retrievers Society Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.</p>
+          <h1 id="media-title" dangerouslySetInnerHTML={rich(content.heroTitle)} />
+          <p className="media-lead" dangerouslySetInnerHTML={rich(content.heroLead)} />
           <div className="media-actions">
             <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry">Make a media inquiry <span aria-hidden="true">↗</span></a>
             <a className="media-text-link" href="#downloads">Explore resources <span aria-hidden="true">↓</span></a>
@@ -67,9 +86,8 @@ export default function MediaPage() {
         <div className="media-intro-grid">
           <h2 id="about-title">Good dogs.<br /><em>Good people.</em><br />Greater good.</h2>
           <div className="media-copy">
-            <p>We&apos;re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.</p>
-            <p>The House of Retrievers Society Inc., formerly known as House of Retrievers PH, is a Philippine SEC-registered nonprofit organization built around the relationship between dogs and the people who love them. The community is rooted in the Golden and Labrador Retriever world and welcomes responsible pet parents of every breed.</p>
-            <p className="media-mission"><strong>Our mission</strong> is to bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.</p>
+            <div dangerouslySetInnerHTML={rich(content.about)} />
+            <p className="media-mission"><strong>Our mission</strong> <span dangerouslySetInnerHTML={rich(content.mission)} /></p>
             <p className="media-note">SEC registration number 2026090268846-04 is supplied by HOR and remains subject to final organizational verification before publication.</p>
           </div>
         </div>
@@ -85,12 +103,12 @@ export default function MediaPage() {
         <div className="media-section-label">03 / For the media</div>
         <div className="media-stories-grid">
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
-          <div className="media-angle-list"><article><span>01</span><h3>Pawres de Mayo</h3><p>HOR&apos;s first Purpose to Celebrate, held at Parklinks Pet Park on 17 May 2026, with MBY Pet Rescue and Sanctuary named as beneficiary.</p></article><article><span>02</span><h3>An afternoon of company</h3><p>A Purpose to Care visit to Milagros Elderly Home Care and Services, bringing dogs and people together for a gentle afternoon.</p></article><article><span>03</span><h3>Two communities, one pack</h3><p>The HoR × Beagle Buddies PH Community Pack Walk at Ayala Triangle, Makati, on 23 August 2026.</p></article></div>
+          <div className="media-angle-list"><article><span>01</span><h3>Pawres de Mayo</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[0])} /></article><article><span>02</span><h3>Care and companionship</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[1] || "")} /></article><article><span>03</span><h3>Community collaboration</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[2] || "")} /></article></div>
         </div>
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
-          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">04 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p>Partnerships are shaped around shared objectives—not a fixed price list. Possibilities include an event partnership, a Purpose program partnership, responsible-pet-ownership advocacy, product or in-kind support, educational sessions, venue collaboration, content, and CSR volunteering.</p><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
+          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">04 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
         <div className="media-quote"><span aria-hidden="true">“</span><p>Raise responsibly.<br />Serve generously.</p><small>House of Retrievers</small></div>
       </section>
 

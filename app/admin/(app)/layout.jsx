@@ -4,7 +4,7 @@ import AdminNav from "./AdminNav";
 
 const GROUPS = [
   ["Run", [["Dashboard", "/", "dashboard:view"], ["Events", "/events", "events:view"], ["Registrations", "/registrations", "registrations:view"], ["Check-in", "/checkin", "checkin"], ["People", "/people", "people:view"], ["Sponsors & partners", "/supporters", "people:view"]]],
-  ["Publish", [["Gallery", null], ["Forms", null], ["Content", null]]],
+    ["Publish", [["Gallery", null], ["Forms", null], ["Media hub", "/media", "media:edit"], ["Content", null]]],
   ["Money", [["Payment settings", "/payments", "payments:view"], ["Donations & spending", null]]],
   ["Settings", [["Email templates", "/emails", "people:edit"], ["Breed icons", "/breeds", "events:edit"], ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
 ];
