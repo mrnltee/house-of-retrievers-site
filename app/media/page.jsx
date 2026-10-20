@@ -62,7 +62,7 @@ export default function MediaPage() {
         </div>
       </section>
 
-      <section className="media-section media-intro" id="about" aria-labelledby="about-title">
+      <section className="media-section media-intro media-chapter" id="about" aria-labelledby="about-title">
         <div className="media-section-label">01 / The Society</div>
         <div className="media-intro-grid">
           <h2 id="about-title">Good dogs.<br /><em>Good people.</em><br />Greater good.</h2>
@@ -74,13 +74,13 @@ export default function MediaPage() {
         </div>
       </section>
 
-      <section className="media-purpose" aria-labelledby="purpose-title">
+      <section className="media-purpose media-chapter" aria-labelledby="purpose-title">
         <div className="media-section-label media-section-label-light">02 / Five purpose areas</div>
         <div className="media-purpose-head"><h2 id="purpose-title">The work<br /><em>in five ways.</em></h2><p>Every activity begins with a simple question: how can our community use the bond between dogs and people to do some good?</p></div>
         <div className="media-purpose-grid">{purposes.map(([number, title, body]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
       </section>
 
-      <section className="media-section media-stories" id="stories" aria-labelledby="stories-title">
+      <section className="media-section media-stories media-chapter" id="stories" aria-labelledby="stories-title">
         <div className="media-section-label">03 / For the media</div>
         <div className="media-stories-grid">
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
@@ -88,12 +88,12 @@ export default function MediaPage() {
         </div>
       </section>
 
-      <section className="media-partnerships" id="partnerships" aria-labelledby="partnerships-title">
+      <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
         <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">04 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p>We welcome conversations with companies, sponsors, donors, volunteers, and community organizations interested in animal welfare, responsible pet ownership, senior companionship, and community well-being.</p><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
         <div className="media-quote"><span aria-hidden="true">“</span><p>Raise responsibly.<br />Serve generously.</p><small>House of Retrievers</small></div>
       </section>
 
-      <section className="media-section media-downloads" id="downloads" aria-labelledby="downloads-title">
+      <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
         <div className="media-section-label">05 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Approved media materials will be added here as they are finalized and cleared for publication.</p></div>
         <div className="media-download-grid">{downloads.map(([title, body, status]) => <article key={title}><div className="media-download-icon" aria-hidden="true">↘</div><h3>{title}</h3><p>{body}</p><span className="media-download-status">{status}</span></article>)}</div>
       </section>
