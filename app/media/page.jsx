@@ -18,7 +18,7 @@ const purposes = [
   ["02", "Purpose to Learn", "Responsible pet ownership and community education."],
   ["03", "Purpose to Give Back", "Practical support for rescue organizations."],
   ["04", "Purpose to Care", "Visits that bring comfort and companionship."],
-  ["05", "Purpose to Connect", "Friendship and collaboration across dog communities."],
+  ["05", "Purpose to Connect", "A community-wide role documented in HOR materials; final wording pending confirmation."],
 ];
 
 const downloads = [
@@ -67,9 +67,10 @@ export default function MediaPage() {
         <div className="media-intro-grid">
           <h2 id="about-title">Good dogs.<br /><em>Good people.</em><br />Greater good.</h2>
           <div className="media-copy">
-            <p>The House of Retrievers Society Inc., formerly known as House of Retrievers PH, is a Philippine SEC-registered nonprofit organization founded by fur parents united by a purpose to help others.</p>
-            <p>Our work brings together responsible pet ownership, animal welfare, community service, and emotional well-being through meaningful interaction with dogs—creating space for comfort, companionship, connection, and community support.</p>
-            <p className="media-note">The Society’s registration details and additional organizational information should be verified with HOR before publication.</p>
+            <p>We&apos;re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.</p>
+            <p>The House of Retrievers Society Inc., formerly known as House of Retrievers PH, is a Philippine SEC-registered nonprofit organization built around the relationship between dogs and the people who love them. The community is rooted in the Golden and Labrador Retriever world and welcomes responsible pet parents of every breed.</p>
+            <p className="media-mission"><strong>Our mission</strong> is to bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.</p>
+            <p className="media-note">SEC registration number 2026090268846-04 is supplied by HOR and remains subject to final organizational verification before publication.</p>
           </div>
         </div>
       </section>
@@ -84,18 +85,19 @@ export default function MediaPage() {
         <div className="media-section-label">03 / For the media</div>
         <div className="media-stories-grid">
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
-          <div className="media-angle-list"><article><span>01</span><h3>Responsible pet ownership</h3><p>Practical, community-rooted learning for families and dog guardians.</p></article><article><span>02</span><h3>Dogs, people, and connection</h3><p>Meaningful interaction that creates comfort, companionship, and belonging.</p></article><article><span>03</span><h3>Partnerships with purpose</h3><p>How organizations can help turn shared care into community action.</p></article></div>
+          <div className="media-angle-list"><article><span>01</span><h3>Pawres de Mayo</h3><p>HOR&apos;s first Purpose to Celebrate, held at Parklinks Pet Park on 17 May 2026, with MBY Pet Rescue and Sanctuary named as beneficiary.</p></article><article><span>02</span><h3>An afternoon of company</h3><p>A Purpose to Care visit to Milagros Elderly Home Care and Services, bringing dogs and people together for a gentle afternoon.</p></article><article><span>03</span><h3>Two communities, one pack</h3><p>The HoR × Beagle Buddies PH Community Pack Walk at Ayala Triangle, Makati, on 23 August 2026.</p></article></div>
         </div>
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
-        <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">04 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p>We welcome conversations with companies, sponsors, donors, volunteers, and community organizations interested in animal welfare, responsible pet ownership, senior companionship, and community well-being.</p><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
+          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">04 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p>Partnerships are shaped around shared objectives—not a fixed price list. Possibilities include an event partnership, a Purpose program partnership, responsible-pet-ownership advocacy, product or in-kind support, educational sessions, venue collaboration, content, and CSR volunteering.</p><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
         <div className="media-quote"><span aria-hidden="true">“</span><p>Raise responsibly.<br />Serve generously.</p><small>House of Retrievers</small></div>
       </section>
 
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
         <div className="media-section-label">05 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Approved media materials will be added here as they are finalized and cleared for publication.</p></div>
         <div className="media-download-grid">{downloads.map(([title, body, status]) => <article key={title}><div className="media-download-icon" aria-hidden="true">↘</div><h3>{title}</h3><p>{body}</p><span className="media-download-status">{status}</span></article>)}</div>
+        <div className="media-editorial-note"><strong>For editors and producers</strong><p>HOR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>
 
       <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers Society Inc.</span><a href="/">Visit the main site ↗</a></div></footer>
