@@ -29,6 +29,26 @@ const downloads = [
   ["Photo and video library", "Selected, credited media for approved editorial use.", "Coming soon"],
 ];
 
+const mediaProofPoints = [
+  ["03", "documented activities", "Pawres de Mayo, a care visit, and a community pack walk."],
+  ["05", "purpose areas", "Celebrate, Learn, Give Back, Care, and one area pending final wording."],
+  ["PH", "community-rooted", "A Philippine nonprofit built around dogs, people, and responsible care."],
+];
+
+const activityTimeline = [
+  ["17 May 2026", "Pawres de Mayo", "Parklinks Pet Park", "Beneficiary: MBY Pet Rescue and Sanctuary"],
+  ["Documented activity", "Purpose to Care visit", "Milagros Elderly Home Care and Services", "A visit shaped around care and companionship"],
+  ["23 August 2026", "Community Pack Walk", "Ayala Triangle, Makati", "HoR × Beagle Buddies PH"],
+];
+
+const partnershipPathways = [
+  ["Event partnerships", "Create a gathering with a clear community purpose."],
+  ["Purpose programs", "Support a focused activity under the Paws for a Purpose platform."],
+  ["Advocacy and education", "Help make responsible pet ownership easier to understand and practise."],
+  ["Product or in-kind support", "Contribute useful goods or services where there is a clear need."],
+  ["Venue, content, and CSR", "Open a space, tell a thoughtful story, or bring a team to volunteer."],
+];
+
 const FALLBACK_CONTENT = {
   heroTitle: "A house with<br><em>a purpose.</em>",
   heroLead: "The media hub for The House of Retrievers Society Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
@@ -99,21 +119,39 @@ export default async function MediaPage() {
         <div className="media-purpose-grid">{purposes.map(([number, title, body]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
       </section>
 
+      <section className="media-section media-profile media-chapter" aria-labelledby="profile-title">
+        <div className="media-section-label">03 / The profile</div>
+        <div className="media-profile-head">
+          <div><h2 id="profile-title">The details<br /><em>behind the work.</em></h2><p>For a quick briefing, here is the information most useful to editors, producers, and potential partners.</p></div>
+          <div className="media-proof-grid">{mediaProofPoints.map(([value, label, note]) => <article key={label}><strong>{value}</strong><span>{label}</span><p>{note}</p></article>)}</div>
+        </div>
+        <div className="media-snapshot" aria-label="Selected House of Retrievers image moments">
+          <figure><img src="/1-purpaws/purpaw1.jpg" alt="House of Retrievers community moment with dogs and their families" /><figcaption>Community, with purpose</figcaption></figure>
+          <figure><img src="/2-better/better1.jpg" alt="Retriever family participating in a House of Retrievers activity" /><figcaption>Better humans for better dogs</figcaption></figure>
+          <figure><img src="/house-of-retrievers-hero-poster.jpg" alt="House of Retrievers families and furbabies together" /><figcaption>Good dogs. Good people.</figcaption></figure>
+        </div>
+      </section>
+
       <section className="media-section media-stories media-chapter" id="stories" aria-labelledby="stories-title">
-        <div className="media-section-label">03 / For the media</div>
+        <div className="media-section-label">04 / For the media</div>
         <div className="media-stories-grid">
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
           <div className="media-angle-list"><article><span>01</span><h3>Pawres de Mayo</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[0])} /></article><article><span>02</span><h3>Care and companionship</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[1] || "")} /></article><article><span>03</span><h3>Community collaboration</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[2] || "")} /></article></div>
         </div>
+        <div className="media-timeline" aria-label="Documented activity timeline">
+          <div className="media-timeline-heading"><span>Activity history</span><p>Completed activities are listed separately from upcoming or proposed work.</p></div>
+          <div className="media-timeline-list">{activityTimeline.map(([date, title, place, detail]) => <article key={title}><time>{date}</time><div><h3>{title}</h3><p>{place}</p><small>{detail}</small></div></article>)}</div>
+        </div>
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
-          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">04 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
+          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
+        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
         <div className="media-quote"><span aria-hidden="true">“</span><p>Raise responsibly.<br />Serve generously.</p><small>House of Retrievers</small></div>
       </section>
 
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
-        <div className="media-section-label">05 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Approved media materials will be added here as they are finalized and cleared for publication.</p></div>
+        <div className="media-section-label">06 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Approved media materials will be added here as they are finalized and cleared for publication.</p></div>
         <div className="media-download-grid">{downloads.map(([title, body, status]) => <article key={title}><div className="media-download-icon" aria-hidden="true">↘</div><h3>{title}</h3><p>{body}</p><span className="media-download-status">{status}</span></article>)}</div>
         <div className="media-editorial-note"><strong>For editors and producers</strong><p>HOR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>
