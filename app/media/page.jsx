@@ -72,10 +72,13 @@ export default async function MediaPage() {
     <main className="media-hub">
       <a className="skip-link media-skip" href="#media-content">Skip to content</a>
       <header className="media-header">
-        <Link className="media-brand" href="/" aria-label="House of Retrievers home">
+        <div className="media-masthead">
+          <Link className="media-brand" href="/" aria-label="House of Retrievers home">
           <LogoMoments tone="dark" priority />
-        </Link>
-        <nav aria-label="Media hub navigation" className="media-nav">
+          </Link>
+          <div className="media-orgname" aria-label="The House of Retrievers Society Inc.">The House of Retrievers <span>Society Inc.</span></div>
+        </div>
+        <nav aria-label="Media hub navigation" className="media-nav media-glass-dock">
           <a href="#about">About</a>
           <a href="#stories">Stories</a>
           <a href="#partnerships">Partnerships</a>
