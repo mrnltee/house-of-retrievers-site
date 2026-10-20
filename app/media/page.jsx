@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LogoMoments from "../components/LogoMoments";
 import { hasDatabase, sql } from "../lib/db";
+import { DEFAULT_MEDIA_TIMELINE, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
 export const metadata = {
   title: "Media hub | The House of Retrievers Society Inc.",
@@ -35,12 +36,6 @@ const mediaProofPoints = [
   ["PH", "community-rooted", "A Philippine nonprofit built around dogs, people, and responsible care."],
 ];
 
-const activityTimeline = [
-  ["17 May 2026", "Pawres de Mayo", "Parklinks Pet Park", "Beneficiary: MBY Pet Rescue and Sanctuary"],
-  ["Documented activity", "Purpose to Care visit", "Milagros Elderly Home Care and Services", "A visit shaped around care and companionship"],
-  ["23 August 2026", "Community Pack Walk", "Ayala Triangle, Makati", "HoR × Beagle Buddies PH"],
-];
-
 const partnershipPathways = [
   ["Event partnerships", "Create a gathering with a clear community purpose."],
   ["Purpose programs", "Support a focused activity under the Paws for a Purpose platform."],
@@ -68,6 +63,8 @@ export default async function MediaPage() {
     const [document] = await sql("SELECT content FROM media_hub_documents WHERE id=true AND status='published'");
     if (document?.content && Object.keys(document.content).length) content = { ...content, ...document.content };
   }
+  const timeline = Array.isArray(content.timeline) ? cleanMediaTimeline(content.timeline) : DEFAULT_MEDIA_TIMELINE;
+  const timelineOrientation = cleanTimelineOrientation(content.timelineOrientation);
   return (
     <main className="media-hub">
       <a className="skip-link media-skip" href="#media-content">Skip to content</a>
@@ -141,9 +138,9 @@ export default async function MediaPage() {
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
           <div className="media-angle-list"><article><span>01</span><h3>Pawres de Mayo</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[0])} /></article><article><span>02</span><h3>Care and companionship</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[1] || "")} /></article><article><span>03</span><h3>Community collaboration</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[2] || "")} /></article></div>
         </div>
-        <div className="media-timeline" aria-label="Documented activity timeline">
+        <div className={`media-timeline media-timeline-${timelineOrientation}`} aria-label="Documented activity timeline">
           <div className="media-timeline-heading"><span>Activity history</span><p>Completed activities are listed separately from upcoming or proposed work.</p></div>
-          <div className="media-timeline-list">{activityTimeline.map(([date, title, place, detail]) => <article key={title}><time>{date}</time><div><h3>{title}</h3><p>{place}</p><small>{detail}</small></div></article>)}</div>
+          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt="" /> : <span aria-hidden="true">✦</span>}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
         </div>
       </section>
 

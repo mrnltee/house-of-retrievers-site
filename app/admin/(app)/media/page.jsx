@@ -2,6 +2,7 @@ import { pageAdmin } from "../../../lib/admin/guard";
 import { sql } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed } from "../ui";
 import MediaEditor from "./MediaEditor";
+import { DEFAULT_MEDIA_TIMELINE } from "../../../lib/mediaHub.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ const DEFAULTS = {
   mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
   stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park · Beneficiary: MBY Pet Rescue and Sanctuary\n\nPurpose to Care visit · Milagros Elderly Home Care and Services\n\nHoR × Beagle Buddies PH Community Pack Walk · 23 August 2026 · Ayala Triangle, Makati",
   partnerships: "Event partnerships, Purpose program partnerships, advocacy campaigns, product and in-kind support, educational sessions, venue collaborations, content partnerships, and CSR volunteering.",
+  timelineOrientation: "vertical",
+  timeline: DEFAULT_MEDIA_TIMELINE,
   contactEmail: "houseofretrieversph@gmail.com",
   seoTitle: "Media hub | The House of Retrievers Society Inc.",
   seoDescription: "Press resources, organization information, partnership context, and media contact details for The House of Retrievers Society Inc.",

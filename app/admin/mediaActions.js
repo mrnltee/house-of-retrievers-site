@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { sql } from "../lib/db";
 import { actionAdmin, backWith } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
+import { cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
 const ALLOWED_TAGS = /<(?!\/?(?:strong|em|a|br)\b)[^>]*>/gi;
 const MAX_HTML = 12000;
@@ -32,6 +33,8 @@ export async function saveMediaHub(data) {
     mission: cleanHtml(data.get("mission")),
     stories: cleanHtml(data.get("stories")),
     partnerships: cleanHtml(data.get("partnerships")),
+    timelineOrientation: cleanTimelineOrientation(data.get("timelineOrientation")),
+    timeline: cleanMediaTimeline(data.get("timeline")),
     contactEmail: cleanText(data.get("contactEmail"), 160) || "houseofretrieversph@gmail.com",
     seoTitle: cleanText(data.get("seoTitle"), 160),
     seoDescription: cleanText(data.get("seoDescription"), 320),
