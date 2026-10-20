@@ -1538,8 +1538,9 @@ main:focus { outline: none; }
 .media-editorial-note strong { color: var(--media-gold); font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
 .media-editorial-note p { max-width: 600px; margin: 0; color: var(--media-muted); font-size: 14px; line-height: 1.6; }
 .media-footer { display: grid; grid-template-columns: 1fr auto; gap: 50px; padding: 70px clamp(24px, 10vw, 150px) 28px; }
-.media-footer > div:first-child { max-width: 230px; }
-.media-footer .hor-logo-dogs { fill: white; }
+.media-footer > div:first-child { max-width: 250px; }
+.media-footer .hor-logo { width: 100%; max-width: 250px; aspect-ratio: 1396 / 564; }
+.media-footer .hor-logo-dogs { fill: currentColor; }
 .media-footer p { margin: 16px 0 0; color: rgba(255,255,255,.58); font-size: 13px; }
 .media-footer-contact { display: grid; align-content: start; gap: 11px; text-align: right; }
 .media-footer-contact span { color: rgba(255,255,255,.55); font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
