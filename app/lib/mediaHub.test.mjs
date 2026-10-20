@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cleanMediaTimeline, cleanTimelineOrientation } from "./mediaHub.mjs";
+import { cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "./mediaHub.mjs";
 
 test("media timeline keeps fields and approved thumbnails", () => {
   assert.deepEqual(cleanMediaTimeline(JSON.stringify([
@@ -20,4 +20,12 @@ test("media timeline ignores malformed input and caps entries", () => {
 test("timeline orientation accepts only the two layouts", () => {
   assert.equal(cleanTimelineOrientation("horizontal"), "horizontal");
   assert.equal(cleanTimelineOrientation("diagonal"), "vertical");
+});
+
+test("media profile keeps three proof cards and approved image choices", () => {
+  const profile = cleanMediaProfile({ title: "Briefing", cards: [{ value: "1", label: "Story", note: "Note" }], images: [{ src: "/1-purpaws/purpaw1.jpg", alt: "A moment", caption: "Purpose" }, { src: "/private.jpg" }] });
+  assert.equal(profile.title, "Briefing");
+  assert.equal(profile.cards.length, 1);
+  assert.equal(profile.images[0].src, "/1-purpaws/purpaw1.jpg");
+  assert.equal(profile.images[1].src, "");
 });

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import LogoMoments from "../components/LogoMoments";
 import { hasDatabase, sql } from "../lib/db";
-import { DEFAULT_MEDIA_TIMELINE, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
+import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
 export const metadata = {
   title: "Media hub | The House of Retrievers Society Inc.",
@@ -28,12 +28,6 @@ const downloads = [
   ["Short and long boilerplates", "Approved descriptions for listings, articles, and introductions.", "Coming soon"],
   ["Logo and brand assets", "Approved artwork and usage notes.", "Coming soon"],
   ["Photo and video library", "Selected, credited media for approved editorial use.", "Coming soon"],
-];
-
-const mediaProofPoints = [
-  ["03", "documented activities", "Pawres de Mayo, a care visit, and a community pack walk."],
-  ["05", "purpose areas", "Celebrate, Learn, Give Back, Care, and one area pending final wording."],
-  ["PH", "community-rooted", "A Philippine nonprofit built around dogs, people, and responsible care."],
 ];
 
 const partnershipPathways = [
@@ -65,6 +59,7 @@ export default async function MediaPage() {
   }
   const timeline = Array.isArray(content.timeline) ? cleanMediaTimeline(content.timeline) : DEFAULT_MEDIA_TIMELINE;
   const timelineOrientation = cleanTimelineOrientation(content.timelineOrientation);
+  const profile = cleanMediaProfile(content.profile || DEFAULT_MEDIA_PROFILE);
   return (
     <main className="media-hub">
       <a className="skip-link media-skip" href="#media-content">Skip to content</a>
@@ -122,13 +117,11 @@ export default async function MediaPage() {
       <section className="media-section media-profile media-chapter" aria-labelledby="profile-title">
         <div className="media-section-label">03 / The profile</div>
         <div className="media-profile-head">
-          <div><h2 id="profile-title">The details<br /><em>behind the work.</em></h2><p>For a quick briefing, here is the information most useful to editors, producers, and potential partners.</p></div>
-          <div className="media-proof-grid">{mediaProofPoints.map(([value, label, note]) => <article key={label}><strong>{value}</strong><span>{label}</span><p>{note}</p></article>)}</div>
+          <div><h2 id="profile-title">{profile.title}</h2><p>{profile.intro}</p></div>
+          <div className="media-proof-grid">{profile.cards.map((card, index) => <article key={`${card.label}-${index}`}><strong>{card.value}</strong><span>{card.label}</span><p>{card.note}</p></article>)}</div>
         </div>
         <div className="media-snapshot" aria-label="Selected House of Retrievers image moments">
-          <figure><img src="/1-purpaws/purpaw1.jpg" alt="House of Retrievers community moment with dogs and their families" /><figcaption>Community, with purpose</figcaption></figure>
-          <figure><img src="/2-better/better1.jpg" alt="Retriever family participating in a House of Retrievers activity" /><figcaption>Better humans for better dogs</figcaption></figure>
-          <figure><img src="/house-of-retrievers-hero-poster.jpg" alt="House of Retrievers families and furbabies together" /><figcaption>Good dogs. Good people.</figcaption></figure>
+          {profile.images.map((image, index) => <figure key={`${image.src}-${index}`}><img src={image.src} alt={image.alt} /><figcaption>{image.caption}</figcaption></figure>)}
         </div>
       </section>
 

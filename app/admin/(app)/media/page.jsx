@@ -2,7 +2,7 @@ import { pageAdmin } from "../../../lib/admin/guard";
 import { sql } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed } from "../ui";
 import MediaEditor from "./MediaEditor";
-import { DEFAULT_MEDIA_TIMELINE } from "../../../lib/mediaHub.mjs";
+import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE } from "../../../lib/mediaHub.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,7 @@ const DEFAULTS = {
   partnerships: "Event partnerships, Purpose program partnerships, advocacy campaigns, product and in-kind support, educational sessions, venue collaborations, content partnerships, and CSR volunteering.",
   timelineOrientation: "vertical",
   timeline: DEFAULT_MEDIA_TIMELINE,
+  profile: DEFAULT_MEDIA_PROFILE,
   contactEmail: "houseofretrieversph@gmail.com",
   seoTitle: "Media hub | The House of Retrievers Society Inc.",
   seoDescription: "Press resources, organization information, partnership context, and media contact details for The House of Retrievers Society Inc.",
