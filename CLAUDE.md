@@ -186,6 +186,8 @@ the sheet cell to it.
 
 ## Media conventions
 
+- **Media hub (20 Oct 2026):** `/media` is the responsive PR, press and partnership resource hub, and `media.houseofretrieversph.org` rewrites to it through `app/lib/hostRouting.mjs`. The first implementation uses only approved organization context and marks resource downloads as coming soon until HOR supplies final files and approvals. Its official contact is `houseofretrieversph@gmail.com`; do not publish unverified spokesperson, registration, impact or program details.
+
 - Story media lives in per-section folders under `public/`: `1-purpaws/`, `2-better/`, `3-giveback/`.
 - Camera originals stay local. `.gitignore` keeps `public/**/*.JPEG` and `public/**/MBY.mp4` out of the repo, so committed media is always the web-ready copy.
 - **Background videos live on Cloudinary, not in `public/` (19 Oct 2026):** the hero, "Join the pack" and "Give back" videos are served from the HOR Cloudinary account (cloud `dgelskqx`, folder `site-videos`, public IDs `hero-1080p`, `cta-join-us`, `mby-give-back`) through `app/lib/siteVideos.mjs`, delivered untouched (no transformation, so no processing credits), so each Vercel deployment no longer carries ~15 MB of video. Posters stay in `public/`. To replace a video, upload the new H.264 file in Cloudinary with the same Public ID. The local copies are git-ignored.

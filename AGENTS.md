@@ -34,6 +34,7 @@ taking RSVPs and payments, and checking people in at the door.
 | `events.houseofretrieversph.org` | Events list, event pages, passes | `app/events/`, rewritten by `proxy.js` → `app/lib/eventsHost.mjs` |
 | `admin.houseofretrieversph.org` | Admin module (Google sign-in) | `app/admin/`, routed by `app/lib/adminHost.mjs` |
 | `countdown.houseofretrieversph.org` | Retired pre-launch hostname; permanently redirects to www until the owner removes the Vercel domain | `app/lib/hostRouting.mjs` |
+| `media.houseofretrieversph.org` | PR, press and partnership resource hub; rewrites to `/media` locally and on previews | `app/media/`, `app/lib/hostRouting.mjs` |
 
 On localhost and Vercel previews the subdomains are paths instead: `/events`,
 `/admin`.

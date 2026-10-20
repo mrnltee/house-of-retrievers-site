@@ -17,6 +17,9 @@ const RETIRED_MAIN_HOSTS = ["countdown.houseofretrieversph.org", "countdown.loca
 export function routePageRequest(host, pathname, search = "") {
   let decision = routeAdminRequest(host, pathname, search);
   if (decision.type === "next") decision = routeEventsRequest(host, pathname, search);
+  if (decision.type === "next" && ["media.houseofretrieversph.org", "media.localhost"].includes(normalizeHost(host)) && pathname === "/") {
+    return { type: "rewrite", pathname: "/media" };
+  }
   if (decision.type === "next" && RETIRED_MAIN_HOSTS.includes(normalizeHost(host))) {
     return { type: "redirect", url: `${SITE_URL}/` };
   }

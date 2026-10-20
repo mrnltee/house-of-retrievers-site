@@ -1415,3 +1415,80 @@ main:focus { outline: none; }
 .breed-select-icon .furbaby-halo { position: absolute; left: 18%; right: 18%; top: -2%; height: 24%; z-index: 1; border: 2.5px solid #d4ab45; border-radius: 50%; box-shadow: 0 0 6px rgba(212, 171, 69, .6), inset 0 0 3px rgba(212, 171, 69, .45); pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) { .breed-select-icon .furbaby-halo { animation: halo-glow 4s ease-in-out infinite; } }
 @keyframes halo-glow { 0%, 100% { box-shadow: 0 0 4px rgba(212, 171, 69, .4); } 50% { box-shadow: 0 0 9px rgba(212, 171, 69, .7); } }
+
+/* Media hub: a calm, editorial resource space for journalists and partners. */
+.media-hub { --media-black: #0d0d0d; --media-gold: #a78440; --media-ivory: #f5f1e6; --media-muted: #68665f; background: var(--media-ivory); color: var(--media-black); }
+.media-header { position: absolute; z-index: 3; inset: 0 0 auto; display: flex; align-items: center; justify-content: space-between; min-height: 88px; padding: 0 clamp(24px, 6vw, 88px); color: white; border-bottom: 1px solid rgba(255,255,255,.18); }
+.media-brand { display: block; width: 230px; }
+.media-brand .hor-logo, .media-footer .hor-logo { display: block; width: 100%; height: auto; }
+.media-brand .hor-logo-wordmark, .media-footer .hor-logo-wordmark { display: block; }
+.media-brand .hor-logo-dogs, .media-footer .hor-logo-dogs { width: 100%; height: 100%; display: block; }
+.media-nav { display: flex; align-items: center; gap: clamp(16px, 2.7vw, 42px); font-size: 13px; font-weight: 600; }
+.media-nav a { color: white; opacity: .84; }
+.media-nav a:hover, .media-nav a:focus-visible { opacity: 1; }
+.media-nav-contact { padding: 12px 17px; border: 1px solid rgba(255,255,255,.55); border-radius: 999px; }
+.media-hero { position: relative; display: flex; align-items: flex-end; min-height: min(790px, 100svh); padding: 150px clamp(24px, 10vw, 150px) 92px; overflow: hidden; color: white; background: linear-gradient(90deg, rgba(13,13,13,.96), rgba(13,13,13,.6) 52%, rgba(13,13,13,.3)), url('/house-of-retrievers-hero-poster.jpg') center / cover; }
+.media-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 180px; background: linear-gradient(transparent, rgba(13,13,13,.38)); pointer-events: none; }
+.media-hero-copy { position: relative; z-index: 1; max-width: 730px; }
+.media-kicker, .media-section-label { margin: 0 0 24px; color: var(--media-gold); font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+.media-hero h1 { margin: 0; font-size: clamp(62px, 9vw, 132px); line-height: .88; letter-spacing: -.055em; }
+.media-hero h1 em, .media-section h2 em, .media-purpose h2 em, .media-partnerships h2 em { color: var(--media-gold); font-style: normal; }
+.media-lead { max-width: 600px; margin: 30px 0 0; color: rgba(255,255,255,.77); font-size: clamp(17px, 1.7vw, 21px); line-height: 1.6; }
+.media-actions { display: flex; align-items: center; gap: 28px; margin-top: 38px; }
+.media-button { display: inline-flex; align-items: center; justify-content: center; gap: 18px; min-height: 49px; padding: 14px 21px; border-radius: 999px; font-size: 13px; font-weight: 800; transition: transform .2s ease, background .2s ease; }
+.media-button:hover, .media-button:focus-visible { transform: translateY(-2px); }
+.media-button-gold { background: var(--media-gold); color: var(--media-black); }
+.media-button-dark { background: var(--media-black); color: white; }
+.media-text-link { color: white; font-size: 13px; font-weight: 700; }
+.media-hero-note { position: absolute; z-index: 1; right: clamp(24px, 10vw, 150px); bottom: 98px; display: grid; gap: 9px; width: 190px; padding: 18px 0 18px 20px; border-left: 1px solid var(--media-gold); }
+.media-hero-note span { color: rgba(255,255,255,.7); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.media-hero-note strong { font: 400 28px/1.02 'DM Serif Display', serif; }
+.media-hero-note-mark { color: var(--media-gold) !important; font-size: 28px !important; }
+.media-section { padding: clamp(80px, 11vw, 150px) clamp(24px, 10vw, 150px); }
+.media-intro-grid, .media-stories-grid, .media-download-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: clamp(42px, 9vw, 150px); align-items: start; }
+.media-section h2, .media-purpose h2, .media-partnerships h2 { margin: 0; font-size: clamp(52px, 7vw, 92px); line-height: .9; }
+.media-copy { max-width: 540px; padding-top: 12px; }
+.media-copy p, .media-stories p, .media-purpose-head > p, .media-download-head > p, .media-partnerships-copy > p { color: var(--media-muted); font-size: 16px; line-height: 1.72; }
+.media-note { padding-top: 16px; border-top: 1px solid rgba(13,13,13,.16); font-size: 13px !important; }
+.media-purpose, .media-partnerships, .media-footer { background: var(--media-black); color: white; }
+.media-purpose { padding: clamp(80px, 10vw, 140px) clamp(24px, 10vw, 150px); }
+.media-section-label-light { color: var(--media-gold); }
+.media-purpose-head { display: grid; grid-template-columns: 1fr .75fr; gap: clamp(42px, 9vw, 150px); align-items: end; }
+.media-purpose-head > p { max-width: 400px; margin: 0; color: rgba(255,255,255,.68); }
+.media-purpose-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; margin-top: 90px; border-top: 1px solid rgba(255,255,255,.22); }
+.media-purpose-grid article { min-height: 225px; padding: 24px 18px 0 0; border-right: 1px solid rgba(255,255,255,.22); }
+.media-purpose-grid article:last-child { border-right: 0; }
+.media-purpose-grid span, .media-angle-list span { color: var(--media-gold); font-size: 11px; font-weight: 800; letter-spacing: .15em; }
+.media-purpose-grid h3, .media-angle-list h3, .media-download-grid h3 { margin: 34px 0 12px; font-size: 17px; line-height: 1.2; }
+.media-purpose-grid p, .media-angle-list p, .media-download-grid p { margin: 0; color: rgba(255,255,255,.65); font-size: 14px; line-height: 1.55; }
+.media-stories-grid { align-items: end; }
+.media-stories p { max-width: 450px; margin: 30px 0; }
+.media-angle-list article { padding: 24px 0; border-top: 1px solid rgba(13,13,13,.16); }
+.media-angle-list h3 { margin: 12px 0 7px; }
+.media-angle-list p { color: var(--media-muted); }
+.media-partnerships { display: grid; grid-template-columns: 1fr .65fr; gap: clamp(50px, 12vw, 190px); padding: clamp(80px, 10vw, 140px) clamp(24px, 10vw, 150px); }
+.media-partnerships-copy > p { max-width: 470px; color: rgba(255,255,255,.68); margin: 30px 0; }
+.media-quote { align-self: center; padding: 24px 0 24px 32px; border-left: 1px solid var(--media-gold); }
+.media-quote > span { color: var(--media-gold); font: 400 60px/0 'DM Serif Display', serif; }
+.media-quote p { margin: 18px 0 20px; font: 400 clamp(34px, 4.5vw, 60px)/.95 'DM Serif Display', serif; }
+.media-quote small { color: rgba(255,255,255,.58); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; }
+.media-download-head { align-items: end; }
+.media-download-head > p { max-width: 390px; margin: 0; }
+.media-download-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 70px; }
+.media-download-grid article { min-height: 250px; padding: 20px; border: 1px solid rgba(13,13,13,.17); display: flex; flex-direction: column; }
+.media-download-icon { color: var(--media-gold); font-size: 24px; }
+.media-download-grid h3 { margin-top: auto; }
+.media-download-grid p { color: var(--media-muted); }
+.media-download-status { margin-top: 22px; color: var(--media-gold); font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.media-footer { display: grid; grid-template-columns: 1fr auto; gap: 50px; padding: 70px clamp(24px, 10vw, 150px) 28px; }
+.media-footer > div:first-child { max-width: 230px; }
+.media-footer .hor-logo-dogs { fill: white; }
+.media-footer p { margin: 16px 0 0; color: rgba(255,255,255,.58); font-size: 13px; }
+.media-footer-contact { display: grid; align-content: start; gap: 11px; text-align: right; }
+.media-footer-contact span { color: rgba(255,255,255,.55); font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
+.media-footer-contact a { color: var(--media-gold); font-size: 16px; font-weight: 700; }
+.media-footer-bottom { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 20px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.5); font-size: 12px; }
+.media-footer-bottom a { color: white; }
+@media (max-width: 800px) { .media-header { align-items: flex-start; padding-top: 18px; } .media-nav { gap: 12px; padding-top: 15px; } .media-nav a:not(.media-nav-contact) { display: none; } .media-nav-contact { font-size: 11px; } .media-hero { min-height: 720px; padding-top: 150px; } .media-hero-note { right: 24px; bottom: 42px; } .media-intro-grid, .media-stories-grid, .media-download-head, .media-purpose-head, .media-partnerships { grid-template-columns: 1fr; gap: 42px; } .media-purpose-grid { grid-template-columns: repeat(2, 1fr); margin-top: 60px; } .media-purpose-grid article:nth-child(2n) { border-right: 0; padding-left: 14px; } .media-download-grid { grid-template-columns: repeat(2, 1fr); margin-top: 48px; } .media-footer { grid-template-columns: 1fr; } .media-footer-contact { text-align: left; } }
+@media (max-width: 480px) { .media-brand { width: 180px; } .media-hero h1 { font-size: 62px; } .media-hero-note { position: relative; right: auto; bottom: auto; margin: 60px 0 0; } .media-hero { display: block; padding-top: 165px; } .media-actions { align-items: flex-start; flex-direction: column; gap: 18px; } .media-section, .media-purpose, .media-partnerships { padding-block: 80px; } .media-purpose-grid, .media-download-grid { grid-template-columns: 1fr; } .media-purpose-grid article, .media-purpose-grid article:nth-child(2n) { min-height: 0; padding: 22px 0; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.22); } .media-purpose-grid article:last-child { border-bottom: 0; } .media-download-grid article { min-height: 210px; } .media-footer-bottom { align-items: flex-start; flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .media-button { transition: none; } .media-button:hover, .media-button:focus-visible { transform: none; } }

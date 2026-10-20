@@ -13,6 +13,14 @@ test("keeps admin and events host routing unchanged", () => {
   });
 });
 
+test("serves the media hub at its subdomain root", () => {
+  assert.deepEqual(routePageRequest("media.houseofretrieversph.org", "/"), {
+    type: "rewrite",
+    pathname: "/media",
+  });
+  assert.deepEqual(routePageRequest("media.localhost", "/downloads"), { type: "next" });
+});
+
 test("leaves the main site and previews alone after countdown cleanup", () => {
   assert.deepEqual(routePageRequest("www.houseofretrieversph.org", "/"), { type: "next" });
   assert.deepEqual(routePageRequest("house-of-retrievers-site-git-x.vercel.app", "/countdown"), { type: "next" });
