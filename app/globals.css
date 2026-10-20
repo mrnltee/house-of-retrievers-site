@@ -1421,7 +1421,8 @@ main:focus { outline: none; }
 .media-header { position: absolute; z-index: 3; inset: 0 0 auto; display: grid; justify-items: center; gap: 16px; padding: 24px clamp(16px, 4vw, 48px) 0; color: white; }
 .media-masthead { display: grid; justify-items: center; gap: 9px; }
 .media-brand { display: block; width: 78px; height: 32px; }
-.media-brand .hor-logo, .media-footer .hor-logo { display: block; width: 100%; height: auto; }
+.media-brand .hor-logo { display: block; width: 100%; height: auto; }
+.media-footer .hor-logo { display: grid; width: 100%; height: auto; }
 .media-masthead .hor-logo-wordmark { display: none; }
 .media-masthead .hor-logo { width: 100%; height: 100%; }
 .media-orgname { max-width: 90vw; font-size: clamp(9px, 1vw, 12px); font-weight: 800; letter-spacing: .22em; line-height: 1.3; text-align: center; text-transform: uppercase; }
