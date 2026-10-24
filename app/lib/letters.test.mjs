@@ -43,6 +43,15 @@ test("markup: headings, centred lines, bullets, bold, tables and page breaks", (
   assert.equal(row.cells[1][0].bold, true);
 });
 
+test("tables are capped at 12 columns (the rest folds into the last cell) and 400 rows", () => {
+  const wide = `| ${Array.from({ length: 30 }, (_, i) => `c${i}`).join(" | ")} |`;
+  const [table] = letterBlocks(wide);
+  assert.equal(table.rows[0].cells.length, 12);
+  assert.match(table.rows[0].cells[11][0].text, /^c11 \/ c12 \/ .* c29$/);
+  const tall = Array.from({ length: 500 }, () => "| a | b |").join("\n");
+  assert.equal(letterBlocks(tall)[0].rows.length, 400);
+});
+
 test("a saved wording replaces the starter, field by field", () => {
   const l = letterWithOverride("invite-media", { name: "Media invite", subject: "", cover: "Hello [Company Name]", body: "Body" });
   assert.equal(l.name, "Media invite");

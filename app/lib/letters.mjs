@@ -112,6 +112,16 @@ export function inlineRuns(text) {
   return runs.filter((r) => r.text);
 }
 
+/** Table limits, so a letter can't make the PDF drawing run away. */
+export const TABLE_LIMITS = { columns: 12, rows: 400 };
+
+/** Cells beyond the column limit are folded into the last cell. */
+function capCells(cells) {
+  if (cells.length <= TABLE_LIMITS.columns) return cells;
+  const keep = cells.slice(0, TABLE_LIMITS.columns - 1);
+  return [...keep, cells.slice(TABLE_LIMITS.columns - 1).join(" / ")];
+}
+
 const splitRow = (line) => line.replace(/^\|!?\s?/, "").replace(/\s?\|\s*$/, "").split(/\s\|\s/).map((c) => c.trim().replace(/\s*\/\/\s*/g, "\n"));
 
 /**
@@ -126,7 +136,7 @@ export function letterBlocks(text) {
     if (block.trim() === "---page---") { blocks.push({ type: "page" }); continue; }
     const lines = block.split("\n");
     if (lines.every((l) => /^\|/.test(l.trim()))) {
-      blocks.push({ type: "table", rows: lines.map((l) => ({ header: l.trim().startsWith("|!"), cells: splitRow(l.trim()).map(inlineRuns) })) });
+      blocks.push({ type: "table", rows: lines.slice(0, TABLE_LIMITS.rows).map((l) => ({ header: l.trim().startsWith("|!"), cells: capCells(splitRow(l.trim())).map(inlineRuns) })) });
       continue;
     }
     if (lines.every((l) => /^- /.test(l))) {

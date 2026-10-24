@@ -21,7 +21,8 @@ export async function POST(request) {
   const field = (key) => (typeof data.get(key) === "string" ? data.get(key) : "");
   const saved = await loadLetter(field("letter"));
   if (!saved) return new Response("Not found", { status: 404 });
-  // The editor posts its unsaved wording to preview it.
+  // The editor posts its unsaved wording to preview it; that needs the right to edit letters.
+  if (field("body") && !can(admin.roles, "people:edit")) return new Response("Not allowed", { status: 403 });
   const letter = field("body") ? { ...saved, subject: field("subject") || saved.subject, cover: field("cover") || saved.cover, body: field("body").slice(0, LETTER_LIMITS.body) } : saved;
   let typed = {};
   try { typed = JSON.parse(field("values") || "{}"); } catch { typed = {}; }
