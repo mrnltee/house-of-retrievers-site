@@ -1,0 +1,106 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import BrandTransition from "./BrandTransition";
+import Header from "./Header";
+import Hero from "./Hero";
+import PurposeStories from "./PurposeStories";
+import Journey from "./Journey";
+import InstagramFeed from "./InstagramFeed";
+import Pack from "./Pack";
+import FinalCta from "./FinalCta";
+import Supporters from "./Supporters";
+import Footer from "./Footer";
+import JoinModal from "./JoinModal";
+import SupportModal from "./SupportModal";
+import ScrollProgress from "./ScrollProgress";
+
+/** The homepage. app/page.jsx (server) passes in the admin-set journey timeline settings. */
+export default function HomePage({ journeySettings }) {
+  const [packView, setPackView] = useState("impact");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [interest, setInterest] = useState("Member");
+  const [joinTransitionId, setJoinTransitionId] = useState(0);
+
+  useEffect(() => {
+    document.body.style.overflow = modalOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setModalOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [modalOpen]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    if (view === "families") setPackView(view);
+    // Old shared links carry ?view=impact (the default): tidy it away.
+    if (view === "impact") {
+      params.delete("view");
+      const query = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+    }
+  }, []);
+
+  // Keep the address clean: only write ?view= after a visitor switches tabs,
+  // and only for the non-default tab, so shared links stay
+  // houseofretrieversph.org/ unless they point at the founding families.
+  const viewChanged = useRef(false);
+  useEffect(() => {
+    if (!viewChanged.current) {
+      viewChanged.current = true;
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (packView === "impact") params.delete("view");
+    else params.set("view", packView);
+    params.delete("story");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+  }, [packView]);
+
+  const openJoin = (nextInterest = "Member") => {
+    setMenuOpen(false);
+    setInterest(nextInterest);
+    setJoinTransitionId((current) => current + 1);
+  };
+
+  const finishJoinTransition = useCallback(() => {
+    setModalOpen(true);
+  }, []);
+
+  return (
+    <>
+      <a href="#main" className="skip-link">Skip to content</a>
+      <ScrollProgress />
+      <BrandTransition interactionId={joinTransitionId} onInteractionComplete={finishJoinTransition} />
+
+      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} onSupport={() => { setMenuOpen(false); setSupportOpen(true); }} />
+      <main id="main" tabIndex={-1}>
+      <Hero onJoin={openJoin} />
+      <PurposeStories />
+      <Journey onJoin={openJoin} settings={journeySettings} />
+      <InstagramFeed />
+      <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
+      <Supporters onJoin={openJoin} />
+      <FinalCta onJoin={openJoin} />
+      </main>
+      <Footer />
+
+      {modalOpen && (
+        <JoinModal interest={interest} setInterest={setInterest} onClose={() => setModalOpen(false)} />
+      )}
+      {supportOpen && <SupportModal onClose={() => setSupportOpen(false)} onJoin={() => { setSupportOpen(false); openJoin("Sponsor"); }} />}
+    </>
+  );
+}

@@ -4,6 +4,7 @@ import { journey } from "../content/journey";
 import { EVENTS_URL } from "../lib/eventsHost.mjs";
 import { manilaMonth, monthLabel, stopStatus, withOrg } from "../lib/journeyStatus.mjs";
 import useLegal from "../lib/useLegal";
+import { DEFAULT_JOURNEY_SETTINGS } from "../lib/journeySettings.mjs";
 
 const SLIDE_MS = 5200;
 
@@ -101,7 +102,9 @@ function JourneyMedia({ stop, status, index, playing }) {
  * line fills down the past as the visitor scrolls; the line turns dashed
  * where the upcoming stops begin.
  */
-export default function Journey({ onJoin }) {
+export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS }) {
+  // Read on the server (app/page.jsx), so the page arrives already hidden or in the right layout.
+  const { show, orientation } = settings;
   const legal = useLegal();
   const reducedMotion = useReducedMotion();
   const list = useRef(null);
@@ -115,6 +118,7 @@ export default function Journey({ onJoin }) {
   // Reveal each stop as it comes into view (content stays visible without JS).
   useEffect(() => {
     const el = list.current;
+    if (!el) return undefined;
     setReady(true);
     const items = el.querySelectorAll(".journey-stop, .journey-divider");
     if (reducedMotion) {
@@ -136,6 +140,7 @@ export default function Journey({ onJoin }) {
   // The gold line: follows the reader down to where the upcoming stops begin.
   useEffect(() => {
     const el = list.current;
+    if (!el) return undefined;
     let frame = 0;
     const limit = () => {
       const boundary = el.querySelector(".journey-divider");
@@ -158,8 +163,10 @@ export default function Journey({ onJoin }) {
     };
   }, [reducedMotion]);
 
+  if (!show) return null;
+
   return (
-    <section className="journey section-shell" id="journey" aria-labelledby="journey-title">
+    <section className={`journey section-shell${orientation === "horizontal" ? " is-horizontal" : ""}`} id="journey" aria-labelledby="journey-title">
       <div className="journey-head">
         <div className="eyebrow">Our journey</div>
         <h2 id="journey-title">How the House grew, <em>and what comes next.</em></h2>
@@ -172,52 +179,54 @@ export default function Journey({ onJoin }) {
         )}
       </div>
 
-      <ol className={`journey-list${ready ? " is-ready" : ""}`} ref={list}>
-        {stops.map((stop, index) => {
-          const side = index % 2 ? "left" : "right";
-          const [month, year] = stop.month ? monthLabel(stop.month).split(" ") : ["Soon", "Date to be announced"];
-          const href = stop.event ? `${EVENTS_URL}/${stop.event}` : null;
-          return (
-            <Fragment key={stop.id}>
-              {index === firstUpcoming && (
-                <li className="journey-divider" aria-hidden="true"><span>Coming up</span></li>
-              )}
-              <li className={`journey-stop is-${stop.status} is-${side}${stop.mark ? ` is-${stop.mark}` : ""}${href ? " is-linked" : ""}`}>
-                <p className="journey-when">
-                  {stop.month
-                    ? <time dateTime={stop.month}><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></time>
-                    : <><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></>}
-                  {stop.status === "upcoming" && <span className="visually-hidden">, upcoming</span>}
-                </p>
-                <span className="journey-dot" aria-hidden="true" />
-                <article className="journey-card">
-                  <JourneyMedia stop={stop} status={stop.status} index={index} playing={!paused && !reducedMotion} />
-                  <div className="journey-body">
-                    <p className="journey-tag">{stop.status === "upcoming" ? "Upcoming" : stop.tag}</p>
-                    <h3>{href ? <a className="journey-card-link" href={href}>{stop.title}</a> : stop.title}</h3>
-                    {stop.theme && <p className="journey-theme">{stop.theme}</p>}
-                    {stop.place && <p className="journey-place"><MapPin size={15} aria-hidden="true" />{stop.place}</p>}
-                    {stop.story && <p className="journey-story">{withOrg(stop.story, legal?.org)}</p>}
-                    {href && <span className="journey-link" aria-hidden="true">{stop.status === "upcoming" ? "Event details" : "See the event"} <ArrowRight size={15} /></span>}
-                  </div>
-                </article>
-              </li>
-            </Fragment>
-          );
-        })}
-        <li className="journey-stop journey-end">
-          <span className="journey-dot" aria-hidden="true" />
-          <div className="journey-card">
-            <p className="journey-tag">What’s next</p>
-            <h3>Your chapter starts here.</h3>
-            <p className="journey-story">There is always room for one more good human. Join as a member, volunteer or partner, with or without a dog.</p>
-            <div className="journey-end-actions">
-              <button type="button" className="button primary" onClick={() => onJoin?.()}>Join the pack</button>
-              <a className="journey-link" href={EVENTS_URL}>See upcoming events <ArrowRight size={15} aria-hidden="true" /></a>
+      <div className="journey-track" tabIndex={orientation === "horizontal" ? 0 : undefined} role={orientation === "horizontal" ? "region" : undefined} aria-label={orientation === "horizontal" ? "Our journey timeline, scrollable" : undefined}>
+        <ol className={`journey-list${ready ? " is-ready" : ""}`} ref={list}>
+          {stops.map((stop, index) => {
+            const side = index % 2 ? "left" : "right";
+            const [month, year] = stop.month ? monthLabel(stop.month).split(" ") : ["Soon", "Date to be announced"];
+            const href = stop.event ? `${EVENTS_URL}/${stop.event}` : null;
+            return (
+              <Fragment key={stop.id}>
+                {index === firstUpcoming && (
+                  <li className="journey-divider" aria-hidden="true"><span>Coming up</span></li>
+                )}
+                <li className={`journey-stop is-${stop.status} is-${side}${stop.mark ? ` is-${stop.mark}` : ""}${href ? " is-linked" : ""}`}>
+                  <p className="journey-when">
+                    {stop.month
+                      ? <time dateTime={stop.month}><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></time>
+                      : <><span className="journey-when-month">{month}</span> <span className="journey-when-year">{year}</span></>}
+                    {stop.status === "upcoming" && <span className="visually-hidden">, upcoming</span>}
+                  </p>
+                  <span className="journey-dot" aria-hidden="true" />
+                  <article className="journey-card">
+                    <JourneyMedia stop={stop} status={stop.status} index={index} playing={!paused && !reducedMotion} />
+                    <div className="journey-body">
+                      <p className="journey-tag">{stop.status === "upcoming" ? "Upcoming" : stop.tag}</p>
+                      <h3>{href ? <a className="journey-card-link" href={href}>{stop.title}</a> : stop.title}</h3>
+                      {stop.theme && <p className="journey-theme">{stop.theme}</p>}
+                      {stop.place && <p className="journey-place"><MapPin size={15} aria-hidden="true" />{stop.place}</p>}
+                      {stop.story && <p className="journey-story">{withOrg(stop.story, legal?.org)}</p>}
+                      {href && <span className="journey-link" aria-hidden="true">{stop.status === "upcoming" ? "Event details" : "See the event"} <ArrowRight size={15} /></span>}
+                    </div>
+                  </article>
+                </li>
+              </Fragment>
+            );
+          })}
+          <li className="journey-stop journey-end">
+            <span className="journey-dot" aria-hidden="true" />
+            <div className="journey-card">
+              <p className="journey-tag">What’s next</p>
+              <h3>Your chapter starts here.</h3>
+              <p className="journey-story">There is always room for one more good human. Join as a member, volunteer or partner, with or without a dog.</p>
+              <div className="journey-end-actions">
+                <button type="button" className="button primary" onClick={() => onJoin?.()}>Join the pack</button>
+                <a className="journey-link" href={EVENTS_URL}>See upcoming events <ArrowRight size={15} aria-hidden="true" /></a>
+              </div>
             </div>
-          </div>
-        </li>
-      </ol>
+          </li>
+        </ol>
+      </div>
     </section>
   );
 }
