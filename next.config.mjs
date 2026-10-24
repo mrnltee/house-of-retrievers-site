@@ -13,6 +13,8 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // pdfkit reads its font metrics from its own folder at runtime, so it isn't bundled.
+  serverExternalPackages: ["pdfkit"],
   // Admin forms carry a resized event photo or a QR image (under ~2 MB).
   // 4 MB stays under Vercel's 4.5 MB request cap; the editor keeps photos well below it.
   experimental: { serverActions: { bodySizeLimit: "4mb" } },

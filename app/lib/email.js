@@ -11,9 +11,10 @@ export function emailReady() {
 
 /**
  * `idempotencyKey` ("<event>/<id>") stops a retry from sending twice: Resend
- * returns the first result for the same key within 24 hours.
+ * returns the first result for the same key within 24 hours. `attachments`:
+ * [{ filename, content: Buffer }] (a letter's PDF).
  */
-export async function sendEmail({ to, subject, html, text, idempotencyKey }) {
+export async function sendEmail({ to, subject, html, text, idempotencyKey, attachments }) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM;
   if (!key || !from || !to) return { skipped: true };
@@ -31,9 +32,10 @@ export async function sendEmail({ to, subject, html, text, idempotencyKey }) {
         subject,
         html,
         text,
+        ...(attachments?.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content).toString("base64") })) } : {}),
         ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
       }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(attachments?.length ? 20000 : 10000),
     });
     if (!response.ok) {
       console.warn("email not sent", response.status, (await response.text()).slice(0, 200));

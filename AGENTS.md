@@ -63,7 +63,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
      renames of anything the live code still reads.
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`051_…sql`**).
+     number (the next one is **`053_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
@@ -156,7 +156,7 @@ app/lib/                 shared logic (.mjs = pure + tested): prices, eventPayme
 app/lib/admin/           roles, guard, auth, events (validate/toPublicEvent/publicStatus),
                          people, peopleImport, registrations, payments, activity (labels), log
 app/globals.css          public styles and brand tokens;  app/admin/admin.css  admin styles
-db/migrations/           001–050 (see §6)
+db/migrations/           001–052 (see §6)
 scripts/                 migrate.mjs, apps-script/Code.gs (Join → Google Sheet), logo/ (rig builder)
 brand/                   source logo SVGs (see brand/README.md)
 public/                  web-ready media only (camera originals are git-ignored)
@@ -208,6 +208,7 @@ public/                  web-ready media only (camera originals are git-ignored)
 | 049 | `registrations.hold_reminded_at` / `hold_reminders` |
 | 050 | `people.furbaby_rainbow` (furbabies over the rainbow bridge) |
 | 051 | Media hub document content and draft/published status (`media_hub_documents`) |
+| 052 | Letters: HOR's saved wording per letter (`letter_templates`) and last-typed blank values (`letter_saved_values`) |
 
 Advisory locks in use: 727001 migrations, 727010 member numbers, 727011
 supporter numbers. Pick a new number for any new lock.

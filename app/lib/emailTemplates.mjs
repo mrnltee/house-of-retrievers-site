@@ -390,6 +390,25 @@ export function welcomeMember({ name, memberNo, furbaby = "", organization = "",
   return renderTemplate(ref, custom, { name, memberNo, furbaby, organization, kind });
 }
 
+/**
+ * The covering email for a letter (Settings → Letters): the letter's subject
+ * as the heading, the filled-in cover text (a first "Dear …," paragraph
+ * becomes the greeting), and a note that the letter is attached as a PDF.
+ */
+export function letterCoverEmail({ subject, cover, filename }) {
+  const text = String(cover || "").replace(/\r\n?/g, "\n").trim();
+  const [first = "", ...rest] = text.split(/\n{2,}/);
+  const greeting = /^dear\b/i.test(first) ? first.trim() : "";
+  return build({
+    subject,
+    preheader: "Our letter is attached.",
+    greeting: greeting || undefined,
+    heading: subject,
+    paragraphs: messageParagraphs(greeting ? rest.join("\n\n") : text, {}),
+    footnote: `Our letter is attached as a PDF (${filename}). Reply to this email to talk to the team.`,
+  });
+}
+
 /** An Acceptance template sent to anyone in People. */
 export function acceptanceEmail({ person, custom }) {
   return renderTemplate("custom:acceptance", custom, person);

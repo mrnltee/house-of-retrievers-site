@@ -212,6 +212,14 @@ export default async function PersonPage({ params, searchParams }) {
             </section>
           )}
 
+          {canEdit && (
+            <section className="card">
+              <h2>Send a letter</h2>
+              <p className="small muted">One of HOR's prepared letters (donation, invitations, sponsorship…) as a PDF, addressed to {person.organization || person.name}.</p>
+              <a className="btn ghost" href={`${base}/letters/send?to=person:${person.id}`}>Choose a letter…</a>
+            </section>
+          )}
+
           <section className="card">
             <h2>Follow-up</h2>
             {canEdit ? (

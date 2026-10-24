@@ -28,6 +28,7 @@ export default async function SupporterPage({ params, searchParams }) {
     <>
       <p className="small"><a href={`${base}/supporters`}>← Sponsors & partners</a></p>
       <PageHead title={row.name} lead={[row.kind, row.category_label, supporterNumber(row), row.tier ? `★ ${tierLabel(row.tier)}` : "", statusLabel(row.status), shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
+        <a className="btn ghost" href={`${base}/letters/send?to=supporter:${row.id}`}>✉ Send a letter</a>
         {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}
       </PageHead>
       <Flash params={query} />
