@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { ArrowRight, BadgeCheck, CalendarHeart, Camera, MapPin, Pause, Play } from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarHeart, Camera, ChevronLeft, ChevronRight, MapPin, Pause, Play } from "lucide-react";
 import { journey } from "../content/journey";
 import { EVENTS_URL } from "../lib/eventsHost.mjs";
 import { manilaMonth, monthLabel, stopStatus, withOrg } from "../lib/journeyStatus.mjs";
@@ -24,12 +24,18 @@ function useReducedMotion() {
  * The card's picture: a still, a slow fade-and-pan through several photos,
  * or a designed placeholder until photos are chosen. Moves only while on
  * screen, never under reduced motion, and stops with the section's pause.
+ * Like the event pages, visitors can also step through the photos (arrows,
+ * thumbnails on wide screens, dots on phones, ← → keys); doing so pauses
+ * this card, and its own play/pause button restarts it (owner's choice, C-029 B).
  */
-function JourneyMedia({ stop, status, index, playing }) {
+function JourneyMedia({ stop, status, index, playing: sectionPlaying }) {
   const photos = stop.photos ?? [];
   const frame = useRef(null);
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [held, setHeld] = useState(false);
+  const playing = sectionPlaying && !held;
+  const show = (i) => { setActive((i + photos.length) % photos.length); setHeld(true); };
 
   useEffect(() => {
     if (photos.length < 2) return undefined;
@@ -61,8 +67,21 @@ function JourneyMedia({ stop, status, index, playing }) {
     );
   }
 
+  const many = photos.length > 1;
   return (
-    <div className="journey-media" ref={frame}>
+    <div className="journey-visual">
+    <div
+      className="journey-media"
+      ref={frame}
+      tabIndex={many ? 0 : undefined}
+      role={many ? "group" : undefined}
+      aria-roledescription={many ? "carousel" : undefined}
+      aria-label={many ? `${stop.title} photos` : undefined}
+      onKeyDown={many ? (e) => {
+        if (e.key === "ArrowLeft") { e.preventDefault(); show(active - 1); }
+        if (e.key === "ArrowRight") { e.preventDefault(); show(active + 1); }
+      } : undefined}
+    >
       {photos[active]?.fit === "contain" && (
         <img className="journey-media-backdrop" src={photos[active].src} alt="" aria-hidden="true" />
       )}
@@ -87,11 +106,34 @@ function JourneyMedia({ stop, status, index, playing }) {
               className={i === active ? "active" : undefined}
               aria-label={`${stop.title}, photo ${i + 1} of ${photos.length}`}
               aria-current={i === active}
-              onClick={() => setActive(i)}
+              onClick={() => show(i)}
             />
           ))}
         </div>
       )}
+      {many && (
+        <>
+          <button type="button" className="journey-arrow is-prev" aria-label={`${stop.title}, previous photo`} onClick={() => show(active - 1)}><ChevronLeft size={20} aria-hidden="true" /></button>
+          <button type="button" className="journey-arrow is-next" aria-label={`${stop.title}, next photo`} onClick={() => show(active + 1)}><ChevronRight size={20} aria-hidden="true" /></button>
+          <span className="journey-count" aria-live="polite">{active + 1} / {photos.length}</span>
+          {sectionPlaying && (
+            <button type="button" className="journey-card-play" aria-pressed={held} onClick={() => setHeld((h) => !h)}>
+              {held ? <><Play size={13} aria-hidden="true" /> Play</> : <><Pause size={13} aria-hidden="true" /> Pause</>}
+              <span className="visually-hidden"> {stop.title} photos</span>
+            </button>
+          )}
+        </>
+      )}
+    </div>
+    {many && (
+      <div className="journey-thumbs" aria-label={`Choose a ${stop.title} photo`}>
+        {photos.map((photo, i) => (
+          <button type="button" key={photo.src} aria-label={`${stop.title}, photo ${i + 1} of ${photos.length}`} aria-current={i === active} onClick={() => show(i)}>
+            <img src={photo.src} alt="" loading="lazy" decoding="async" />
+          </button>
+        ))}
+      </div>
+    )}
     </div>
   );
 }
