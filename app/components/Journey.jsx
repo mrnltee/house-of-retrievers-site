@@ -102,7 +102,7 @@ function JourneyMedia({ stop, status, index, playing }) {
  * line fills down the past as the visitor scrolls; the line turns dashed
  * where the upcoming stops begin.
  */
-export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS }) {
+export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS, stops: given }) {
   // Read on the server (app/page.jsx), so the page arrives already hidden or in the right layout.
   const { show, orientation } = settings;
   const legal = useLegal();
@@ -111,7 +111,8 @@ export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS })
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
   const current = manilaMonth();
-  const stops = journey.map((stop) => ({ ...stop, status: stopStatus(stop, current) }));
+  // From the database (app/lib/journeyStore.js), or the built-in file when there isn't one.
+  const stops = (given ?? journey).map((stop) => ({ ...stop, status: stopStatus(stop, current) }));
   const firstUpcoming = stops.findIndex((stop) => stop.status === "upcoming");
   const hasSlideshows = stops.some((stop) => (stop.photos?.length ?? 0) > 1);
 

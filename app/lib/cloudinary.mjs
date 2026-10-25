@@ -37,6 +37,11 @@ export function eventFolder(eventId) {
   return `hor/events/${eventId}`;
 }
 
+/** The folder one "Our journey" stop's uploaded photos go in. */
+export function journeyFolder(entryId) {
+  return `hor/journey/${entryId}`;
+}
+
 /**
  * A delivery address sized for where it is shown. f_auto picks WebP or AVIF
  * per browser; q_auto picks the lowest quality that still looks right.

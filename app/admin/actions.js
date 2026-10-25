@@ -176,6 +176,8 @@ export async function saveEvent(data) {
         [...fields, status, id],
       );
       if (!rows.length) await backWith("/events", "error", "That event no longer exists.");
+      // A journey stop linked to this event follows its date (migration 054).
+      await sql("UPDATE journey_entries SET happened_on=$1, updated_at=now() WHERE event_id=$2 AND happened_on IS DISTINCT FROM $1::date", [value.date, id]);
     } else {
       let slug = slugify(value.title, value.date);
       const taken = await sql("SELECT slug FROM events WHERE slug = $1 OR slug LIKE $2", [slug, `${slug}-%`]);

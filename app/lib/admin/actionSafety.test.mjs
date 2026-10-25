@@ -52,3 +52,19 @@ test("registration payment actions authorize before reading a registration", () 
     assert.ok(body.indexOf("await actionAdmin(") < body.indexOf("await registration("), `${name} must authorize before reading the registration`);
   }
 });
+
+test("journey entry actions authorize (media:edit) before touching the database", () => {
+  const source = readFileSync(join(ROOT, "app", "admin", "journeyEntryActions.js"), "utf8");
+  const names = [...source.matchAll(/export async function (\w+)/g)].map((m) => m[1]);
+  assert.ok(names.length >= 13, "all journey actions found");
+  for (const name of names) {
+    const start = source.indexOf(`export async function ${name}`);
+    const rest = source.slice(start + 1);
+    const end = rest.indexOf("\nexport ");
+    const body = end >= 0 ? rest.slice(0, end) : rest;
+    const auth = Math.min(...["actionAdmin(\"media:edit\")", "await allowed()"].map((s) => body.indexOf(s)).filter((i) => i >= 0));
+    const firstQuery = body.search(/\b(sql|transaction)\(/);
+    assert.ok(Number.isFinite(auth), `${name} checks permission`);
+    assert.ok(firstQuery < 0 || auth < firstQuery, `${name} must authorize before its first query`);
+  }
+});

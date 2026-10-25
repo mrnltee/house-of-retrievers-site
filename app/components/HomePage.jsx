@@ -16,7 +16,7 @@ import SupportModal from "./SupportModal";
 import ScrollProgress from "./ScrollProgress";
 
 /** The homepage. app/page.jsx (server) passes in the admin-set journey timeline settings. */
-export default function HomePage({ journeySettings }) {
+export default function HomePage({ journeySettings, journeyStops }) {
   const [packView, setPackView] = useState("impact");
   const [modalOpen, setModalOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -89,7 +89,7 @@ export default function HomePage({ journeySettings }) {
       <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
       <PurposeStories />
-      <Journey onJoin={openJoin} settings={journeySettings} />
+      <Journey onJoin={openJoin} settings={journeySettings} stops={journeyStops} />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
       <Supporters onJoin={openJoin} />
