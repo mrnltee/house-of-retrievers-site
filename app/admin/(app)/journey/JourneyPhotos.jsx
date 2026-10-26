@@ -222,7 +222,7 @@ export default function JourneyPhotos({ entryId, hasEvent, initialPhotos, connec
               <input
                 type="text"
                 aria-label="Describe this photo"
-                placeholder="Describe the photo"
+                placeholder="Describe the photo (needed to publish)"
                 maxLength={200}
                 defaultValue={photo.alt}
                 onBlur={(e) => saveDetails(photo, e.target.value.trim(), photo.fit)}

@@ -107,6 +107,15 @@ export async function setJourneyEntryStatus(data) {
   const id = field(data, "id");
   const status = field(data, "status") === "published" ? "published" : "draft";
   if (!isUuid(id)) await backWith("/journey", "error", "That stop no longer exists.");
+  if (status === "published") {
+    // Owner's rule: every photo is described before the stop goes public (screen readers read it).
+    const [{ missing }] = await sql(
+      `SELECT count(*)::int AS missing FROM journey_entry_photos p LEFT JOIN event_photos ep ON ep.id = p.event_photo_id
+        WHERE p.entry_id=$1 AND COALESCE(NULLIF(trim(p.alt), ''), NULLIF(trim(ep.alt), '')) IS NULL`,
+      [id],
+    );
+    if (missing) await backWith(entryPage(id), "error", `Describe ${missing === 1 ? "the 1 photo" : `all ${missing} photos`} without a description first — what's in the picture, for people using screen readers. Then publish.`);
+  }
   const [row] = await sql("UPDATE journey_entries SET status=$1, updated_by=$2, updated_at=now() WHERE id=$3 RETURNING title", [status, admin.email, id]);
   if (!row) await backWith("/journey", "error", "That stop no longer exists.");
   await logActivity(admin.email, status === "published" ? "journey.entry.publish" : "journey.entry.unpublish", row.title, { id });
@@ -198,17 +207,25 @@ export async function addJourneyPhoto(entryId, uploaded) {
   if (!publicId.startsWith(`${journeyFolder(entryId)}/`) || ![width, height, bytes].every((n) => Number.isInteger(n) && n > 0)) {
     return { error: "That photo couldn't be added." };
   }
-  if ((await photoCount(entryId)) >= MAX_JOURNEY_PHOTOS) {
+  // Lock the stop so two uploads finishing together can't both squeeze past the limit.
+  const result = await transaction(async (tx) => {
+    const [entry] = await tx.sql("SELECT id FROM journey_entries WHERE id=$1 FOR UPDATE", [entryId]);
+    if (!entry) return { error: "That stop no longer exists." };
+    const [{ count, next }] = await tx.sql("SELECT count(*)::int AS count, COALESCE(max(position), -1) + 1 AS next FROM journey_entry_photos WHERE entry_id=$1", [entryId]);
+    if (count >= MAX_JOURNEY_PHOTOS) return { full: true };
+    const [row] = await tx.sql(
+      `INSERT INTO journey_entry_photos (entry_id, public_id, width, height, bytes, position, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (public_id) DO NOTHING RETURNING *`,
+      [entryId, publicId, width, height, bytes, next, admin.email],
+    );
+    return row ? { row } : { error: "That photo is already on this stop." };
+  });
+  if (result.full) {
     await destroyPhoto(publicId);
     return { error: `This stop already has ${MAX_JOURNEY_PHOTOS} photos.` };
   }
-  const [{ next }] = await sql("SELECT COALESCE(max(position), -1) + 1 AS next FROM journey_entry_photos WHERE entry_id=$1", [entryId]);
-  const [row] = await sql(
-    `INSERT INTO journey_entry_photos (entry_id, public_id, width, height, bytes, position, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (public_id) DO NOTHING RETURNING *`,
-    [entryId, publicId, width, height, bytes, next, admin.email],
-  );
-  if (!row) return { error: "That photo is already on this stop." };
+  if (result.error) return { error: result.error };
+  const row = result.row;
   await logActivity(admin.email, "journey.photo.add", entryId, { publicId });
   refresh();
   return { photo: publicPhoto(row, config.cloudName) };
@@ -238,10 +255,12 @@ export async function borrowEventPhotos(entryId, eventPhotoIds) {
   if (error) return { error };
   const ids = (Array.isArray(eventPhotoIds) ? eventPhotoIds : []).filter(isUuid).slice(0, MAX_JOURNEY_PHOTOS);
   if (!isUuid(entryId) || !ids.length) return { error: "Pick at least one photo." };
-  const room = MAX_JOURNEY_PHOTOS - (await photoCount(entryId));
-  if (room <= 0) return { error: `This stop already has ${MAX_JOURNEY_PHOTOS} photos.` };
   const added = await transaction(async (tx) => {
-    const [{ next }] = await tx.sql("SELECT COALESCE(max(position), -1) + 1 AS next FROM journey_entry_photos WHERE entry_id=$1", [entryId]);
+    // Locked like addJourneyPhoto, so the limit holds when several adds overlap.
+    await tx.sql("SELECT id FROM journey_entries WHERE id=$1 FOR UPDATE", [entryId]);
+    const [{ count, next }] = await tx.sql("SELECT count(*)::int AS count, COALESCE(max(position), -1) + 1 AS next FROM journey_entry_photos WHERE entry_id=$1", [entryId]);
+    const room = MAX_JOURNEY_PHOTOS - count;
+    if (room <= 0) return null;
     // Only photos from this stop's own linked event.
     return tx.sql(
       `INSERT INTO journey_entry_photos (entry_id, event_photo_id, position, uploaded_by)
@@ -254,6 +273,7 @@ export async function borrowEventPhotos(entryId, eventPhotoIds) {
       [entryId, ids, next, admin.email, room],
     );
   });
+  if (!added) return { error: `This stop already has ${MAX_JOURNEY_PHOTOS} photos.` };
   await logActivity(admin.email, "journey.photo.add", entryId, { fromAlbum: added.length });
   refresh();
   return { added: added.length };

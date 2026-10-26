@@ -167,17 +167,22 @@ export async function saveEvent(data) {
     }
 
     if (isUuid(id)) {
-      const rows = await sql(
+      // The event and the journey stops linked to it change together, or not at all.
+      const saved = await transaction(async (tx) => {
+        const rows = await tx.sql(
         `UPDATE events SET title=$1, category=$2, date=$3, start_time=$4, end_time=$5, venue=$6, city=$7, cost=$8, supports=$9, summary=$10,
            image=$11, image_alt=$12, registration=$13, capacity=$14, capacity_basis=COALESCE($15, capacity_basis), rsvp_open=$16, rsvp_label=$17, vaccination_record_required=$18,
            fee_required=$19, pricing_basis=$20, included_furbabies_per_human=$21, additional_furbaby_fee=$22, onsite_payment=$23, rsvp_form_config=COALESCE($24::jsonb, rsvp_form_config),
            status=COALESCE($25, status), updated_at=now()
          WHERE id=$26 RETURNING id`,
         [...fields, status, id],
-      );
-      if (!rows.length) await backWith("/events", "error", "That event no longer exists.");
-      // A journey stop linked to this event follows its date (migration 054).
-      await sql("UPDATE journey_entries SET happened_on=$1, updated_at=now() WHERE event_id=$2 AND happened_on IS DISTINCT FROM $1::date", [value.date, id]);
+        );
+        if (!rows.length) return false;
+        // A journey stop linked to this event follows its date (migration 054).
+        await tx.sql("UPDATE journey_entries SET happened_on=$1, updated_at=now() WHERE event_id=$2 AND happened_on IS DISTINCT FROM $1::date", [value.date, id]);
+        return true;
+      });
+      if (!saved) await backWith("/events", "error", "That event no longer exists.");
     } else {
       let slug = slugify(value.title, value.date);
       const taken = await sql("SELECT slug FROM events WHERE slug = $1 OR slug LIKE $2", [slug, `${slug}-%`]);
