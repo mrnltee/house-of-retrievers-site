@@ -1021,7 +1021,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .journey.is-horizontal .journey-track { --bleed: calc(max(0px, (100vw - 1280px) / 2) + clamp(24px, 6vw, 84px)); margin-top: clamp(48px, 6vw, 72px); margin-inline: calc(-1 * var(--bleed)); padding-inline: var(--bleed); scroll-padding-inline: var(--bleed); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
 .journey.is-horizontal .journey-track::-webkit-scrollbar { display: none; }
 .journey.is-horizontal .journey-track:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }
-.journey.is-horizontal .journey-list { display: flex; align-items: stretch; column-gap: 28px; width: max-content; margin: 0; padding: 6px 56px 24px 2px; }
+.journey.is-horizontal .journey-list { display: flex; align-items: stretch; column-gap: 28px; width: max-content; margin: 0 0 0 -12px; padding: 18px 56px 24px 14px; } /* room for the first dot's ring and card shadows inside the scroller */
 .journey.is-horizontal .journey-list::before, .journey.is-horizontal .journey-list::after { display: none; }
 .journey.is-horizontal .journey-stop { display: flex; flex-direction: column; width: clamp(272px, 78vw, 320px); scroll-snap-align: start; }
 .journey.is-horizontal .journey-stop::before,
