@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate } from "../../../../lib/letters.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
-import LetterPreview from "../LetterPreview";
+import LetterView from "../LetterView";
 
 const SAMPLE = "Pawsome Pet Shop";
 
@@ -75,7 +75,7 @@ export default function LetterEditor({ letter, original, pdfAction }) {
             <button type="submit" className="btn ghost" data-confirm="not-needed-read-only">Preview PDF</button>
           </form>
         </div>
-        <LetterPreview text={preview} />
+        <LetterView text={preview} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body }} />
       </section>
     </div>
   );

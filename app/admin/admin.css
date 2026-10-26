@@ -610,3 +610,10 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .letter-recipients { display: grid; gap: 6px; max-height: 260px; overflow: auto; }
 .letter-recipients .check { display: flex; gap: 8px; align-items: flex-start; }
 .supporter-letter-bar { margin: 0 0 10px; align-items: center; }
+
+/* Letters: Page view / Actual PDF switch */
+.seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--a-line, #e2d8c4); border-radius: 999px; justify-self: start; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; }
+.seg button.is-on { background: var(--a-ink, #1f1b16); color: #fff; }
+.seg button:focus-visible { outline: 2px solid var(--a-gold, #a7853f); outline-offset: 2px; }
+.letter-pdf-frame { width: 100%; height: 78vh; border: 1px solid #e6dcc8; border-radius: 8px; background: #fff; }

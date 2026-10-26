@@ -1,7 +1,7 @@
 /**
  * Draws a filled-in letter (blocks from `letters.mjs`) as an A4 PDF: HOR's
- * logo on the first page, Times for the text (a classic letter face that every
- * PDF reader has, so nothing needs embedding), page numbers in the footer.
+ * logo on the first page, Helvetica for the text (Arial's twin, as in HOR's Word
+ * letters, and built into every PDF reader, so nothing needs embedding), page numbers in the footer.
  * Server only. `₱` becomes "PHP " and `☐` "[  ]", because the standard PDF
  * fonts have neither sign.
  */
@@ -12,7 +12,7 @@ const INK = "#1F1B16";
 const GOLD = "#7A5C1F";
 const RULE = "#C9B48A";
 const HEAD_FILL = "#F3EBDD";
-const SIZE = 10.5;
+const SIZE = 11;
 const MARGIN = 60;
 
 let logo = null;
@@ -36,7 +36,18 @@ export function pdfSafe(text) {
     .join("");
 }
 
-const font = (bold) => (bold ? "Times-Bold" : "Times-Roman");
+// HOR's Word letters use Arial 11; Helvetica is the PDF standard face with the same shapes and widths.
+const font = (bold) => (bold ? "Helvetica-Bold" : "Helvetica");
+
+/** A fillable text field with a unique name (readers merge fields that share one). */
+function field(doc, label, x, y, w, h, options = {}) {
+  const count = (doc._fieldCount = (doc._fieldCount || 0) + 1);
+  const name = `${pdfSafe(label).replace(/[^A-Za-z0-9 ]+/g, " ").trim().slice(0, 40) || "Field"} ${count}`;
+  const saved = { x: doc.x, y: doc.y };
+  doc.formText(name, x, y, w, h, { fontSize: 0, ...options });
+  doc.x = saved.x;
+  doc.y = saved.y;
+}
 
 /** Writes runs at the current position (or x, y), wrapping in `width`. */
 function writeRuns(doc, runs, { x, y, width, align = "left", size = SIZE, color = INK, gap = 2 } = {}) {
@@ -69,6 +80,30 @@ function drawTable(doc, rows) {
   const header = rows.find((r) => r.header);
 
   const rowHeight = (row) => Math.max(...widths.map((w, i) => cellHeight(doc, row.cells[i] || [], w - pad * 2, row.header))) + pad * 2;
+  // Write-in spots become fillable fields (owner, 2026-10-27): an empty cell, a ☐ box,
+  // and the ____ after a label such as "Signature: ____". Lines still print for pen.
+  const addFields = (row, x, y, w, h) => {
+    if (row.header) return;
+    const text = plain(row.cells[x.i] || []);
+    const cx = x.at + pad;
+    const cw = w - pad * 2;
+    if (!text.trim()) {
+      field(doc, x.label, cx, y + pad - 1, cw, Math.max(h - pad * 2 + 2, 14), { multiline: h > 30 });
+    } else if (text.trim() === "[  ]") {
+      doc.font(font(false)).fontSize(SIZE - 0.5);
+      field(doc, `Select ${plain(row.cells[x.i + 1] || []).trim() || x.label}`, cx - 1, y + pad - 1, doc.widthOfString("[  ]") + 2, 14, { maxLength: 1, align: 1 });
+    } else if (/_{3,}/.test(text)) {
+      doc.font(font(false)).fontSize(SIZE - 0.5);
+      const lineH = doc.currentLineHeight(true) + 1.5;
+      text.split("\n").forEach((line, n) => {
+        const at = line.search(/_{3,}/);
+        if (at < 0) return;
+        const left = doc.widthOfString(line.slice(0, at));
+        field(doc, line.slice(0, at).replace(/[:\s]+$/, "") || x.label, cx + left, y + pad + n * lineH - 1, Math.max(cw - left, 40), lineH);
+      });
+    }
+  };
+
   const drawRow = (row, next) => {
     const h = rowHeight(row);
     // A header row never sits alone at the foot of a page: it needs room for the row under it.
@@ -84,6 +119,7 @@ function drawTable(doc, rows) {
       doc.lineWidth(0.5).strokeColor(RULE).rect(x, y, w, h).stroke();
       const runs = (row.cells[i] || []).map((r) => ({ ...r, bold: r.bold || row.header }));
       writeRuns(doc, runs, { x: x + pad, y: y + pad, width: w - pad * 2, size: SIZE - 0.5, gap: 1.5 });
+      addFields(row, { i, at: x, label: plain(row.cells[0] || []).trim() || `Field ${i + 1}` }, y, w, h);
       x += w;
     });
     doc.x = left;
@@ -98,6 +134,8 @@ function drawTable(doc, rows) {
 export function letterPdf(blocks, { title = "House of Retrievers letter" } = {}) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margins: { top: MARGIN, bottom: MARGIN + 10, left: MARGIN, right: MARGIN }, bufferPages: true, info: { Title: pdfSafe(title), Author: "The House of Retrievers Society Inc." } });
+    doc.font("Helvetica");
+    doc.initForm();
     const chunks = [];
     doc.on("data", (c) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -150,7 +188,7 @@ export function letterPdf(blocks, { title = "House of Retrievers letter" } = {})
       // The footer sits inside the bottom margin; without this pdfkit adds a blank page per footer.
       doc.page.margins.bottom = 0;
       const y = doc.page.height - MARGIN + 18;
-      doc.font("Times-Roman").fontSize(8.5).fillColor("#8A8073")
+      doc.font("Helvetica").fontSize(8).fillColor("#8A8073")
         .text(`The House of Retrievers Society Inc. · Page ${i + 1} of ${range.count}`, left, y, { width, align: "center", lineBreak: false });
     }
     doc.end();

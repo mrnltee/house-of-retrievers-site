@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { fillLetter, letterDate, missingBlanks } from "../../../../lib/letters.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
-import LetterPreview from "../LetterPreview";
+import LetterView from "../LetterView";
 
 /**
  * Pick the letter, tick recipients, fill the blanks (last values are offered
@@ -108,7 +108,7 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
           <p className="small letter-cover">{cover}</p>
           <p className="small muted" style={{ margin: 0 }}>📎 PDF letter attached</p>
         </div>
-        <LetterPreview text={filled} />
+        <LetterView text={filled} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
       </section>
     </div>
   );
