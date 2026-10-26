@@ -44,6 +44,8 @@ export const ACTION_LABELS = {
   "supporter.create": "Added a sponsor or partner",
   "supporter.save": "Updated a sponsor or partner",
   "supporter.delete": "Deleted a sponsor or partner",
+  "supporter.import": "Imported sponsors and partners",
+  "registration.import": "Imported registrations",
   "supporter.letter": "Sent a letter",
   "person.letter": "Sent a letter",
   "letter.save": "Saved a letter's wording",

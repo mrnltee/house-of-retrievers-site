@@ -86,6 +86,7 @@ export default async function EventRegistrations({ params, searchParams }) {
     <>
       <PageHead title={event.title} lead={`Registrations · ${formatDay(event.date)}${paidEvent ? " · paid event · payments checked by hand" : ""}`}>
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
+        {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
         {can(admin.roles, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
       </PageHead>

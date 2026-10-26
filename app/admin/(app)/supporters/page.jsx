@@ -66,6 +66,7 @@ export default async function SupportersPage({ searchParams }) {
   return (
     <>
       <PageHead title="Sponsors & partners" lead="Who backs HOR and how. Add a clear relationship label, then use cards for a quick scan or the list when the records grow.">
+        {canEdit && <a className="btn ghost" href={`${base}/supporters/import`}>Import from Excel</a>}
         {canEdit && <a className="btn gold" href={`${base}/supporters/new`}>+ Add sponsor or partner</a>}
       </PageHead>
       <Flash params={params} />

@@ -54,7 +54,7 @@ export default async function PeoplePage({ searchParams }) {
   return (
     <>
       <PageHead title="People" lead="Everyone who used the Join form, one record each. Open someone for their photo, events and history.">
-        {canEdit && <a className="btn ghost" href={`${base}/people/import`}>Import from sheet</a>}
+        {canEdit && <a className="btn ghost" href={`${base}/people/import`}>Import</a>}
         <a className="btn ghost" href={`${base}/people/export?kind=${kind}`}>Export CSV</a>
       </PageHead>
       <Flash params={params} />

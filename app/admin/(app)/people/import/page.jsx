@@ -2,6 +2,7 @@ import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { importPeople } from "../../../actions";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import ConfirmButton from "../../ConfirmButton";
+import SheetImport from "../../SheetImport";
 
 /** Brings everyone from the Join sheet into People, once (re-running is safe). */
 export default async function ImportPeoplePage({ searchParams }) {
@@ -12,8 +13,12 @@ export default async function ImportPeoplePage({ searchParams }) {
   return (
     <>
       <p className="small"><a href={`${base}/people`}>← People</a></p>
-      <PageHead title="Import from the Join sheet" lead="People who joined before the admin existed are only in the Google Sheet. This brings them in, so People is the whole list." />
+      <PageHead title="Import people" lead="Add many people at once from Excel or a CSV, or bring in the Join sheet." />
       <Flash params={params} />
+      <h2>From Excel or a CSV</h2>
+      <p className="small muted">Any sheet with a header row. People already here (same email and join type) are skipped and no emails are sent.</p>
+      <SheetImport target="people" backHref={`${base}/people`} />
+      <h2 style={{ marginTop: 32 }}>From the Join sheet</h2>
       <section className="card">
         <h2>1. Download the sheet</h2>
         <p className="small">Open the Join responses sheet in Google Sheets, then <strong>File → Download → Comma-separated values (.csv)</strong>. Download the tab with the applications.</p>
