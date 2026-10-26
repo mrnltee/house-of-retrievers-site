@@ -6,8 +6,8 @@ import { describePhoto } from "../../eventTools";
 import FitPicker from "./FitPicker";
 import PhotoCropper, { CROP_RATIO, clampCrop, cropSize, drawCrop, initialCrop } from "./PhotoCropper";
 
-/** Saved width of the cropped cover. 1600 × 1000 stays sharp on a retina card. */
-const OUTPUT_WIDTH = 1600;
+/** Saved width of the cropped poster: 1200 × 1500 (4:5) stays sharp on a retina card. */
+const OUTPUT_WIDTH = 1200;
 /** The uncropped original is kept at this longest side, so re-framing later has room to zoom. */
 const SOURCE_EDGE = 2400;
 /**
@@ -18,7 +18,17 @@ const SOURCE_EDGE = 2400;
 const MAX_COVER_BYTES = 700 * 1024;
 const MAX_ORIGINAL_BYTES = 1200 * 1024;
 /** Below this many source pixels across, the card will look soft. */
-const SOFT_WIDTH = 800;
+const SOFT_WIDTH = 640;
+
+/** A reminder when the picture isn't 4:5, saying what the crop will trim. */
+function shapeNote(bitmap) {
+  const ratio = bitmap.width / bitmap.height;
+  if (Math.abs(ratio - CROP_RATIO) < 0.03) return "";
+  const shape = Math.abs(ratio - 9 / 16) < 0.03 ? "9:16" : Math.abs(ratio - 16 / 9) < 0.05 ? "16:9" : Math.abs(ratio - 1) < 0.03 ? "square" : ratio < CROP_RATIO ? "taller than 4:5" : "wider than 4:5";
+  return ratio < CROP_RATIO
+    ? `This picture is ${shape}, so its top and bottom are trimmed to fit 4:5. Drag to choose what stays.`
+    : `This picture is ${shape}, so its sides are trimmed to fit 4:5. Drag to choose what stays.`;
+}
 
 const toStored = (bitmap, c) => ({ zoom: c.zoom, x: c.cx / bitmap.width, y: c.cy / bitmap.height });
 const fromStored = (bitmap, s) =>
@@ -67,6 +77,7 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
   const [editing, setEditing] = useState(false);
   const [bitmap, setBitmap] = useState(null);
   const [crop, setCrop] = useState(null);
+  const [shape, setShapeNote] = useState("");
   /** A newly picked original (data URL), or the saved photo it was re-framed from (a path). */
   const [source, setSource] = useState({ data: "", path: "" });
   const [alt, setAlt] = useState(currentAlt || "");
@@ -167,6 +178,7 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
     try {
       const original = await prepareOriginal(file);
       const frame = initialCrop(original.bitmap);
+      setShapeNote(shapeNote(original.bitmap));
       startEditing();
       setBitmap(original.bitmap);
       setCrop(frame);
@@ -254,11 +266,12 @@ export default function EventPhoto({ current, currentAlt, currentSource, current
     <div className="row-2" style={{ alignItems: "start" }}>
       <div className="form" style={{ gap: 8 }}>
         <span className="field">
-          <span>Cover photo <small>A JPG or PNG, straight from your phone is fine. The box shows what the event card will show; the event page shows it as set below.</small></span>
+          <span>Poster <small>Shown at 4:5 on the event card and page, e.g. 1080 × 1350 px. A 9:16 story or a wide photo is cropped to 4:5; you choose what stays. JPG or PNG, straight from your phone is fine.</small></span>
         </span>
         {editing && bitmap && crop ? (
           <>
             <PhotoCropper bitmap={bitmap} crop={crop} onChange={onCropChange} />
+            {shape && <p className="banner note small" style={{ margin: 0 }}>{shape}</p>}
             <p className="small muted">Drag to move, zoom to fill. Arrow keys and + / − work too.</p>
             <div className="actions">
               <button type="button" className="btn small" onClick={done}>Done</button>

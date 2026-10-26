@@ -23,7 +23,7 @@ export async function generateMetadata({ params }) {
   if (!event) return { title: `Event not found | ${SITE_NAME}`, robots: { index: false } };
   const title = `${event.title} | ${SITE_NAME}`;
   const image = event.image
-    ? { url: absolute(event.image), width: 1600, height: 1000, alt: event.imageAlt || event.title }
+    ? { url: absolute(event.image), width: 1200, height: 1500, alt: event.imageAlt || event.title }
     : { url: `${SITE_URL}/house-of-retrievers-hero-poster.jpg`, width: 1280, height: 720, alt: "House of Retrievers furparents and furbabies together" };
   const desc = description(event);
   return {

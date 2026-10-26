@@ -630,7 +630,7 @@ a.nav-support { display: inline-flex; align-items: center; opacity: 1; }
 .events-list h2, .events-partner h2 { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(30px, 3.4vw, 40px); line-height: 1.1; margin: 0 0 28px; }
 .event-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 24px; }
 .event-card { background: white; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
-.event-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.event-card img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .event-card-body { padding: 24px; display: grid; gap: 10px; }
 .event-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 .event-status, .event-cost { border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 700; }
@@ -1382,7 +1382,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
    Poster with the date tile and availability; type, title, time, place, price;
    View details + RSVP. The rest lives on the event page. */
 .event-card.is-compact .event-card-body { padding: 18px 20px 20px; gap: 8px; }
-.event-card-media { position: relative; display: block; aspect-ratio: 16 / 10; background: var(--cream); overflow: hidden; }
+.event-card-media { position: relative; display: block; aspect-ratio: 4 / 5; background: var(--cream); overflow: hidden; }
 .event-card-media img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; display: block; transition: transform .35s ease; }
 .event-card:hover .event-card-media img { transform: scale(1.03); }
 .event-card-media.no-image { aspect-ratio: auto; min-height: 92px; background: linear-gradient(135deg, #e9dfc6, #d8c7a0); }

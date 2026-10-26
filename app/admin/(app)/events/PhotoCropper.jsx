@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-/** The event card shows photos at 16:10, so the crop is fixed to that. */
-export const CROP_RATIO = 16 / 10;
+/** Event posters are 4:5 on the card and the event page (owner, 2026-10-27), so the crop is fixed to that. */
+export const CROP_RATIO = 4 / 5;
 export const MAX_ZOOM = 4;
 
-/** The crop that shows as much of the photo as fits at 16:10, centred. */
+/** The crop that shows as much of the photo as fits at 4:5, centred. */
 export function initialCrop(bitmap) {
   return { zoom: 1, cx: bitmap.width / 2, cy: bitmap.height / 2 };
 }
