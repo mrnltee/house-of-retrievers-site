@@ -13,7 +13,10 @@ const INK = "#1F1B16";
 const GOLD = "#7A5C1F";
 const RULE = "#C9B48A";
 const HEAD_FILL = "#F3EBDD";
-const SIZE = 11;
+// Text size and spacing; tightened a step when a page would otherwise carry only a few spilled lines.
+let SIZE = 11;
+let GAP = 1;
+const down = (doc, lines) => doc.moveDown(lines * GAP);
 const MARGIN = 60;
 
 let logo = null;
@@ -153,18 +156,37 @@ function drawTable(doc, rows) {
   };
 
   rows.forEach((row, i) => drawRow(row, rows[i + 1]));
-  doc.moveDown(0.6);
+  down(doc, 0.6);
 }
 
 /** Renders letter blocks to a PDF; resolves to a Buffer. */
-export function letterPdf(blocks, { title = "House of Retrievers letter" } = {}) {
+const LEVELS = [{ size: 11, gap: 1 }, { size: 10.5, gap: 0.8 }, { size: 10, gap: 0.65 }];
+
+/**
+ * Renders letter blocks to a PDF; resolves to a Buffer. If a page would end up
+ * holding only a few lines that spilled over (a near-empty page), it is drawn
+ * again a step tighter, up to twice.
+ */
+export async function letterPdf(blocks, options = {}) {
+  let best = null;
+  for (const level of LEVELS) {
+    const result = await drawLetter(blocks, options, level);
+    if (!best || result.spills < best.spills) best = result;
+    if (!result.spills) break;
+  }
+  return best.pdf;
+}
+
+function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level = LEVELS[0]) {
+  SIZE = level.size;
+  GAP = level.gap;
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margins: { top: MARGIN, bottom: MARGIN + 10, left: MARGIN, right: MARGIN }, bufferPages: true, info: { Title: pdfSafe(title), Author: "The House of Retrievers Society Inc." } });
     doc.font("Helvetica");
     doc.initForm();
     const chunks = [];
     doc.on("data", (c) => chunks.push(c));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("end", () => resolve({ pdf: Buffer.concat(chunks), spills }));
     doc.on("error", reject);
 
     const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
@@ -178,39 +200,54 @@ export function letterPdf(blocks, { title = "House of Retrievers letter" } = {})
       doc.y = top + (image ? w * (242 / 600) : 0) + 8;
       doc.moveTo(left, doc.y).lineTo(left + width, doc.y).lineWidth(0.75).strokeColor(RULE).stroke();
       doc.x = left;
-      doc.moveDown(1);
+      down(doc, 1);
     };
     header(150);
-    doc.on("pageAdded", () => header(96));
+    // Each page: did it start by overflowing (not a ---page--- break), and how full did it get?
+    const pages = [{ auto: false, top: doc.y }];
+    let explicit = false;
+    const usable = doc.page.height - doc.page.margins.bottom - MARGIN;
+    const close = () => { pages[pages.length - 1].end = doc.y; };
+    const breakPage = () => { close(); explicit = true; doc.addPage(); };
+    doc.on("pageAdded", () => {
+      pages[pages.length - 1].end ??= doc.page.height - doc.page.margins.bottom;
+      header(96);
+      pages.push({ auto: !explicit, top: doc.y });
+      explicit = false;
+    });
+    let spills = 0;
 
     const room = () => doc.page.height - doc.page.margins.bottom - doc.y;
     for (const block of blocks) {
-      if (block.type === "page") { doc.addPage(); continue; }
+      if (block.type === "page") { breakPage(); continue; }
       // Headings keep company with what follows them.
       if ((block.type === "h1" || block.type === "h2") && room() < 110) doc.addPage();
       if (block.type === "table") { drawTable(doc, block.rows); continue; }
       doc.x = left;
       if (block.type === "h1") {
-        doc.moveDown(0.3);
+        down(doc, 0.3);
         writeRuns(doc, block.runs.map((r) => ({ ...r, bold: true })), { width, align: "center", size: 14, color: GOLD });
-        doc.moveDown(0.6);
+        down(doc, 0.6);
       } else if (block.type === "h2") {
-        doc.moveDown(0.4);
+        down(doc, 0.4);
         writeRuns(doc, block.runs.map((r) => ({ ...r, bold: true })), { width, size: SIZE + 0.5, color: GOLD });
-        doc.moveDown(0.35);
+        down(doc, 0.35);
       } else if (block.type === "center") {
         writeRuns(doc, block.runs, { width, align: "center" });
-        doc.moveDown(0.5);
+        down(doc, 0.5);
       } else if (block.type === "bullet") {
         const y = doc.y;
         doc.font(font(false)).fontSize(SIZE).fillColor(INK).text("•", left + 4, y);
         writeRuns(doc, block.runs, { x: left + 18, y, width: width - 18 });
-        doc.moveDown(0.4);
+        down(doc, 0.4);
       } else {
         writeRuns(doc, block.runs, { width });
-        doc.moveDown(0.7);
+        down(doc, 0.7);
       }
     }
+
+    close();
+    spills = pages.filter((p) => p.auto && p.end - p.top < usable * 0.2).length;
 
     // Page numbers once the length is known.
     const range = doc.bufferedPageRange();

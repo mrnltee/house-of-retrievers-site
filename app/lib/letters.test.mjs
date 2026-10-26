@@ -82,3 +82,12 @@ test("a short letter is one PDF page (no blank page from the footer)", async () 
   const buf = await letterPdf([{ type: "p", runs: [{ text: "Hello. ".repeat(40) }] }]);
   assert.equal((buf.toString("latin1").match(/\/Type \/Page\b/g) || []).length, 1);
 });
+
+test("a few spilled lines don't make a near-empty extra page (letters tighten a step instead)", async () => {
+  for (const key of ["invite-media", "invite-guest-speaker", "invite-creators"]) {
+    const letter = LETTER_STARTERS.find((l) => l.key === key);
+    const values = Object.fromEntries(blanksOf(letter.subject, letter.cover, letter.body).map((b) => [b.label, b.suggestion || `Sample ${b.label}`]));
+    const pdf = await letterPdf(prepareLetter(letter, { name: "House of Retrievers Test", values }).blocks);
+    assert.equal((pdf.toString("latin1").match(/\/Type \/Page\b/g) || []).length, 1, key);
+  }
+});
