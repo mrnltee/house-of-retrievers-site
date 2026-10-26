@@ -40,6 +40,31 @@ export function pdfSafe(text) {
 // HOR's Word letters use Arial 11; Helvetica is the PDF standard face with the same shapes and widths.
 const font = (bold) => (bold ? "Helvetica-Bold" : "Helvetica");
 
+/**
+ * A tick box: a drawn square plus a checkbox field that shows a ✓ when clicked.
+ * pdfkit's own checkbox has no appearance (Mac Preview shows nothing), so the
+ * on/off looks are drawn here as small vector streams.
+ */
+function tickBox(doc, label, x, y, size = 10) {
+  doc.lineWidth(0.8).strokeColor(INK).rect(x, y, size, size).stroke();
+  const look = (content) => {
+    const ref = doc.ref({ Type: "XObject", Subtype: "Form", BBox: [0, 0, size, size], Resources: {} });
+    ref.end(content);
+    return ref;
+  };
+  const on = look(`q 0.12 0.11 0.09 RG 1.4 w 1 J 1 j ${size * 0.2} ${size * 0.52} m ${size * 0.42} ${size * 0.25} l ${size * 0.82} ${size * 0.8} l S Q`);
+  const off = look("");
+  const count = (doc._fieldCount = (doc._fieldCount || 0) + 1);
+  const saved = { x: doc.x, y: doc.y };
+  doc.annotate(x, y, size, size, {
+    Subtype: "Widget", FT: "Btn", F: 4, T: new String(`${pdfSafe(label).replace(/[^A-Za-z0-9 ]+/g, " ").trim().slice(0, 40)} ${count}`),
+    V: "Off", AS: "Off", MK: { CA: new String("4") }, AP: { N: { Yes: on, Off: off }, D: { Yes: on, Off: off } },
+  });
+  doc._root.data.AcroForm.data.Fields.push(doc.page.annotations[doc.page.annotations.length - 1]);
+  doc.x = saved.x;
+  doc.y = saved.y;
+}
+
 /** A fillable text field with a unique name (readers merge fields that share one). */
 function field(doc, label, x, y, w, h, options = {}) {
   const count = (doc._fieldCount = (doc._fieldCount || 0) + 1);
@@ -91,8 +116,7 @@ function drawTable(doc, rows) {
     if (!text.trim()) {
       field(doc, x.label, cx, y + pad - 1, cw, Math.max(h - pad * 2 + 2, 14), { multiline: h > 30 });
     } else if (text.trim() === "[  ]") {
-      doc.font(font(false)).fontSize(SIZE - 0.5);
-      field(doc, `Select ${plain(row.cells[x.i + 1] || []).trim() || x.label}`, cx - 1, y + pad - 1, doc.widthOfString("[  ]") + 2, 14, { maxLength: 1, align: 1 });
+      tickBox(doc, `Select ${plain(row.cells[x.i + 1] || []).trim() || x.label}`, cx + 1, y + pad + 1.5);
     } else if (/_{3,}/.test(text)) {
       doc.font(font(false)).fontSize(SIZE - 0.5);
       const lineH = doc.currentLineHeight(true) + 1.5;
@@ -118,7 +142,8 @@ function drawTable(doc, rows) {
     widths.forEach((w, i) => {
       if (row.header) doc.rect(x, y, w, h).fill(HEAD_FILL);
       doc.lineWidth(0.5).strokeColor(RULE).rect(x, y, w, h).stroke();
-      const runs = (row.cells[i] || []).map((r) => ({ ...r, bold: r.bold || row.header }));
+      const isTick = !row.header && plain(row.cells[i] || []).trim() === "[  ]";
+      const runs = isTick ? [] : (row.cells[i] || []).map((r) => ({ ...r, bold: r.bold || row.header }));
       writeRuns(doc, runs, { x: x + pad, y: y + pad, width: w - pad * 2, size: SIZE - 0.5, gap: 1.5 });
       addFields(row, { i, at: x, label: plain(row.cells[0] || []).trim() || `Field ${i + 1}` }, y, w, h);
       x += w;
