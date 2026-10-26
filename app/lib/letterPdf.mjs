@@ -147,6 +147,8 @@ export function letterPdf(blocks, { title = "House of Retrievers letter" } = {})
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);
+      // The footer sits inside the bottom margin; without this pdfkit adds a blank page per footer.
+      doc.page.margins.bottom = 0;
       const y = doc.page.height - MARGIN + 18;
       doc.font("Times-Roman").fontSize(8.5).fillColor("#8A8073")
         .text(`The House of Retrievers Society Inc. · Page ${i + 1} of ${range.count}`, left, y, { width, align: "center", lineBreak: false });

@@ -77,3 +77,8 @@ test("PDF text: peso sign and check boxes the standard fonts lack", () => {
   assert.equal(pdfSafe("“Quotes” — ok"), "“Quotes” — ok");
   assert.equal(pdfSafe("emoji 🐶 gone"), "emoji  gone");
 });
+
+test("a short letter is one PDF page (no blank page from the footer)", async () => {
+  const buf = await letterPdf([{ type: "p", runs: [{ text: "Hello. ".repeat(40) }] }]);
+  assert.equal((buf.toString("latin1").match(/\/Type \/Page\b/g) || []).length, 1);
+});
