@@ -43,29 +43,43 @@ export function pdfSafe(text) {
 // HOR's Word letters use Arial 11; Helvetica is the PDF standard face with the same shapes and widths.
 const font = (bold) => (bold ? "Helvetica-Bold" : "Helvetica");
 
+/** A circle as a PDF path (four Bézier quarters), for the radio button looks. */
+const circlePath = (cx, cy, r) => {
+  const k = r * 0.5523;
+  return `${cx + r} ${cy} m ${cx + r} ${cy + k} ${cx + k} ${cy + r} ${cx} ${cy + r} c ${cx - k} ${cy + r} ${cx - r} ${cy + k} ${cx - r} ${cy} c `
+    + `${cx - r} ${cy - k} ${cx - k} ${cy - r} ${cx} ${cy - r} c ${cx + k} ${cy - r} ${cx + r} ${cy - k} ${cx + r} ${cy} c`;
+};
+
 /**
- * A tick box: a drawn square plus a checkbox field that shows a ✓ when clicked.
- * pdfkit's own checkbox has no appearance (Mac Preview shows nothing), so the
- * on/off looks are drawn here as small vector streams.
+ * One choice in a pick-one list (owner, 2026-10-27: the package selection is a
+ * radio button): a printed circle plus a radio widget in the table's group, so
+ * choosing one clears the others. pdfkit draws no appearance for buttons (Mac
+ * Preview would show nothing), so the dot is drawn here as a vector stream.
  */
-function tickBox(doc, label, x, y, size = 10) {
-  doc.lineWidth(0.8).strokeColor(INK).rect(x, y, size, size).stroke();
+function radioOption(doc, group, label, x, y, size = 10) {
+  const r = size / 2;
+  doc.lineWidth(0.8).strokeColor(INK).circle(x + r, y + r, r - 0.4).stroke();
   const look = (content) => {
     const ref = doc.ref({ Type: "XObject", Subtype: "Form", BBox: [0, 0, size, size], Resources: {} });
     ref.end(content);
     return ref;
   };
-  const on = look(`q 0.12 0.11 0.09 RG 1.4 w 1 J 1 j ${size * 0.2} ${size * 0.52} m ${size * 0.42} ${size * 0.25} l ${size * 0.82} ${size * 0.8} l S Q`);
+  const value = pdfSafe(label).replace(/[^A-Za-z0-9]+/g, "") || `Choice${group.data.Kids.length + 1}`;
+  const on = look(`q 0.12 0.11 0.09 rg ${circlePath(r, r, r * 0.5)} f Q`);
   const off = look("");
-  const count = (doc._fieldCount = (doc._fieldCount || 0) + 1);
   const saved = { x: doc.x, y: doc.y };
-  doc.annotate(x, y, size, size, {
-    Subtype: "Widget", FT: "Btn", F: 4, T: new String(`${pdfSafe(label).replace(/[^A-Za-z0-9 ]+/g, " ").trim().slice(0, 40)} ${count}`),
-    V: "Off", AS: "Off", MK: { CA: new String("4") }, AP: { N: { Yes: on, Off: off }, D: { Yes: on, Off: off } },
-  });
-  doc._root.data.AcroForm.data.Fields.push(doc.page.annotations[doc.page.annotations.length - 1]);
+  doc.annotate(x, y, size, size, { Subtype: "Widget", F: 4, Parent: group, AS: "Off", MK: { CA: new String("l") }, AP: { N: { [value]: on, Off: off }, D: { [value]: on, Off: off } } });
+  group.data.Kids.push(doc.page.annotations[doc.page.annotations.length - 1]);
   doc.x = saved.x;
   doc.y = saved.y;
+}
+
+/** The radio group for one table's choices (Ff: radio + no toggle to off). */
+function radioGroup(doc, name) {
+  const count = (doc._fieldCount = (doc._fieldCount || 0) + 1);
+  const group = doc.ref({ FT: "Btn", Ff: 0x8000 | 0x4000, T: new String(`${name} ${count}`), V: "Off", Kids: [] });
+  doc._root.data.AcroForm.data.Fields.push(group);
+  return group;
 }
 
 /** A fillable text field with a unique name (readers merge fields that share one). */
@@ -107,6 +121,7 @@ function drawTable(doc, rows) {
   const pad = 4;
   const bottom = () => doc.page.height - doc.page.margins.bottom;
   const header = rows.find((r) => r.header);
+  let group = null; // the table's radio group, made at its first ☐
 
   const rowHeight = (row) => Math.max(...widths.map((w, i) => cellHeight(doc, row.cells[i] || [], w - pad * 2, row.header))) + pad * 2;
   // Write-in spots become fillable fields (owner, 2026-10-27): an empty cell, a ☐ box,
@@ -119,7 +134,8 @@ function drawTable(doc, rows) {
     if (!text.trim()) {
       field(doc, x.label, cx, y + pad - 1, cw, Math.max(h - pad * 2 + 2, 14), { multiline: h > 30 });
     } else if (text.trim() === "[  ]") {
-      tickBox(doc, `Select ${plain(row.cells[x.i + 1] || []).trim() || x.label}`, cx + 1, y + pad + 1.5);
+      group ??= radioGroup(doc, plain(header?.cells[x.i + 1] || []).trim() || "Choice");
+      radioOption(doc, group, plain(row.cells[x.i + 1] || []).trim() || x.label, cx + 1, y + pad + 1.5);
     } else if (/_{3,}/.test(text)) {
       doc.font(font(false)).fontSize(SIZE - 0.5);
       const lineH = doc.currentLineHeight(true) + 1.5;
@@ -156,6 +172,7 @@ function drawTable(doc, rows) {
   };
 
   rows.forEach((row, i) => drawRow(row, rows[i + 1]));
+  group?.end();
   down(doc, 0.6);
 }
 
