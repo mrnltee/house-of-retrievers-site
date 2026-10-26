@@ -249,19 +249,20 @@ function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level
     close();
     spills = pages.filter((p) => p.auto && p.end - p.top < usable * 0.2).length;
 
-    // Page numbers once the length is known.
+    // Footers on every page.
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);
       // The footer sits inside the bottom margin; without this pdfkit adds a blank page per footer.
       doc.page.margins.bottom = 0;
-      const y = doc.page.height - MARGIN + 12;
-      // Footer as in HOR's Word letters: registered name, SEC number, website, page.
-      doc.moveTo(left, y - 6).lineTo(left + width, y - 6).lineWidth(0.5).strokeColor(RULE).stroke();
-      doc.font("Helvetica-Bold").fontSize(7.5).fillColor("#6F665A")
-        .text(`${LEGAL.org.toUpperCase().replace(" INC.", ", INC.")}  ·  SEC Registration: ${LEGAL.sec}`, left, y, { width, align: "center", lineBreak: false });
-      doc.font("Helvetica").fontSize(7.5).fillColor("#8A8073")
-        .text(`https://${LEGAL.website}/  ·  Page ${i + 1} of ${range.count}`, left, y + 10, { width, align: "center", lineBreak: false });
+      const y = doc.page.height - MARGIN + 2;
+      // Footer as in HOR's Word letters: a rule, then name (bold), SEC number and website, centred.
+      doc.moveTo(left, y - 8).lineTo(left + width, y - 8).lineWidth(0.5).strokeColor("#8A8073").stroke();
+      const line = (text, at, bold) => doc.font(bold ? "Helvetica-Bold" : "Helvetica").fontSize(bold ? 7.5 : 6.5).fillColor(INK)
+        .text(text, left, at, { width, align: "center", lineBreak: false });
+      line(LEGAL.org.toUpperCase().replace(" INC.", ", INC."), y, true);
+      line(`SEC Registration: ${LEGAL.sec}`, y + 9.5);
+      line(`https://${LEGAL.website}/`, y + 17.5);
     }
     doc.end();
   });
