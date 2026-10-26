@@ -58,7 +58,7 @@ export function cleanEntry(raw) {
   return { value };
 }
 
-/** Text for a photo's description, or "" (the admin is nudged to fill it). */
+/** Text for a photo's description, or "" (optional; toStop fills a default). */
 export const cleanAlt = (value) => oneLine(value, JOURNEY_LIMITS.alt);
 
 /** The "YYYY-MM" a row sits in, or null when it has no date yet. */
@@ -98,6 +98,10 @@ export function toStop(row, photos, today = manilaDate()) {
   if (month === today.slice(0, 7) && entryStatus(row, today) === "upcoming") stop.upcoming = true;
   // Only a published event page is linked, so nothing points at a draft.
   if (row.event_slug && row.event_status === "published") stop.event = row.event_slug;
-  if (photos.length) stop.photos = photos.map((p) => (p.fit === "contain" ? { src: p.src, alt: p.alt, fit: "contain" } : { src: p.src, alt: p.alt }));
+  // A photo left undescribed reads as "<title> — photo N" (owner, 2026-10-26: descriptions are optional).
+  if (photos.length) stop.photos = photos.map((p, i) => {
+    const alt = p.alt?.trim() || `${row.title} — photo ${i + 1}`;
+    return p.fit === "contain" ? { src: p.src, alt, fit: "contain" } : { src: p.src, alt };
+  });
   return stop;
 }

@@ -107,15 +107,6 @@ export async function setJourneyEntryStatus(data) {
   const id = field(data, "id");
   const status = field(data, "status") === "published" ? "published" : "draft";
   if (!isUuid(id)) await backWith("/journey", "error", "That stop no longer exists.");
-  if (status === "published") {
-    // Owner's rule: every photo is described before the stop goes public (screen readers read it).
-    const [{ missing }] = await sql(
-      `SELECT count(*)::int AS missing FROM journey_entry_photos p LEFT JOIN event_photos ep ON ep.id = p.event_photo_id
-        WHERE p.entry_id=$1 AND COALESCE(NULLIF(trim(p.alt), ''), NULLIF(trim(ep.alt), '')) IS NULL`,
-      [id],
-    );
-    if (missing) await backWith(entryPage(id), "error", `Describe ${missing === 1 ? "the 1 photo" : `all ${missing} photos`} without a description first — what's in the picture, for people using screen readers. Then publish.`);
-  }
   const [row] = await sql("UPDATE journey_entries SET status=$1, updated_by=$2, updated_at=now() WHERE id=$3 RETURNING title", [status, admin.email, id]);
   if (!row) await backWith("/journey", "error", "That stop no longer exists.");
   await logActivity(admin.email, status === "published" ? "journey.entry.publish" : "journey.entry.unpublish", row.title, { id });

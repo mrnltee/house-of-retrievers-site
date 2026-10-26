@@ -76,3 +76,8 @@ test("the seed in migration 054 renders today's timeline unchanged", async () =>
     for (const photo of stop.photos || []) assert.ok(sqlText.includes(`'${photo.src}'`), photo.src);
   }
 });
+
+test("an undescribed photo gets a default description from the stop title", () => {
+  const stop = toStop({ slug: "run", title: "Weekend Social Run" }, [{ src: "/a.jpg", alt: "Start line" }, { src: "/b.jpg", alt: "  " }]);
+  assert.deepEqual(stop.photos.map((p) => p.alt), ["Start line", "Weekend Social Run — photo 2"]);
+});

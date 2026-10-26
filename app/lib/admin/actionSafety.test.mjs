@@ -69,10 +69,8 @@ test("journey entry actions authorize (media:edit) before touching the database"
   }
 });
 
-test("journey stops can't be published with undescribed photos, and the photo limit is checked under a lock", () => {
+test("the journey photo limit is checked under a lock", () => {
   const source = readFileSync(join(ROOT, "app", "admin", "journeyEntryActions.js"), "utf8");
-  const publish = source.slice(source.indexOf("export async function setJourneyEntryStatus"), source.indexOf("export async function deleteJourneyEntry"));
-  assert.match(publish, /status === "published"[\s\S]*COALESCE\(NULLIF\(trim\(p\.alt\)/, "publishing checks every photo has a description");
   for (const name of ["addJourneyPhoto", "borrowEventPhotos"]) {
     const start = source.indexOf(`export async function ${name}`);
     const body = source.slice(start, source.indexOf("\nexport ", start + 1));
