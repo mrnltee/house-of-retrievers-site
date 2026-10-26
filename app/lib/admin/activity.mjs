@@ -43,6 +43,7 @@ export const ACTION_LABELS = {
   "people.import": "Imported people from the sheet",
   "supporter.create": "Added a sponsor or partner",
   "supporter.save": "Updated a sponsor or partner",
+  "supporter.delete": "Deleted a sponsor or partner",
   "supporter.letter": "Sent a letter",
   "person.letter": "Sent a letter",
   "letter.save": "Saved a letter's wording",

@@ -152,3 +152,19 @@ export async function supporterFromPerson(data) {
     await backWith(`/supporters/${row.id}`, "ok", "Record created from the Join form. Add a logo and blurb when they're confirmed.");
   });
 }
+
+/**
+ * Deletes a sponsor or partner record for good (e.g. a test record). Events
+ * keep the name in their Sponsors/Partners field; the history keeps a line.
+ */
+export async function deleteSupporter(data) {
+  const id = form(data, "id");
+  const back = isUuid(id) ? `/supporters/${id}` : "/supporters";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("people:edit");
+    const [gone] = isUuid(id) ? await sql("DELETE FROM supporters WHERE id = $1 RETURNING name", [id]) : [];
+    if (!gone) await backWith("/supporters", "error", "That record no longer exists.");
+    await logActivity(admin.email, "supporter.delete", gone.name, { supporterId: id });
+    await backWith("/supporters", "ok", `Deleted ${gone.name}.`);
+  });
+}

@@ -7,6 +7,8 @@ import { isPublic, statusLabel, supporterNumber, tierLabel } from "../../../../l
 import { HOME_URL } from "../../../../lib/siteSeo.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import SupporterForm from "../SupporterForm";
+import ConfirmButton from "../../ConfirmButton";
+import { deleteSupporter } from "../../../supporterActions";
 
 /** One sponsor or partner: the record, the events they backed, and its history. */
 export default async function SupporterPage({ params, searchParams }) {
@@ -48,6 +50,23 @@ export default async function SupporterPage({ params, searchParams }) {
               <p className="small">None yet. In an event, add “{row.name}” under {row.kind === "Partner" ? "Partners" : "Sponsors"}.</p>
             )}
           </section>
+          {can(admin.roles, "people:edit") && (
+            <section className="card danger-zone">
+              <h2>Delete this record</h2>
+              <p className="small muted">For test or mistaken records. Events keep the name in their {row.kind === "Partner" ? "Partners" : "Sponsors"} field.</p>
+              <form action={deleteSupporter}>
+                <input type="hidden" name="id" value={row.id} />
+                <ConfirmButton
+                  className="btn danger"
+                  tone="danger"
+                  title={`Delete ${row.name}?`}
+                  items={["The record, logo link and contact details are removed for good", "It disappears from the website and the sponsor list", "Events and the activity history keep their mention of the name"]}
+                  note="This can't be undone."
+                  yes="Yes, delete it"
+                >Delete record</ConfirmButton>
+              </form>
+            </section>
+          )}
           {row.person_id && (
             <section className="card"><h2>From the Join form</h2><p className="small"><a href={`${base}/people/${row.person_id}`}>Open their People record →</a></p></section>
           )}
