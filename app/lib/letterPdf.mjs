@@ -7,6 +7,7 @@
  */
 import PDFDocument from "pdfkit";
 import { LETTER_LOGO_PNG } from "./letters/logo.mjs";
+import { LEGAL } from "./legal.mjs";
 
 const INK = "#1F1B16";
 const GOLD = "#7A5C1F";
@@ -143,14 +144,19 @@ export function letterPdf(blocks, { title = "House of Retrievers letter" } = {})
 
     const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
     const left = doc.page.margins.left;
+    // Branding on every page, like the header in HOR's Word letters: the logo (full size on
+    // page 1, smaller after) over a gold rule.
     const image = logoImage();
-    if (image) {
-      const w = 150;
-      doc.image(image, (doc.page.width - w) / 2, MARGIN - 20, { width: w });
-      doc.y = MARGIN - 20 + w * (242 / 600) + 10;
-    }
-    doc.moveTo(left, doc.y).lineTo(left + width, doc.y).lineWidth(0.75).strokeColor(RULE).stroke();
-    doc.moveDown(1.2);
+    const header = (w) => {
+      const top = MARGIN - 28;
+      if (image) doc.image(image, (doc.page.width - w) / 2, top, { width: w });
+      doc.y = top + (image ? w * (242 / 600) : 0) + 8;
+      doc.moveTo(left, doc.y).lineTo(left + width, doc.y).lineWidth(0.75).strokeColor(RULE).stroke();
+      doc.x = left;
+      doc.moveDown(1);
+    };
+    header(150);
+    doc.on("pageAdded", () => header(96));
 
     const room = () => doc.page.height - doc.page.margins.bottom - doc.y;
     for (const block of blocks) {
@@ -187,9 +193,13 @@ export function letterPdf(blocks, { title = "House of Retrievers letter" } = {})
       doc.switchToPage(range.start + i);
       // The footer sits inside the bottom margin; without this pdfkit adds a blank page per footer.
       doc.page.margins.bottom = 0;
-      const y = doc.page.height - MARGIN + 18;
-      doc.font("Helvetica").fontSize(8).fillColor("#8A8073")
-        .text(`The House of Retrievers Society Inc. · Page ${i + 1} of ${range.count}`, left, y, { width, align: "center", lineBreak: false });
+      const y = doc.page.height - MARGIN + 12;
+      // Footer as in HOR's Word letters: registered name, SEC number, website, page.
+      doc.moveTo(left, y - 6).lineTo(left + width, y - 6).lineWidth(0.5).strokeColor(RULE).stroke();
+      doc.font("Helvetica-Bold").fontSize(7.5).fillColor("#6F665A")
+        .text(`${LEGAL.org.toUpperCase().replace(" INC.", ", INC.")}  ·  SEC Registration: ${LEGAL.sec}`, left, y, { width, align: "center", lineBreak: false });
+      doc.font("Helvetica").fontSize(7.5).fillColor("#8A8073")
+        .text(`https://${LEGAL.website}/  ·  Page ${i + 1} of ${range.count}`, left, y + 10, { width, align: "center", lineBreak: false });
     }
     doc.end();
   });
