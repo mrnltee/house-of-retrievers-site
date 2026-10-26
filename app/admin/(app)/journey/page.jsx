@@ -66,12 +66,12 @@ async function TimelineStopsCard({ base }) {
               <tr key={entry.id}>
                 <td>{entry.happened_on ? formatDay(entry.happened_on) : entry.month ? monthLabel(entry.month) : "No date yet"}</td>
                 <td className="strong">
-                  {entry.title}
+                  <a href={`${base}/journey/${entry.id}`} style={{ display: "inline-block", minHeight: 24 }}>{entry.title}</a>
                   {entry.event_title && <><br /><span className="small muted">Linked to {entry.event_title}</span></>}
                 </td>
                 <td><span className={`chip ${entry.status === "published" ? "good" : ""}`}>{entry.status === "published" ? "Published" : "Draft"}</span></td>
                 <td>{entry.photo_count}</td>
-                <td className="actions"><a className="linkish" href={`${base}/journey/${entry.id}`}>Edit</a></td>
+                <td className="actions"><a className="linkish" href={`${base}/journey/${entry.id}`} tabIndex={-1} aria-hidden="true" style={{ display: "inline-block", padding: "4px 2px" }}>Edit</a></td>
               </tr>
             ))}
           </tbody>

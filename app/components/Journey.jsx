@@ -115,9 +115,9 @@ function JourneyMedia({ stop, status, index, playing: sectionPlaying }) {
         <>
           <button type="button" className="journey-arrow is-prev" aria-label={`${stop.title}, previous photo`} onClick={() => show(active - 1)}><ChevronLeft size={20} aria-hidden="true" /></button>
           <button type="button" className="journey-arrow is-next" aria-label={`${stop.title}, next photo`} onClick={() => show(active + 1)}><ChevronRight size={20} aria-hidden="true" /></button>
-          <span className="journey-count" aria-live="polite">{active + 1} / {photos.length}</span>
+          <span className="journey-count" aria-live={held ? "polite" : "off"}>{active + 1} / {photos.length}</span>
           {sectionPlaying && (
-            <button type="button" className="journey-card-play" aria-pressed={held} onClick={() => setHeld((h) => !h)}>
+            <button type="button" className="journey-card-play" onClick={() => setHeld((h) => !h)}>
               {held ? <><Play size={13} aria-hidden="true" /> Play</> : <><Pause size={13} aria-hidden="true" /> Pause</>}
               <span className="visually-hidden"> {stop.title} photos</span>
             </button>
@@ -126,7 +126,7 @@ function JourneyMedia({ stop, status, index, playing: sectionPlaying }) {
       )}
     </div>
     {many && (
-      <div className="journey-thumbs" aria-label={`Choose a ${stop.title} photo`}>
+      <div className="journey-thumbs" role="group" aria-label={`Choose a ${stop.title} photo`}>
         {photos.map((photo, i) => (
           <button type="button" key={photo.src} aria-label={`${stop.title}, photo ${i + 1} of ${photos.length}`} aria-current={i === active} onClick={() => show(i)}>
             <img src={photo.src} alt="" loading="lazy" decoding="async" />
