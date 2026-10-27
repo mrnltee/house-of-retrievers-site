@@ -1,7 +1,8 @@
 import { sql } from "../../../lib/db";
-import { adminBase, pageAdmin } from "../../../lib/admin/guard";
+import { pageAdmin } from "../../../lib/admin/guard";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { PAGES, ROLES, ROLE_LABELS, pageLevel, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
+import { startPreview } from "../../previewActions";
 import { inviteAdmin, removeAdmin, saveAdminPages, updateAdmin } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import ConfirmButton from "../ConfirmButton";
@@ -44,7 +45,7 @@ function AccessSelect({ page, level = "", label, form, id }) {
  * Ticked pages are the only ones in their sidebar and the only ones they can
  * open. Owners always have every page.
  */
-function PageAccess({ admins, base }) {
+function PageAccess({ admins }) {
   const people = admins.filter((a) => !a.roles.includes("owner"));
   return (
     <section className="card">
@@ -78,7 +79,16 @@ function PageAccess({ admins, base }) {
                       </td>
                     ))}
                     <td>
-                      <a className="linkish small" href={`${base}/preview?as=${encodeURIComponent(a.email)}`} title="See the admin as they will">Preview</a>
+                      <form action={startPreview}>
+                        <input type="hidden" name="email" value={a.email} />
+                        <ConfirmButton
+                          className="linkish small"
+                          title={`Preview the admin as ${a.email}?`}
+                          items={["You'll see exactly their menu and pages", "Changes are switched off until you exit the preview"]}
+                          yes="Yes, preview"
+                          tone="ink"
+                        >Preview</ConfirmButton>
+                      </form>
                       <form id={formId} action={saveAdminPages}>
                         <input type="hidden" name="email" value={a.email} />
                         <ConfirmButton
@@ -149,7 +159,7 @@ export default async function AdminsPage({ searchParams }) {
         </form>
       </section>
 
-      <PageAccess admins={admins} base={await adminBase()} />
+      <PageAccess admins={admins} />
 
       <h2>Admins</h2>
       <div className="table-wrap">

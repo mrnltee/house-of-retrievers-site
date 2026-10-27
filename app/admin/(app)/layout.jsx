@@ -2,6 +2,7 @@ import { pageAdmin, adminBase } from "../../lib/admin/guard";
 import { can, PAGES, ROLE_LABELS } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 import GuideTour from "./GuideTour";
+import { exitPreview } from "../previewActions";
 import { HOW, guidePages } from "../../lib/admin/guide.mjs";
 
 // Each page shows when the admin has its first capability (see PAGES).
@@ -54,7 +55,7 @@ export default async function AdminAppLayout({ children }) {
         {admin.preview && (
           <p className="banner alert preview-bar" role="status">
             <span><strong>Preview: you're seeing the admin as {admin.name || admin.email}.</strong> Their menu and pages, exactly. Changes are switched off.</span>
-            <a className="btn small" href={`${base}/preview?exit=1`}>Exit preview</a>
+            <form action={exitPreview}><button type="submit" className="btn small" data-confirm="none: leaving preview changes nothing">Exit preview</button></form>
           </p>
         )}
         {children}
