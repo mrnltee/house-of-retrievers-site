@@ -16,6 +16,7 @@ function cell(value) {
 
 export async function GET(request) {
   const admin = await currentAdmin();
+  if (admin?.preview) return new Response("Exports are off while previewing as someone else.", { status: 403 });
   if (!admin || !can(admin, "people:view")) return new Response("Not allowed", { status: 403 });
   const kind = new URL(request.url).searchParams.get("kind");
   if (!KINDS.includes(kind)) return new Response("Not found", { status: 404 });

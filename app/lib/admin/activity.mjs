@@ -68,6 +68,7 @@ export const ACTION_LABELS = {
   "admin.invite": "Invited an admin",
   "admin.roles": "Changed an admin's roles",
   "admin.pages": "Changed an admin's page access",
+  "admin.preview": "Previewed the admin as someone",
   "admin.remove": "Removed an admin",
 };
 

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getServerSession } from "next-auth/next";
+import { cookies } from "next/headers";
 import { hasDatabase, sql } from "../db";
 import { parseEmailList } from "./roles.mjs";
 
@@ -109,6 +110,9 @@ export const authOptions = {
   },
 };
 
+/** Cookie holding whom an Owner is previewing the admin as. */
+export const PREVIEW_COOKIE = "hor_preview_as";
+
 /**
  * The signed-in admin, freshly read from the database, or null.
  * @returns {Promise<null | {email: string, name: string|null, roles: string[], authTime: number}>}
@@ -118,7 +122,15 @@ export async function currentAdmin() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const rows = await sql("SELECT email, name, roles, pages, welcomed_at FROM admins WHERE email = $1 AND active", [email]);
+  const rows = await sql("SELECT email, name, roles, pages, welcomed_at, guide_hidden FROM admins WHERE email = $1 AND active", [email]);
   if (!rows.length) return null;
-  return { ...rows[0], authTime: session.authTime };
+  const me = { ...rows[0], authTime: session.authTime };
+  // An Owner previewing the admin as someone else (owner, 2026-10-27): their
+  // menu and pages, read only. actionAdmin refuses every change while it's on.
+  const previewEmail = me.roles.includes("owner") ? (await cookies()).get(PREVIEW_COOKIE)?.value?.toLowerCase() : null;
+  if (previewEmail && previewEmail !== me.email) {
+    const [them] = await sql("SELECT email, name, roles, pages FROM admins WHERE email = $1 AND active", [previewEmail]);
+    if (them) return { ...them, welcomed_at: true, guide_hidden: true, authTime: me.authTime, preview: true, previewBy: me.email };
+  }
+  return me;
 }

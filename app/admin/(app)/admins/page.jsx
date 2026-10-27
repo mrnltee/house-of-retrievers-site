@@ -1,5 +1,5 @@
 import { sql } from "../../../lib/db";
-import { pageAdmin } from "../../../lib/admin/guard";
+import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { PAGES, ROLES, ROLE_LABELS, pageLevel, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
 import { inviteAdmin, removeAdmin, saveAdminPages, updateAdmin } from "../../actions";
@@ -44,12 +44,12 @@ function AccessSelect({ page, level = "", label, form, id }) {
  * Ticked pages are the only ones in their sidebar and the only ones they can
  * open. Owners always have every page.
  */
-function PageAccess({ admins }) {
+function PageAccess({ admins, base }) {
   const people = admins.filter((a) => !a.roles.includes("owner"));
   return (
     <section className="card">
       <h2>Page access</h2>
-      <p className="small muted">For each person, set every page to <strong>—</strong> (hidden), <strong>View</strong> (can open and read only) or <strong>Edit</strong> (can also save, send and delete), then press Save on their row. Only pages set to View or Edit show in their sidebar; every other page is blocked for them. Owners always see and edit every page.</p>
+      <p className="small muted">For each person, set every page to <strong>—</strong> (hidden), <strong>View</strong> (can open and read only) or <strong>Edit</strong> (can also save, send and delete), then press Save on their row. <strong>Preview</strong> shows you the admin exactly as they will see it. Only pages set to View or Edit show in their sidebar; every other page is blocked for them. Owners always see and edit every page.</p>
       {people.length === 0 ? (
         <p className="empty">No one to set yet. Invite an admin above and set their pages there.</p>
       ) : (
@@ -78,6 +78,7 @@ function PageAccess({ admins }) {
                       </td>
                     ))}
                     <td>
+                      <a className="linkish small" href={`${base}/preview?as=${encodeURIComponent(a.email)}`} title="See the admin as they will">Preview</a>
                       <form id={formId} action={saveAdminPages}>
                         <input type="hidden" name="email" value={a.email} />
                         <ConfirmButton
@@ -148,7 +149,7 @@ export default async function AdminsPage({ searchParams }) {
         </form>
       </section>
 
-      <PageAccess admins={admins} />
+      <PageAccess admins={admins} base={await adminBase()} />
 
       <h2>Admins</h2>
       <div className="table-wrap">

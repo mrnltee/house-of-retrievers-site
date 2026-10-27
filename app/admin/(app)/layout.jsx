@@ -1,6 +1,8 @@
 import { pageAdmin, adminBase } from "../../lib/admin/guard";
 import { can, PAGES, ROLE_LABELS } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
+import GuideTour from "./GuideTour";
+import { HOW, guidePages } from "../../lib/admin/guide.mjs";
 
 // Each page shows when the admin has its first capability (see PAGES).
 const page = (key) => {
@@ -25,6 +27,20 @@ export default async function AdminAppLayout({ children }) {
       .map(([name, path]) => ({ name, href: path === null ? null : path === "/" ? base || "/" : `${base}${path}` })),
   ]).filter(([, items]) => items.length);
 
+  const href = (path) => (path === "/" ? base || "/" : `${base}${path}`);
+  const tour = [
+    { title: "Welcome!", text: "This quick guide shows you around the admin. It only takes a minute; press Esc any time to close it." },
+    ...guidePages(admin).map((p) => ({
+      target: `.admin-side a[href="${href(p.path)}"]`,
+      title: p.label,
+      text: HOW[p.key].what,
+      level: p.level,
+      levelText: p.level === "edit" && HOW[p.key].edit ? HOW[p.key].edit : HOW[p.key].view,
+    })),
+    { target: `.admin-side a[href="${href("/start")}"]`, title: "Getting started", text: "Your guide to the admin is always here, with a “Show me around” button to run this tour again." },
+    { target: ".admin-side .me button", title: "Sign out", text: "On a shared or borrowed computer, sign out when you're done. Every change you make is recorded with your name." },
+  ];
+
   return (
     <div className="admin-shell">
       <AdminNav
@@ -33,10 +49,12 @@ export default async function AdminAppLayout({ children }) {
         email={admin.email}
         roles={Array.isArray(admin.pages) && !admin.roles.includes("owner") ? "Chosen pages" : admin.roles.map((role) => ROLE_LABELS[role] || role).join(", ") || "No role yet"}
       />
+      {!admin.preview && <GuideTour steps={tour} autoStart={!admin.guide_hidden} hidden={Boolean(admin.guide_hidden)} sessionKey={`hor-guide-${admin.authTime || 0}`} />}
       <main className="admin-main" id="admin-main">
-        {!admin.welcomed_at && (
-          <p className="banner ok welcome">
-            <strong>Welcome to the House of Retrievers admin!</strong> New here? Read the two-minute <a href={`${base}/start`}>Getting started</a> guide: what each of your pages is for and what you can change.
+        {admin.preview && (
+          <p className="banner alert preview-bar" role="status">
+            <span><strong>Preview: you're seeing the admin as {admin.name || admin.email}.</strong> Their menu and pages, exactly. Changes are switched off.</span>
+            <a className="btn small" href={`${base}/preview?exit=1`}>Exit preview</a>
           </p>
         )}
         {children}

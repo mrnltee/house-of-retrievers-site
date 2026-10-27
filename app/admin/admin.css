@@ -634,5 +634,16 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .guide-page { border: 1px solid var(--a-line); border-radius: 12px; padding: 12px 14px; }
 .guide-page h3 { margin: 0 0 6px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
 .guide-page p { margin: 4px 0; }
-.banner.welcome a { font-weight: 700; }
-.banner.welcome { display: block; }
+
+
+.preview-bar { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.page-access td:last-child { display: flex; gap: 10px; align-items: center; justify-content: flex-end; }
+
+/* On-screen guide. */
+.guide-tour { position: fixed; inset: 0; z-index: 1000; }
+.guide-dim { position: fixed; inset: 0; background: rgba(10, 10, 10, 0.55); }
+.guide-spot { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(10, 10, 10, 0.55); outline: 3px solid #d4b26a; transition: all 0.2s ease; pointer-events: none; }
+.guide-card { position: fixed; width: min(340px, calc(100vw - 32px)); background: white; color: var(--a-ink); border-radius: 16px; padding: 18px 20px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35); display: grid; gap: 8px; }
+.guide-card h2 { margin: 0; font-size: 20px; }
+.guide-card p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .guide-spot { transition: none; } }
