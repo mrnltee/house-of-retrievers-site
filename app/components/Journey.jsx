@@ -150,6 +150,8 @@ export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS, s
   const legal = useLegal();
   const reducedMotion = useReducedMotion();
   const list = useRef(null);
+  const pin = useRef(null);
+  const track = useRef(null);
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
   const current = manilaMonth();
@@ -206,6 +208,68 @@ export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS, s
     };
   }, [reducedMotion]);
 
+  // Horizontal layout on wide screens (owner, 2026-10-28): the timeline pins in place
+  // and the page's own scroll moves it sideways; at its end the page scrolls on down.
+  // Phones, short windows and reduced motion keep the swipeable row.
+  useEffect(() => {
+    const box = pin.current;
+    const row = track.current;
+    if (orientation !== "horizontal" || reducedMotion || !box || !row) return undefined;
+    const wide = window.matchMedia("(min-width: 861px) and (min-height: 600px)");
+    let frame = 0;
+    let travel = 0;
+    let top = 0;
+    let on = false;
+    const off = () => {
+      on = false;
+      box.classList.remove("is-pinned");
+      box.style.height = "";
+      row.style.removeProperty("--pin-top");
+    };
+    const update = () => {
+      frame = 0;
+      if (!on) return;
+      const progress = Math.min(1, Math.max(0, (top - box.getBoundingClientRect().top) / travel));
+      row.scrollLeft = progress * travel;
+    };
+    const measure = () => {
+      if (!wide.matches) { off(); return; }
+      box.classList.add("is-pinned");
+      travel = row.scrollWidth - row.clientWidth;
+      if (travel < 40) { off(); return; }
+      on = true;
+      top = Math.max(0, (window.innerHeight - row.offsetHeight) / 2);
+      row.style.setProperty("--pin-top", `${top}px`);
+      box.style.height = `${row.offsetHeight + travel}px`;
+      update();
+    };
+    const schedule = () => { if (!frame) frame = window.requestAnimationFrame(update); };
+    // Tabbing to a card off to the side scrolls the row; bring the page along so they agree.
+    const follow = () => {
+      if (!on) return;
+      window.requestAnimationFrame(() => {
+        const want = box.getBoundingClientRect().top + window.scrollY - top + row.scrollLeft;
+        window.scrollTo({ top: want, behavior: "instant" });
+      });
+    };
+    measure();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", measure);
+    wide.addEventListener("change", measure);
+    row.addEventListener("focusin", follow);
+    const images = [...row.querySelectorAll("img")].filter((img) => !img.complete);
+    images.forEach((img) => img.addEventListener("load", measure, { once: true }));
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", measure);
+      wide.removeEventListener("change", measure);
+      row.removeEventListener("focusin", follow);
+      images.forEach((img) => img.removeEventListener("load", measure));
+      off();
+    };
+  }, [orientation, reducedMotion]);
+
   if (!show) return null;
 
   return (
@@ -222,7 +286,8 @@ export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS, s
         )}
       </div>
 
-      <div className="journey-track" tabIndex={orientation === "horizontal" ? 0 : undefined} role={orientation === "horizontal" ? "region" : undefined} aria-label={orientation === "horizontal" ? "Our journey timeline, scrollable" : undefined}>
+      <div className="journey-pin" ref={pin}>
+      <div className="journey-track" ref={track} tabIndex={orientation === "horizontal" ? 0 : undefined} role={orientation === "horizontal" ? "region" : undefined} aria-label={orientation === "horizontal" ? "Our journey timeline, scrollable" : undefined}>
         <ol className={`journey-list${ready ? " is-ready" : ""}`} ref={list}>
           {stops.map((stop, index) => {
             const side = index % 2 ? "left" : "right";
@@ -269,6 +334,7 @@ export default function Journey({ onJoin, settings = DEFAULT_JOURNEY_SETTINGS, s
             </div>
           </li>
         </ol>
+      </div>
       </div>
     </section>
   );

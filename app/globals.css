@@ -1575,3 +1575,8 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 /* Wide screens: thumbnails replace the dots. Phones: dots and the counter, no thumbnails. */
 @media (min-width: 761px) { .journey-media .journey-dots { display: none; } }
 @media (max-width: 760px) { .journey-thumbs { display: none; } .journey-count { display: none; } }
+
+/* Horizontal journey, wide screens: the row pins (sticky, centred in the window)
+   while the page's scroll moves it sideways; Journey.jsx sets the pin's height to
+   the row's height plus how far it travels. Without JS it stays a swipeable row. */
+.journey.is-horizontal .journey-pin.is-pinned .journey-track { position: sticky; top: var(--pin-top, 0px); overflow-x: hidden; scroll-snap-type: none; }
