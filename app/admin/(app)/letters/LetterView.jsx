@@ -4,13 +4,15 @@ import { useEffect, useId, useRef, useState } from "react";
 import LetterPreview from "./LetterPreview";
 
 /**
- * The letter preview with a switch to the actual PDF (owner, 2026-10-27): the
+ * The letter preview with a switch to the covering email as recipients get it
+ * (phone or desktop width) and to the actual PDF (owner, 2026-10-27): the
  * same file the recipient gets, with its fillable fields, drawn by the
  * browser's PDF viewer. `fields` are posted to the PDF route; the PDF redraws
  * a moment after they stop changing.
  */
-export default function LetterView({ text, action, fields }) {
+export default function LetterView({ text, action, fields, email }) {
   const [mode, setMode] = useState("page");
+  const [width, setWidth] = useState("phone");
   const form = useRef(null);
   const frame = `letter-pdf-${useId().replace(/:/g, "")}`;
   const signature = JSON.stringify(fields);
@@ -25,9 +27,19 @@ export default function LetterView({ text, action, fields }) {
     <>
       <div className="seg" role="group" aria-label="Preview as">
         <button type="button" className={mode === "page" ? "is-on" : ""} aria-pressed={mode === "page"} onClick={() => setMode("page")}>Page view</button>
+        {email && <button type="button" className={mode === "email" ? "is-on" : ""} aria-pressed={mode === "email"} onClick={() => setMode("email")}>Email</button>}
         <button type="button" className={mode === "pdf" ? "is-on" : ""} aria-pressed={mode === "pdf"} onClick={() => setMode("pdf")}>Actual PDF</button>
       </div>
-      {mode === "pdf" ? (
+      {mode === "email" && email ? (
+        <>
+          <div className="segmented" role="group" aria-label="Email preview width">
+            <button type="button" aria-pressed={width === "phone"} onClick={() => setWidth("phone")}>Phone</button>
+            <button type="button" aria-pressed={width === "desktop"} onClick={() => setWidth("desktop")}>Desktop</button>
+          </div>
+          <iframe title="The covering email" className={`template-frame is-${width}`} srcDoc={email.html} sandbox="" />
+          <p className="small muted" style={{ margin: 0 }}>The email the letter is attached to, as the recipient sees it. Links work in the real email.</p>
+        </>
+      ) : mode === "pdf" ? (
         <>
           <form ref={form} method="post" action={action} target={frame} hidden>
             {Object.entries(fields).map(([name, value]) => <input key={name} type="hidden" name={name} value={value ?? ""} />)}

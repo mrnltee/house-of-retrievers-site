@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate } from "../../../../lib/letters.mjs";
+import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate, prepareLetter } from "../../../../lib/letters.mjs";
+import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
 import LetterView from "../LetterView";
@@ -21,6 +22,10 @@ export default function LetterEditor({ letter, original, pdfAction }) {
   }, [changed]);
   const blanks = useMemo(() => blanksOf(fields.subject, fields.cover, fields.body), [fields]);
   const preview = useMemo(() => fillLetter(fields.body, { name: SAMPLE, date: letterDate(), values: {} }), [fields.body]);
+  const email = useMemo(() => {
+    const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { name: SAMPLE });
+    return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename });
+  }, [fields, letter.name]);
   const set = (name) => (e) => setFields((f) => ({ ...f, [name]: e.target.value }));
 
   return (
@@ -82,7 +87,7 @@ export default function LetterEditor({ letter, original, pdfAction }) {
             <button type="submit" className="btn ghost" data-confirm="not-needed-read-only">Preview PDF</button>
           </form>
         </div>
-        <LetterView text={preview} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body }} />
+        <LetterView text={preview} email={email} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body }} />
       </section>
     </div>
   );
