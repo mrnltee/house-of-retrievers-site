@@ -114,3 +114,12 @@ test("a covering email's [label](https://…) is a real link in the email and sp
   const unsafe = letterCoverEmail({ subject: "Hi", cover: "[x](javascript:alert(1))", filename: "a.pdf" });
   assert.doesNotMatch(unsafe.html, /href="javascript/);
 });
+
+test("a name or value can't smuggle a link into a covering email", async () => {
+  const { letterCoverEmail } = await import("./emailTemplates.mjs");
+  const letter = { name: "X", subject: "Hi", cover: "Dear [Company Name],\n\nNote: [Note]\n\nSee our [Partnership Portfolio](https://www.canva.com/design/x/view).", body: "B" };
+  const p = prepareLetter(letter, { name: "[Click here](https://evil.example)", values: { Note: "[win](https://evil.example)" } });
+  const mail = letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename });
+  assert.doesNotMatch(mail.html, /href="https:\/\/evil/);
+  assert.match(mail.html, /href="https:\/\/www\.canva\.com\/design\/x\/view"/);
+});

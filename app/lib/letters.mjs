@@ -80,12 +80,16 @@ export function missingBlanks(blanks, values = {}) {
  * Fills the blanks. `values` is keyed by label; auto blanks come from `name`
  * and `date`. A line made only of an empty optional blank is dropped.
  */
-export function fillLetter(text, { name = "", date = letterDate(), values = {} } = {}) {
+export function fillLetter(text, { name = "", date = letterDate(), values = {} } = {}, { plain = false } = {}) {
+  // In a covering email only the template's own [label](https://…) may become
+  // a link; a filled-in name or value (which can come from the public Join
+  // form) is kept as plain text by breaking any "](" in it.
+  const safe = (v) => (plain ? String(v).replace(/\]\s*\(/g, "] (") : v);
   const value = (label) => {
     const base = baseLabel(label);
-    if (base === "Company Name") return name;
+    if (base === "Company Name") return safe(name);
     if (base === "Date") return date;
-    return String(values[base] ?? "").trim();
+    return safe(String(values[base] ?? "").trim());
   };
   return String(text || "")
     .replace(/\r\n?/g, "\n")
@@ -166,7 +170,7 @@ export function prepareLetter(letter, { name, date = letterDate(), values = {} }
   const fill = (t) => fillLetter(t, { name, date, values });
   return {
     subject: fill(letter.subject).replace(/\s+/g, " ").trim(),
-    cover: fill(letter.cover),
+    cover: fillLetter(letter.cover, { name, date, values }, { plain: true }),
     blocks: letterBlocks(fill(letter.body)),
     filename: `HOR ${letter.name.replace(/[^\w ()&,.–—-]+/g, "").trim()}${name ? ` – ${name.replace(/[^\w ()&,.-]+/g, "").trim()}` : ""}.pdf`.slice(0, 140),
   };

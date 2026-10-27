@@ -18,7 +18,7 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
   const date = letterDate();
   const filled = useMemo(() => fillLetter(letter.body, { name: who?.name || "", date, values }), [letter.body, who, date, values]);
   const subject = fillLetter(letter.subject, { name: who?.name || "", date, values });
-  const cover = fillLetter(letter.cover, { name: who?.name || "", date, values });
+  const cover = fillLetter(letter.cover, { name: who?.name || "", date, values }, { plain: true });
   const missing = missingBlanks(blanks, values);
   const count = picked.size;
 
