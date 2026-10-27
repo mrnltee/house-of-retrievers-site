@@ -87,7 +87,13 @@ function field(doc, label, x, y, w, h, options = {}) {
   const count = (doc._fieldCount = (doc._fieldCount || 0) + 1);
   const name = `${pdfSafe(label).replace(/[^A-Za-z0-9 ]+/g, " ").trim().slice(0, 40) || "Field"} ${count}`;
   const saved = { x: doc.x, y: doc.y };
+  // pdfkit writes a field's own text size only when its font differs from the form's
+  // default; with a set size, make it write one so viewers don't auto-size the text.
+  const form = doc._acroform;
+  const defaultFont = form?.defaultFont;
+  if (form && options.fontSize) form.defaultFont = null;
   doc.formText(name, x, y, w, h, { fontSize: 0, ...options });
+  if (form) form.defaultFont = defaultFont;
   doc.x = saved.x;
   doc.y = saved.y;
 }
@@ -132,7 +138,8 @@ function drawTable(doc, rows) {
     const cx = x.at + pad;
     const cw = w - pad * 2;
     if (!text.trim()) {
-      field(doc, x.label, cx, y + pad - 1, cw, Math.max(h - pad * 2 + 2, 14), { multiline: h > 30 });
+      // A set text size: viewers otherwise grow auto-sized text to fill the box.
+      field(doc, x.label, cx, y + pad - 1, cw, Math.max(h - pad * 2 + 2, 14), h > 30 ? { multiline: true, fontSize: SIZE - 1 } : { fontSize: SIZE - 1 });
     } else if (text.trim() === "[  ]") {
       group ??= radioGroup(doc, plain(header?.cells[x.i + 1] || []).trim() || "Choice");
       radioOption(doc, group, plain(row.cells[x.i + 1] || []).trim() || x.label, cx + 1, y + pad + 1.5);
@@ -143,7 +150,9 @@ function drawTable(doc, rows) {
         const at = line.search(/_{3,}/);
         if (at < 0) return;
         const left = doc.widthOfString(line.slice(0, at));
-        field(doc, line.slice(0, at).replace(/[:\s]+$/, "") || x.label, cx + left, y + pad + n * lineH - 1, Math.max(cw - left, 40), lineH);
+        // The box ends just above the printed line, so typed text sits on it, not through it.
+        const top = y + pad + n * lineH;
+        field(doc, line.slice(0, at).replace(/[:\s]+$/, "") || x.label, cx + left, top - 3.5, Math.max(cw - left, 40), SIZE + 1, { fontSize: SIZE - 1.5 });
       });
     }
   };
@@ -225,21 +234,27 @@ function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level
     let explicit = false;
     const usable = doc.page.height - doc.page.margins.bottom - MARGIN;
     const close = () => { pages[pages.length - 1].end = doc.y; };
-    const breakPage = () => { close(); explicit = true; doc.addPage(); };
+    // Something drawn on this page since its header? A ---page--- on a page that is still
+    // empty (one just started), or at the very end, would only leave a blank page.
+    let drawn = false;
+    const breakPage = () => { if (!drawn) return; close(); explicit = true; doc.addPage(); };
     doc.on("pageAdded", () => {
       pages[pages.length - 1].end ??= doc.page.height - doc.page.margins.bottom;
       header(96);
       pages.push({ auto: !explicit, top: doc.y });
       explicit = false;
+      drawn = false;
     });
     let spills = 0;
 
     const room = () => doc.page.height - doc.page.margins.bottom - doc.y;
-    for (const block of blocks) {
-      if (block.type === "page") { breakPage(); continue; }
+    const lastContent = blocks.findLastIndex((b) => b.type !== "page");
+    for (const [n, block] of blocks.entries()) {
+      if (block.type === "page") { if (n < lastContent) breakPage(); continue; }
+      drawn = true;
       // Headings keep company with what follows them.
       if ((block.type === "h1" || block.type === "h2") && room() < 110) doc.addPage();
-      if (block.type === "table") { drawTable(doc, block.rows); continue; }
+      if (block.type === "table") { drawTable(doc, block.rows); drawn = true; continue; }
       doc.x = left;
       if (block.type === "h1") {
         down(doc, 0.3);
@@ -261,6 +276,7 @@ function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level
         writeRuns(doc, block.runs, { width });
         down(doc, 0.7);
       }
+      drawn = true;
     }
 
     close();

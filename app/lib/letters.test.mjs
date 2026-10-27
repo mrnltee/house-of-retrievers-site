@@ -123,3 +123,11 @@ test("a name or value can't smuggle a link into a covering email", async () => {
   assert.doesNotMatch(mail.html, /href="https:\/\/evil/);
   assert.match(mail.html, /href="https:\/\/www\.canva\.com\/design\/x\/view"/);
 });
+
+test("a page break never leaves a blank page (doubled, at the start of a page, or at the end)", async () => {
+  const count = async (body) => ((await letterPdf(letterBlocks(body))).toString("latin1").match(/\/Type \/Page\b/g) || []).length;
+  assert.equal(await count("One\n\n---page---\n\nTwo"), 2);
+  assert.equal(await count("One\n\n---page---\n\n---page---\n\nTwo"), 2);
+  assert.equal(await count("One\n\n---page---"), 1);
+  assert.equal(await count("---page---\n\nOne"), 1);
+});
