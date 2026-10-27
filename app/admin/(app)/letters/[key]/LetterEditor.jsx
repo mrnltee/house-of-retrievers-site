@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate } from "../../../../lib/letters.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
@@ -12,6 +12,13 @@ const SAMPLE = "Pawsome Pet Shop";
 export default function LetterEditor({ letter, original, pdfAction }) {
   const [fields, setFields] = useState({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const changed = JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
+  // Leaving (Back, Previous, Next) with unsaved wording asks first.
+  useEffect(() => {
+    if (!changed) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [changed]);
   const blanks = useMemo(() => blanksOf(fields.subject, fields.cover, fields.body), [fields]);
   const preview = useMemo(() => fillLetter(fields.body, { name: SAMPLE, date: letterDate(), values: {} }), [fields.body]);
   const set = (name) => (e) => setFields((f) => ({ ...f, [name]: e.target.value }));

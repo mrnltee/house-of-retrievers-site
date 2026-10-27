@@ -683,3 +683,11 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
   .chat-page .chat-list { flex: 1; min-height: 0; max-height: none; }
   .chat-page > p { margin: 0; }
 }
+
+/* Letter editor: Back / Previous / Next, top right. */
+.letter-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.letter-nav [aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.page-head:has(.letter-nav) { align-items: flex-start; flex-wrap: nowrap; }
+.page-head:has(.letter-nav) > div:first-child { min-width: 0; }
+.page-head:has(.letter-nav) .letter-nav { flex-wrap: nowrap; white-space: nowrap; }
+@media (max-width: 860px) { .page-head:has(.letter-nav) { flex-wrap: wrap; } }
