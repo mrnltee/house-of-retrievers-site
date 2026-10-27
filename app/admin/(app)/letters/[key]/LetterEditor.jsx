@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate, prepareLetter } from "../../../../lib/letters.mjs";
 import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
 import LetterView from "../LetterView";
@@ -57,7 +58,7 @@ export default function LetterEditor({ letter, original, pdfAction }) {
           <ul>
             {Object.entries(AUTO_BLANKS).map(([label, help]) => <li key={label}><span className="tag-badge var-chip">[{label}]</span> <span className="small muted">{help}</span></li>)}
             {blanks.map((b) => (
-              <li key={b.label}><span className="tag-badge">[{b.label}{b.optional ? "?" : ""}]</span> <span className="small muted">{b.optional ? "Optional — its line is left out if empty" : b.suggestion ? "Asked when sending, starting from the suggestion" : "Asked when sending"}</span></li>
+              <li key={b.label}><span className="tag-badge">[{b.label}{b.optional ? "?" : ""}]</span> <span className="small muted">{b.optional ? "Optional — its line is left out if empty" : b.suggestion ? "Asked when sending, starting from the suggestion" : "Asked when sending"}{blankSample(b.label, letter.key) ? <> · sample: <em>{blankSample(b.label, letter.key).replace(/^e\.g\. /, "")}</em></> : null}</span></li>
             ))}
           </ul>
         </div>

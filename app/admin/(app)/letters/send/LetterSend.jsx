@@ -1,5 +1,6 @@
 "use client";
 
+import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useMemo, useState } from "react";
 import { fillLetter, letterDate, missingBlanks } from "../../../../lib/letters.mjs";
 import { sendLetters } from "../../../letterActions";
@@ -65,7 +66,7 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
             <legend className="field-head">Fill in <small>The same for everyone in this send. Last values are filled in for you.</small></legend>
             {blanks.map((b) => {
               const long = b.label.length > 40 || (values[b.label] || "").length > 60;
-              const props = { value: values[b.label] || "", maxLength: 600, required: !b.optional, onChange: (e) => setValues((v) => ({ ...v, [b.label]: e.target.value })) };
+              const props = { value: values[b.label] || "", maxLength: 600, required: !b.optional, placeholder: blankSample(b.label, letter.key) || undefined, onChange: (e) => setValues((v) => ({ ...v, [b.label]: e.target.value })) };
               return (
                 <label key={b.label} className="field">
                   <span>{b.label}{b.optional ? <small> optional</small> : null}</span>

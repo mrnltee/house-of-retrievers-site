@@ -131,3 +131,13 @@ test("a page break never leaves a blank page (doubled, at the start of a page, o
   assert.equal(await count("One\n\n---page---"), 1);
   assert.equal(await count("---page---\n\nOne"), 1);
 });
+
+test("every blank in the eight letters has a sample answer for the send form", async () => {
+  const { blankSample } = await import("./letters/samples.mjs");
+  for (const l of LETTER_STARTERS) {
+    for (const b of blanksOf(l.subject, l.cover, l.body)) {
+      if (b.suggestion) continue; // starts filled in with its suggestion
+      assert.ok(blankSample(b.label, l.key), `${l.key}: no sample for [${b.label}]`);
+    }
+  }
+});
