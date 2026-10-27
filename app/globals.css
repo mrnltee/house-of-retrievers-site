@@ -1580,3 +1580,10 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
    while the page's scroll moves it sideways; Journey.jsx sets the pin's height to
    the row's height plus how far it travels. Without JS it stays a swipeable row. */
 .journey.is-horizontal .journey-pin.is-pinned .journey-track { position: sticky; top: var(--pin-top, 0px); overflow-x: hidden; scroll-snap-type: none; }
+
+/* Lenis (app/components/SmoothScroll.jsx): it smooths the wheel itself, so the
+   browser's own smooth scrolling must not double it while Lenis is on. */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }

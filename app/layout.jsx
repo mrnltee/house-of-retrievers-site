@@ -1,3 +1,4 @@
+import SmoothScroll from "./components/SmoothScroll";
 import "./globals.css";
 import Script from "next/script";
 import {
@@ -74,7 +75,7 @@ export default function RootLayout({ children }) {
         <link rel="preload" href="/fonts/dm-serif-display-latin-400-italic.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/dm-sans-latin-opsz-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
-      <body>{children}</body>
+      <body>{children}<SmoothScroll /></body>
       <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-MNCGQGDRPR"
         strategy="afterInteractive"
