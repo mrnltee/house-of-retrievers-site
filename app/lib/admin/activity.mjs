@@ -46,6 +46,7 @@ export const ACTION_LABELS = {
   "supporter.delete": "Deleted a sponsor or partner",
   "supporter.import": "Imported sponsors and partners",
   "registration.import": "Imported registrations",
+  "event.posters.reframe": "Re-framed event posters to 4:5",
   "supporter.letter": "Sent a letter",
   "person.letter": "Sent a letter",
   "letter.save": "Saved a letter's wording",
