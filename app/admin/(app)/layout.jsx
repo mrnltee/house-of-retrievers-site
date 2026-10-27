@@ -3,6 +3,8 @@ import { can, PAGES, ROLE_LABELS } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 import GuideTour from "./GuideTour";
 import Presence from "./Presence";
+import { sql } from "../../lib/db";
+import { CHAT_ROOM_DAYS } from "../../lib/admin/chat.mjs";
 import { exitPreview } from "../previewActions";
 import { HOW, guidePages } from "../../lib/admin/guide.mjs";
 
@@ -16,17 +18,25 @@ const GROUPS = [
   ["Publish", [["Gallery", null], ["Forms", null], page("media"), ["Content", null]]],
   ["Money", [page("payments"), ["Donations & spending", null]]],
   ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
+  ["Team", [["Team chat", "/chat", "*"]]],
   ["Help", [["Getting started", "/start", "*"]]],
 ];
 
 export default async function AdminAppLayout({ children }) {
   const { admin } = await pageAdmin();
   const base = await adminBase();
+  // Unread team-chat messages from others in the room (last 90 days).
+  const [{ unread = 0 } = {}] = admin.preview
+    ? []
+    : await sql(
+        `SELECT count(*)::int AS unread FROM chat_messages WHERE id > $1 AND author_email <> $2 AND created_at > now() - interval '${CHAT_ROOM_DAYS} days'`,
+        [admin.chat_read_id || 0, admin.email],
+      ).catch(() => [{ unread: 0 }]);
   const groups = GROUPS.map(([label, items]) => [
     label,
     items
       .filter(([, path, cap]) => (path === null ? !Array.isArray(admin.pages) || admin.roles.includes("owner") : cap === "*" || can(admin, cap)))
-      .map(([name, path]) => ({ name, href: path === null ? null : path === "/" ? base || "/" : `${base}${path}` })),
+      .map(([name, path]) => ({ name, href: path === null ? null : path === "/" ? base || "/" : `${base}${path}`, badge: path === "/chat" ? unread : 0 })),
   ]).filter(([, items]) => items.length);
 
   const href = (path) => (path === "/" ? base || "/" : `${base}${path}`);

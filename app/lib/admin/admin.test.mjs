@@ -270,3 +270,10 @@ test("page access gives exactly the chosen pages, at View or Edit", async () => 
   assert.deepEqual(pagesForRoles(["checkin"]), ["checkin"]);
   assert.deepEqual(pagesForRoles(["treasurer"]).includes("people:view"), true);
 });
+
+test("chat messages are trimmed and limited", async () => {
+  const { cleanMessage, CHAT_MAX } = await import("./chat.mjs");
+  assert.equal(cleanMessage("  hi \r\n\n\n\nthere ").body, "hi \n\nthere");
+  assert.ok(cleanMessage("   ").error);
+  assert.ok(cleanMessage("x".repeat(CHAT_MAX + 1)).error);
+});

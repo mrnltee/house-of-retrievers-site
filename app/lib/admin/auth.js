@@ -132,7 +132,7 @@ export async function currentAdmin() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const rows = await sql("SELECT email, name, roles, pages, welcomed_at, guide_hidden, last_active_at FROM admins WHERE email = $1 AND active", [email]);
+  const rows = await sql("SELECT email, name, roles, pages, welcomed_at, guide_hidden, last_active_at, chat_read_id FROM admins WHERE email = $1 AND active", [email]);
   if (!rows.length) return null;
   await markActive(rows[0]);
   const me = { ...rows[0], authTime: session.authTime };

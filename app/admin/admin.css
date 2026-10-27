@@ -654,3 +654,15 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .presence.on::before { background: #2f9e5b; box-shadow: 0 0 0 3px rgba(47, 158, 91, 0.18); }
 .presence.off { font-weight: 400; color: var(--a-muted, #666); display: inline-block; }
 .presence.off::before { display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+/* Team chat. */
+.chat { display: grid; gap: 12px; }
+.chat-list { max-height: min(60vh, 560px); overflow-y: auto; display: grid; gap: 10px; align-content: start; padding: 4px; }
+.chat-msg { max-width: min(560px, 85%); background: #f4efe3; border-radius: 14px; padding: 8px 12px; }
+.chat-msg.mine { justify-self: end; background: var(--a-ink, #111); color: white; }
+.chat-msg.mine .chat-meta { color: rgba(255, 255, 255, 0.7); }
+.chat-meta { margin: 0 0 2px; font-size: 12px; color: var(--a-muted, #666); }
+.chat-body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-form { display: flex; gap: 10px; align-items: flex-end; }
+.chat-form textarea { flex: 1; resize: vertical; min-height: 48px; }
+.unread { display: inline-block; min-width: 20px; padding: 1px 7px; margin-left: 6px; border-radius: 999px; background: #d4b26a; color: #111; font-size: 12px; font-weight: 700; text-align: center; }

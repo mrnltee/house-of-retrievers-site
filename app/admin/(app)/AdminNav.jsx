@@ -20,6 +20,7 @@ export default function AdminNav({ groups, home, email, roles }) {
             item.href ? (
               <a key={item.name} className="admin-link" href={item.href} aria-current={isCurrent(item.href) ? "page" : undefined}>
                 {item.name}
+                {item.badge > 0 && <span className="unread" aria-label={`${item.badge} unread`}>{item.badge > 99 ? "99+" : item.badge}</span>}
               </a>
             ) : (
               <span key={item.name} className="soon">
