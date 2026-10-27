@@ -141,3 +141,10 @@ test("every blank in the eight letters has a sample answer for the send form", a
     }
   }
 });
+
+test("the covering email tells people to open the PDF in a PDF viewer, not Google Docs", async () => {
+  const { letterCoverEmail } = await import("./emailTemplates.mjs");
+  const mail = letterCoverEmail({ subject: "Hi", cover: "Dear Bark,\n\nHello.", filename: "a.pdf" });
+  assert.match(mail.text, /Adobe Acrobat Reader/);
+  assert.match(mail.text, /rather than Google Docs/);
+});

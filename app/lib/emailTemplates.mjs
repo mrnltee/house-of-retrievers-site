@@ -407,7 +407,9 @@ export function letterCoverEmail({ subject, cover, filename }) {
     greeting: greeting || undefined,
     heading: subject,
     paragraphs: messageParagraphs(greeting ? rest.join("\n\n") : text, {}),
-    footnote: `Our letter is attached as a PDF (${filename}). Reply to this email to talk to the team.`,
+    // Opening the PDF with "Open with Google Docs" rebuilds it and loses the layout and
+    // the fill-in fields (owner, 2026-10-28), so point to a PDF viewer.
+    footnote: `Our letter is attached as a PDF (${filename}). To fill in its form, open it in a PDF viewer such as Adobe Acrobat Reader (free), Preview on a Mac, or Microsoft Edge, rather than Google Docs, which changes the layout. Reply to this email to talk to the team.`,
   });
 }
 
