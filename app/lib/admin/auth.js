@@ -110,6 +110,16 @@ export const authOptions = {
   },
 };
 
+/** Online means active in the admin within this long. */
+export const ONLINE_MS = 5 * 60 * 1000;
+
+/** Notes that this admin is using the admin now (at most once a minute). */
+export async function markActive(row) {
+  const last = row.last_active_at ? new Date(row.last_active_at).getTime() : 0;
+  if (Date.now() - last < 60 * 1000) return;
+  await sql("UPDATE admins SET last_active_at = now() WHERE email = $1", [row.email]).catch(() => {});
+}
+
 /** Cookie holding whom an Owner is previewing the admin as. */
 export const PREVIEW_COOKIE = "hor_preview_as";
 
@@ -122,8 +132,9 @@ export async function currentAdmin() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const rows = await sql("SELECT email, name, roles, pages, welcomed_at, guide_hidden FROM admins WHERE email = $1 AND active", [email]);
+  const rows = await sql("SELECT email, name, roles, pages, welcomed_at, guide_hidden, last_active_at FROM admins WHERE email = $1 AND active", [email]);
   if (!rows.length) return null;
+  await markActive(rows[0]);
   const me = { ...rows[0], authTime: session.authTime };
   // An Owner previewing the admin as someone else (owner, 2026-10-27): their
   // menu and pages, read only. actionAdmin refuses every change while it's on.

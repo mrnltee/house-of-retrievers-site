@@ -2,6 +2,7 @@ import { pageAdmin, adminBase } from "../../lib/admin/guard";
 import { can, PAGES, ROLE_LABELS } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 import GuideTour from "./GuideTour";
+import Presence from "./Presence";
 import { exitPreview } from "../previewActions";
 import { HOW, guidePages } from "../../lib/admin/guide.mjs";
 
@@ -51,12 +52,13 @@ export default async function AdminAppLayout({ children }) {
         roles={Array.isArray(admin.pages) && !admin.roles.includes("owner") ? "Chosen pages" : admin.roles.map((role) => ROLE_LABELS[role] || role).join(", ") || "No role yet"}
       />
       {!admin.preview && <GuideTour steps={tour} autoStart={!admin.guide_hidden} hidden={Boolean(admin.guide_hidden)} sessionKey={`hor-guide-${admin.authTime || 0}`} />}
+      {!admin.preview && <Presence />}
       <main className="admin-main" id="admin-main">
         {admin.preview && (
-          <p className="banner alert preview-bar" role="status">
+          <div className="banner alert preview-bar" role="status">
             <span><strong>Preview: you're seeing the admin as {admin.name || admin.email}.</strong> Their menu and pages, exactly. Changes are switched off.</span>
             <form action={exitPreview}><button type="submit" className="btn small" data-confirm="none: leaving preview changes nothing">Exit preview</button></form>
-          </p>
+          </div>
         )}
         {children}
       </main>

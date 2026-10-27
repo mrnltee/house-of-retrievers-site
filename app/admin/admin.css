@@ -647,3 +647,10 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .guide-card h2 { margin: 0; font-size: 20px; }
 .guide-card p { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .guide-spot { transition: none; } }
+
+/* Online / offline on the Admins page. */
+.presence { display: inline-flex; align-items: baseline; gap: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.presence::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #9a9a9a; align-self: center; }
+.presence.on::before { background: #2f9e5b; box-shadow: 0 0 0 3px rgba(47, 158, 91, 0.18); }
+.presence.off { font-weight: 400; color: var(--a-muted, #666); display: inline-block; }
+.presence.off::before { display: inline-block; margin-right: 6px; vertical-align: middle; }

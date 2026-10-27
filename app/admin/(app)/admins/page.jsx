@@ -1,5 +1,6 @@
 import { sql } from "../../../lib/db";
 import { pageAdmin } from "../../../lib/admin/guard";
+import { ONLINE_MS } from "../../../lib/admin/auth";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { PAGES, ROLES, ROLE_LABELS, pageLevel, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
 import { startPreview } from "../../previewActions";
@@ -117,10 +118,13 @@ export default async function AdminsPage({ searchParams }) {
   if (!allowed) return <NotAllowed />;
   const envOwners = parseEmailList(process.env.ADMIN_OWNER_EMAILS);
   const [admins, log] = await Promise.all([
-    sql("SELECT email, name, roles, pages, active, last_seen_at, invited_by FROM admins WHERE active ORDER BY ('owner' = ANY(roles)) DESC, email"),
+    sql("SELECT email, name, roles, pages, active, last_seen_at, last_active_at, invited_by FROM admins WHERE active ORDER BY ('owner' = ANY(roles)) DESC, email"),
     sql("SELECT at, actor_email, action, target FROM activity_log ORDER BY at DESC LIMIT 100"),
   ]);
   const owners = admins.filter((a) => a.roles.includes("owner")).length;
+  const now = Date.now();
+  const isOnline = (a) => a.last_active_at && now - new Date(a.last_active_at).getTime() < ONLINE_MS;
+  const online = admins.filter(isOnline).length;
 
   return (
     <>
@@ -161,14 +165,16 @@ export default async function AdminsPage({ searchParams }) {
 
       <PageAccess admins={admins} />
 
-      <h2>Admins</h2>
+      <h2>Team</h2>
+      <p className="muted">{online} online now. Online means they've used the admin in the last 5 minutes.</p>
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Admin</th><th>Roles</th><th>Last signed in</th><th><span className="visually-hidden">Edit</span></th></tr></thead>
+          <thead><tr><th>Admin</th><th>Status</th><th>Roles</th><th>Last signed in</th><th><span className="visually-hidden">Edit</span></th></tr></thead>
           <tbody>
             {admins.map((a) => (
               <tr key={a.email}>
                 <td className="strong">{a.name ? `${a.name} · ` : ""}{a.email}{envOwners.includes(a.email) && <span className="small muted"><br />Owner set in Vercel</span>}</td>
+                <td>{isOnline(a) ? <span className="presence on">Online</span> : <span className="presence off">Offline{a.last_active_at ? <small className="muted"><br />active {formatWhen(a.last_active_at)}</small> : null}</span>}</td>
                 <td><div className="actions">{a.roles.map((r) => <span key={r} className={`chip ${r === "owner" ? "dark" : ""}`}>{ROLE_LABELS[r] || r}</span>)}</div>{Array.isArray(a.pages) && !a.roles.includes("owner") && <span className="small muted">Pages: {PAGES.filter((p) => a.pages.includes(p.key)).map((p) => p.label).join(", ")}</span>}</td>
                 <td>{formatWhen(a.last_seen_at)}</td>
                 <td>
