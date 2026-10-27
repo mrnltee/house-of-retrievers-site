@@ -69,7 +69,7 @@ async function readName(data, back) {
 export async function saveEmailTemplate(data) {
   const fallback = form(data, "id") ? `/emails/custom/${form(data, "id")}` : `/emails/${form(data, "key") || ""}`;
   return guarded(fallback, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("emails:edit");
     const t = await target(data);
     const f = await readFields(data, t);
     if (t.key) {
@@ -106,7 +106,7 @@ export async function saveEmailTemplate(data) {
 export async function resetEmailTemplate(data) {
   const fallback = form(data, "id") ? `/emails/custom/${form(data, "id")}` : `/emails/${form(data, "key") || ""}`;
   return guarded(fallback, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("emails:edit");
     const t = await target(data);
     if (t.key) {
       await sql("DELETE FROM email_templates WHERE key = $1", [t.key]);
@@ -125,7 +125,7 @@ export async function resetEmailTemplate(data) {
 export async function sendTestEmail(data) {
   const fallback = form(data, "id") ? `/emails/custom/${form(data, "id")}` : `/emails/${form(data, "key") || ""}`;
   return guarded(fallback, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("emails:edit");
     const t = await target(data);
     const f = await readFields(data, t);
     const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event";

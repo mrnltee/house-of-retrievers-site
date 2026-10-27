@@ -29,7 +29,7 @@ export default async function EventsPage({ searchParams }) {
      WHERE ${where} GROUP BY e.id ORDER BY e.date ${tab === "past" ? "DESC" : "ASC"}`,
     [today],
   );
-  const canEdit = can(admin.roles, "events:edit");
+  const canEdit = can(admin, "events:edit");
 
   return (
     <>
@@ -69,7 +69,7 @@ export default async function EventsPage({ searchParams }) {
                 <td><span className={`chip ${event.status === "published" ? "good" : event.status === "cancelled" ? "alert" : ""}`}>{event.status[0].toUpperCase() + event.status.slice(1)}</span></td>
                 <td className="actions">
                   {canEdit && <a className="linkish" href={`${base}/events/${event.id}`}>Edit</a>}
-                  {event.registration === "required" && can(admin.roles, "registrations:view") && <a className="linkish" href={`${base}/registrations/${event.id}`}>RSVPs</a>}
+                  {event.registration === "required" && can(admin, "registrations:view") && <a className="linkish" href={`${base}/registrations/${event.id}`}>RSVPs</a>}
                 </td>
               </tr>
             ))}

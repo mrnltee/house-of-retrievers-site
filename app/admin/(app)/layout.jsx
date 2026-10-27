@@ -1,12 +1,17 @@
 import { pageAdmin, adminBase } from "../../lib/admin/guard";
-import { can, ROLE_LABELS } from "../../lib/admin/roles.mjs";
+import { can, PAGES, ROLE_LABELS } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 
+// Each page shows when the admin has its first capability (see PAGES).
+const page = (key) => {
+  const p = PAGES.find((x) => x.key === key);
+  return [p.label, p.path, p.caps[0]];
+};
 const GROUPS = [
-  ["Run", [["Dashboard", "/", "dashboard:view"], ["Events", "/events", "events:view"], ["Registrations", "/registrations", "registrations:view"], ["Check-in", "/checkin", "checkin"], ["People", "/people", "people:view"], ["Sponsors & partners", "/supporters", "people:view"]]],
-    ["Publish", [["Gallery", null], ["Forms", null], ["Media hub", "/media", "media:edit"], ["Content", null]]],
-  ["Money", [["Payment settings", "/payments", "payments:view"], ["Donations & spending", null]]],
-  ["Settings", [["Email templates", "/emails", "people:edit"], ["Letters", "/letters", "people:edit"], ["Journey timeline", "/journey", "media:edit"], ["Breed icons", "/breeds", "events:edit"], ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
+  ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters"].map(page)],
+  ["Publish", [["Gallery", null], ["Forms", null], page("media"), ["Content", null]]],
+  ["Money", [page("payments"), ["Donations & spending", null]]],
+  ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
 ];
 
 export default async function AdminAppLayout({ children }) {
@@ -15,7 +20,7 @@ export default async function AdminAppLayout({ children }) {
   const groups = GROUPS.map(([label, items]) => [
     label,
     items
-      .filter(([, path, cap]) => path === null || can(admin.roles, cap))
+      .filter(([, path, cap]) => (path === null ? !Array.isArray(admin.pages) || admin.roles.includes("owner") : can(admin, cap)))
       .map(([name, path]) => ({ name, href: path === null ? null : path === "/" ? base || "/" : `${base}${path}` })),
   ]).filter(([, items]) => items.length);
 
@@ -25,7 +30,7 @@ export default async function AdminAppLayout({ children }) {
         groups={groups}
         home={base || "/"}
         email={admin.email}
-        roles={admin.roles.map((role) => ROLE_LABELS[role] || role).join(", ") || "No role yet"}
+        roles={Array.isArray(admin.pages) && !admin.roles.includes("owner") ? "Chosen pages" : admin.roles.map((role) => ROLE_LABELS[role] || role).join(", ") || "No role yet"}
       />
       <main className="admin-main" id="admin-main">{children}</main>
     </div>

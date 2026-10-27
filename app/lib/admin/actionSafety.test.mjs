@@ -53,7 +53,7 @@ test("registration payment actions authorize before reading a registration", () 
   }
 });
 
-test("journey entry actions authorize (media:edit) before touching the database", () => {
+test("journey entry actions authorize (journey:edit) before touching the database", () => {
   const source = readFileSync(join(ROOT, "app", "admin", "journeyEntryActions.js"), "utf8");
   const names = [...source.matchAll(/export async function (\w+)/g)].map((m) => m[1]);
   assert.ok(names.length >= 13, "all journey actions found");
@@ -62,7 +62,7 @@ test("journey entry actions authorize (media:edit) before touching the database"
     const rest = source.slice(start + 1);
     const end = rest.indexOf("\nexport ");
     const body = end >= 0 ? rest.slice(0, end) : rest;
-    const auth = Math.min(...["actionAdmin(\"media:edit\")", "await allowed()"].map((s) => body.indexOf(s)).filter((i) => i >= 0));
+    const auth = Math.min(...["actionAdmin(\"journey:edit\")", "await allowed()"].map((s) => body.indexOf(s)).filter((i) => i >= 0));
     const firstQuery = body.search(/\b(sql|transaction)\(/);
     assert.ok(Number.isFinite(auth), `${name} checks permission`);
     assert.ok(firstQuery < 0 || auth < firstQuery, `${name} must authorize before its first query`);

@@ -71,8 +71,8 @@ export default async function EventRegistrations({ params, searchParams }) {
   for (const r of live) if (r.fee_reference) byRef.set(referenceKey(r.fee_reference), [...(byRef.get(referenceKey(r.fee_reference)) || []), r]);
   const sameRef = (r) => (r.fee_reference ? (byRef.get(referenceKey(r.fee_reference)) || []).filter((o) => o.id !== r.id) : []);
 
-  const canEdit = can(admin.roles, "registrations:edit");
-  const canFees = can(admin.roles, "registrations:fees");
+  const canEdit = can(admin, "registrations:edit");
+  const canFees = can(admin, "registrations:fees");
   const counts = {
     all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, notchecked: confirmed.length - checked.length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
     check: toCheck.length, pending: pending.length, paid: paid.length, expired: current.filter((r) => isExpiredHold(r)).length,
@@ -88,7 +88,7 @@ export default async function EventRegistrations({ params, searchParams }) {
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
-        {can(admin.roles, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
+        {can(admin, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
       </PageHead>
       <Flash params={query} />
 

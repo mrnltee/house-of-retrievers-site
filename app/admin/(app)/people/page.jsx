@@ -47,7 +47,7 @@ export default async function PeoplePage({ searchParams }) {
     ),
   ]);
   const count = (k) => counts.find((row) => row.kind === k)?.count || 0;
-  const canEdit = can(admin.roles, "people:edit");
+  const canEdit = can(admin, "people:edit");
   const members = hasMembership(kind);
   const link = (extra) => `${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(noPhoto ? { photo: "none" } : {}), ...extra })}`;
 

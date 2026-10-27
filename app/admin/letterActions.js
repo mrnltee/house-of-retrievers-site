@@ -32,7 +32,7 @@ export async function saveLetter(data) {
   const key = form(data, "key");
   const back = isKey(key) ? `/letters/${key}` : "/letters";
   return guarded(back, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("letters:edit");
     if (!isKey(key)) await backWith("/letters", "error", "That letter doesn't exist.");
     const f = { name: form(data, "name").trim(), subject: form(data, "subject").replace(/\s+/g, " ").trim(), cover: form(data, "cover").replace(/\r\n?/g, "\n").trim(), body: form(data, "body").replace(/\r\n?/g, "\n").trim() };
     for (const [field, max] of Object.entries({ name: LETTER_LIMITS.name, subject: LETTER_LIMITS.subject, cover: LETTER_LIMITS.cover, body: LETTER_LIMITS.body })) {
@@ -54,7 +54,7 @@ export async function resetLetter(data) {
   const key = form(data, "key");
   const back = isKey(key) ? `/letters/${key}` : "/letters";
   return guarded(back, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("letters:edit");
     await sql("DELETE FROM letter_templates WHERE key = $1", [key]);
     await logActivity(admin.email, "letter.reset", key, { letter: key });
     await backWith(back, "ok", "Back to the original wording.");
@@ -82,7 +82,7 @@ async function loadRecipients(refs) {
 export async function sendLetters(data) {
   const back = form(data, "back").startsWith("/letters/send") ? form(data, "back") : "/letters/send";
   return guarded(back, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("letters:edit");
     if (!emailReady()) await backWith(back, "error", "Email isn't set up yet (Resend key missing).");
     const letter = await loadLetter(form(data, "letter"));
     if (!letter) await backWith(back, "error", "Pick a letter.");

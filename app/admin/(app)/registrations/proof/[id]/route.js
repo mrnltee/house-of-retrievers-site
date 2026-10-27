@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(_request, { params }) {
   const admin = await currentAdmin();
-  if (!admin || !can(admin.roles, "registrations:view")) return new Response("Not allowed", { status: 403 });
+  if (!admin || !can(admin, "registrations:view")) return new Response("Not allowed", { status: 403 });
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response("Not found", { status: 404 });
   const [row] = await sql("SELECT mime, data FROM payment_proofs WHERE id = $1", [id]);

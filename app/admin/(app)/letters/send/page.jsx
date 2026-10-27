@@ -19,7 +19,7 @@ const clean = (value, max = 80) => String(value || "").trim().slice(0, max);
  */
 export default async function SendLetterPage({ searchParams }) {
   const params = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("letters:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const letters = await listLetters();

@@ -7,7 +7,7 @@ import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 /** The emails HOR can reword, and the ones HOR has written itself. */
 export default async function EmailsPage({ searchParams }) {
   const params = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("emails:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   let saved = [];

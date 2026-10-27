@@ -9,7 +9,7 @@ import TemplateEditor from "../../[key]/TemplateEditor";
 export default async function CustomEmailTemplatePage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("emails:edit");
   if (!allowed) return <NotAllowed />;
   const row = await loadCustomTemplate(id);
   if (!row) notFound();

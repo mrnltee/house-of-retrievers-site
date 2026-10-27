@@ -25,7 +25,7 @@ export class Forbidden extends Error {}
 export async function pageAdmin(capability) {
   const admin = await currentAdmin();
   if (!admin) redirect(await adminHref("/sign-in"));
-  if (capability && !can(admin.roles, capability)) return { admin, allowed: false };
+  if (capability && !can(admin, capability)) return { admin, allowed: false };
   return { admin, allowed: true };
 }
 
@@ -33,7 +33,7 @@ export async function pageAdmin(capability) {
 export async function actionAdmin(capability) {
   const admin = await currentAdmin();
   if (!admin) throw new Forbidden("Please sign in again.");
-  if (capability && !can(admin.roles, capability)) throw new Forbidden("Your role can't do that.");
+  if (capability && !can(admin, capability)) throw new Forbidden("Your role can't do that.");
   return admin;
 }
 

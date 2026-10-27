@@ -31,10 +31,58 @@ const PERMISSIONS = {
   "admins:manage": ["owner"],
   "log:view": ["owner"],
   "media:edit": ["owner", "content"],
+  "supporters:view": ["owner", "events", "treasurer"],
+  "supporters:edit": ["owner", "events"],
+  "emails:edit": ["owner", "events"],
+  "letters:edit": ["owner", "events"],
+  "journey:edit": ["owner", "content"],
+  "breeds:edit": ["owner", "events"],
 };
 
-/** True when any of `roles` grants `capability`. Unknown capabilities are denied. */
-export function can(roles, capability) {
+/**
+ * Sidebar pages an Owner can tick per person (owner, 2026-10-27). When a
+ * person has ticks, they see exactly those pages and can do everything on
+ * them; nothing else, whatever their roles say. With no ticks saved, their
+ * roles decide as before. Owners always have every page. Approving payment
+ * changes and Admins & activity log stay Owner-only.
+ */
+export const PAGES = [
+  { key: "dashboard", label: "Dashboard", group: "Run", path: "/", caps: ["dashboard:view"] },
+  { key: "events", label: "Events", group: "Run", path: "/events", caps: ["events:view", "events:edit", "events:delete"] },
+  { key: "registrations", label: "Registrations", group: "Run", path: "/registrations", caps: ["registrations:view", "registrations:edit", "registrations:fees"] },
+  { key: "checkin", label: "Check-in", group: "Run", path: "/checkin", caps: ["checkin"] },
+  { key: "people", label: "People", group: "Run", path: "/people", caps: ["people:view", "people:edit"] },
+  { key: "supporters", label: "Sponsors & partners", group: "Run", path: "/supporters", caps: ["supporters:view", "supporters:edit"] },
+  { key: "media", label: "Media hub", group: "Publish", path: "/media", caps: ["media:edit"] },
+  { key: "payments", label: "Payment settings", group: "Money", path: "/payments", caps: ["payments:view", "payments:request"] },
+  { key: "emails", label: "Email templates", group: "Settings", path: "/emails", caps: ["emails:edit"] },
+  { key: "letters", label: "Letters", group: "Settings", path: "/letters", caps: ["letters:edit"] },
+  { key: "journey", label: "Journey timeline", group: "Settings", path: "/journey", caps: ["journey:edit"] },
+  { key: "breeds", label: "Breed icons", group: "Settings", path: "/breeds", caps: ["breeds:edit"] },
+];
+
+/** Keeps only known page keys, in sidebar order. */
+export function cleanPages(pages) {
+  const wanted = new Set(Array.isArray(pages) ? pages : [pages]);
+  return PAGES.map((p) => p.key).filter((key) => wanted.has(key));
+}
+
+/** The pages a person's roles open, used to pre-tick the grid. */
+export function pagesForRoles(roles) {
+  return PAGES.filter((p) => p.caps.some((cap) => can(roles, cap))).map((p) => p.key);
+}
+
+/**
+ * True when `who` may use `capability`. `who` is a roles array, or an admin
+ * ({ roles, pages }); an admin with page ticks (and not an Owner) gets exactly
+ * the capabilities of the ticked pages. Unknown capabilities are denied.
+ */
+export function can(who, capability) {
+  const roles = Array.isArray(who) ? who : who?.roles;
+  const pages = Array.isArray(who) ? null : who?.pages;
+  if (Array.isArray(pages) && Array.isArray(roles) && !roles.includes("owner")) {
+    return PAGES.some((p) => pages.includes(p.key) && p.caps.includes(capability));
+  }
   const allowed = PERMISSIONS[capability];
   if (!allowed || !Array.isArray(roles)) return false;
   return roles.some((role) => allowed.includes(role));

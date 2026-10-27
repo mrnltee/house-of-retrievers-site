@@ -11,7 +11,7 @@ import { createJourneyFromEvent, createJourneyMilestone } from "../../journeyEnt
 export const dynamic = "force-dynamic";
 
 export default async function JourneyAdminPage({ searchParams }) {
-  const { allowed } = await pageAdmin("media:edit");
+  const { allowed } = await pageAdmin("journey:edit");
   if (!allowed) return <NotAllowed />;
   const params = await searchParams;
   const base = await adminBase();

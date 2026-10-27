@@ -1,6 +1,7 @@
 import { sql } from "../../lib/db";
 import { adminBase, pageAdmin } from "../../lib/admin/guard";
-import { can } from "../../lib/admin/roles.mjs";
+import { redirect } from "next/navigation";
+import { PAGES, can } from "../../lib/admin/roles.mjs";
 import { METHODS } from "../../lib/admin/payments.mjs";
 import { actionLabel } from "../../lib/admin/activity.mjs";
 import { CAPACITY_USED_AGGREGATE_SQL } from "../../lib/eventCapacity.mjs";
@@ -11,24 +12,18 @@ export default async function Dashboard({ searchParams }) {
   const { admin, allowed } = await pageAdmin("dashboard:view");
   const base = await adminBase();
   if (!allowed) {
-    // Check-in helpers land on their one screen.
-    if (can(admin.roles, "checkin")) {
-      return (
-        <>
-          <PageHead title="Check-in" lead="Your role covers event-day check-in." />
-          <p><a className="btn gold" href={`${base}/checkin`}>Open check-in</a></p>
-        </>
-      );
-    }
+    // Without the Dashboard, land on the first page they can use.
+    const first = PAGES.find((p) => p.path !== "/" && can(admin, p.caps[0]));
+    if (first) redirect(`${base}${first.path}`);
     return <NotAllowed />;
   }
 
   const today = manilaToday();
   const [pending, newPeople, upcoming, waitlists, log] = await Promise.all([
-    can(admin.roles, "payments:view")
+    can(admin, "payments:view")
       ? sql("SELECT id, method_key, requested_by, requested_at FROM payment_change_requests WHERE status='pending' ORDER BY requested_at")
       : [],
-    can(admin.roles, "people:view")
+    can(admin, "people:view")
       ? sql("SELECT kind, count(*)::int AS count FROM people WHERE status='New' GROUP BY kind")
       : [],
     sql(
@@ -40,14 +35,14 @@ export default async function Dashboard({ searchParams }) {
        WHERE e.date >= $1 AND e.status <> 'cancelled' GROUP BY e.id ORDER BY e.date LIMIT 5`,
       [today],
     ),
-    can(admin.roles, "registrations:view")
+    can(admin, "registrations:view")
       ? sql(
           `SELECT e.id, e.title, count(*)::int AS count FROM registrations r JOIN events e ON e.id=r.event_id
            WHERE r.status='waitlist' AND r.deleted_at IS NULL AND e.date >= $1 GROUP BY e.id ORDER BY e.date`,
           [today],
         )
       : [],
-    can(admin.roles, "log:view") ? sql("SELECT at, actor_email, action, target FROM activity_log ORDER BY at DESC LIMIT 6") : [],
+    can(admin, "log:view") ? sql("SELECT at, actor_email, action, target FROM activity_log ORDER BY at DESC LIMIT 6") : [],
   ]);
 
   const newTotal = newPeople.reduce((sum, row) => sum + row.count, 0);
@@ -56,7 +51,7 @@ export default async function Dashboard({ searchParams }) {
   return (
     <>
       <PageHead title="Dashboard" lead="What needs a person today, then what is coming up.">
-        {can(admin.roles, "events:edit") && <a className="btn gold" href={`${base}/events/new`}>Create event</a>}
+        {can(admin, "events:edit") && <a className="btn gold" href={`${base}/events/new`}>Create event</a>}
       </PageHead>
       <Flash params={params} />
 

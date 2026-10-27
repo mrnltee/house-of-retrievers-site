@@ -8,7 +8,7 @@ import { INCOMING_TRANSFORMATION, cloudinaryConfig, destroyPhoto, journeyFolder,
 import { MAX_JOURNEY_PHOTOS, cleanAlt, cleanEntry, slugifyEntry } from "../lib/journeyEntries.mjs";
 
 /*
- * Journey entries (admin → Settings → Journey timeline, media:edit). The
+ * Journey entries (admin → Settings → Journey timeline, journey:edit). The
  * entry forms redirect back with a message, like the other admin forms; the
  * photo calls return data for the photo panel, like the event album
  * (app/admin/eventPhotos.js). Every change refreshes the homepage.
@@ -20,7 +20,7 @@ const entryPage = (id) => `/journey/${id}`;
 
 async function allowed() {
   try {
-    return { admin: await actionAdmin("media:edit") };
+    return { admin: await actionAdmin("journey:edit") };
   } catch (error) {
     if (error instanceof Forbidden) return { error: error.message };
     throw error;
@@ -39,7 +39,7 @@ const refresh = () => revalidatePath("/");
 
 /** New stop from an event: title, date, venue and summary copied in (the date then follows the event). Starts as a draft. */
 export async function createJourneyFromEvent(data) {
-  const admin = await actionAdmin("media:edit");
+  const admin = await actionAdmin("journey:edit");
   const eventId = field(data, "eventId");
   if (!isUuid(eventId)) await backWith("/journey", "error", "Pick an event first.");
   const [event] = await sql("SELECT id, title, date, venue, city, summary FROM events WHERE id=$1", [eventId]);
@@ -63,7 +63,7 @@ export async function createJourneyFromEvent(data) {
 
 /** New standalone stop (a milestone, or anything without an event). Starts as a draft. */
 export async function createJourneyMilestone(data) {
-  const admin = await actionAdmin("media:edit");
+  const admin = await actionAdmin("journey:edit");
   const { value, error } = cleanEntry({ title: field(data, "title"), date: field(data, "date"), mark: field(data, "mark") || "milestone" });
   if (error) await backWith("/journey", "error", error);
   const [row] = await sql(
@@ -77,7 +77,7 @@ export async function createJourneyMilestone(data) {
 
 /** Saves a stop's wording and date. A linked stop's date follows its event, so it isn't changed here. */
 export async function updateJourneyEntry(data) {
-  const admin = await actionAdmin("media:edit");
+  const admin = await actionAdmin("journey:edit");
   const id = field(data, "id");
   if (!isUuid(id)) await backWith("/journey", "error", "That stop no longer exists.");
   const [current] = await sql("SELECT id, event_id, happened_on, month FROM journey_entries WHERE id=$1", [id]);
@@ -103,7 +103,7 @@ export async function updateJourneyEntry(data) {
 
 /** Publish or hide a stop. */
 export async function setJourneyEntryStatus(data) {
-  const admin = await actionAdmin("media:edit");
+  const admin = await actionAdmin("journey:edit");
   const id = field(data, "id");
   const status = field(data, "status") === "published" ? "published" : "draft";
   if (!isUuid(id)) await backWith("/journey", "error", "That stop no longer exists.");
@@ -116,7 +116,7 @@ export async function setJourneyEntryStatus(data) {
 
 /** Deletes a stop, and the photos uploaded for it (album photos and files in public/ stay). */
 export async function deleteJourneyEntry(data) {
-  const admin = await actionAdmin("media:edit");
+  const admin = await actionAdmin("journey:edit");
   const id = field(data, "id");
   if (!isUuid(id)) await backWith("/journey", "error", "That stop no longer exists.");
   if (field(data, "confirm") !== "on") await backWith(entryPage(id), "error", "Tick the box to confirm you want to delete this stop.");

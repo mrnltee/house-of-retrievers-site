@@ -14,7 +14,7 @@ import { deleteSupporter } from "../../../supporterActions";
 export default async function SupporterPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { admin, allowed } = await pageAdmin("people:view");
+  const { admin, allowed } = await pageAdmin("supporters:view");
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const [row] = await sql("SELECT * FROM supporters WHERE id = $1", [id]);
@@ -35,7 +35,7 @@ export default async function SupporterPage({ params, searchParams }) {
       </PageHead>
       <Flash params={query} />
       <div className="grid-2 supporter-grid">
-        <SupporterForm row={row} canEdit={can(admin.roles, "people:edit")} />
+        <SupporterForm row={row} canEdit={can(admin, "supporters:edit")} />
         <div className="form" style={{ gap: 20 }}>
           <section className="card">
             <h2>Events they backed</h2>
@@ -50,7 +50,7 @@ export default async function SupporterPage({ params, searchParams }) {
               <p className="small">None yet. In an event, add “{row.name}” under {row.kind === "Partner" ? "Partners" : "Sponsors"}.</p>
             )}
           </section>
-          {can(admin.roles, "people:edit") && (
+          {can(admin, "supporters:edit") && (
             <section className="card danger-zone">
               <h2>Delete this record</h2>
               <p className="small muted">For test or mistaken records. Events keep the name in their {row.kind === "Partner" ? "Partners" : "Sponsors"} field.</p>

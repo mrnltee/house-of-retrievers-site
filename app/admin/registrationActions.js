@@ -469,7 +469,7 @@ export async function uploadWelcomePhoto(data) {
     const match = await welcomePhotoFor(reg.id, reg.event_id);
     const saved = await saveRegistrationPhoto(reg.id, dataUrl, admin.email);
     if (!saved) await backWith(back, "error", "That photo couldn't be saved. Try another one.");
-    const toProfile = form(data, "saveToPerson") === "on" && can(admin.roles, "people:edit") && match?.personId
+    const toProfile = form(data, "saveToPerson") === "on" && can(admin, "people:edit") && match?.personId
       ? Boolean(await savePersonPhoto(match.personId, dataUrl))
       : false;
     await logActivity(admin.email, "registration.photo", reg.title, { registrationId: reg.id, source: "own", personId: toProfile ? match.personId : undefined });

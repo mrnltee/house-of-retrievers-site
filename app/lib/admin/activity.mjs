@@ -67,6 +67,7 @@ export const ACTION_LABELS = {
   "payment.disable": "Hid a payment method",
   "admin.invite": "Invited an admin",
   "admin.roles": "Changed an admin's roles",
+  "admin.pages": "Changed an admin's page access",
   "admin.remove": "Removed an admin",
 };
 

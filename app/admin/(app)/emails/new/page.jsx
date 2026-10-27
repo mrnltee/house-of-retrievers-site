@@ -7,7 +7,7 @@ import TemplateEditor from "../[key]/TemplateEditor";
 /** A new template of HOR's own: ?kind=acceptance or ?kind=event. */
 export default async function NewEmailTemplatePage({ searchParams }) {
   const query = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("emails:edit");
   if (!allowed) return <NotAllowed />;
   const kind = String(query?.kind || "");
   const k = CUSTOM_KINDS[kind];

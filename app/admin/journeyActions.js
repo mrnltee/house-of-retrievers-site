@@ -7,7 +7,7 @@ import { logActivity } from "../lib/admin/log";
 import { cleanJourneyOrientation, cleanJourneyShow } from "../lib/journeySettings.mjs";
 
 export async function saveJourneySettings(data) {
-  const admin = await actionAdmin("media:edit");
+  const admin = await actionAdmin("journey:edit");
   const show = cleanJourneyShow(data.get("show"));
   const orientation = cleanJourneyOrientation(data.get("orientation"));
   await sql(

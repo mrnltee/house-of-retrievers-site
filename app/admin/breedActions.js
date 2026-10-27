@@ -22,7 +22,7 @@ async function guarded(work) {
 /** Replace a breed's icon with HOR's own (SVG kept as is; PNG/WebP made a 256 px WebP). */
 export async function uploadBreedIcon(data) {
   return guarded(async () => {
-    const admin = await actionAdmin("events:edit");
+    const admin = await actionAdmin("breeds:edit");
     const key = form(data, "key");
     if (!KEYS.has(key)) await backWith(BACK, "error", "That breed isn't in the list.");
     const upload = readBreedIconUpload(form(data, "iconData"));
@@ -49,7 +49,7 @@ export async function uploadBreedIcon(data) {
 /** Go back to the built-in icon. */
 export async function resetBreedIcon(data) {
   return guarded(async () => {
-    const admin = await actionAdmin("events:edit");
+    const admin = await actionAdmin("breeds:edit");
     const key = form(data, "key");
     if (!KEYS.has(key)) await backWith(BACK, "error", "That breed isn't in the list.");
     await sql("DELETE FROM breed_icons WHERE key = $1", [key]);

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 /** Private vaccination record: only signed-in admins who can view registrations. */
 export async function GET(request, { params }) {
   const admin = await currentAdmin();
-  if (!admin || !can(admin.roles, "registrations:view")) return new Response("Not allowed", { status: 403 });
+  if (!admin || !can(admin, "registrations:view")) return new Response("Not allowed", { status: 403 });
   const { registrationId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(registrationId)) return new Response("Not found", { status: 404 });
   const index = Number(new URL(request.url).searchParams.get("i") || 0);

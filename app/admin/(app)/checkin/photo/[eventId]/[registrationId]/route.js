@@ -13,7 +13,7 @@ const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
  */
 export async function GET(_request, { params }) {
   const admin = await currentAdmin();
-  if (!admin || !canSeeWelcomePhoto(admin.roles)) return new Response("Not allowed", { status: 403 });
+  if (!admin || !canSeeWelcomePhoto(admin)) return new Response("Not allowed", { status: 403 });
   const { eventId, registrationId } = await params;
   if (!isUuid(eventId) || !isUuid(registrationId)) return new Response("Not found", { status: 404 });
   const resolved = await welcomePhotoFor(registrationId, eventId);

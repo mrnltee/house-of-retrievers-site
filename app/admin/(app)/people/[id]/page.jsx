@@ -51,7 +51,7 @@ export default async function PersonPage({ params, searchParams }) {
     ? (await sql("SELECT id, name, code, number_year, number_no FROM supporters WHERE person_id = $1 OR lower(name) = lower($2) LIMIT 1", [id, (person.organization || person.name || "").trim()]))[0] || null
     : null;
   const acceptance = await listCustomTemplates("acceptance");
-  const canEdit = can(admin.roles, "people:edit");
+  const canEdit = can(admin, "people:edit");
   const member = hasMembership(person.kind);
   const noun = person.kind === "Volunteer" ? "volunteer" : "member";
   const number = member ? memberNumber(person) : supporterNumber(supporter);

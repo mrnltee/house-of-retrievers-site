@@ -1,8 +1,8 @@
 import { sql } from "../../../lib/db";
 import { pageAdmin } from "../../../lib/admin/guard";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
-import { ROLES, ROLE_LABELS, parseEmailList } from "../../../lib/admin/roles.mjs";
-import { inviteAdmin, removeAdmin, updateAdmin } from "../../actions";
+import { PAGES, ROLES, ROLE_LABELS, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
+import { inviteAdmin, removeAdmin, resetAdminPages, saveAdminPages, updateAdmin } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import ConfirmButton from "../ConfirmButton";
 
@@ -28,13 +28,56 @@ function RolePicker({ selected = [], idPrefix }) {
   );
 }
 
+/** Tick the sidebar pages this person can use; starts from what their roles allow. */
+function PagePicker({ admin }) {
+  const custom = Array.isArray(admin.pages);
+  const ticked = custom ? admin.pages : pagesForRoles(admin.roles);
+  const id = `pages-${admin.email}`;
+  return (
+    <form action={saveAdminPages} className="form" style={{ marginTop: 16 }}>
+      <input type="hidden" name="email" value={admin.email} />
+      <fieldset className="plain">
+        <legend>Page access</legend>
+        <p className="small muted" style={{ margin: 0 }}>
+          {custom ? "Only the ticked pages show in their sidebar, and they can do everything on them." : "Now following their roles. Saving ticks gives them exactly the ticked pages instead."}
+        </p>
+        {PAGES.map((page) => (
+          <label className="check" key={page.key} htmlFor={`${id}-${page.key}`}>
+            <input id={`${id}-${page.key}`} type="checkbox" name="pages" value={page.key} defaultChecked={ticked.includes(page.key)} />
+            <span>{page.label} <span className="small muted">· {page.group}</span></span>
+          </label>
+        ))}
+      </fieldset>
+      <div className="actions">
+        <ConfirmButton
+          className="btn small"
+          title={`Save page access for ${admin.email}?`}
+          items={["Their sidebar shows only the ticked pages", "Other pages are blocked even by direct link", "Takes effect on their next page or action"]}
+          yes="Yes, save pages"
+          tone="ink"
+        >Save pages</ConfirmButton>
+        {custom && (
+          <ConfirmButton
+            className="btn small ghost"
+            formAction={resetAdminPages}
+            title={`Go back to roles for ${admin.email}?`}
+            items={["Their ticks are cleared", "Their roles decide what they see again"]}
+            yes="Yes, use roles"
+            tone="ink"
+          >Use their roles instead</ConfirmButton>
+        )}
+      </div>
+    </form>
+  );
+}
+
 export default async function AdminsPage({ searchParams }) {
   const params = await searchParams;
   const { allowed } = await pageAdmin("log:view");
   if (!allowed) return <NotAllowed />;
   const envOwners = parseEmailList(process.env.ADMIN_OWNER_EMAILS);
   const [admins, log] = await Promise.all([
-    sql("SELECT email, name, roles, active, last_seen_at, invited_by FROM admins WHERE active ORDER BY ('owner' = ANY(roles)) DESC, email"),
+    sql("SELECT email, name, roles, pages, active, last_seen_at, invited_by FROM admins WHERE active ORDER BY ('owner' = ANY(roles)) DESC, email"),
     sql("SELECT at, actor_email, action, target FROM activity_log ORDER BY at DESC LIMIT 100"),
   ]);
   const owners = admins.filter((a) => a.roles.includes("owner")).length;
@@ -69,7 +112,7 @@ export default async function AdminsPage({ searchParams }) {
             {admins.map((a) => (
               <tr key={a.email}>
                 <td className="strong">{a.name ? `${a.name} · ` : ""}{a.email}{envOwners.includes(a.email) && <span className="small muted"><br />Owner set in Vercel</span>}</td>
-                <td><div className="actions">{a.roles.map((r) => <span key={r} className={`chip ${r === "owner" ? "dark" : ""}`}>{ROLE_LABELS[r] || r}</span>)}</div></td>
+                <td><div className="actions">{a.roles.map((r) => <span key={r} className={`chip ${r === "owner" ? "dark" : ""}`}>{ROLE_LABELS[r] || r}</span>)}</div>{Array.isArray(a.pages) && !a.roles.includes("owner") && <span className="small muted">Pages: {PAGES.filter((p) => a.pages.includes(p.key)).map((p) => p.label).join(", ")}</span>}</td>
                 <td>{formatWhen(a.last_seen_at)}</td>
                 <td>
                   <details>
@@ -95,6 +138,7 @@ export default async function AdminsPage({ searchParams }) {
                         >Remove access</ConfirmButton>
                       </div>
                     </form>
+                    {!a.roles.includes("owner") && <PagePicker admin={a} />}
                   </details>
                 </td>
               </tr>

@@ -18,7 +18,7 @@ export default async function PaymentsPage({ searchParams }) {
   ]);
   const byKey = Object.fromEntries(methods.map((m) => [m.key, m]));
   const pendingFor = Object.fromEntries(pending.map((p) => [p.method_key, p]));
-  const canRequest = can(admin.roles, "payments:request");
+  const canRequest = can(admin, "payments:request");
 
   return (
     <>

@@ -9,7 +9,7 @@ import LetterEditor from "./LetterEditor";
 export default async function LetterPage({ params, searchParams }) {
   const { key } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("letters:edit");
   if (!allowed) return <NotAllowed />;
   const letter = await loadLetter(key);
   if (!letter) notFound();

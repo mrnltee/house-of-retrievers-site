@@ -4,7 +4,7 @@ import SheetImport from "../../SheetImport";
 
 /** Adds many sponsors and partners from an Excel or CSV sheet. */
 export default async function ImportSupportersPage() {
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("supporters:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   return (

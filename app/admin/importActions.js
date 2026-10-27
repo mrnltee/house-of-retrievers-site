@@ -13,7 +13,7 @@ import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis } from "../l
 import { validateCapacityCounts } from "../lib/eventCapacity.mjs";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
-const RIGHTS = { supporters: "people:edit", people: "people:edit", registrations: "registrations:edit" };
+const RIGHTS = { supporters: "supporters:edit", people: "people:edit", registrations: "registrations:edit" };
 const sameName = (a, b) => String(a || "").trim().replace(/\s+/g, " ").toLowerCase() === String(b || "").trim().replace(/\s+/g, " ").toLowerCase();
 
 /** One sheet row → { value } ready to insert, or { error }. */

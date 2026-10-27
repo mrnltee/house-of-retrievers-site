@@ -18,7 +18,7 @@ function cell(value) {
 export async function GET(_request, { params }) {
   const { eventId } = await params;
   const admin = await currentAdmin();
-  if (!admin || !can(admin.roles, "registrations:view")) return new Response("Not allowed", { status: 403 });
+  if (!admin || !can(admin, "registrations:view")) return new Response("Not allowed", { status: 403 });
   if (!/^[0-9a-f-]{36}$/i.test(eventId)) return new Response("Not found", { status: 404 });
   const [event] = await sql("SELECT title, slug, rsvp_form_config FROM events WHERE id=$1", [eventId]);
   if (!event) return new Response("Not found", { status: 404 });

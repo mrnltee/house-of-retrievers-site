@@ -10,7 +10,7 @@ const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max)
 /** Sponsors & partners: switchable cards/table with kind, status and relationship filters. */
 export default async function SupportersPage({ searchParams }) {
   const params = await searchParams;
-  const { admin, allowed } = await pageAdmin("people:view");
+  const { admin, allowed } = await pageAdmin("supporters:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const kind = ["Sponsor", "Partner"].includes(params?.kind) ? params.kind : "";
@@ -39,7 +39,7 @@ export default async function SupportersPage({ searchParams }) {
     sql("SELECT DISTINCT category_label FROM supporters WHERE category_label IS NOT NULL ORDER BY category_label"),
   ]);
   const count = (key) => counts.find((item) => item.kind === key)?.n || 0;
-  const canEdit = can(admin.roles, "people:edit");
+  const canEdit = can(admin, "supporters:edit");
   const backed = (row) => {
     const field = row.kind === "Partner" ? "partners" : "sponsors";
     return events.filter((event) => (event[field] || []).some((name) => name.toLowerCase() === row.name.toLowerCase()));

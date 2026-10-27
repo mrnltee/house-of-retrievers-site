@@ -37,7 +37,7 @@ export async function saveSupporter(data) {
   const id = form(data, "id");
   const back = isUuid(id) ? `/supporters/${id}` : "/supporters/new";
   return guarded(back, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("supporters:edit");
     const before = isUuid(id) ? (await sql("SELECT * FROM supporters WHERE id = $1", [id]))[0] : null;
     if (isUuid(id) && !before) await backWith("/supporters", "error", "That record no longer exists.");
     const input = Object.fromEntries([...data.entries()].filter(([, v]) => typeof v === "string"));
@@ -137,7 +137,7 @@ export async function supporterFromPerson(data) {
   const personId = form(data, "personId");
   const back = isUuid(personId) ? `/people/${personId}` : "/people";
   return guarded(back, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("supporters:edit");
     const [person] = isUuid(personId) ? await sql("SELECT * FROM people WHERE id = $1", [personId]) : [];
     if (!person || !["Sponsor", "Partner"].includes(person.kind)) await backWith(back, "error", "Only Sponsors and Partners get a record.");
     const name = (person.organization || person.name || "").trim().slice(0, 80);
@@ -161,7 +161,7 @@ export async function deleteSupporter(data) {
   const id = form(data, "id");
   const back = isUuid(id) ? `/supporters/${id}` : "/supporters";
   return guarded(back, async () => {
-    const admin = await actionAdmin("people:edit");
+    const admin = await actionAdmin("supporters:edit");
     const [gone] = isUuid(id) ? await sql("DELETE FROM supporters WHERE id = $1 RETURNING name", [id]) : [];
     if (!gone) await backWith("/supporters", "error", "That record no longer exists.");
     await logActivity(admin.email, "supporter.delete", gone.name, { supporterId: id });

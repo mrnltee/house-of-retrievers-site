@@ -4,7 +4,7 @@ import SupporterForm from "../SupporterForm";
 
 export default async function NewSupporterPage({ searchParams }) {
   const params = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("supporters:edit");
   if (!allowed) return <NotAllowed />;
   return (
     <>

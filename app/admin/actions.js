@@ -8,7 +8,7 @@ import { sql, transaction } from "../lib/db";
 import { actionAdmin, adminHref, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { alertAdmins } from "../lib/admin/notify";
-import { canApprovePaymentChange, cleanRoles, parseEmailList, signedInRecently } from "../lib/admin/roles.mjs";
+import { canApprovePaymentChange, cleanPages, cleanRoles, parseEmailList, signedInRecently } from "../lib/admin/roles.mjs";
 import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin/payments.mjs";
 import { cleanSlug, slugify, validateEvent } from "../lib/admin/events.mjs";
 import { destroyPhoto } from "../lib/cloudinary.mjs";
@@ -720,6 +720,33 @@ export async function updateAdmin(data) {
     await logActivity(admin.email, remove ? "admin.remove" : "admin.roles", email, { roles });
     await backWith("/admins", "ok", remove ? `${email} can no longer sign in.` : `Roles saved for ${email}.`);
   });
+}
+
+/**
+ * Saves which sidebar pages a person can use (owner, 2026-10-27). "Use their
+ * roles" clears the ticks so their roles decide again. Owners always have
+ * every page, so ticks are not saved for them.
+ */
+export async function saveAdminPages(data) {
+  return guarded("/admins", async () => {
+    const admin = await actionAdmin("admins:manage");
+    const email = parseEmailList(form(data, "email"))[0];
+    const [target] = email ? await sql("SELECT roles FROM admins WHERE email=$1 AND active", [email]) : [];
+    if (!target) await backWith("/admins", "error", "That admin no longer exists.");
+    if (target.roles.includes("owner")) await backWith("/admins", "error", "Owners always see every page.");
+    const useRoles = form(data, "mode") === "roles";
+    const pages = useRoles ? null : cleanPages(data.getAll("pages"));
+    if (!useRoles && !pages.length) await backWith("/admins", "error", "Tick at least one page, or remove the admin.");
+    await sql("UPDATE admins SET pages=$1 WHERE email=$2", [pages, email]);
+    await logActivity(admin.email, "admin.pages", email, { pages });
+    await backWith("/admins", "ok", useRoles ? `${email} now follows their roles.` : `Page access saved for ${email}.`);
+  });
+}
+
+/** "Use their roles instead": clears the page ticks (own action; see below). */
+export async function resetAdminPages(data) {
+  data.set("mode", "roles");
+  return saveAdminPages(data);
 }
 
 // A form's submit buttons can't be told apart reliably (the clicked button's

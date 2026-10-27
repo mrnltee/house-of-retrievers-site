@@ -6,7 +6,7 @@ import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 /** Settings → Letters: HOR's prepared letters, sent as a PDF with a covering email. */
 export default async function LettersPage({ searchParams }) {
   const params = await searchParams;
-  const { allowed } = await pageAdmin("people:edit");
+  const { allowed } = await pageAdmin("letters:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const letters = await listLetters();

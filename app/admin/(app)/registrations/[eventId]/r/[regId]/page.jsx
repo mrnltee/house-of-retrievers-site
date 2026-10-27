@@ -54,8 +54,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const proof = proofs[0];
   const dogNames = String(reg.furbaby_name || "").split(/,\s*/);
   const dogLabel = (i) => [dogNames[i] || (reg.furbaby_count > 1 ? `Furbaby ${i + 1}` : "Furbaby"), breedLabel(reg.furbaby_breeds?.[i] || "")].filter(Boolean).join(" · ");
-  const canFees = can(admin.roles, "registrations:fees");
-  const canEdit = can(admin.roles, "registrations:edit");
+  const canFees = can(admin, "registrations:fees");
+  const canEdit = can(admin, "registrations:edit");
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
   const owing = reg.fee_required && reg.status === "confirmed" && UNPAID.includes(reg.fee_status);
   const due = reg.amount_due ?? reg.ticket_amount;
@@ -171,7 +171,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 <span className="small">{WELCOME_PHOTO_SOURCE_LABELS[welcome.source]}</span>
               </div>
               {canEdit && (
-                <WelcomePhotoField registrationId={reg.id} name={reg.name} source={welcome.source} hasMatch={Boolean(welcome.personId)} matchPhotoId={welcome.matchPhotoId} canSaveToPerson={can(admin.roles, "people:edit")} />
+                <WelcomePhotoField registrationId={reg.id} name={reg.name} source={welcome.source} hasMatch={Boolean(welcome.personId)} matchPhotoId={welcome.matchPhotoId} canSaveToPerson={can(admin, "people:edit")} />
               )}
             </section>
           )}

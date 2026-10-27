@@ -16,13 +16,13 @@ const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
  */
 export async function POST(request) {
   const admin = await currentAdmin();
-  if (!admin || !can(admin.roles, "people:view")) return new Response("Not allowed", { status: 403 });
+  if (!admin || !can(admin, "letters:edit")) return new Response("Not allowed", { status: 403 });
   const data = await request.formData();
   const field = (key) => (typeof data.get(key) === "string" ? data.get(key) : "");
   const saved = await loadLetter(field("letter"));
   if (!saved) return new Response("Not found", { status: 404 });
   // The editor posts its unsaved wording to preview it; that needs the right to edit letters.
-  if (field("body") && !can(admin.roles, "people:edit")) return new Response("Not allowed", { status: 403 });
+  if (field("body") && !can(admin, "letters:edit")) return new Response("Not allowed", { status: 403 });
   const letter = field("body") ? { ...saved, subject: field("subject") || saved.subject, cover: field("cover") || saved.cover, body: field("body").slice(0, LETTER_LIMITS.body) } : saved;
   let typed = {};
   try { typed = JSON.parse(field("values") || "{}"); } catch { typed = {}; }
