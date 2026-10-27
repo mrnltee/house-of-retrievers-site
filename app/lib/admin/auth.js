@@ -118,7 +118,7 @@ export async function currentAdmin() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const rows = await sql("SELECT email, name, roles, pages FROM admins WHERE email = $1 AND active", [email]);
+  const rows = await sql("SELECT email, name, roles, pages, welcomed_at FROM admins WHERE email = $1 AND active", [email]);
   if (!rows.length) return null;
   return { ...rows[0], authTime: session.authTime };
 }

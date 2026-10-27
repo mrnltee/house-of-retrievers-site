@@ -628,3 +628,11 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .page-access td.tick input { width: 20px; height: 20px; accent-color: var(--a-ink); }
 .page-ticks { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
 .page-access select.access, .page-ticks select.access { min-width: 76px; padding: 6px 8px; font-size: 13px; }
+
+/* Getting started guide. */
+.guide-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.guide-page { border: 1px solid var(--a-line); border-radius: 12px; padding: 12px 14px; }
+.guide-page h3 { margin: 0 0 6px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+.guide-page p { margin: 4px 0; }
+.banner.welcome a { font-weight: 700; }
+.banner.welcome { display: block; }
