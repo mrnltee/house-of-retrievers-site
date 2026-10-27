@@ -657,7 +657,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 
 /* Team chat. */
 .chat { display: grid; gap: 12px; }
-.chat-list { max-height: min(60vh, 560px); overflow-y: auto; display: grid; gap: 10px; align-content: start; padding: 4px; }
+.chat-list { max-height: min(60vh, 560px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 10px; align-content: start; padding: 4px; }
 .chat-msg { max-width: min(560px, 85%); background: #f4efe3; border-radius: 14px; padding: 8px 12px; }
 .chat-msg.mine { justify-self: end; background: var(--a-ink, #111); color: white; }
 .chat-msg.mine .chat-meta { color: rgba(255, 255, 255, 0.7); }
@@ -666,3 +666,20 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .chat-form { display: flex; gap: 10px; align-items: flex-end; }
 .chat-form textarea { flex: 1; resize: vertical; min-height: 48px; }
 .unread { display: inline-block; min-width: 20px; padding: 1px 7px; margin-left: 6px; border-radius: 999px; background: #d4b26a; color: #111; font-size: 12px; font-weight: 700; text-align: center; }
+.chat-msg.deleted { opacity: 0.6; }
+.chat-msg.deleted .chat-body em { font-style: italic; }
+.chat-tools { display: flex; gap: 10px; align-items: center; font-size: 12px; margin-top: 4px; opacity: 0.75; }
+.chat-msg.mine .chat-tools .linkish, .chat-msg.mine .chat-history summary { color: inherit; }
+.chat-history { font-size: 12px; margin-top: 4px; }
+.chat-history ol { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.chat-edit textarea { width: 100%; color: var(--a-ink, #111); }
+
+/* The chat page fits the window: only the message list scrolls (desktop). */
+.chat-page { display: grid; gap: 16px; }
+@media (min-width: 861px) {
+  .admin-main:has(.chat-page) { height: 100dvh; box-sizing: border-box; padding-bottom: 24px; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-page { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .chat-page .chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .chat-page .chat-list { flex: 1; min-height: 0; max-height: none; }
+  .chat-page > p { margin: 0; }
+}

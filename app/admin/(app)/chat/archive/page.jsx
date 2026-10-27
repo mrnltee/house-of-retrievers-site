@@ -2,13 +2,14 @@ import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { CHAT_ROOM_DAYS } from "../../../../lib/admin/chat.mjs";
 import { PageHead } from "../../ui";
+import { shapeMessages } from "../../../../lib/admin/chatView";
+import { ChatMessage } from "../TeamChat";
 
 const MONTH = new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", month: "long", year: "numeric" });
-const WHEN = new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 /** Chat older than the room keeps, by month, read only. */
 export default async function ChatArchive({ searchParams }) {
-  await pageAdmin();
+  const { admin } = await pageAdmin();
   const base = await adminBase();
   const params = await searchParams;
   const months = await sql(
@@ -18,13 +19,14 @@ export default async function ChatArchive({ searchParams }) {
   const pick = months.find((m) => m.month === params?.month)?.month || months[0]?.month;
   const rows = pick
     ? await sql(
-        `SELECT m.id, coalesce(a.name, split_part(m.author_email, '@', 1)) AS author, m.body, m.created_at FROM chat_messages m
+        `SELECT m.id, m.author_email, coalesce(a.name, split_part(m.author_email, '@', 1)) AS author, m.body, m.created_at, m.edited_at, m.deleted_at FROM chat_messages m
          LEFT JOIN admins a ON a.email = m.author_email
          WHERE to_char(m.created_at AT TIME ZONE 'Asia/Manila', 'YYYY-MM') = $1 AND m.created_at <= now() - interval '${CHAT_ROOM_DAYS} days'
          ORDER BY m.id`,
         [pick],
       )
     : [];
+  const shown = await shapeMessages(rows, admin);
   return (
     <>
       <PageHead title="Archived chats" lead={`Team chat older than ${CHAT_ROOM_DAYS} days. Read only.`}>
@@ -43,12 +45,7 @@ export default async function ChatArchive({ searchParams }) {
           </div>
           <section className="card chat">
             <div className="chat-list">
-              {rows.map((m) => (
-                <article key={m.id} className="chat-msg">
-                  <p className="chat-meta"><strong>{m.author}</strong> · {WHEN.format(new Date(m.created_at))}</p>
-                  <p className="chat-body">{m.body}</p>
-                </article>
-              ))}
+              {shown.map((m) => <ChatMessage key={m.id} m={m} readOnly />)}
             </div>
           </section>
         </>
