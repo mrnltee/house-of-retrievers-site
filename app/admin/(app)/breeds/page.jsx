@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 /** Every breed with its icon; HOR can upload its own in place of the built-in one. */
 export default async function BreedIconsPage({ searchParams }) {
   const query = await searchParams;
-  const { allowed } = await pageAdmin("breeds:edit");
+  const { allowed } = await pageAdmin("breeds:view");
   if (!allowed) return <NotAllowed />;
   const custom = new Map((await sql("SELECT key, updated_by, updated_at FROM breed_icons")).map((r) => [r.key, r]));
   return (

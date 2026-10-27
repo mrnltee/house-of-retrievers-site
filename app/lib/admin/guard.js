@@ -33,7 +33,7 @@ export async function pageAdmin(capability) {
 export async function actionAdmin(capability) {
   const admin = await currentAdmin();
   if (!admin) throw new Forbidden("Please sign in again.");
-  if (capability && !can(admin, capability)) throw new Forbidden("Your role can't do that.");
+  if (capability && !can(admin, capability)) throw new Forbidden(Array.isArray(admin.pages) ? "You have view-only access here." : "Your role can't do that.");
   return admin;
 }
 

@@ -16,7 +16,7 @@ const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
  */
 export async function POST(request) {
   const admin = await currentAdmin();
-  if (!admin || !can(admin, "letters:edit")) return new Response("Not allowed", { status: 403 });
+  if (!admin || !can(admin, "letters:view")) return new Response("Not allowed", { status: 403 });
   const data = await request.formData();
   const field = (key) => (typeof data.get(key) === "string" ? data.get(key) : "");
   const saved = await loadLetter(field("letter"));

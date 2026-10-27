@@ -14,7 +14,7 @@ const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
 export default async function JourneyEntryPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("journey:edit");
+  const { allowed } = await pageAdmin("journey:view");
   if (!allowed) return <NotAllowed />;
   if (!isUuid(id)) notFound();
   const [entry] = await sql(

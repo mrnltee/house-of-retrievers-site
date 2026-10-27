@@ -5,7 +5,7 @@ import AdminNav from "./AdminNav";
 // Each page shows when the admin has its first capability (see PAGES).
 const page = (key) => {
   const p = PAGES.find((x) => x.key === key);
-  return [p.label, p.path, p.caps[0]];
+  return [p.label, p.path, p.view[0]];
 };
 const GROUPS = [
   ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters"].map(page)],

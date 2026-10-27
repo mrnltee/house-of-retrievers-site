@@ -8,7 +8,7 @@ import TemplateEditor from "./TemplateEditor";
 export default async function EmailTemplatePage({ params, searchParams }) {
   const { key } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("emails:edit");
+  const { allowed } = await pageAdmin("emails:view");
   if (!allowed) return <NotAllowed />;
   const t = EDITABLE_TEMPLATES[key];
   if (!t) notFound();

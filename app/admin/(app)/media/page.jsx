@@ -22,7 +22,7 @@ const DEFAULTS = {
 };
 
 export default async function MediaAdminPage({ searchParams }) {
-  const { admin, allowed } = await pageAdmin("media:edit");
+  const { admin, allowed } = await pageAdmin("media:view");
   if (!allowed) return <NotAllowed />;
   const [document] = await sql("SELECT content, status, updated_at, updated_by FROM media_hub_documents WHERE id=true");
   const content = { ...DEFAULTS, ...(document?.content || {}) };

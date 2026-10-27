@@ -15,7 +15,7 @@ import ConfirmButton from "../../ConfirmButton";
 export default async function EditEventPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("events:edit");
+  const { allowed } = await pageAdmin("events:view");
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const [event] = await sql("SELECT * FROM events WHERE id = $1", [id]);

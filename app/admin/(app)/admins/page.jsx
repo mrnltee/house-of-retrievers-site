@@ -1,8 +1,8 @@
 import { sql } from "../../../lib/db";
 import { pageAdmin } from "../../../lib/admin/guard";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
-import { PAGES, ROLES, ROLE_LABELS, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
-import { inviteAdmin, removeAdmin, resetAdminPages, saveAdminPages, updateAdmin } from "../../actions";
+import { PAGES, ROLES, ROLE_LABELS, pageLevel, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
+import { inviteAdmin, removeAdmin, saveAdminPages, updateAdmin } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import ConfirmButton from "../ConfirmButton";
 
@@ -28,46 +28,75 @@ function RolePicker({ selected = [], idPrefix }) {
   );
 }
 
-/** Tick the sidebar pages this person can use; starts from what their roles allow. */
-function PagePicker({ admin }) {
-  const custom = Array.isArray(admin.pages);
-  const ticked = custom ? admin.pages : pagesForRoles(admin.roles);
-  const id = `pages-${admin.email}`;
+/** — / View / Edit for one page ("" is sent for hidden and ignored). */
+function AccessSelect({ page, level = "", label, form, id }) {
   return (
-    <form action={saveAdminPages} className="form" style={{ marginTop: 16 }}>
-      <input type="hidden" name="email" value={admin.email} />
-      <fieldset className="plain">
-        <legend>Page access</legend>
-        <p className="small muted" style={{ margin: 0 }}>
-          {custom ? "Only the ticked pages show in their sidebar, and they can do everything on them." : "Now following their roles. Saving ticks gives them exactly the ticked pages instead."}
-        </p>
-        {PAGES.map((page) => (
-          <label className="check" key={page.key} htmlFor={`${id}-${page.key}`}>
-            <input id={`${id}-${page.key}`} type="checkbox" name="pages" value={page.key} defaultChecked={ticked.includes(page.key)} />
-            <span>{page.label} <span className="small muted">· {page.group}</span></span>
-          </label>
-        ))}
-      </fieldset>
-      <div className="actions">
-        <ConfirmButton
-          className="btn small"
-          title={`Save page access for ${admin.email}?`}
-          items={["Their sidebar shows only the ticked pages", "Other pages are blocked even by direct link", "Takes effect on their next page or action"]}
-          yes="Yes, save pages"
-          tone="ink"
-        >Save pages</ConfirmButton>
-        {custom && (
-          <ConfirmButton
-            className="btn small ghost"
-            formAction={resetAdminPages}
-            title={`Go back to roles for ${admin.email}?`}
-            items={["Their ticks are cleared", "Their roles decide what they see again"]}
-            yes="Yes, use roles"
-            tone="ink"
-          >Use their roles instead</ConfirmButton>
-        )}
-      </div>
-    </form>
+    <select form={form} id={id} name="pages" defaultValue={level ? (level === "view" ? `${page.key}:view` : page.key) : ""} aria-label={label} className={`access ${level}`}>
+      <option value="">—</option>
+      <option value={`${page.key}:view`}>View</option>
+      {page.edit.length > 0 && <option value={page.key}>Edit</option>}
+    </select>
+  );
+}
+
+/**
+ * One row per person, one tick box per sidebar page (owner, 2026-10-27).
+ * Ticked pages are the only ones in their sidebar and the only ones they can
+ * open. Owners always have every page.
+ */
+function PageAccess({ admins }) {
+  const people = admins.filter((a) => !a.roles.includes("owner"));
+  return (
+    <section className="card">
+      <h2>Page access</h2>
+      <p className="small muted">For each person, set every page to <strong>—</strong> (hidden), <strong>View</strong> (can open and read only) or <strong>Edit</strong> (can also save, send and delete), then press Save on their row. Only pages set to View or Edit show in their sidebar; every other page is blocked for them. Owners always see and edit every page.</p>
+      {people.length === 0 ? (
+        <p className="empty">No one to set yet. Invite an admin above and set their pages there.</p>
+      ) : (
+        <div className="table-wrap">
+          <table className="page-access">
+            <thead>
+              <tr>
+                <th>Person</th>
+                {PAGES.map((p) => <th key={p.key} scope="col"><span>{p.label}</span></th>)}
+                <th><span className="visually-hidden">Save</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {people.map((a) => {
+                const formId = `pages-${a.email}`;
+                const ticked = Array.isArray(a.pages) ? a.pages : pagesForRoles(a.roles);
+                return (
+                  <tr key={a.email}>
+                    <th scope="row" className="strong">
+                      {a.name || a.email}
+                      {!Array.isArray(a.pages) && <span className="small muted"><br />From their roles — not saved yet</span>}
+                    </th>
+                    {PAGES.map((p) => (
+                      <td key={p.key} className="tick">
+                        <AccessSelect form={formId} page={p} level={pageLevel(ticked, p.key)} label={`${p.label} for ${a.email}`} />
+                      </td>
+                    ))}
+                    <td>
+                      <form id={formId} action={saveAdminPages}>
+                        <input type="hidden" name="email" value={a.email} />
+                        <ConfirmButton
+                          className="btn small"
+                          title={`Save page access for ${a.email}?`}
+                          items={["Only pages set to View or Edit show in their sidebar", "Other pages are blocked, even by direct link", "Takes effect on their next page or action"]}
+                          yes="Yes, save pages"
+                          tone="ink"
+                        >Save</ConfirmButton>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -93,18 +122,35 @@ export default async function AdminsPage({ searchParams }) {
         <p className="small muted">While HOR&apos;s Google sign-in app is in Testing, also add their email under Google Cloud → Google Auth Platform → Audience → Test users, or Google will stop them before they reach this site.</p>
         <form action={inviteAdmin} className="form">
           <label className="field"><span>Their Google email <small>The account they&apos;ll sign in with</small></span><input type="email" name="email" required /></label>
-          <RolePicker idPrefix="invite" />
+          <fieldset className="plain">
+            <legend>Page access <small className="muted">— hidden · View = read only · Edit = read and write</small></legend>
+            <div className="page-ticks">
+              {PAGES.map((p) => (
+                <label className="field" key={p.key} htmlFor={`invite-page-${p.key}`}>
+                  <span>{p.label}</span>
+                  <AccessSelect id={`invite-page-${p.key}`} page={p} label={p.label} />
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <details>
+            <summary className="linkish small">Or give a role instead (Owner = every page)</summary>
+            <RolePicker idPrefix="invite" />
+          </details>
           <div>
             <ConfirmButton
               title="Invite this admin?"
               echo={[{ name: "email", label: "Google email" }]}
-              items={["They can sign in once their Google account is also allowed in Google Cloud", "Their selected roles decide what they can view and change"]}
+              items={["They can sign in once their Google account is also allowed in Google Cloud", "Only pages set to View or Edit show in their sidebar"]}
               yes="Yes, invite admin"
             >Invite</ConfirmButton>
           </div>
         </form>
       </section>
 
+      <PageAccess admins={admins} />
+
+      <h2>Admins</h2>
       <div className="table-wrap">
         <table>
           <thead><tr><th>Admin</th><th>Roles</th><th>Last signed in</th><th><span className="visually-hidden">Edit</span></th></tr></thead>
@@ -138,7 +184,6 @@ export default async function AdminsPage({ searchParams }) {
                         >Remove access</ConfirmButton>
                       </div>
                     </form>
-                    {!a.roles.includes("owner") && <PagePicker admin={a} />}
                   </details>
                 </td>
               </tr>

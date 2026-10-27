@@ -6,7 +6,7 @@ import Scanner from "./Scanner";
 
 export default async function CheckInPage({ params }) {
   const { eventId } = await params;
-  const { allowed } = await pageAdmin("checkin");
+  const { allowed } = await pageAdmin("checkin:view");
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(eventId)) notFound();
   const [event] = await sql(

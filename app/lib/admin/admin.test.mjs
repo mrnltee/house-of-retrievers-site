@@ -251,17 +251,22 @@ test("the door turns away payments that aren't approved", () => {
   assert.equal(checkInOutcome({ ...reg, consent_required_before_checkin: true, consent_completed_at: new Date() }, "e1"), "ok");
 });
 
-test("page ticks give exactly the ticked pages", async () => {
-  const { can, pagesForRoles, cleanPages } = await import("./roles.mjs");
-  const helper = { roles: ["events"], pages: ["letters", "checkin"] };
+test("page access gives exactly the chosen pages, at View or Edit", async () => {
+  const { can, pagesForRoles, cleanPages, pageLevel } = await import("./roles.mjs");
+  const helper = { roles: ["events"], pages: ["letters", "checkin:view"] };
+  assert.equal(can(helper, "letters:view"), true);
   assert.equal(can(helper, "letters:edit"), true);
-  assert.equal(can(helper, "checkin"), true);
-  assert.equal(can(helper, "people:edit"), false);
+  assert.equal(can(helper, "checkin:view"), true);
+  assert.equal(can(helper, "checkin"), false);
+  assert.equal(can({ roles: [], pages: ["letters:view"] }, "letters:edit"), false);
+  assert.equal(can(helper, "people:view"), false);
   assert.equal(can(helper, "events:view"), false);
-  assert.equal(can(helper, "dashboard:view"), false);
   assert.equal(can(helper, "admins:manage"), false);
   assert.equal(can({ roles: ["events"], pages: null }, "people:edit"), true);
-  assert.equal(can({ roles: ["owner"], pages: ["letters"] }, "events:edit"), true);
-  assert.deepEqual(cleanPages(["breeds", "nope", "dashboard"]), ["dashboard", "breeds"]);
+  assert.equal(can({ roles: ["owner"], pages: ["letters:view"] }, "events:edit"), true);
+  assert.deepEqual(cleanPages(["breeds", "nope", "dashboard", "events:view", "events", ""]), ["dashboard:view", "events", "breeds"]);
+  assert.equal(pageLevel(["events:view"], "events"), "view");
+  assert.equal(pageLevel(["events"], "people"), "");
   assert.deepEqual(pagesForRoles(["checkin"]), ["checkin"]);
+  assert.deepEqual(pagesForRoles(["treasurer"]).includes("people:view"), true);
 });

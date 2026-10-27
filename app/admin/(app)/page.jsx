@@ -13,7 +13,7 @@ export default async function Dashboard({ searchParams }) {
   const base = await adminBase();
   if (!allowed) {
     // Without the Dashboard, land on the first page they can use.
-    const first = PAGES.find((p) => p.path !== "/" && can(admin, p.caps[0]));
+    const first = PAGES.find((p) => p.path !== "/" && can(admin, p.view[0]));
     if (first) redirect(`${base}${first.path}`);
     return <NotAllowed />;
   }

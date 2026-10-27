@@ -3,7 +3,7 @@ import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { DateBox, NotAllowed, PageHead, manilaToday } from "../ui";
 
 export default async function CheckInIndex() {
-  const { allowed } = await pageAdmin("checkin");
+  const { allowed } = await pageAdmin("checkin:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const rows = await sql(

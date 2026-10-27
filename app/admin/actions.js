@@ -689,14 +689,16 @@ export async function inviteAdmin(data) {
     const admin = await actionAdmin("admins:manage");
     const [email] = parseEmailList(form(data, "email"));
     const roles = cleanRoles(data.getAll("roles"));
+    // Ticked pages win over roles (Owners always get everything).
+    const pages = roles.includes("owner") ? [] : cleanPages(data.getAll("pages"));
     if (!email) await backWith("/admins", "error", "Enter the person's Google email address.");
-    if (!roles.length) await backWith("/admins", "error", "Pick at least one role.");
+    if (!roles.length && !pages.length) await backWith("/admins", "error", "Tick the pages they can use (or pick a role).");
     await sql(
-      `INSERT INTO admins (email, roles, active, invited_by) VALUES ($1, $2, true, $3)
-       ON CONFLICT (email) DO UPDATE SET roles=EXCLUDED.roles, active=true`,
-      [email, roles, admin.email],
+      `INSERT INTO admins (email, roles, pages, active, invited_by) VALUES ($1, $2, $3, true, $4)
+       ON CONFLICT (email) DO UPDATE SET roles=EXCLUDED.roles, pages=EXCLUDED.pages, active=true`,
+      [email, roles, pages.length ? pages : null, admin.email],
     );
-    await logActivity(admin.email, "admin.invite", email, { roles });
+    await logActivity(admin.email, "admin.invite", email, { roles, pages });
     await backWith("/admins", "ok", `${email} can sign in now with that Google account.`);
   });
 }
