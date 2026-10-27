@@ -35,7 +35,8 @@ export const LETTER_HELP = [
   "---page--- starts a new page.",
 ];
 
-const BLANK_RE = /\[([^\]\n]{1,400})\]/g;
+// A [label](https://…) link in a covering email is not a blank.
+const BLANK_RE = /\[([^\]\n]{1,400})\](?!\(https:\/\/)/g;
 
 /** The Manila date for `when`, e.g. "October 24, 2026". */
 export function letterDate(when = new Date()) {

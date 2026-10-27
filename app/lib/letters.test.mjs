@@ -8,8 +8,22 @@ test("the eight starter letters are there, each with a subject", () => {
   assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 8);
   for (const l of LETTER_STARTERS) {
     assert.ok(l.subject, l.key);
-    assert.match(l.cover, /\[Company Name\]/, l.key);
+    // The guests-of-honor letter is written to Senator Zubiri by name.
+    assert.match(l.cover, l.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : /\[Company Name\]/, l.key);
   }
+});
+
+test("covering emails (owner's brief, 2026-10-27): portfolio link, official name, no \"beyond\"", () => {
+  const portfolio = "[Partnership Portfolio](https://www.canva.com/design/DAHWLsiZugc/7RGzvgYEMCjGc67tzRlW2w/view)";
+  for (const l of LETTER_STARTERS) {
+    assert.ok(l.cover.includes(portfolio), `${l.key}: portfolio link`);
+    assert.match(l.cover, /The House of Retrievers Society Inc/, l.key);
+    assert.doesNotMatch(`${l.subject} ${l.cover}`, /beyond/i, l.key);
+    assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
+    assert.ok(l.cover.length <= 2000, l.key);
+  }
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 8, "each cover is its own");
+  assert.deepEqual(blanksOf(`See our ${portfolio}.`).map((b) => b.label), []);
 });
 
 test("blanks: automatic ones are not asked for; optional and suggested ones are marked", () => {
@@ -65,8 +79,8 @@ test("every starter fills in and renders to a PDF", async () => {
     const blanks = blanksOf(letter.subject, letter.cover, letter.body);
     const values = Object.fromEntries(blanks.map((b) => [b.label, b.suggestion || "Sample"]));
     const p = prepareLetter(letter, { name: "Bark Boulevard PH", date: letterDate(new Date("2026-10-24T03:00:00Z")), values });
-    assert.doesNotMatch(p.cover, /\[[^\]]+\]/, `${letter.key}: cover still has a blank`);
-    assert.match(p.cover, /^Dear Bark Boulevard PH,/);
+    assert.doesNotMatch(p.cover, /\[[^\]]+\](?!\(https:)/, `${letter.key}: cover still has a blank`);
+    assert.match(p.cover, letter.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : /^Dear Bark Boulevard PH,/);
     const pdf = await letterPdf(p.blocks, { title: p.subject });
     assert.equal(pdf.subarray(0, 5).toString(), "%PDF-", letter.key);
   }
@@ -90,4 +104,13 @@ test("a few spilled lines don't make a near-empty extra page (letters tighten a 
     const pdf = await letterPdf(prepareLetter(letter, { name: "House of Retrievers Test", values }).blocks);
     assert.equal((pdf.toString("latin1").match(/\/Type \/Page\b/g) || []).length, 1, key);
   }
+});
+
+test("a covering email's [label](https://…) is a real link in the email and spelled out in plain text", async () => {
+  const { letterCoverEmail } = await import("./emailTemplates.mjs");
+  const mail = letterCoverEmail({ subject: "Hi", cover: "Dear Bark,\n\nSee our [Partnership Portfolio](https://www.canva.com/design/x/view).", filename: "a.pdf" });
+  assert.match(mail.html, /<a class="em-text-link" href="https:\/\/www\.canva\.com\/design\/x\/view"[^>]*>Partnership Portfolio<\/a>/);
+  assert.match(mail.text, /Partnership Portfolio \(https:\/\/www\.canva\.com\/design\/x\/view\)/);
+  const unsafe = letterCoverEmail({ subject: "Hi", cover: "[x](javascript:alert(1))", filename: "a.pdf" });
+  assert.doesNotMatch(unsafe.html, /href="javascript/);
 });

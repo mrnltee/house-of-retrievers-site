@@ -93,7 +93,7 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
 
 /** The plain-text twin every email needs (some apps show only this; spam filters check for it). */
 function plain({ greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
-  const strip = (html) => String(html).replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const strip = (html) => String(html).replace(/<a class="em-text-link" href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2 ($1)").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   const ending = centered
     ? [`THORSI · ${ORG}`, "Reply to this email to reach the team.", "", footnote ? strip(footnote) : ""]
     : [footnote ? strip(footnote) : "", `${ORG} · ${HOME_URL}`, "Reply to this email to reach the team."];
@@ -304,6 +304,8 @@ function messageParagraphs(text, vars) {
     .map((para) =>
       esc(para)
         .replace(/\*\*(.+?)\*\*/g, '<strong style="white-space:nowrap">$1</strong>')
+        // [Partnership Portfolio](https://…) becomes a link (https only).
+        .replace(/\[([^\]\n]{1,120})\]\((https:\/\/[^\s()<>"]+)\)/g, '<a class="em-text-link" href="$2" style="color:#7A5C1F;text-decoration:underline">$1</a>')
         .replace(/\n/g, "<br>")
         .replace(VAR_RE, (_, name) => esc(vars[name] ?? "")),
     );

@@ -105,11 +105,20 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
         </div>
         <div className="letter-email">
           <p className="small" style={{ margin: 0 }}>Email subject: <strong>{subject}</strong></p>
-          <p className="small letter-cover">{cover}</p>
+          <p className="small letter-cover"><CoverText text={cover} /></p>
           <p className="small muted" style={{ margin: 0 }}>📎 PDF letter attached</p>
         </div>
         <LetterView text={filled} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
       </section>
     </div>
   );
+}
+
+/** The covering email as sent: [label](https://…) shows as a link. */
+function CoverText({ text }) {
+  const parts = String(text || "").split(/(\[[^\]\n]{1,120}\]\(https:\/\/[^\s()<>"]+\))/g);
+  return parts.map((part, i) => {
+    const link = part.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/);
+    return link ? <a key={i} href={link[2]} target="_blank" rel="noreferrer">{link[1]}</a> : part;
+  });
 }

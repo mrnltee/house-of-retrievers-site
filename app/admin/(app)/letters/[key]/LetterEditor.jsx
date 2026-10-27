@@ -29,7 +29,7 @@ export default function LetterEditor({ letter, original, pdfAction }) {
           <input type="text" name="subject" maxLength={LETTER_LIMITS.subject} required value={fields.subject} onChange={set("subject")} />
         </label>
         <label className="field">
-          <span>Covering email <small>The short email the PDF is attached to. A first “Dear [Company Name],” line becomes the greeting.</small></span>
+          <span>Covering email <small>The short email the PDF is attached to. A first “Dear [Company Name],” line becomes the greeting. Write a link as [Partnership Portfolio](https://…).</small></span>
           <textarea name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
         </label>
         <label className="field">
