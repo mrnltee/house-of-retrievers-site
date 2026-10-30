@@ -3,6 +3,10 @@ import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { CONTACT_CATEGORIES, categoryOf } from "../../../lib/contacts.mjs";
 import { listLetters } from "../../../lib/letterStore";
+import { recipientFields } from "../../../lib/letters.mjs";
+
+// What "Dear [Salutation]" will say for this record.
+const greetingOf = (f) => f.salutation || f.contact || f.name;
 import { saveContact } from "../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import ContactFields from "./ContactFields";
@@ -31,7 +35,7 @@ export default async function GuestsPage({ searchParams }) {
       [only, q],
     ),
     !seeSupporters ? [] : sql(
-      `SELECT id, name, kind, status, contact_email FROM supporters WHERE status <> 'ended'
+      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation FROM supporters WHERE status <> 'ended'
           AND ($1 = '' OR name ILIKE '%' || $1 || '%') ORDER BY name`,
       [q],
     ),
@@ -41,9 +45,9 @@ export default async function GuestsPage({ searchParams }) {
   const groups = CONTACT_CATEGORIES.filter((c) => !only || c.key === only).map((c) => ({
     ...c,
     rows: [
-      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, name: r.name, sub: r.organization, email: r.email, href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
+      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, name: r.name, sub: r.organization, email: r.email, greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
       ...supporters.filter((s) => (c.key === "sponsor" && s.kind === "Sponsor") || (c.key === "partner" && s.kind === "Partner"))
-        .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, name: s.name, sub: "From Sponsors & partners", email: s.contact_email, href: `${base}/supporters/${s.id}`, last: "" })),
+        .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, name: s.name, sub: s.contact_name ? `${s.contact_name} · from Sponsors & partners` : "From Sponsors & partners", email: s.contact_email, greeting: greetingOf(recipientFields({ supporter: s })), href: `${base}/supporters/${s.id}`, last: "" })),
     ],
   }));
 
@@ -62,7 +66,7 @@ export default async function GuestsPage({ searchParams }) {
       </form>
 
       {canEdit && (
-        <details className="card" open={params?.add === "1"}>
+        <details className="card" id="add" open={params?.add === "1"}>
           <summary className="strong">+ Add someone</summary>
           <form action={saveContact} className="form" style={{ marginTop: 12 }}>
             <ContactFields category={only} />
@@ -82,25 +86,25 @@ export default async function GuestsPage({ searchParams }) {
               </div>
               {canEdit && g.rows.length > 0 && <button type="submit" className="btn dark" data-confirm="not-needed-read-only">✉ Send this letter to ticked</button>}
             </div>
-            {g.rows.length === 0 ? (
-              <p className="small muted">No one here yet.</p>
-            ) : (
-              <div className="table-wrap" style={{ marginTop: 10 }}>
-                <table>
-                  <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Name</th><th>Email</th><th>Last letter</th></tr></thead>
-                  <tbody>
-                    {g.rows.map((r) => (
-                      <tr key={r.ref}>
-                        {canEdit && <td><input type="checkbox" name="to" value={r.ref} aria-label={`Pick ${r.name}`} /></td>}
-                        <td className="strong"><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</td>
-                        <td>{r.email || <span className="muted">No email yet</span>}</td>
-                        <td className="small">{r.last || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {/* The table shows even when empty, with an add link that picks this category. */}
+            <div className="table-wrap" style={{ marginTop: 10 }}>
+              <table>
+                <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Name</th><th>Email</th><th>Greeting</th><th>Last letter</th></tr></thead>
+                <tbody>
+                  {g.rows.map((r) => (
+                    <tr key={r.ref}>
+                      {canEdit && <td><input type="checkbox" name="to" value={r.ref} aria-label={`Pick ${r.name}`} /></td>}
+                      <td className="strong"><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</td>
+                      <td>{r.email || <span className="muted">No email yet</span>}</td>
+                      <td className="small">Dear {r.greeting},</td>
+                      <td className="small">{r.last || "—"}</td>
+                    </tr>
+                  ))}
+                  {g.rows.length === 0 && <tr><td colSpan={canEdit ? 5 : 4} className="muted">No one here yet.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+            {canEdit && <p className="small" style={{ margin: "8px 0 0" }}><a href={`${base}/guests?category=${g.key}&add=1#add`}>+ Add to {g.label}</a></p>}
           </form>
         </section>
       ))}
