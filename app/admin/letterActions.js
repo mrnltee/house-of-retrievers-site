@@ -5,7 +5,7 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { emailReady, sendEmail } from "../lib/email";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
-import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientName } from "../lib/letters.mjs";
+import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
 import { loadLetter } from "../lib/letterStore";
 
@@ -65,14 +65,14 @@ export async function resetLetter(data) {
 async function loadRecipients(refs) {
   const ids = (kind) => refs.filter((r) => r.startsWith(`${kind}:`)).map((r) => r.slice(kind.length + 1)).filter(isUuid);
   const [supporters, people, contacts] = await Promise.all([
-    ids("supporter").length ? sql("SELECT id, name, kind, contact_email FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
+    ids("supporter").length ? sql("SELECT id, name, kind, contact_email, contact_name, address, salutation FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
     ids("person").length ? sql("SELECT id, name, email, organization FROM people WHERE id = ANY($1::uuid[])", [ids("person")]) : [],
-    ids("contact").length ? sql("SELECT id, name, email FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
+    ids("contact").length ? sql("SELECT id, name, organization, email, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
   ]);
   return [
-    ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", name: recipientName({ supporter: s }), email: (s.contact_email || "").trim() })),
-    ...people.map((p) => ({ ref: `person:${p.id}`, id: p.id, type: "person", name: recipientName({ person: p }), email: (p.email || "").trim() })),
-    ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", name: c.name, email: (c.email || "").trim() })),
+    ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim() })),
+    ...people.map((p) => ({ ref: `person:${p.id}`, id: p.id, type: "person", ...recipientFields({ person: p }), email: (p.email || "").trim() })),
+    ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", ...recipientFields({ contact: c }), email: (c.email || "").trim() })),
   ];
 }
 
@@ -107,7 +107,7 @@ export async function sendLetters(data) {
     const failed = [];
     for (const r of recipients) {
       if (!looksLikeEmail(r.email)) { skipped.push(r.name); continue; }
-      const prepared = prepareLetter(letter, { name: r.name, date, values });
+      const prepared = prepareLetter(letter, { ...r, date, values });
       const pdf = await letterPdf(prepared.blocks, { title: prepared.subject });
       const mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename });
       const result = await sendEmail({ to: r.email, ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });

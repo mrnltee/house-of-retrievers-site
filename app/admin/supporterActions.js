@@ -99,6 +99,8 @@ export async function saveSupporter(data) {
       );
       recordId = row.id;
     }
+    // Letter address block (migration 064).
+    await sql("UPDATE supporters SET address=$2, salutation=$3 WHERE id=$1", [recordId, value.address, value.salutation]);
 
     // First time Confirmed: HOR-XXXX-YY-NNNN, YY = the year they registered
     // (the Join form if they came through it, else when the record was made).

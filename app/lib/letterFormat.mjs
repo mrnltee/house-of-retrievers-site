@@ -46,6 +46,8 @@ export const FORMATS = {
   table: { label: "▦", title: "Table", run: (t, s, e) => insertBlock(t, s, e, "|! Heading | Heading |\n| Cell | Cell |") },
   page: { label: "⤓", title: "New page", run: (t, s, e) => insertBlock(t, s, e, "---page---") },
   blank: { label: "[ ]", title: "Blank filled in when sending", run: (t, s, e) => wrap(t, s, e, "[", "]", "Blank name") },
+  address: { label: "✉ To", title: "Address block (contact person, company, address)", run: (t, s, e) => insertBlock(t, s, e, "[Contact Person?]\n[Company Name]\n[Address?]") },
+  greeting: { label: "Dear …", title: "Greeting name (e.g. Ms. Jessie)", run: (t, s, e) => { const out = t.slice(0, s) + "[Salutation]" + t.slice(e); return { text: out, start: s, end: s + 12 }; } },
   link: { label: "🔗", title: "Link", run: (t, s, e) => { const r = wrap(t, s, e, "[", "](https://)", "Link text"); return { ...r, start: r.end + 2, end: r.end + 10 }; } },
 };
 

@@ -85,6 +85,10 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
             <label className="field"><span>Email</span><input type="email" name="contactEmail" maxLength={160} defaultValue={v("contact_email", person?.email || "")} /></label>
             <label className="field"><span>Phone</span><input type="tel" name="contactPhone" maxLength={40} defaultValue={v("contact_phone")} /></label>
           </div>
+          <div className="row-2">
+            <label className="field"><span>Address <small>For letters, one line each</small></span><textarea name="address" rows={2} maxLength={300} defaultValue={v("address")} /></label>
+            <label className="field"><span>Greeting <small>For letters: “Dear ___,” e.g. Ms. Jessie. Blank = the person, else the company</small></span><input type="text" name="salutation" maxLength={120} defaultValue={v("salutation")} placeholder="Ms. Jessie" /></label>
+          </div>
           <label className="field"><span>Notes</span><textarea name="notes" rows={3} maxLength={2000} defaultValue={v("notes")} /></label>
         </section>
       </fieldset>

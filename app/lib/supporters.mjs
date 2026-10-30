@@ -102,6 +102,8 @@ export function validateSupporter(input, { legacyCode = null } = {}) {
     contactName: clean(input?.contactName, 120) || null,
     contactEmail: clean(input?.contactEmail, 160).toLowerCase() || null,
     contactPhone: clean(input?.contactPhone, 40) || null,
+    address: String(input?.address ?? "").replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n").slice(0, 300) || null,
+    salutation: clean(input?.salutation, 120) || null,
     notes: String(input?.notes ?? "").trim().slice(0, 2000) || null,
     logo: clean(input?.logo, 300) || null,
     code: String(input?.code ?? "").trim().toUpperCase() || null,

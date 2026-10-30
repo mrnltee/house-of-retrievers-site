@@ -17,9 +17,10 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
   const [previewRef, setPreviewRef] = useState(recipients.find((r) => r.email)?.ref || recipients[0]?.ref);
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
   const date = letterDate();
-  const filled = useMemo(() => fillLetter(letter.body, { name: who?.name || "", date, values }), [letter.body, who, date, values]);
-  const subject = fillLetter(letter.subject, { name: who?.name || "", date, values });
-  const cover = fillLetter(letter.cover, { name: who?.name || "", date, values }, { plain: true });
+  const to = { name: who?.name || "", contact: who?.contact || "", address: who?.address || "", salutation: who?.salutation || "", date, values };
+  const filled = useMemo(() => fillLetter(letter.body, to), [letter.body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
+  const subject = fillLetter(letter.subject, to);
+  const cover = fillLetter(letter.cover, to, { plain: true });
   const missing = missingBlanks(blanks, values);
   const count = picked.size;
 

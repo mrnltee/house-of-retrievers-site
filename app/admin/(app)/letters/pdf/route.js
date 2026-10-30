@@ -1,7 +1,7 @@
 import { sql } from "../../../../lib/db";
 import { currentAdmin } from "../../../../lib/admin/auth";
 import { can } from "../../../../lib/admin/roles.mjs";
-import { LETTER_LIMITS, blanksOf, prepareLetter, recipientName } from "../../../../lib/letters.mjs";
+import { LETTER_LIMITS, blanksOf, prepareLetter, recipientFields } from "../../../../lib/letters.mjs";
 import { letterPdf } from "../../../../lib/letterPdf.mjs";
 import { loadLetter } from "../../../../lib/letterStore";
 
@@ -29,17 +29,20 @@ export async function POST(request) {
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
   const values = Object.fromEntries(blanks.map((b) => [b.label, String(typed[b.label] ?? "").slice(0, LETTER_LIMITS.value) || (field("sample") ? b.suggestion || `[${b.label}]` : "")]));
 
-  let name = "Pawsome Pet Shop";
+  let to = { name: "Pawsome Pet Shop", contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
   // The send page posts its whole form: "previewTo" is the recipient shown in the preview.
   const [type, id] = (field("previewTo") || field("to")).split(":");
   if (type === "supporter" && isUuid(id)) {
-    const [row] = await sql("SELECT name FROM supporters WHERE id = $1", [id]);
-    if (row) name = recipientName({ supporter: row });
+    const [row] = await sql("SELECT name, contact_name, address, salutation FROM supporters WHERE id = $1", [id]);
+    if (row) to = recipientFields({ supporter: row });
   } else if (type === "person" && isUuid(id)) {
     const [row] = await sql("SELECT name, organization FROM people WHERE id = $1", [id]);
-    if (row) name = recipientName({ person: row });
+    if (row) to = recipientFields({ person: row });
+  } else if (type === "contact" && isUuid(id)) {
+    const [row] = await sql("SELECT name, organization, address, salutation FROM letter_contacts WHERE id = $1 AND deleted_at IS NULL", [id]);
+    if (row) to = recipientFields({ contact: row });
   }
-  const prepared = prepareLetter(letter, { name, values });
+  const prepared = prepareLetter(letter, { ...to, values });
   const pdf = await letterPdf(prepared.blocks, { title: prepared.subject });
   const ascii = prepared.filename.replace(/[^\x20-\x7e]/g, "-").replace(/"/g, "'");
   return new Response(pdf, {

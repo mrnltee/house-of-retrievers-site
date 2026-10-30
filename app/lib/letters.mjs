@@ -24,6 +24,9 @@ export const MAX_LETTER_RECIPIENTS = 25;
 /** Blanks the system fills by itself. */
 export const AUTO_BLANKS = {
   "Company Name": "The sponsor or partner's name (for People: their organization, else their name)",
+  "Contact Person": "The representative or contact person on their record (write [Contact Person?] to drop the line when there's none)",
+  Address: "The address on their record (write [Address?] to drop the line when there's none)",
+  Salutation: "How to greet them, e.g. Ms. Jessie: the greeting on their record, else the contact person, else the company",
   Date: "The day the letter is sent, e.g. October 24, 2026",
 };
 
@@ -48,6 +51,24 @@ export function recipientName({ supporter, person } = {}) {
   if (supporter) return String(supporter.name || "").trim();
   if (person) return String(person.organization || "").trim() || String(person.name || "").trim();
   return "";
+}
+
+/**
+ * What a recipient's record gives the address block: { name, contact, address, salutation }.
+ * Guest list: with a company/brand filled in, the company is [Company Name]
+ * and the name is the contact person; without one, the name is both the
+ * [Company Name] and the greeting.
+ */
+export function recipientFields({ supporter, person, contact } = {}) {
+  const t = (v) => String(v || "").trim();
+  if (contact) {
+    const company = t(contact.organization) || t(contact.name);
+    const who = t(contact.organization) ? t(contact.name) : "";
+    return { name: company, contact: who, address: t(contact.address), salutation: t(contact.salutation) };
+  }
+  if (supporter) return { name: recipientName({ supporter }), contact: t(supporter.contact_name), address: t(supporter.address), salutation: t(supporter.salutation) };
+  if (person) return { name: recipientName({ person }), contact: t(person.organization) ? t(person.name) : "", address: "", salutation: "" };
+  return { name: "", contact: "", address: "", salutation: "" };
 }
 
 const isOptional = (label) => label.endsWith("?");
@@ -80,7 +101,7 @@ export function missingBlanks(blanks, values = {}) {
  * Fills the blanks. `values` is keyed by label; auto blanks come from `name`
  * and `date`. A line made only of an empty optional blank is dropped.
  */
-export function fillLetter(text, { name = "", date = letterDate(), values = {} } = {}, { plain = false } = {}) {
+export function fillLetter(text, { name = "", contact = "", address = "", salutation = "", date = letterDate(), values = {} } = {}, { plain = false } = {}) {
   // In a covering email only the template's own [label](https://…) may become
   // a link; a filled-in name or value (which can come from the public Join
   // form) is kept as plain text by breaking any "](" in it.
@@ -88,6 +109,9 @@ export function fillLetter(text, { name = "", date = letterDate(), values = {} }
   const value = (label) => {
     const base = baseLabel(label);
     if (base === "Company Name") return safe(name);
+    if (base === "Contact Person") return safe(contact);
+    if (base === "Address") return safe(address);
+    if (base === "Salutation") return safe(salutation || contact || name);
     if (base === "Date") return date;
     return safe(String(values[base] ?? "").trim());
   };
@@ -166,11 +190,12 @@ export function letterWithOverride(key, saved) {
 }
 
 /** Everything one recipient gets: email subject and cover text, and the letter's blocks. */
-export function prepareLetter(letter, { name, date = letterDate(), values = {} }) {
-  const fill = (t) => fillLetter(t, { name, date, values });
+export function prepareLetter(letter, { name, contact = "", address = "", salutation = "", date = letterDate(), values = {} }) {
+  const who = { name, contact, address, salutation, date, values };
+  const fill = (t) => fillLetter(t, who);
   return {
     subject: fill(letter.subject).replace(/\s+/g, " ").trim(),
-    cover: fillLetter(letter.cover, { name, date, values }, { plain: true }),
+    cover: fillLetter(letter.cover, who, { plain: true }),
     blocks: letterBlocks(fill(letter.body)),
     filename: `HOR ${letter.name.replace(/[^\w ()&,.–—-]+/g, "").trim()}${name ? ` – ${name.replace(/[^\w ()&,.-]+/g, "").trim()}` : ""}.pdf`.slice(0, 140),
   };

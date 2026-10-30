@@ -10,6 +10,8 @@ import ConfirmButton from "../../ConfirmButton";
 import LetterView from "../LetterView";
 
 const SAMPLE = "Pawsome Pet Shop";
+// The sample recipient for the preview: fills the address block like a real record would.
+const TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
 
 /** Edits one letter with a live preview. "Preview PDF" posts the unsaved wording to the PDF route. */
 export default function LetterEditor({ letter, original, pdfAction }) {
@@ -23,9 +25,9 @@ export default function LetterEditor({ letter, original, pdfAction }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [changed]);
   const blanks = useMemo(() => blanksOf(fields.subject, fields.cover, fields.body), [fields]);
-  const preview = useMemo(() => fillLetter(fields.body, { name: SAMPLE, date: letterDate(), values: {} }), [fields.body]);
+  const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values: {} }), [fields.body]);
   const email = useMemo(() => {
-    const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { name: SAMPLE });
+    const p = prepareLetter({ ...fields, name: fields.name || letter.name }, TO);
     return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename });
   }, [fields, letter.name]);
   const set = (name) => (e) => setFields((f) => ({ ...f, [name]: e.target.value }));
@@ -47,12 +49,12 @@ export default function LetterEditor({ letter, original, pdfAction }) {
         </label>
         <div className="field">
           <label htmlFor="letter-cover">Covering email <small>The short email the PDF is attached to. A first “Dear [Company Name],” line becomes the greeting. Write a link as [Partnership Portfolio](https://…).</small></label>
-          <FormatBar target={coverRef} keys={["link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting" />
+          <FormatBar target={coverRef} keys={["greeting", "link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting" />
           <textarea id="letter-cover" ref={coverRef} name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
         </div>
         <div className="field">
           <label htmlFor="letter-body">Letter <small>Becomes the PDF. Select text, then use the buttons.</small></label>
-          <FormatBar target={bodyRef} keys={["bold", "h1", "h2", "center", "bullet", "table", "page", "blank"]} value={fields.body} onChange={put("body")} label="Letter formatting" />
+          <FormatBar target={bodyRef} keys={["bold", "h1", "h2", "center", "bullet", "table", "page", "address", "greeting", "blank"]} value={fields.body} onChange={put("body")} label="Letter formatting" />
           <textarea id="letter-body" ref={bodyRef} name="body" rows={24} maxLength={LETTER_LIMITS.body} required value={fields.body} onChange={set("body")} onKeyDown={boldKey} className="letter-source" spellCheck />
         </div>
         <details className="small">
@@ -83,7 +85,7 @@ export default function LetterEditor({ letter, original, pdfAction }) {
         <div className="template-preview-head">
           <div>
             <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {SAMPLE}</p>
-            <p className="template-subject"><strong>{fillLetter(fields.subject, { name: SAMPLE })}</strong></p>
+            <p className="template-subject"><strong>{fillLetter(fields.subject, TO)}</strong></p>
           </div>
           <form method="post" action={pdfAction} target="_blank">
             <input type="hidden" name="letter" value={letter.key} />

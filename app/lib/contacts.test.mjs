@@ -15,5 +15,5 @@ test("contacts need a category and a name; email is checked", () => {
   assert.match(cleanContact({ category: "vip" }).error, /name/);
   assert.match(cleanContact({ category: "vip", name: "X", email: "bad" }).error, /email/);
   assert.deepEqual(cleanContact({ category: "media", name: "  Jane   Doe ", email: "J@X.PH", organization: "" }).contact,
-    { category: "media", name: "Jane Doe", email: "j@x.ph", organization: null, phone: null, handle: null, notes: null });
+    { category: "media", name: "Jane Doe", email: "j@x.ph", organization: null, phone: null, handle: null, address: null, salutation: null, notes: null });
 });

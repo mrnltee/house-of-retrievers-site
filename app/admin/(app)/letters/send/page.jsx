@@ -1,7 +1,7 @@
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { emailReady } from "../../../../lib/email";
-import { MAX_LETTER_RECIPIENTS, blanksOf, recipientName } from "../../../../lib/letters.mjs";
+import { MAX_LETTER_RECIPIENTS, blanksOf, recipientFields } from "../../../../lib/letters.mjs";
 import { listLetters, savedValues } from "../../../../lib/letterStore";
 import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
@@ -29,14 +29,14 @@ export default async function SendLetterPage({ searchParams }) {
   const refs = list(params?.to);
   const supporterIds = refs.filter((r) => r.startsWith("supporter:")).map((r) => r.slice(10)).filter(isUuid);
   const personIds = refs.filter((r) => r.startsWith("person:")).map((r) => r.slice(7)).filter(isUuid);
-  let supporters = supporterIds.length ? await sql("SELECT id, name, kind, status, contact_email FROM supporters WHERE id = ANY($1::uuid[]) ORDER BY name", [supporterIds]) : [];
+  let supporters = supporterIds.length ? await sql("SELECT id, name, kind, status, contact_email, contact_name, address, salutation FROM supporters WHERE id = ANY($1::uuid[]) ORDER BY name", [supporterIds]) : [];
   if (params?.all === "1") {
     const kind = ["Sponsor", "Partner"].includes(params?.kind) ? params.kind : "";
     const status = STATUSES.some(([key]) => key === params?.status) ? params.status : "";
     const label = clean(params?.label, 60);
     const q = clean(params?.q);
     supporters = await sql(
-      `SELECT id, name, kind, status, contact_email FROM supporters
+      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation FROM supporters
         WHERE ($1 = '' OR kind = $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category_label = $3)
           AND ($4 = '' OR name ILIKE '%' || $4 || '%' OR coalesce(code, '') ILIKE '%' || $4 || '%' OR coalesce(category_label, '') ILIKE '%' || $4 || '%')
         ORDER BY name`,
@@ -44,12 +44,12 @@ export default async function SendLetterPage({ searchParams }) {
     );
   }
   const contactIds = refs.filter((r) => r.startsWith("contact:")).map((r) => r.slice(8)).filter(isUuid);
-  const contacts = contactIds.length ? await sql("SELECT id, name, email, category FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [contactIds]) : [];
+  const contacts = contactIds.length ? await sql("SELECT id, name, organization, email, category, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [contactIds]) : [];
   const people = personIds.length ? await sql("SELECT id, name, email, organization, kind FROM people WHERE id = ANY($1::uuid[]) ORDER BY name", [personIds]) : [];
   const recipients = [
-    ...supporters.map((s) => ({ ref: `supporter:${s.id}`, name: recipientName({ supporter: s }), email: (s.contact_email || "").trim(), note: `${s.kind} · ${s.status}`, href: `${base}/supporters/${s.id}` })),
-    ...contacts.map((c) => ({ ref: `contact:${c.id}`, name: c.name, email: (c.email || "").trim(), note: categoryOf(c.category)?.label || "Guest list", href: `${base}/guests/${c.id}`, category: c.category })),
-    ...people.map((p) => ({ ref: `person:${p.id}`, name: recipientName({ person: p }), email: (p.email || "").trim(), note: p.organization ? `${p.kind} · ${p.name}` : p.kind, href: `${base}/people/${p.id}` })),
+    ...supporters.map((s) => ({ ref: `supporter:${s.id}`, ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim(), note: `${s.kind} · ${s.status}`, href: `${base}/supporters/${s.id}` })),
+    ...contacts.map((c) => ({ ref: `contact:${c.id}`, ...recipientFields({ contact: c }), email: (c.email || "").trim(), note: categoryOf(c.category)?.label || "Guest list", href: `${base}/guests/${c.id}`, category: c.category })),
+    ...people.map((p) => ({ ref: `person:${p.id}`, ...recipientFields({ person: p }), email: (p.email || "").trim(), note: p.organization ? `${p.kind} · ${p.name}` : p.kind, href: `${base}/people/${p.id}` })),
   ];
 
   // Guest list people whose category is meant for a different letter.

@@ -15,7 +15,7 @@ export const CONTACT_CATEGORIES = [
   { key: "donor", label: "Cash donors", letter: "donation-letter" },
 ];
 
-export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000 };
+export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
 
 export const categoryOf = (key) => CONTACT_CATEGORIES.find((c) => c.key === key) || null;
 export const letterFor = (key) => categoryOf(key)?.letter || "";
@@ -37,6 +37,9 @@ export function cleanContact(input = {}) {
       organization: clean(input.organization, CONTACT_LIMITS.organization) || null,
       phone: clean(input.phone, CONTACT_LIMITS.phone) || null,
       handle: clean(input.handle, CONTACT_LIMITS.handle) || null,
+      // An address keeps its line breaks (one line each in the letter).
+      address: String(input.address ?? "").replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n").slice(0, CONTACT_LIMITS.address) || null,
+      salutation: clean(input.salutation, CONTACT_LIMITS.salutation) || null,
       notes: notes || null,
     },
   };

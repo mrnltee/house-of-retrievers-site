@@ -9,7 +9,8 @@ test("the eight starter letters are there, each with a subject", () => {
   for (const l of LETTER_STARTERS) {
     assert.ok(l.subject, l.key);
     // The guests-of-honor letter is written to Senator Zubiri by name.
-    assert.match(l.cover, l.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : /\[Company Name\]/, l.key);
+    assert.match(l.cover, l.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : /^Dear \[Salutation\],/, l.key);
+    if (l.key !== "invite-guests-of-honor") assert.match(l.body, /\[Contact Person\?\]\n\[Company Name\]\n\[Address\?\]/, l.key);
   }
 });
 
@@ -27,9 +28,9 @@ test("covering emails (owner's brief, 2026-10-27): portfolio link, official name
 });
 
 test("blanks: automatic ones are not asked for; optional and suggested ones are marked", () => {
-  const blanks = blanksOf("Hi [Company Name] [Date]", "[Address?]\n[Reply Date] and [Reply Date]", "[Proposed: Non-exclusive.]");
-  assert.deepEqual(blanks.map((b) => b.label), ["Address", "Reply Date", "Proposed: Non-exclusive."]);
-  assert.equal(blanks[0].optional, true);
+  const blanks = blanksOf("Hi [Company Name] [Date] [Salutation]", "[Address?]\n[Contact Person?]\n[Reply Date] and [Reply Date]", "[Note?] [Proposed: Non-exclusive.]");
+  assert.deepEqual(blanks.map((b) => b.label), ["Reply Date", "Note", "Proposed: Non-exclusive."]);
+  assert.equal(blanks[1].optional, true);
   assert.equal(blanks[2].suggestion, "Non-exclusive.");
   assert.deepEqual(missingBlanks(blanks, { "Proposed: Non-exclusive.": "x" }), ["Reply Date"]);
 });
@@ -38,7 +39,7 @@ test("filling: the company name everywhere, the date, and an empty optional line
   const text = "[Date]\n[Company Name]\n[Address?]\n\nDear [Company Name]:\n\nReply by [Reply Date].";
   const out = fillLetter(text, { name: "Bark Boulevard PH", date: "October 24, 2026", values: { "Reply Date": "Nov 6" } });
   assert.equal(out, "October 24, 2026\nBark Boulevard PH\n\nDear Bark Boulevard PH:\n\nReply by Nov 6.");
-  assert.match(fillLetter("[Address?]", { values: { Address: "Pasay" } }), /^Pasay$/);
+  assert.match(fillLetter("[Address?]", { address: "Pasay" }), /^Pasay$/);
 });
 
 test("the recipient is always the company; for people, their organization, else their name", () => {
@@ -147,4 +148,17 @@ test("the covering email tells people to open the PDF in a PDF viewer, not Googl
   const mail = letterCoverEmail({ subject: "Hi", cover: "Dear Bark,\n\nHello.", filename: "a.pdf" });
   assert.match(mail.text, /Adobe Acrobat Reader/);
   assert.match(mail.text, /rather than Google Docs/);
+});
+
+test("address block fills from the record; empty optional lines drop", async () => {
+  const { fillLetter, recipientFields } = await import("./letters.mjs");
+  const head = "[Contact Person?]\n[Company Name]\n[Address?]\n\nDear [Salutation]:";
+  const full = recipientFields({ supporter: { name: "Modeler Collection", contact_name: "Jessie Mae Gabriel", address: "1 Main St.\nQuezon City", salutation: "Ms. Jessie" } });
+  assert.equal(fillLetter(head, full), "Jessie Mae Gabriel\nModeler Collection\n1 Main St.\nQuezon City\n\nDear Ms. Jessie:");
+  const bare = recipientFields({ supporter: { name: "Pawsome" } });
+  assert.equal(fillLetter(head, bare), "Pawsome\n\nDear Pawsome:");
+  const guest = recipientFields({ contact: { name: "Jessie Mae Gabriel", organization: "Modeler Collection" } });
+  assert.equal(fillLetter(head, guest), "Jessie Mae Gabriel\nModeler Collection\n\nDear Jessie Mae Gabriel:");
+  const celeb = recipientFields({ contact: { name: "Anne Curtis", salutation: "Ms. Anne" } });
+  assert.equal(fillLetter(head, celeb), "Anne Curtis\n\nDear Ms. Anne:");
 });
