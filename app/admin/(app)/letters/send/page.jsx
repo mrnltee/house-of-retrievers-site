@@ -6,6 +6,7 @@ import { listLetters, savedValues } from "../../../../lib/letterStore";
 import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import LetterSend from "./LetterSend";
+import { categoryOf, letterFor } from "../../../../lib/contacts.mjs";
 
 export const maxDuration = 120;
 
@@ -42,11 +43,17 @@ export default async function SendLetterPage({ searchParams }) {
       [kind, status, label, q],
     );
   }
+  const contactIds = refs.filter((r) => r.startsWith("contact:")).map((r) => r.slice(8)).filter(isUuid);
+  const contacts = contactIds.length ? await sql("SELECT id, name, email, category FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [contactIds]) : [];
   const people = personIds.length ? await sql("SELECT id, name, email, organization, kind FROM people WHERE id = ANY($1::uuid[]) ORDER BY name", [personIds]) : [];
   const recipients = [
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, name: recipientName({ supporter: s }), email: (s.contact_email || "").trim(), note: `${s.kind} · ${s.status}`, href: `${base}/supporters/${s.id}` })),
+    ...contacts.map((c) => ({ ref: `contact:${c.id}`, name: c.name, email: (c.email || "").trim(), note: categoryOf(c.category)?.label || "Guest list", href: `${base}/guests/${c.id}`, category: c.category })),
     ...people.map((p) => ({ ref: `person:${p.id}`, name: recipientName({ person: p }), email: (p.email || "").trim(), note: p.organization ? `${p.kind} · ${p.name}` : p.kind, href: `${base}/people/${p.id}` })),
   ];
+
+  // Guest list people whose category is meant for a different letter.
+  const mismatched = recipients.filter((r) => r.category && letterFor(r.category) !== letter.key);
 
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
   const saved = await savedValues(blanks.map((b) => b.label));
@@ -59,8 +66,9 @@ export default async function SendLetterPage({ searchParams }) {
       <p className="small"><a href={`${base}/supporters?view=list`}>← Sponsors & partners</a> · <a href={`${base}/letters`}>Letters</a></p>
       <PageHead title="Send a letter" lead={`The letter is filled in with each recipient's name and sent as a PDF attached to a short email. Up to ${MAX_LETTER_RECIPIENTS} at a time.`} />
       <Flash params={params} />
+      {mismatched.length > 0 && <p className="card" role="alert" style={{ borderLeft: "4px solid #b8860b" }}>Check the letter: {mismatched.map((r) => `${r.name} (${r.note})`).join(", ")} {mismatched.length === 1 ? "is" : "are"} usually sent a different letter.</p>}
       {recipients.length === 0 ? (
-        <p className="card muted">No recipients picked. In <a href={`${base}/supporters?view=list`}>Sponsors & partners</a>, tick the records and choose “Send a letter”, or open someone in People and choose “Send a letter”.</p>
+        <p className="card muted">No recipients picked. In the <a href={`${base}/guests`}>Guest list</a> or <a href={`${base}/supporters?view=list`}>Sponsors & partners</a>, tick the records and choose “Send a letter”, or open someone in People and choose “Send a letter”.</p>
       ) : (
         <LetterSend
           letters={letters.map((l) => ({ key: l.key, name: l.name }))}

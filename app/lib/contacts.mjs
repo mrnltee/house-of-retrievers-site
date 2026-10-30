@@ -1,0 +1,43 @@
+/**
+ * Guest list (Letters → Guest list): who HOR sends letters to, by category.
+ * Each category matches the letter written for it in Settings → Letters, so
+ * picking a group picks its letter. Pure functions, so they can be tested.
+ */
+export const CONTACT_CATEGORIES = [
+  { key: "politician", label: "Politicians & guests of honor", letter: "invite-guests-of-honor" },
+  { key: "speaker", label: "Guest speakers (animal advocates)", letter: "invite-guest-speaker" },
+  { key: "celebrity", label: "Celebrities", letter: "invite-special-guest" },
+  { key: "vip", label: "VIP furparents & special guests", letter: "invite-special-guest" },
+  { key: "influencer", label: "Influencers & creators", letter: "invite-creators" },
+  { key: "media", label: "Media & press", letter: "invite-media" },
+  { key: "sponsor", label: "Sponsors (brands & companies)", letter: "sponsorship-letter" },
+  { key: "partner", label: "X-Deal partners", letter: "xdeal-proposal" },
+  { key: "donor", label: "Cash donors", letter: "donation-letter" },
+];
+
+export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000 };
+
+export const categoryOf = (key) => CONTACT_CATEGORIES.find((c) => c.key === key) || null;
+export const letterFor = (key) => categoryOf(key)?.letter || "";
+
+const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+
+/** Form fields → { contact } or { error }. */
+export function cleanContact(input = {}) {
+  const category = categoryOf(input.category)?.key;
+  if (!category) return { error: "Pick a category." };
+  const name = clean(input.name, CONTACT_LIMITS.name);
+  if (!name) return { error: "Type the name as it should appear on the letter." };
+  const email = clean(input.email, CONTACT_LIMITS.email).toLowerCase();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "That email doesn't look right." };
+  const notes = String(input.notes ?? "").trim().slice(0, CONTACT_LIMITS.notes);
+  return {
+    contact: {
+      category, name, email: email || null,
+      organization: clean(input.organization, CONTACT_LIMITS.organization) || null,
+      phone: clean(input.phone, CONTACT_LIMITS.phone) || null,
+      handle: clean(input.handle, CONTACT_LIMITS.handle) || null,
+      notes: notes || null,
+    },
+  };
+}

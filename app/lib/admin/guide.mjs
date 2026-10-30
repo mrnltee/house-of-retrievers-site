@@ -11,6 +11,7 @@ export const HOW = {
   checkin: { what: "Event-day check-in.", view: "See who is expected and who has arrived.", edit: "Pick the event, then scan each guest's QR code (or find their name) to check them in." },
   people: { what: "Members, volunteers, sponsors and partners who joined through the website.", view: "Search and read each person's details.", edit: "Update their status and notes, send them an email, or import a list." },
   supporters: { what: "Sponsors and partners and what each gives.", view: "Read each sponsor's details and history.", edit: "Add or edit a sponsor, import a spreadsheet, or delete a test entry." },
+  guests: { what: "Everyone HOR sends letters to, grouped by the letter each category gets.", view: "See the guest list and who got which letter.", edit: "Add or edit guests and send each group its letter." },
   media: { what: "Photos and files used on the website.", view: "Browse what's there.", edit: "Upload, replace or remove photos." },
   payments: { what: "Where supporters send money (GCash, Maya, bank).", view: "See the current payment details.", edit: "Ask for a change. A different Owner must approve it before it goes live." },
   emails: { what: "The emails the website sends (confirmations, reminders).", view: "Read each template.", edit: "Edit the wording and send yourself a test first." },

@@ -64,13 +64,15 @@ export async function resetLetter(data) {
 /** "supporter:<uuid>" / "person:<uuid>" → rows with who to send to. */
 async function loadRecipients(refs) {
   const ids = (kind) => refs.filter((r) => r.startsWith(`${kind}:`)).map((r) => r.slice(kind.length + 1)).filter(isUuid);
-  const [supporters, people] = await Promise.all([
+  const [supporters, people, contacts] = await Promise.all([
     ids("supporter").length ? sql("SELECT id, name, kind, contact_email FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
     ids("person").length ? sql("SELECT id, name, email, organization FROM people WHERE id = ANY($1::uuid[])", [ids("person")]) : [],
+    ids("contact").length ? sql("SELECT id, name, email FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
   ]);
   return [
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", name: recipientName({ supporter: s }), email: (s.contact_email || "").trim() })),
     ...people.map((p) => ({ ref: `person:${p.id}`, id: p.id, type: "person", name: recipientName({ person: p }), email: (p.email || "").trim() })),
+    ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", name: c.name, email: (c.email || "").trim() })),
   ];
 }
 
@@ -111,7 +113,8 @@ export async function sendLetters(data) {
       const result = await sendEmail({ to: r.email, ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
-      await logActivity(admin.email, r.type === "supporter" ? "supporter.letter" : "person.letter", r.name, { [r.type === "supporter" ? "supporterId" : "personId"]: r.id, letter: letter.key, letterName: letter.name, to: r.email });
+      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email });
+      if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second
     }
 
