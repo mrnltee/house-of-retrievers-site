@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import FormatBar, { boldKey } from "./FormatBar";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate, prepareLetter } from "../../../../lib/letters.mjs";
 import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { blankSample } from "../../../../lib/letters/samples.mjs";
@@ -28,6 +29,9 @@ export default function LetterEditor({ letter, original, pdfAction }) {
     return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename });
   }, [fields, letter.name]);
   const set = (name) => (e) => setFields((f) => ({ ...f, [name]: e.target.value }));
+  const put = (name) => (text) => setFields((f) => ({ ...f, [name]: text }));
+  const coverRef = useRef(null);
+  const bodyRef = useRef(null);
 
   return (
     <div className="grid-2 template-grid">
@@ -41,14 +45,16 @@ export default function LetterEditor({ letter, original, pdfAction }) {
           <span>Email subject <small>The covering email's subject line</small></span>
           <input type="text" name="subject" maxLength={LETTER_LIMITS.subject} required value={fields.subject} onChange={set("subject")} />
         </label>
-        <label className="field">
-          <span>Covering email <small>The short email the PDF is attached to. A first “Dear [Company Name],” line becomes the greeting. Write a link as [Partnership Portfolio](https://…).</small></span>
-          <textarea name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
-        </label>
-        <label className="field">
-          <span>Letter <small>Becomes the PDF</small></span>
-          <textarea name="body" rows={24} maxLength={LETTER_LIMITS.body} required value={fields.body} onChange={set("body")} className="letter-source" spellCheck />
-        </label>
+        <div className="field">
+          <label htmlFor="letter-cover">Covering email <small>The short email the PDF is attached to. A first “Dear [Company Name],” line becomes the greeting. Write a link as [Partnership Portfolio](https://…).</small></label>
+          <FormatBar target={coverRef} keys={["link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting" />
+          <textarea id="letter-cover" ref={coverRef} name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
+        </div>
+        <div className="field">
+          <label htmlFor="letter-body">Letter <small>Becomes the PDF. Select text, then use the buttons.</small></label>
+          <FormatBar target={bodyRef} keys={["bold", "h1", "h2", "center", "bullet", "table", "page", "blank"]} value={fields.body} onChange={put("body")} label="Letter formatting" />
+          <textarea id="letter-body" ref={bodyRef} name="body" rows={24} maxLength={LETTER_LIMITS.body} required value={fields.body} onChange={set("body")} onKeyDown={boldKey} className="letter-source" spellCheck />
+        </div>
         <details className="small">
           <summary>How to write a letter</summary>
           <ul>{LETTER_HELP.map((line) => <li key={line}>{line}</li>)}</ul>

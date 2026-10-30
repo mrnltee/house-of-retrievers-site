@@ -1593,3 +1593,10 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
 .lenis.lenis-stopped { overflow: clip; }
+
+/* Letter editor formatting buttons (FormatBar.jsx) */
+.letter-format-bar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border: 1px solid #d9d2bf; border-bottom: 0; border-radius: 10px 10px 0 0; background: #f5f1e6; }
+.letter-format-bar + textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
+.letter-format-btn { min-width: 36px; min-height: 36px; padding: 0 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; font: 600 14px/1 inherit; color: #2b2a27; cursor: pointer; }
+.letter-format-btn:hover, .letter-format-btn:focus-visible { background: #fff; border-color: #d9d2bf; }
+.letter-format-btn.fmt-bold { font-weight: 800; }
