@@ -204,6 +204,10 @@ export default async function RegistrationDetail({ params, searchParams }) {
                     {tiers.map((tier, index) => <option key={index} value={index}>{ticketLine(tier.label, tier.amount)}</option>)}
                   </select>
                 </label>}
+                {reg.fee_required && <label className="field"><span>Promo code <small>Optional · change or clear it and the amount due is worked out again</small></span>
+                  <input type="hidden" name="promoSent" value="1" />
+                  <input name="promoCode" maxLength={30} autoComplete="off" spellCheck={false} style={{ textTransform: "uppercase" }} defaultValue={reg.promo?.code || ""} placeholder="None" />
+                </label>}
                 <label className="check"><input type="checkbox" name="photoConsent" defaultChecked={reg.photo_consent} /> <span>Photos of them are OK</span></label>
                 <label className="check"><input type="checkbox" name="under18" defaultChecked={reg.under_18} /> <span>Under 18</span></label>
                 {reg.under_18 && <label className="field"><span>Guardian&apos;s name</span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
