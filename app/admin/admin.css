@@ -693,3 +693,12 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .page-head:has(.letter-nav) > div:first-child { min-width: 0; }
 .page-head:has(.letter-nav) .letter-nav { flex-wrap: nowrap; white-space: nowrap; }
 @media (max-width: 860px) { .page-head:has(.letter-nav) { flex-wrap: wrap; } }
+
+/* Letter editor formatting buttons (FormatBar.jsx): one box with the text area under it. */
+.letter-format { display: grid; }
+.letter-format-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px; border: 1px solid var(--a-field); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--a-sand); }
+.admin .letter-format textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
+.letter-format-btn { min-height: 32px; padding: 0 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; font: 600 13px/1 inherit; color: var(--a-ink); cursor: pointer; white-space: nowrap; }
+.letter-format-btn:hover, .letter-format-btn:focus-visible { background: #fff; border-color: var(--a-line); }
+.letter-format-btn.fmt-bold { font-weight: 800; min-width: 32px; }
+.letter-format-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--a-line); }

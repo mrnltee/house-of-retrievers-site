@@ -48,14 +48,16 @@ export default function LetterEditor({ letter, original, pdfAction }) {
           <input type="text" name="subject" maxLength={LETTER_LIMITS.subject} required value={fields.subject} onChange={set("subject")} />
         </label>
         <div className="field">
-          <label htmlFor="letter-cover">Covering email <small>The short email the PDF is attached to. A first “Dear [Company Name],” line becomes the greeting. Write a link as [Partnership Portfolio](https://…).</small></label>
-          <FormatBar target={coverRef} keys={["greeting", "link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting" />
-          <textarea id="letter-cover" ref={coverRef} name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
+          <label htmlFor="letter-cover" className="field-head">Covering email <small>The short email the PDF is attached to. A first “Dear [Salutation],” line becomes the greeting.</small></label>
+          <FormatBar target={coverRef} keys={["greeting", "|", "link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting">
+            <textarea id="letter-cover" ref={coverRef} name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
+          </FormatBar>
         </div>
         <div className="field">
-          <label htmlFor="letter-body">Letter <small>Becomes the PDF. Select text, then use the buttons.</small></label>
-          <FormatBar target={bodyRef} keys={["bold", "h1", "h2", "center", "bullet", "table", "page", "address", "greeting", "blank"]} value={fields.body} onChange={put("body")} label="Letter formatting" />
-          <textarea id="letter-body" ref={bodyRef} name="body" rows={24} maxLength={LETTER_LIMITS.body} required value={fields.body} onChange={set("body")} onKeyDown={boldKey} className="letter-source" spellCheck />
+          <label htmlFor="letter-body" className="field-head">Letter <small>Becomes the PDF. Select text, then use a button.</small></label>
+          <FormatBar target={bodyRef} keys={["bold", "h1", "h2", "|", "center", "bullet", "table", "page", "|", "address", "greeting", "blank"]} value={fields.body} onChange={put("body")} label="Letter formatting">
+            <textarea id="letter-body" ref={bodyRef} name="body" rows={24} maxLength={LETTER_LIMITS.body} required value={fields.body} onChange={set("body")} onKeyDown={boldKey} className="letter-source" spellCheck />
+          </FormatBar>
         </div>
         <details className="small">
           <summary>How to write a letter</summary>

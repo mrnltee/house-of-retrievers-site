@@ -41,14 +41,14 @@ export const FORMATS = {
   bold: { label: "B", title: "Bold", run: (t, s, e) => wrap(t, s, e, "**") },
   h1: { label: "H1", title: "Big heading", run: (t, s, e) => prefixLines(t, s, e, "# ") },
   h2: { label: "H2", title: "Section heading", run: (t, s, e) => prefixLines(t, s, e, "## ") },
-  center: { label: "≡", title: "Centre the line", run: (t, s, e) => prefixLines(t, s, e, "^ ") },
-  bullet: { label: "•", title: "Bullet list", run: (t, s, e) => prefixLines(t, s, e, "- ") },
-  table: { label: "▦", title: "Table", run: (t, s, e) => insertBlock(t, s, e, "|! Heading | Heading |\n| Cell | Cell |") },
-  page: { label: "⤓", title: "New page", run: (t, s, e) => insertBlock(t, s, e, "---page---") },
-  blank: { label: "[ ]", title: "Blank filled in when sending", run: (t, s, e) => wrap(t, s, e, "[", "]", "Blank name") },
-  address: { label: "✉ To", title: "Address block (contact person, company, address)", run: (t, s, e) => insertBlock(t, s, e, "[Contact Person?]\n[Company Name]\n[Address?]") },
-  greeting: { label: "Dear …", title: "Greeting name (e.g. Ms. Jessie)", run: (t, s, e) => { const out = t.slice(0, s) + "[Salutation]" + t.slice(e); return { text: out, start: s, end: s + 12 }; } },
-  link: { label: "🔗", title: "Link", run: (t, s, e) => { const r = wrap(t, s, e, "[", "](https://)", "Link text"); return { ...r, start: r.end + 2, end: r.end + 10 }; } },
+  center: { label: "Centre", title: "Centre the line", run: (t, s, e) => prefixLines(t, s, e, "^ ") },
+  bullet: { label: "• List", title: "Bullet list", run: (t, s, e) => prefixLines(t, s, e, "- ") },
+  table: { label: "Table", title: "Table", run: (t, s, e) => insertBlock(t, s, e, "|! Heading | Heading |\n| Cell | Cell |") },
+  page: { label: "New page", title: "New page", run: (t, s, e) => insertBlock(t, s, e, "---page---") },
+  blank: { label: "[ ] Blank", title: "Blank filled in when sending", run: (t, s, e) => wrap(t, s, e, "[", "]", "Blank name") },
+  address: { label: "Address block", title: "Address block (contact person, company, address)", run: (t, s, e) => insertBlock(t, s, e, "[Contact Person?]\n[Company Name]\n[Address?]") },
+  greeting: { label: "Dear name", title: "Greeting name (e.g. Ms. Jessie)", run: (t, s, e) => { const out = t.slice(0, s) + "[Salutation]" + t.slice(e); return { text: out, start: s, end: s + 12 }; } },
+  link: { label: "Link", title: "Link", run: (t, s, e) => { const r = wrap(t, s, e, "[", "](https://)", "Link text"); return { ...r, start: r.end + 2, end: r.end + 10 }; } },
 };
 
 export function applyFormat(key, text, start, end) {
