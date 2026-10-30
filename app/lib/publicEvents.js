@@ -2,6 +2,7 @@ import { TICKET_COUNTS_COLUMN } from "./ticketCounts.mjs";
 import { events as contentEvents } from "../content/events";
 import { hasDatabase, sql } from "./db";
 import { toPublicEvent } from "./admin/events.mjs";
+import { withPoster } from "./posterFrame.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { supporterLinks } from "./publicSupporters";
 import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL } from "./eventCapacity.mjs";
@@ -23,7 +24,8 @@ export async function loadEvents() {
   if (!hasDatabase()) return contentEvents;
   try {
     const rows = await sql(`${PUBLIC_EVENTS} ORDER BY e.date`);
-    return rows.map((row) => toPublicEvent(row, row.confirmed));
+    // Every cover is shown at 4:5 (owner, 2026-10-30), even one saved before posters were 4:5.
+    return rows.map((row) => withPoster(toPublicEvent(row, row.confirmed), row));
   } catch {
     return contentEvents;
   }
@@ -36,7 +38,7 @@ export async function loadEvent(slug) {
   try {
     const [row] = await sql(`${PUBLIC_EVENTS} AND e.slug = $1`, [slug]);
     if (!row) return null;
-    const event = toPublicEvent(row, row.confirmed);
+    const event = withPoster(toPublicEvent(row, row.confirmed), row);
     // Partners and sponsors with a public record get their logo and a link.
     const links = await supporterLinks([...(event.partners || []), ...(event.sponsors || [])]);
     if (Object.keys(links).length) event.supporterLinks = links;
