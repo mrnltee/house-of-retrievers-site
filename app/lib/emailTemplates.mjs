@@ -44,7 +44,7 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * The shared frame. Tables and inline styles, because email apps ignore most
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
-function frame({ preheader, greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
+function frame({ preheader, greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true, showHeading = true }) {
   const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${text}</p>`;
   const sign = signoff
     ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${signoff.join("<br>")}</p>`
@@ -78,7 +78,7 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
     <tr><td style="background:#0D0D0D;padding:0;line-height:0"><img src="${centered ? HEADER_CENTER : HEADER}" width="560" alt="${ORG}" style="display:block;border:0;width:100%;max-width:560px;height:auto"></td></tr>
     <tr><td align="${centered ? "center" : "left"}" style="padding:32px 28px 12px;text-align:${centered ? "center" : "left"}">
       ${greeting ? p(esc(greeting)) : ""}
-      <h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D;text-align:${centered ? "center" : "left"}">${esc(heading)}</h1>
+      ${showHeading ? `<h1 class="em-h1" style="margin:0 0 18px;font:400 30px/1.15 Georgia,'Times New Roman',serif;color:#0D0D0D;text-align:${centered ? "center" : "left"}">${esc(heading)}</h1>` : ""}
       ${paragraphs.map(p).join("\n      ")}
       ${picture}
       ${cta}
@@ -92,14 +92,14 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
 }
 
 /** The plain-text twin every email needs (some apps show only this; spam filters check for it). */
-function plain({ greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true }) {
+function plain({ greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true, showHeading = true }) {
   const strip = (html) => String(html).replace(/<a class="em-text-link" href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2 ($1)").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   const ending = centered
     ? [`THORSI · ${ORG}`, "Reply to this email to reach the team.", "", footnote ? strip(footnote) : ""]
     : [footnote ? strip(footnote) : "", `${ORG} · ${HOME_URL}`, "Reply to this email to reach the team."];
   return [
     ...(greeting ? [greeting, ""] : []),
-    heading, "",
+    ...(showHeading ? [heading, ""] : []),
     ...paragraphs.map(strip).flatMap((x) => [x, ""]),
     ...(image?.caption ? [image.caption, ""] : []),
     ...(button ? [`${button.label}: ${button.href}`, ""] : []),
@@ -393,8 +393,9 @@ export function welcomeMember({ name, memberNo, furbaby = "", organization = "",
 }
 
 /**
- * The covering email for a letter (Settings → Letters): the letter's subject
- * as the heading, the filled-in cover text (a first "Dear …," paragraph
+ * The covering email for a letter (Settings → Letters): written like a letter,
+ * left-aligned with no big heading (the subject is already the inbox line, and
+ * a heading under "Dear …," read oddly; owner, 2026-10-31). The filled-in cover text (a first "Dear …," paragraph
  * becomes the greeting), and a note that the letter is attached as a PDF.
  */
 export function letterCoverEmail({ subject, cover, filename }) {
@@ -406,6 +407,8 @@ export function letterCoverEmail({ subject, cover, filename }) {
     preheader: "Our letter is attached.",
     greeting: greeting || undefined,
     heading: subject,
+    showHeading: false,
+    centered: false,
     paragraphs: messageParagraphs(greeting ? rest.join("\n\n") : text, {}),
     // Opening the PDF with "Open with Google Docs" rebuilds it and loses the layout and
     // the fill-in fields (owner, 2026-10-28), so point to a PDF viewer.
