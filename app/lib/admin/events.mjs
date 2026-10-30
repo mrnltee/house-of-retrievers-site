@@ -400,12 +400,11 @@ export function toPublicEvent(row, confirmed = 0) {
   const counts = row.ticket_counts && typeof row.ticket_counts === "object" ? row.ticket_counts : {};
   const hideLater = Boolean(row.tiers_in_order && row.tiers_hide_later);
   const gallery = Array.isArray(row.gallery) ? row.gallery : [];
-  // On the event page every picture is shown whole: the cover as uploaded (before
-  // it was framed for the card), then the extra photos.
-  // "Fill" uses the crop framed in the editor; "fit" and "tile" the photo as uploaded.
+  // On the event page the cover is the same 4:5 poster as the card (owner, 2026-10-30:
+  // re-framing must show there too), then the extra photos shown whole.
   const coverFit = cleanFit(row.image_fit);
   const media = row.image
-    ? [{ src: coverFit === "fill" ? row.image : row.image_source || row.image, alt: row.image_alt || "", fit: coverFit }, ...gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }))]
+    ? [{ src: row.image, alt: row.image_alt || "", fit: coverFit }, ...gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }))]
     : gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }));
   return {
     slug: row.slug,

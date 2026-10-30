@@ -63,19 +63,18 @@ test("photo uploaders are limited to the known groups", () => {
   assert.deepEqual(cleanUploaders(["members", "hackers", "sponsors"]), ["members", "sponsors"]);
 });
 
-test("the event page shows the uncropped cover first, then the extras", () => {
+test("the event page shows the framed 4:5 cover first, then the extras", () => {
   const event = toPublicEvent({
     slug: "a", date: "2026-12-01", registration: "none", status: "published",
     image: "/api/event-image/crop", image_source: "/api/event-image/full", image_alt: "Poster",
     gallery: [{ src: "/api/event-image/two", alt: "Venue" }],
   });
-  assert.deepEqual(event.media.map((m) => m.src), ["/api/event-image/full", "/api/event-image/two"]);
+  assert.deepEqual(event.media.map((m) => m.src), ["/api/event-image/crop", "/api/event-image/two"]);
 });
 
-test("a cover set to Fill uses the framed crop; Fit and Tile the original", () => {
+test("the event page cover is the framed poster whatever its fit", () => {
   const row = { slug: "a", date: "2026-12-01", registration: "none", status: "published", image: "/crop", image_source: "/full" };
-  assert.equal(toPublicEvent({ ...row, image_fit: "fill" }).media[0].src, "/crop");
-  assert.equal(toPublicEvent({ ...row, image_fit: "tile" }).media[0].src, "/full");
+  for (const fit of ["fill", "fit", "tile"]) assert.equal(toPublicEvent({ ...row, image_fit: fit }).media[0].src, "/crop", fit);
   assert.equal(toPublicEvent({ ...row, image_fit: "bogus" }).media[0].fit, "fit");
 });
 
