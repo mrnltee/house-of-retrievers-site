@@ -1,9 +1,14 @@
 import { manilaToday } from "./publicEvents";
 import { cleanPromoCodes, findPromo, normalizeCode, promoProblem } from "./promoCodes.mjs";
 
-/** Registrations that count as a use of a code: not deleted, not cancelled. */
+/**
+ * Registrations that count as a use of a code: confirmed, not deleted, and not an
+ * unpaid hold that has run out (same rule as capacity), so unpaid RSVPs can't use it up.
+ */
+export const PROMO_USED_WHERE = `deleted_at IS NULL AND status = 'confirmed'
+  AND (fee_status <> 'waiting' OR hold_expires_at IS NULL OR hold_expires_at > now())`;
 const USES_SQL = `SELECT count(*)::int AS used FROM registrations
-  WHERE event_id = $1 AND promo->>'code' = $2 AND deleted_at IS NULL AND status <> 'cancelled'`;
+  WHERE event_id = $1 AND promo->>'code' = $2 AND ${PROMO_USED_WHERE}`;
 
 /**
  * Checks a typed code against an event's promo codes (period and uses left).

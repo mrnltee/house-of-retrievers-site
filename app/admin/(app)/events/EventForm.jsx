@@ -6,6 +6,7 @@ import EventGallery from "./EventGallery";
 import EventPhoto from "./EventPhoto";
 import EventPreview from "./EventPreview";
 import PromoCodesField from "./PromoCodesField";
+import { PROMO_USED_WHERE } from "../../../lib/promoStore";
 import { sql } from "../../../lib/db";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
@@ -33,8 +34,8 @@ export default async function EventForm({ event, autoDescribe = false }) {
   const [partnerNames, sponsorNames, emailTemplates, ticketCounts, promoUses] = await Promise.all([
     supporterNames("Partner"), supporterNames("Sponsor"), listCustomTemplates("event"),
     event ? sql(TICKET_COUNTS_SQL, [event.id]).then(countsFromRows).catch(() => ({})) : {},
-    // Uses per promo code (not deleted or cancelled), shown beside each code.
-    event ? sql("SELECT promo->>'code' AS code, count(*)::int AS used FROM registrations WHERE event_id=$1 AND promo IS NOT NULL AND deleted_at IS NULL AND status <> 'cancelled' GROUP BY 1", [event.id]).then((rows) => Object.fromEntries(rows.map((r) => [r.code, r.used]))).catch(() => ({})) : {},
+    // Uses per promo code (same rule as the use limit), shown beside each code.
+    event ? sql(`SELECT promo->>'code' AS code, count(*)::int AS used FROM registrations WHERE event_id=$1 AND promo IS NOT NULL AND ${PROMO_USED_WHERE} GROUP BY 1`, [event.id]).then((rows) => Object.fromEntries(rows.map((r) => [r.code, r.used]))).catch(() => ({})) : {},
   ]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);
   const missing = event
