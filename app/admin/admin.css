@@ -499,6 +499,8 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .segmented button[aria-pressed="true"] { background: var(--a-ink); color: white; }
 .template-frame { width: 100%; height: 760px; border: 1px solid var(--a-line); border-radius: 12px; background: #F5F1E6; display: block; margin: 0 auto; }
 .template-frame.is-phone { max-width: 390px; }
+.template-frame-scaler { width: 100%; overflow: hidden; border-radius: 12px; }
+.template-frame-scaler .template-frame { max-width: none; transform-origin: top left; }
 .person-photo-field { margin-bottom: 8px; }
 .person-photo-field .actions { align-items: center; }
 

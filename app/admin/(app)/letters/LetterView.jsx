@@ -3,6 +3,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import LetterPreview from "./LetterPreview";
 
+// Desktop email preview: drawn at a desktop mail window's width, then scaled
+// down to fit the narrow preview column (C-060).
+const DESKTOP_WIDTH = 720;
+const FRAME_HEIGHT = 760;
+
 /**
  * The letter preview with a switch to the covering email as recipients get it
  * (phone or desktop width) and to the actual PDF (owner, 2026-10-27): the
@@ -16,6 +21,18 @@ export default function LetterView({ text, action, fields, email }) {
   const form = useRef(null);
   const frame = `letter-pdf-${useId().replace(/:/g, "")}`;
   const signature = JSON.stringify(fields);
+  const box = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return undefined;
+    const fit = () => setScale(Math.min(1, el.clientWidth / DESKTOP_WIDTH) || 1);
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mode, width]);
 
   useEffect(() => {
     if (mode !== "pdf") return undefined;
@@ -36,7 +53,19 @@ export default function LetterView({ text, action, fields, email }) {
             <button type="button" aria-pressed={width === "phone"} onClick={() => setWidth("phone")}>Phone</button>
             <button type="button" aria-pressed={width === "desktop"} onClick={() => setWidth("desktop")}>Desktop</button>
           </div>
-          <iframe title="The covering email" className={`template-frame is-${width}`} srcDoc={email.html} sandbox="" />
+          {width === "desktop" ? (
+            <div ref={box} className="template-frame-scaler" style={{ height: FRAME_HEIGHT }}>
+              <iframe
+                title="The covering email"
+                className="template-frame is-desktop"
+                srcDoc={email.html}
+                sandbox=""
+                style={{ width: DESKTOP_WIDTH, height: FRAME_HEIGHT / scale, transform: `scale(${scale})` }}
+              />
+            </div>
+          ) : (
+            <iframe title="The covering email" className={`template-frame is-${width}`} srcDoc={email.html} sandbox="" />
+          )}
           <p className="small muted" style={{ margin: 0 }}>The email the letter is attached to, as the recipient sees it. Links work in the real email.</p>
         </>
       ) : mode === "pdf" ? (
