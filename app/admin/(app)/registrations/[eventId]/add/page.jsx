@@ -66,6 +66,7 @@ export default async function AddRegistration({ params, searchParams }) {
             </label>
           ) : <div />}
         </div>
+        {event.fee_required && <label className="field"><span>Promo code <small>Optional · same dates and use limits as the RSVP form</small></span><input name="promoCode" maxLength={30} autoComplete="off" spellCheck={false} style={{ textTransform: "uppercase" }} /></label>}
         {event.fee_required && (
           <>
             <fieldset className="plain">

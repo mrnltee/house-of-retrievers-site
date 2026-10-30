@@ -15,6 +15,7 @@ import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../../../lib/registrationPricing.mjs";
+import { applyPromo, promoLabel } from "../../../../../../lib/promoCodes.mjs";
 import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, remindExpiredHolds, resendPass, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
@@ -67,6 +68,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
   // What today's prices say they owe (e.g. pair pricing), to spot an overpayment to refund.
   const currentTier = tiers[selectedTier];
   const currentDue = currentTier ? calculateAmountDue({ basis: cleanPricingBasis(reg.pricing_basis), tier: currentTier, humans: reg.human_count ?? 1, furbabies: reg.furbaby_count ?? 0, includedFurbabiesPerHuman: reg.included_furbabies_per_human, additionalFurbabyFee: reg.additional_furbaby_fee }) : null;
+  if (currentDue && !currentDue.error && reg.promo) currentDue.amount = applyPromo(reg.promo, currentDue, currentTier).amount;
   const overpaid = reg.fee_status === "paid" && currentDue && !currentDue.error ? overpaidBy({ payAmount: reg.pay_amount, due: currentDue.amount, refunded: reg.refund_amount }) : 0;
   const holdExpired = reg.fee_status === "waiting" && !isActiveRegistrationHold({ feeStatus: reg.fee_status, holdExpiresAt: reg.hold_expires_at });
   const back = `${base}/registrations/${eventId}${reg.fee_status === "review" ? "?show=check" : ""}`;
@@ -121,6 +123,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               <div><dt>Status</dt><dd>{reg.status === "confirmed" ? (reg.checked_in_at ? `Checked in ${formatWhen(reg.checked_in_at)}` : "Confirmed") : reg.status === "waitlist" ? "Waitlist" : "Cancelled"}</dd></div>
               {reg.fee_required && <div><dt>Ticket</dt><dd>{ticketLine(reg.ticket_label, reg.ticket_amount) || "—"}</dd></div>}
               {reg.fee_required && <div><dt>Amount due</dt><dd>{due != null ? peso(due) : "—"}</dd></div>}
+              {reg.promo && <div><dt>Promo code</dt><dd>{reg.promo.code} · {promoLabel(reg.promo)}{reg.promo_discount ? ` · ${peso(reg.promo_discount)} off` : ""}</dd></div>}
               <div><dt>People</dt><dd>{reg.human_count ?? 1}</dd></div>
               {reg.guest_names?.some(Boolean) && <div><dt>With</dt><dd>{reg.guest_names.filter(Boolean).join(", ")}</dd></div>}
               <div><dt>Furbabies</dt><dd>{reg.furbaby_count ?? 0}</dd></div>

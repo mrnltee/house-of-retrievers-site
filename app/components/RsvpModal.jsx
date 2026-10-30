@@ -17,6 +17,7 @@ const DOG_WAITLIST = -2;
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImageWithin } from "../lib/resizeImage";
 import { vaccinationBudget } from "../lib/vaccinationRecords.mjs";
+import { applyPromo } from "../lib/promoCodes.mjs";
 
 const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
 
@@ -37,6 +38,10 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const [furbabyCount, setFurbabyCount] = useState(1);
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [breeds, setBreeds] = useState([]);
+  // A promo code checked with /api/rsvp/promo: { code, kind, percent, label }. The RSVP checks it again.
+  const [promoText, setPromoText] = useState("");
+  const [promo, setPromo] = useState(null);
+  const [promoState, setPromoState] = useState({ checking: false, error: "" });
   const [proofSent, setProofSent] = useState(false);
   const [holdRemaining, setHoldRemaining] = useState(null);
   const waitlist = event.status === "full";
@@ -50,7 +55,9 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const [ticket, setTicket] = useState(tickets.length === 1 && !offerDogWaitlist ? tickets[0].i : -1);
   const onDogWaitlist = offerDogWaitlist && ticket === DOG_WAITLIST;
   const chosen = tickets.find((t) => t.i === ticket);
-  const due = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
+  const fullDue = chosen ? calculateAmountDue({ basis: event.pricingBasis, tier: chosen, humans: humanCount, furbabies: furbabyCount, includedFurbabiesPerHuman: event.includedFurbabiesPerHuman, additionalFurbabyFee: event.additionalFurbabyFee }) : null;
+  const promoApplied = promo && fullDue && !fullDue.error ? applyPromo(promo, fullDue, chosen) : null;
+  const due = promoApplied ? { ...fullDue, amount: promoApplied.amount } : fullDue;
   // Use the selected ticket rule directly. This keeps the public form correct even
   // when older event rows carry a legacy pricing-basis value.
   const humanOnly = chosen?.attendanceBasis === "human_only";
@@ -121,6 +128,23 @@ export default function RsvpModal({ event, onClose, preview = false }) {
     if (furbabyPackage && Number(furbabyCount) < 1) setFurbabyCount(1);
   }, [humanOnly, furbabyPackage, furbabyCount]);
 
+  async function applyCode() {
+    if (!promoText.trim() || promoState.checking) return;
+    if (preview) { setPromoState({ checking: false, error: "This is a preview. Codes are checked on the live form." }); return; }
+    setPromoState({ checking: true, error: "" });
+    try {
+      const response = await fetch("/api/rsvp/promo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: event.slug, code: promoText }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "That code didn't work.");
+      setPromo(data);
+      setPromoText(data.code);
+      setPromoState({ checking: false, error: "" });
+    } catch (error) {
+      setPromo(null);
+      setPromoState({ checking: false, error: error.message });
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     if (preview) { setState({ sending: false, error: "This is a preview. Nothing was sent.", result: null }); return; }
@@ -150,6 +174,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
           guardianName: form.get("guardianName"),
           vaccinationRecords,
           ticket: ticket >= 0 ? ticket : undefined,
+          promoCode: promo && !onDogWaitlist ? promo.code : undefined,
           dogWaitlist: onDogWaitlist || undefined,
           [HONEYPOT_FIELD]: form.get(HONEYPOT_FIELD),
           elapsedMs: Date.now() - openedAt.current,
@@ -267,7 +292,17 @@ export default function RsvpModal({ event, onClose, preview = false }) {
               </fieldset>
             ))}
             {furbabyPackage && <p className="form-note">{ticketRuleNote(chosen)}</p>}
-            {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
+            {event.feeRequired && !waitlist && !onDogWaitlist && <div className="rsvp-promo">
+              <label htmlFor="rsvp-promo">Promo code <small>Optional</small></label>
+              <div className="rsvp-promo-row">
+                <input id="rsvp-promo" value={promoText} maxLength={30} autoComplete="off" spellCheck={false} autoCapitalize="characters" aria-describedby="rsvp-promo-status" readOnly={Boolean(promo)} onChange={(e) => { setPromoText(e.target.value); setPromoState({ checking: false, error: "" }); }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyCode(); } }} />
+                {promo
+                  ? <button type="button" className="button events-button-outline" onClick={() => { setPromo(null); setPromoText(""); setPromoState({ checking: false, error: "" }); }}>Remove</button>
+                  : <button type="button" className="button events-button-outline" onClick={applyCode} disabled={promoState.checking || !promoText.trim()}>{promoState.checking ? "Checking…" : "Apply"}</button>}
+              </div>
+              <p id="rsvp-promo-status" className={`form-note${promoState.error ? " form-error" : ""}`} role="status">{promoState.error || (promo ? `${promo.code} applied: ${promo.label}${promo.kind === "free_one" ? " (one at the ticket's rate; the rest at the regular rate)" : ""}.` : "")}</p>
+            </div>}
+            {event.feeRequired && chosen && due?.amount != null && <div className="rsvp-total" role="status"><span>Your registration</span><strong>{peso(due.amount)}</strong>{promoApplied?.discount ? <small>{peso(fullDue.amount)} less {peso(promoApplied.discount)} ({promo.code})</small> : null}{chosen.limit ? (() => { const used = ticketLimitUnits(event.pricingBasis, chosen, Number(humanCount) || 1, Number(furbabyCount) || 0); return <small>Uses {used} of the {chosen.left} {chosen.label || "limited"} {chosen.left === 1 ? "place" : "places"} left</small>; })() : null}</div>}
             {formConfig.optional.includes("photoConsent") && <fieldset className="furbaby-question">
               <legend>Are photos of you OK?</legend>
               <p className="furbaby-hint">We share event photos on Instagram and Facebook.</p>
@@ -287,7 +322,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
             {!waitlist && !onDogWaitlist && event.feeRequired && <p className="form-note">{paymentNotice(event)} Your spot is held as soon as you send this; you pay next.</p>}
             {state.error && <p className="form-error" role="alert">{state.error}</p>}
             <p className="form-note">We only use this to run this event. <a href={PRIVACY_URL} target="_blank" rel="noreferrer">Read our privacy notice.</a></p>
-            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : onDogWaitlist ? "Join the dog waitlist" : event.feeRequired ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : event.rsvpLabel || "Send my RSVP"}</button>
+            <button className="button dark" type="submit" disabled={state.sending}>{state.sending ? "Sending…" : waitlist ? "Join the waitlist" : onDogWaitlist ? "Join the dog waitlist" : event.feeRequired && !(promoApplied && due.amount === 0) ? `Continue to payment${due?.amount != null ? ` · ${peso(due.amount)}` : ""}` : event.rsvpLabel || "Send my RSVP"}</button>
           </form>
         )}
       </section>

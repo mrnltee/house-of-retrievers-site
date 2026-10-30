@@ -19,6 +19,8 @@ import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
 import { readCheckInTime } from "../lib/manualCheckIn.mjs";
 import { cleanBreeds } from "../lib/breeds.mjs";
+import { applyPromo, promoSnapshot } from "../lib/promoCodes.mjs";
+import { checkPromo } from "../lib/promoStore";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -213,7 +215,7 @@ export async function addRegistration(data) {
   const back = isUuid(eventId) ? `/registrations/${eventId}/add` : "/registrations";
   return guarded(back, async () => {
     const admin = await actionAdmin("registrations:edit");
-    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config FROM events WHERE id = $1", [eventId]) : [];
+    const [event] = isUuid(eventId) ? await sql("SELECT id, title, fee_required, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config, promo_codes FROM events WHERE id = $1", [eventId]) : [];
     if (!event) await backWith("/registrations", "error", "That event no longer exists.");
     const { value, error } = validateRsvp({
       name: form(data, "name"), email: form(data, "email"), furbabyName: form(data, "furbabyName"),
@@ -231,14 +233,27 @@ export async function addRegistration(data) {
     const owes = owesPayment(event.fee_required, ticket.value);
     const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
+    // An optional promo code, with the same period and use limits as the public RSVP.
+    let promo = null;
+    let discount = null;
+    if (form(data, "promoCode").trim()) {
+      if (!owes) await backWith(back, "error", "Promo codes are for paid tickets.");
+      const checked = await checkPromo({ sql }, event.id, event.promo_codes, form(data, "promoCode"));
+      if (checked.error) await backWith(back, "error", checked.error);
+      promo = checked.promo;
+      const applied = applyPromo(promo, due, ticket.value);
+      discount = applied.discount;
+      due.amount = applied.amount;
+    }
+    const owesNow = owes && !(promo && due.amount === 0);
     let feeStatus = "not_due";
     let proofDetails = { method: null, reference: "", amount: null };
-    if (owes && payment === "paid") {
-      const checked = validateProof({ method: form(data, "method"), reference: form(data, "reference"), amount: form(data, "amount") || String(ticket.value.amount ?? "") }, { admin: true });
+    if (owesNow && payment === "paid") {
+      const checked = validateProof({ method: form(data, "method"), reference: form(data, "reference"), amount: form(data, "amount") || String(due.amount ?? ticket.value.amount ?? "") }, { admin: true });
       if (checked.error) await backWith(back, "error", checked.error);
       proofDetails = checked.value;
       feeStatus = "paid";
-    } else if (owes && payment === "pending") feeStatus = "waiting";
+    } else if (owesNow && payment === "pending") feeStatus = "waiting";
 
     let created;
     try {
@@ -254,12 +269,12 @@ export async function addRegistration(data) {
         }
         const [row] = await tx.sql(
           `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code,
-             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds, custom_answers)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22,$23) RETURNING id`,
+             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds, custom_answers, promo, promo_discount)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22,$23,$24,$25) RETURNING id`,
           [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, feeStatus, newCheckInCode(),
             ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
             feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email,
-            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies), answersJson(event, data)],
+            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies), answersJson(event, data), promo ? JSON.stringify(promoSnapshot(promo)) : null, discount],
         );
         const receipt = form(data, "receipt");
         if (receipt) {
@@ -310,6 +325,8 @@ export async function updateRegistration(data) {
     if (chosen.error) await backWith(back, "error", chosen.error);
     const due = calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event?.included_furbabies_per_human, additionalFurbabyFee: event?.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
+    // The code it registered with keeps applying (same kind of discount on the new amount).
+    if (reg.promo && !due.error) due.amount = applyPromo(reg.promo, due, chosen.value).amount;
     const oldDue = reg.amount_due ?? reg.ticket_amount ?? 0;
     if (reg.fee_status === "paid" && !paidAmountChangeAllowed({ oldDue, nextDue: due.amount, payAmount: reg.pay_amount })) {
       await backWith(back, "error", "This registration is already paid. The existing payment must match the new amount before its attendee count or ticket can change.");
@@ -385,6 +402,7 @@ export async function recordRefund(data) {
     if (!tier) await backWith(back, "error", "This registration's ticket isn't in the event's prices any more, so today's amount can't be worked out.");
     const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier, humans: reg.human_count ?? 1, furbabies: reg.furbaby_count ?? 0, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
+    if (reg.promo) due.amount = applyPromo(reg.promo, due, tier).amount;
     const refund = overpaidBy({ payAmount: reg.pay_amount, due: due.amount, refunded: reg.refund_amount });
     if (!refund) await backWith(back, "error", "This registration didn't pay more than it owes, so there's nothing to refund.");
     const method = Object.hasOwn(ADMIN_PAY_METHODS, form(data, "method")) ? form(data, "method") : null;

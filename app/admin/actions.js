@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanPromoCodes } from "../lib/promoCodes.mjs";
 import { cleanRainbow, livingFurbabyNames } from "../lib/attendeeNames.mjs";
 import { cleanCustomQuestions } from "../lib/customQuestions.mjs";
 import { revalidatePath } from "next/cache";
@@ -229,6 +230,11 @@ export async function saveEvent(data) {
     if (data.has("venueAddress")) await sql("UPDATE events SET venue_address=$1 WHERE id=$2", [value.venueAddress, eventId]);
     if (data.has("included")) await sql("UPDATE events SET included=$1 WHERE id=$2", [value.included, eventId]);
     if (data.has("imageFit")) await sql("UPDATE events SET image_fit=$1 WHERE id=$2", [value.imageFit, eventId]);
+    if (data.has("promoCodes")) {
+      const promos = cleanPromoCodes(form(data, "promoCodes"));
+      if (promos.error) await backWith(`/events/${eventId}`, "error", `Saved, except the promo codes: ${promos.error}`);
+      await sql("UPDATE events SET promo_codes=$1 WHERE id=$2", [JSON.stringify(promos.codes), eventId]);
+    }
     if (data.has("gallery")) await sql("UPDATE events SET gallery=$1 WHERE id=$2", [JSON.stringify(value.gallery), eventId]);
     if (data.has("photoUploadsSent")) await sql("UPDATE events SET photo_uploads=$1 WHERE id=$2", [value.photoUploads, eventId]);
     if (data.has("checkinSuccessTitle") || data.has("checkinSoundPreset")) {

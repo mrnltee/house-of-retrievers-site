@@ -17,6 +17,8 @@ import { tierLeft } from "../../lib/prices.mjs";
 import { holdExpiresAt, isActiveRegistrationHold, resolveHoldMinutes } from "../../lib/registrationHolds.mjs";
 import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL, cleanCapacityBasis, hoomanLimitFits, validateCapacityCounts } from "../../lib/eventCapacity.mjs";
 import { cleanBreeds } from "../../lib/breeds.mjs";
+import { applyPromo, promoSnapshot } from "../../lib/promoCodes.mjs";
+import { checkPromo } from "../../lib/promoStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,7 +55,7 @@ export async function POST(request) {
     const result = await transaction(async (tx) => {
       // Lock the event row so two people can't both take the last slot.
       const [event] = await tx.sql(
-        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config, tiers_in_order, max_public_humans FROM events WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, title, capacity, capacity_basis, rsvp_open, registration, status, date, start_time, end_time, all_day, venue, city, fee_required, price_tiers, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, cost, rsvp_opens_at, vaccination_record_required, payment_hold_minutes, max_furbabies_per_registration, max_humans_per_furbaby, rsvp_form_config, tiers_in_order, max_public_humans, promo_codes FROM events WHERE slug = $1 FOR UPDATE`,
         [slug],
       );
       if (!event || event.status !== "published" || event.registration !== "required") return { error: "This event isn't taking RSVPs.", status: 404 };
@@ -90,6 +92,18 @@ export async function POST(request) {
       if (capacityRequest.error) return { error: capacityRequest.error, status: 422 };
       const due = dogWaitlist ? { amount: null } : calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
       if (due.error) return { error: due.error, status: 422 };
+      // A promo code (events.promo_codes): checked under the event lock, so its last use goes once.
+      let promo = null;
+      let discount = 0;
+      if (typeof body?.promoCode === "string" && body.promoCode.trim()) {
+        if (!event.fee_required || dogWaitlist) return { error: "Promo codes are for paid tickets.", status: 422 };
+        const checked = await checkPromo(tx, event.id, event.promo_codes, body.promoCode);
+        if (checked.error) return { error: checked.error, status: 422 };
+        promo = checked.promo;
+        const applied = applyPromo(promo, due, ticket.value);
+        discount = applied.discount;
+        due.amount = applied.amount;
+      }
       const selectedTier = dogWaitlist ? null : tiers[Number(body?.ticket)];
       if (selectedTier?.limit) {
         const left = tierLeft(selectedTier, counts);
@@ -115,13 +129,13 @@ export async function POST(request) {
       const status = dogWaitlist ? "waitlist" : fitsHumans ? statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units }) : "waitlist";
       const code = newCheckInCode();
       // A paid RSVP gets a payment window (per-event, default 24h); once proof is under review it stays active.
-      const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) ? "waiting" : "not_due";
+      const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) && !(promo && due.amount === 0) ? "waiting" : "not_due";
       const holdExpiry = feeStatus === "waiting" ? holdExpiresAt(new Date(), resolveHoldMinutes(event.payment_hold_minutes)) : null;
       if (staleDuplicateId) await tx.sql("UPDATE registrations SET status='cancelled' WHERE id=$1", [staleDuplicateId]);
       const [row] = await tx.sql(
-        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due, furbaby_breeds, guest_names, custom_answers)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
-        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, cleanBreeds(body?.furbabyBreeds, attendees.furbabies), cleanGuestNames(body?.guestNames, attendees.humans), answers.value ? JSON.stringify(answers.value) : null],
+        `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, hold_expires_at, check_in_code, ticket_label, ticket_amount, human_count, furbaby_count, amount_due, furbaby_breeds, guest_names, custom_answers, promo, promo_discount)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING id`,
+        [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, status, feeStatus, holdExpiry, code, ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, cleanBreeds(body?.furbabyBreeds, attendees.furbabies), cleanGuestNames(body?.guestNames, attendees.humans), answers.value ? JSON.stringify(answers.value) : null, promo ? JSON.stringify(promoSnapshot(promo)) : null, promo ? discount : null],
       );
       for (const record of vaccinations) {
         const bytes = Buffer.from(record.base64, "base64");
@@ -130,7 +144,7 @@ export async function POST(request) {
           [row.id, record.index, record.mime, bytes, bytes.length],
         );
       }
-      return { id: row.id, status, code, feeStatus, holdExpiresAt: holdExpiry?.toISOString() || null, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };
+      return { id: row.id, promoDiscount: discount || null, status, code, feeStatus, holdExpiresAt: holdExpiry?.toISOString() || null, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };
     });
     if (result.error) return fail(result.error, result.status);
     // Email too, so it isn't lost when the tab closes: the pass, the "spot held, now pay" note, or the waitlist note.
@@ -138,7 +152,7 @@ export async function POST(request) {
     else if (result.feeStatus === "waiting") await sendSpotHeld(result.id);
     else await sendPass(result.id);
     revalidatePath("/events");
-    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", holdExpiresAt: result.holdExpiresAt, ticket: result.ticket, amountDue: result.amountDue, humanCount: result.humanCount, furbabyCount: result.furbabyCount }, { headers: noStore });
+    return NextResponse.json({ status: result.status, code: result.code, feeDue: result.feeStatus === "waiting", holdExpiresAt: result.holdExpiresAt, ticket: result.ticket, amountDue: result.amountDue, promoDiscount: result.promoDiscount, humanCount: result.humanCount, furbabyCount: result.furbabyCount }, { headers: noStore });
   } catch (dbError) {
     if (dbError?.code === "23505") return fail("That registration already exists. Check the confirmation link, or message us to change it.", 409);
     return fail("We couldn't save that just now. Please try again.", 502);

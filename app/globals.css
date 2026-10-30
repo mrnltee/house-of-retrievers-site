@@ -502,6 +502,12 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .rsvp-total span { font-weight: 700; }
 .rsvp-total strong { font-size: 20px; }
 .rsvp-total small { grid-column: 1 / -1; color: var(--muted-on-light); }
+.rsvp-promo { display: grid; gap: 6px; margin: 16px 0 0; }
+.rsvp-promo > label { font-weight: 700; }
+.rsvp-promo > label small { font-weight: 400; color: var(--muted-on-light); }
+.rsvp-promo-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.rsvp-promo-row input { text-transform: uppercase; letter-spacing: 0.04em; }
+.rsvp-promo .form-note { text-align: left; margin: 0; min-height: 1em; }
 .rsvp-ticket-summary { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 16px 0; padding: 14px 16px; border-left: 3px solid var(--gold); background: #fbf8f1; }
 .rsvp-ticket-summary small { grid-column: 2; color: var(--muted-on-light); }
 .rsvp-ticket-summary .ticket-until { color: var(--gold-on-light); font-weight: 600; }

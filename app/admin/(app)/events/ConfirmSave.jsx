@@ -15,6 +15,7 @@ const LABELS = {
   endTime: "End time",
   cost: "Price",
   priceTiers: "Price",
+  promoCodes: "Promo codes",
   gallery: "More photos",
   photoUploads: "Photos from guests",
   isCharity: "Charity event",

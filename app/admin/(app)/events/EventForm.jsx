@@ -5,6 +5,7 @@ import ConfirmSave from "./ConfirmSave";
 import EventGallery from "./EventGallery";
 import EventPhoto from "./EventPhoto";
 import EventPreview from "./EventPreview";
+import PromoCodesField from "./PromoCodesField";
 import { sql } from "../../../lib/db";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
@@ -29,9 +30,11 @@ async function supporterNames(kind) {
 }
 
 export default async function EventForm({ event, autoDescribe = false }) {
-  const [partnerNames, sponsorNames, emailTemplates, ticketCounts] = await Promise.all([
+  const [partnerNames, sponsorNames, emailTemplates, ticketCounts, promoUses] = await Promise.all([
     supporterNames("Partner"), supporterNames("Sponsor"), listCustomTemplates("event"),
     event ? sql(TICKET_COUNTS_SQL, [event.id]).then(countsFromRows).catch(() => ({})) : {},
+    // Uses per promo code (not deleted or cancelled), shown beside each code.
+    event ? sql("SELECT promo->>'code' AS code, count(*)::int AS used FROM registrations WHERE event_id=$1 AND promo IS NOT NULL AND deleted_at IS NULL AND status <> 'cancelled' GROUP BY 1", [event.id]).then((rows) => Object.fromEntries(rows.map((r) => [r.code, r.used]))).catch(() => ({})) : {},
   ]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);
   const missing = event
@@ -111,6 +114,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
         <h2>Pricing and availability</h2>
         <p className="small muted section-lead">Set the ticket rules first, then add sale periods or Early Bird limits. Pricing decides what a group pays; Capacity in Registration decides how many venue slots it uses.</p>
         <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} pricingBasis={event?.pricing_basis || "registration"} includedFurbabiesPerHuman={event?.included_furbabies_per_human || 0} additionalFurbabyFee={event?.additional_furbaby_fee || 0} tiersInOrder={Boolean(event?.tiers_in_order)} tiersHideLater={Boolean(event?.tiers_hide_later)} />
+        <PromoCodesField initial={Array.isArray(event?.promo_codes) ? event.promo_codes : []} uses={promoUses} />
       </section>
 
       <section className="card">
