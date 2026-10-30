@@ -127,6 +127,9 @@ export async function POST(request) {
       // Over the capacity, or over "Most hoomans from public RSVPs": the waitlist.
       const fitsHumans = hoomanLimitFits({ limit: event.max_public_humans, used: humansUsed, requested: attendees.humans });
       const status = dogWaitlist ? "waitlist" : fitsHumans ? statusForNewRegistration({ capacity: event.capacity, confirmed: Number(used || 0), requested: capacityRequest.units }) : "waitlist";
+      // Only confirmed registrations hold a promo code (that's what counts as a use), so a
+      // waitlisted RSVP doesn't keep one: they can use it when they register for a slot.
+      if (promo && status !== "confirmed") { due.amount += discount; promo = null; discount = 0; }
       const code = newCheckInCode();
       // A paid RSVP gets a payment window (per-event, default 24h); once proof is under review it stays active.
       const feeStatus = status === "confirmed" && owesPayment(event.fee_required, ticket.value) && !(promo && due.amount === 0) ? "waiting" : "not_due";
