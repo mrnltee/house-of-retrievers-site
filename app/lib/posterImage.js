@@ -14,7 +14,7 @@ export async function loadPicture(src) {
   }
   const url = /^https:\/\//.test(src) ? src : String(src || "").startsWith("/") ? `${HOME_URL}${src}` : null;
   if (!url) return null;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
   return res.ok ? { data: Buffer.from(await res.arrayBuffer()), mime: res.headers.get("content-type") || "image/jpeg" } : null;
 }
 

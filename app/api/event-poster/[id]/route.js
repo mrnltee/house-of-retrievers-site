@@ -18,13 +18,17 @@ export async function GET(request, { params }) {
     [id],
   );
   if (!event) return new Response("Not found", { status: 404 });
+  // One address per version: any other `v` is sent there before any picture work, so it can't skip the cache.
+  const version = posterVersion(event);
+  if (new URL(request.url).searchParams.get("v") !== version) {
+    return new Response(null, { status: 307, headers: { Location: `/api/event-poster/${id}?v=${version}`, "Cache-Control": "public, max-age=60, s-maxage=60" } });
+  }
   const poster = await posterFor(event).catch(() => null);
   if (!poster) return new Response("Not found", { status: 404 });
-  const current = new URL(request.url).searchParams.get("v") === posterVersion(event);
   return new Response(poster.data, {
     headers: {
       "Content-Type": poster.mime,
-      "Cache-Control": current ? "public, max-age=31536000, s-maxage=31536000, immutable" : "public, max-age=300, s-maxage=300",
+      "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
       "X-Content-Type-Options": "nosniff",
     },
   });
