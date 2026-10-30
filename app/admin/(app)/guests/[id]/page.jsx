@@ -11,7 +11,7 @@ const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
 export default async function ContactPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("letters:edit");
+  const { allowed } = await pageAdmin("guests:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const [row] = isUuid(id) ? await sql("SELECT * FROM letter_contacts WHERE id=$1 AND deleted_at IS NULL", [id]) : [];

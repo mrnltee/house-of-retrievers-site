@@ -26,7 +26,7 @@ export async function saveContact(data) {
   const id = form(data, "id");
   const back = isUuid(id) ? `/guests/${id}` : "/guests";
   return guarded(back, async () => {
-    const admin = await actionAdmin("letters:edit");
+    const admin = await actionAdmin("guests:edit");
     const { contact: c, error } = cleanContact(fields(data));
     if (error) await backWith(back, "error", error);
     if (isUuid(id)) {
@@ -53,7 +53,7 @@ export async function saveContact(data) {
 export async function removeContact(data) {
   const id = form(data, "id");
   return guarded("/guests", async () => {
-    const admin = await actionAdmin("letters:edit");
+    const admin = await actionAdmin("guests:edit");
     if (!isUuid(id)) await backWith("/guests", "error", "That contact wasn't found.");
     const [row] = await sql("UPDATE letter_contacts SET deleted_at=now() WHERE id=$1 AND deleted_at IS NULL RETURNING name", [id]);
     if (row) await logActivity(admin.email, "contact.remove", row.name, { contactId: id });

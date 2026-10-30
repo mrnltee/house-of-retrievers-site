@@ -15,10 +15,12 @@ import ConfirmButton from "../ConfirmButton";
  */
 export default async function GuestsPage({ searchParams }) {
   const params = await searchParams;
-  const { admin, allowed } = await pageAdmin("letters:view");
+  const { admin, allowed } = await pageAdmin("guests:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
-  const canEdit = can(admin, "letters:edit");
+  // Sending still needs letters:edit; sponsor rows only for those who may see Sponsors & partners.
+  const canEdit = can(admin, "guests:edit") && can(admin, "letters:edit");
+  const seeSupporters = can(admin, "supporters:view");
   const only = categoryOf(params?.category)?.key || "";
   const q = String(params?.q || "").trim().slice(0, 80);
   const [contacts, supporters, letters] = await Promise.all([
@@ -28,7 +30,7 @@ export default async function GuestsPage({ searchParams }) {
         ORDER BY name`,
       [only, q],
     ),
-    sql(
+    !seeSupporters ? [] : sql(
       `SELECT id, name, kind, status, contact_email FROM supporters WHERE status <> 'ended'
           AND ($1 = '' OR name ILIKE '%' || $1 || '%') ORDER BY name`,
       [q],

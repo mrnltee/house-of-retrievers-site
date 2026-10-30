@@ -35,6 +35,8 @@ const PERMISSIONS = {
   "supporters:edit": ["owner", "events"],
   "emails:edit": ["owner", "events"],
   "letters:edit": ["owner", "events"],
+  "guests:view": ["owner", "events"],
+  "guests:edit": ["owner", "events"],
   "journey:edit": ["owner", "content"],
   "breeds:edit": ["owner", "events"],
   // View-only rights for pages whose only right used to be "edit".
@@ -61,7 +63,7 @@ export const PAGES = [
   { key: "checkin", label: "Check-in", group: "Run", path: "/checkin", view: ["checkin:view"], edit: ["checkin"] },
   { key: "people", label: "People", group: "Run", path: "/people", view: ["people:view"], edit: ["people:edit"] },
   { key: "supporters", label: "Sponsors & partners", group: "Run", path: "/supporters", view: ["supporters:view"], edit: ["supporters:edit"] },
-  { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["letters:view"], edit: ["letters:edit"] },
+  { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["guests:view"], edit: ["guests:edit"] },
   { key: "media", label: "Media hub", group: "Publish", path: "/media", view: ["media:view"], edit: ["media:edit"] },
   { key: "payments", label: "Payment settings", group: "Money", path: "/payments", view: ["payments:view"], edit: ["payments:request"] },
   { key: "emails", label: "Email templates", group: "Settings", path: "/emails", view: ["emails:view"], edit: ["emails:edit"] },
