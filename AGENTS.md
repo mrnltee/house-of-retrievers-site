@@ -56,17 +56,24 @@ then built. Plain, warm language matters as much as the code (see §7).
    ```
    If the fast-forward fails, stop and ask. Don't rebase, force-push or rewrite
    history on `main` or `staging`.
-3. **Staging and production share one Neon Postgres database.** A staging
-   build runs new migrations against the *live* data before `main` has the code
-   that uses them. So:
+3. **Staging and production do *not* share one database.** Vercel's Neon
+   integration branches the database per preview deployment, so a staging
+   build runs new migrations against a branch copy of the data, not the
+   *live* one — `main` is the only branch that touches production data.
+   Still:
    - Migrations must be **additive and backward compatible**: new columns
      nullable or defaulted, widen CHECKs rather than narrow them, no drops or
-     renames of anything the live code still reads.
+     renames of anything the live code still reads. (Once a migration reaches
+     `main`, it *does* run against live data, so treat staging as a dry run,
+     not proof it's safe for production.)
    - Never edit or rename a migration that has been applied. Add the next
      number (the next one is **`055_…sql`**).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
+   - A feature built and tested only on staging's branch may not reflect live
+     data shape/content until it reaches `main` — don't assume a staging
+     check (e.g. "does X show up") proves anything about production.
 4. **Email is live** (Resend, `hello@houseofretrieversph.org`). Only send an
    email the owner asked for. When testing locally, blank the email env vars
    (see §8).
