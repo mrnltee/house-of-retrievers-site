@@ -52,7 +52,7 @@ export default async function BeneficiariesPage({ searchParams }) {
         <input type="hidden" name="letter" value={letterKey} />
         {canSend && rows.length > 0 && (
           <div className="actions" style={{ flexWrap: "wrap" }}>
-            <TickedSubmit>✉ Send the letter to ticked</TickedSubmit>
+            <TickedSubmit />
             <span className="small muted">Letter: <a href={`${base}/letters/${letterKey}`}>{letterName(letterKey)}</a>. You can pick another letter on the next page.</span>
           </div>
         )}

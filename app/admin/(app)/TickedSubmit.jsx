@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 /**
- * A "Send … to ticked" button that stays disabled until at least one row
- * (an input name="to" in the same form) is ticked, and shows how many are.
+ * The send button on lists: disabled until at least one row (an input
+ * name="to" in the same form) is ticked. "Send a letter" for one, "Send
+ * letters (3)" for more (owner, 2026-10-31).
  */
-export default function TickedSubmit({ children, className = "btn dark" }) {
+export default function TickedSubmit({ className = "btn dark" }) {
   const button = useRef(null);
   const [count, setCount] = useState(0);
+  const hint = useId();
   useEffect(() => {
     const form = button.current?.form;
     if (!form) return undefined;
@@ -18,8 +20,11 @@ export default function TickedSubmit({ children, className = "btn dark" }) {
     return () => form.removeEventListener("change", update);
   }, []);
   return (
-    <button ref={button} type="submit" className={className} disabled={count === 0} title={count === 0 ? "Tick at least one row first" : undefined} data-confirm="not-needed-read-only">
-      {children}{count > 0 ? ` (${count})` : ""}
-    </button>
+    <>
+      <button ref={button} type="submit" className={className} disabled={count === 0} aria-describedby={count === 0 ? hint : undefined} data-confirm="not-needed-read-only">
+        {count > 1 ? `Send letters (${count})` : "Send a letter"}
+      </button>
+      {count === 0 && <span id={hint} className="small muted">Tick at least one person</span>}
+    </>
   );
 }

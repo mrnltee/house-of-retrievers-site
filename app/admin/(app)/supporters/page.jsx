@@ -116,7 +116,7 @@ export default async function SupportersPage({ searchParams }) {
         <form method="get" action={`${base}/letters/send`}>
         {canEdit && (
           <div className="actions supporter-letter-bar">
-            <TickedSubmit>✉ Send a letter to ticked</TickedSubmit>
+            <TickedSubmit />
             <a className="btn ghost" href={allShown}>Send a letter to all {rows.length} shown</a>
             <span className="small muted">Pick the letter and check it before anything is sent.</span>
           </div>

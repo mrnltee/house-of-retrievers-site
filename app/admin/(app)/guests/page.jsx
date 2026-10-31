@@ -88,7 +88,7 @@ export default async function GuestsPage({ searchParams }) {
                 <h2 style={{ margin: 0 }}>{g.label} <span className="muted small">({g.rows.length})</span></h2>
                 <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${g.letter}`}>{letterName(g.letter)}</a></p>
               </div>
-              {canEdit && g.rows.length > 0 && <TickedSubmit>✉ Send this letter to ticked</TickedSubmit>}
+              {canEdit && g.rows.length > 0 && <TickedSubmit />}
             </div>
             {/* The table shows even when empty, with an add link that picks this category. */}
             <div className="table-wrap" style={{ marginTop: 10 }}>
