@@ -1,8 +1,8 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { CONTACT_CATEGORIES, categoryOf } from "../../../lib/contacts.mjs";
-import { listLetters } from "../../../lib/letterStore";
+import { CONTACT_CATEGORIES, categoryOf, letterFor } from "../../../lib/contacts.mjs";
+import { groupLetters, listLetters } from "../../../lib/letterStore";
 import { recipientFields } from "../../../lib/letters.mjs";
 
 // What "Dear [Salutation]" will say for this record.
@@ -29,7 +29,7 @@ export default async function GuestsPage({ searchParams }) {
   const seeSupporters = can(admin, "supporters:view");
   const only = categoryOf(params?.category)?.key || "";
   const q = String(params?.q || "").trim().slice(0, 80);
-  const [contacts, supporters, letters] = await Promise.all([
+  const [contacts, supporters, letters, chosen] = await Promise.all([
     sql(
       `SELECT * FROM letter_contacts WHERE deleted_at IS NULL AND ($1 = '' OR category = $1)
           AND ($2 = '' OR name ILIKE '%' || $2 || '%' OR coalesce(organization,'') ILIKE '%' || $2 || '%' OR coalesce(email,'') ILIKE '%' || $2 || '%')
@@ -42,10 +42,12 @@ export default async function GuestsPage({ searchParams }) {
       [q],
     ),
     listLetters(),
+    groupLetters(),
   ]);
   const letterName = (key) => letters.find((l) => l.key === key)?.name || key;
   const groups = CONTACT_CATEGORIES.filter((c) => !only || c.key === only).map((c) => ({
     ...c,
+    letter: letterFor(c.key, chosen),
     rows: [
       ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: r.organization, email: r.email, greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
       ...supporters.filter((s) => (c.key === "sponsor" && s.kind === "Sponsor") || (c.key === "partner" && s.kind === "Partner"))

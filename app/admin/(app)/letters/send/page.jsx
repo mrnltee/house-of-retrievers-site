@@ -2,7 +2,7 @@ import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { emailReady } from "../../../../lib/email";
 import { MAX_LETTER_RECIPIENTS, blanksOf, recipientFields } from "../../../../lib/letters.mjs";
-import { listLetters, savedValues } from "../../../../lib/letterStore";
+import { groupLetters, listLetters, savedAnswers } from "../../../../lib/letterStore";
 import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import LetterSend from "./LetterSend";
@@ -56,10 +56,15 @@ export default async function SendLetterPage({ searchParams }) {
   ];
 
   // Guest list people whose category is meant for a different letter.
-  const mismatched = recipients.filter((r) => r.category && letterFor(r.category) !== letter.key);
+  const chosen = await groupLetters();
+  const mismatched = recipients.filter((r) => r.category && letterFor(r.category, chosen) !== letter.key);
 
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
-  const saved = await savedValues(blanks.map((b) => b.label));
+  const answers = await savedAnswers(blanks.map((b) => b.label));
+  const saved = answers.values;
+  const standard = [...answers.standard];
+  // Who the email comes from, as recipients see it (e.g. "House of Retrievers <hello@…>").
+  const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM || "";
   const backQuery = new URLSearchParams();
   backQuery.set("letter", letter.key);
   for (const r of recipients) backQuery.append("to", r.ref);
@@ -78,6 +83,9 @@ export default async function SendLetterPage({ searchParams }) {
           letter={letter}
           blanks={blanks}
           saved={saved}
+          standard={standard}
+          from={from}
+          detailsHref={`${base}/letters/details`}
           recipients={recipients}
           max={MAX_LETTER_RECIPIENTS}
           ready={emailReady()}

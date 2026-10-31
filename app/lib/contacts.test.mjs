@@ -17,3 +17,11 @@ test("contacts need a category and a name; email is checked", () => {
   assert.deepEqual(cleanContact({ category: "media", name: "  Jane   Doe ", email: "J@X.PH", organization: "" }).contact,
     { category: "media", name: "Jane Doe", email: "j@x.ph", organization: null, phone: null, handle: null, address: null, salutation: null, notes: null });
 });
+
+test("a group's letter: the admin's choice, else the default", async () => {
+  const { LETTER_GROUPS } = await import("./contacts.mjs");
+  assert.equal(letterFor("media", { media: "my-press-note-ab12" }), "my-press-note-ab12");
+  assert.equal(letterFor("media", {}), "invite-media");
+  assert.equal(letterFor("beneficiary"), "beneficiary-proposal");
+  assert.ok(LETTER_GROUPS.some((g) => g.key === "beneficiary"));
+});

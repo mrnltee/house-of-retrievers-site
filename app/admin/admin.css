@@ -712,3 +712,21 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .row-avatar.is-logo { background: #fff; }
 .row-avatar.is-logo img { object-fit: contain; padding: 3px; }
 
+/* Letters: step headings, blank groups, standard details, and the send page's inbox-style header. */
+.letter-step { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; font-size: 17px; }
+.letter-step span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--a-ink); color: #fff; font-size: 13px; }
+.letter-blanks { display: grid; gap: 8px; }
+.letter-blanks ul { margin: 0 0 6px; }
+.letter-standard summary { cursor: pointer; }
+.letter-standard[open] { display: grid; gap: 10px; }
+.letter-how ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.standard-details td { vertical-align: top; }
+.standard-details td:nth-child(2) { min-width: 260px; }
+.mail-head { border: 1px solid var(--a-line); border-radius: 10px; background: #fff; padding: 12px 14px; display: grid; gap: 10px; margin-bottom: 12px; }
+.mail-head dl { margin: 0; display: grid; gap: 4px; font-size: 14px; }
+.mail-head dl > div { display: grid; grid-template-columns: 64px 1fr; gap: 8px; }
+.mail-head dt { color: var(--a-muted); }
+.mail-head dd { margin: 0; overflow-wrap: anywhere; }
+.mail-attachment { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--a-line); border-radius: 8px; background: var(--a-ivory); font-size: 13px; max-width: 100%; }
+.mail-attachment > span:first-child { font-size: 22px; }
+

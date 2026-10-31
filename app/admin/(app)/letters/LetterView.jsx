@@ -15,8 +15,8 @@ const FRAME_HEIGHT = 760;
  * browser's PDF viewer. `fields` are posted to the PDF route; the PDF redraws
  * a moment after they stop changing.
  */
-export default function LetterView({ text, action, fields, email }) {
-  const [mode, setMode] = useState("page");
+export default function LetterView({ text, action, fields, email, initial = "page" }) {
+  const [mode, setMode] = useState(email ? initial : "page");
   const [width, setWidth] = useState("phone");
   const form = useRef(null);
   const frame = `letter-pdf-${useId().replace(/:/g, "")}`;
@@ -43,9 +43,9 @@ export default function LetterView({ text, action, fields, email }) {
   return (
     <>
       <div className="seg" role="group" aria-label="Preview as">
-        <button type="button" className={mode === "page" ? "is-on" : ""} aria-pressed={mode === "page"} onClick={() => setMode("page")}>Page view</button>
+        <button type="button" className={mode === "page" ? "is-on" : ""} aria-pressed={mode === "page"} onClick={() => setMode("page")}>Letter (page view)</button>
         {email && <button type="button" className={mode === "email" ? "is-on" : ""} aria-pressed={mode === "email"} onClick={() => setMode("email")}>Email</button>}
-        <button type="button" className={mode === "pdf" ? "is-on" : ""} aria-pressed={mode === "pdf"} onClick={() => setMode("pdf")}>Actual PDF</button>
+        <button type="button" className={mode === "pdf" ? "is-on" : ""} aria-pressed={mode === "pdf"} onClick={() => setMode("pdf")}>Attachment (actual PDF)</button>
       </div>
       {mode === "email" && email ? (
         <>

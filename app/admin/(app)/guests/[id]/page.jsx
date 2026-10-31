@@ -1,6 +1,7 @@
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
-import { categoryOf } from "../../../../lib/contacts.mjs";
+import { categoryOf, letterFor } from "../../../../lib/contacts.mjs";
+import { groupLetters } from "../../../../lib/letterStore";
 import { removeContact, saveContact } from "../../../contactActions";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead } from "../../ui";
@@ -27,7 +28,7 @@ export default async function ContactPage({ params, searchParams }) {
         <ContactFields row={row} />
         <div className="actions">
           <ConfirmButton className="btn dark" title="Save changes?" items={["Updates this contact. Changing the category changes which letter they get."]}>Save</ConfirmButton>
-          {cat && <a className="btn ghost" href={`${base}/letters/send?letter=${cat.letter}&to=contact:${row.id}`}>✉ Send their letter</a>}
+          {cat && <a className="btn ghost" href={`${base}/letters/send?letter=${letterFor(cat.key, await groupLetters())}&to=contact:${row.id}`}>✉ Send their letter</a>}
         </div>
       </form>
       <form action={removeContact} className="actions" style={{ marginTop: 12 }}>

@@ -18,7 +18,11 @@ export const CONTACT_CATEGORIES = [
 export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
 
 export const categoryOf = (key) => CONTACT_CATEGORIES.find((c) => c.key === key) || null;
-export const letterFor = (key) => (key === "beneficiary" ? "beneficiary-proposal" : categoryOf(key)?.letter || "");
+/** Every group that gets a letter, with its default: the Guest list categories, then Beneficiaries. */
+export const LETTER_GROUPS = [...CONTACT_CATEGORIES, { key: "beneficiary", label: "Beneficiaries (shelters & rescue groups)", letter: "beneficiary-proposal" }];
+
+/** The letter a group gets: the admin's choice (Letters → Which letter each group gets), else the default. */
+export const letterFor = (key, chosen = {}) => chosen[key] || LETTER_GROUPS.find((g) => g.key === key)?.letter || "";
 
 const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 

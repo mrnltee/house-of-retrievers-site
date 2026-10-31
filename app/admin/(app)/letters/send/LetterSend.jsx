@@ -2,16 +2,19 @@
 
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useMemo, useState } from "react";
-import { fillLetter, letterDate, missingBlanks } from "../../../../lib/letters.mjs";
+import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
+import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
 import LetterView from "../LetterView";
 
 /**
- * Pick the letter, tick recipients, fill the blanks (last values are offered
- * again), check the letter for any recipient, then send.
+ * Pick the letter, tick recipients, fill the blanks (standard details fill in
+ * by themselves; last values are offered again), check each recipient's email
+ * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, recipients, max, ready, pdfAction, back }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", recipients, max, ready, pdfAction, back }) {
+  const isStandard = (label) => standard.includes(label);
   const [values, setValues] = useState(() => Object.fromEntries(blanks.map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
   const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
   const [previewRef, setPreviewRef] = useState(recipients.find((r) => r.email)?.ref || recipients[0]?.ref);
@@ -19,8 +22,8 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
   const date = letterDate();
   const to = { name: who?.name || "", contact: who?.contact || "", address: who?.address || "", salutation: who?.salutation || "", date, values };
   const filled = useMemo(() => fillLetter(letter.body, to), [letter.body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
-  const subject = fillLetter(letter.subject, to);
-  const cover = fillLetter(letter.cover, to, { plain: true });
+  const prepared = useMemo(() => prepareLetter(letter, to), [letter, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
+  const email = useMemo(() => letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename }), [prepared]);
   const missing = missingBlanks(blanks, values);
   const count = picked.size;
 
@@ -34,6 +37,17 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
     if (next.has(ref)) next.delete(ref); else next.add(ref);
     return next;
   });
+
+  function blankInput(b) {
+    const long = b.label.length > 40 || (values[b.label] || "").length > 60;
+    const props = { value: values[b.label] || "", maxLength: 600, required: !b.optional, placeholder: blankSample(b.label, letter.key) || undefined, onChange: (e) => setValues((v) => ({ ...v, [b.label]: e.target.value })) };
+    return (
+      <label key={b.label} className="field">
+        <span>{b.label}{b.optional ? <small> optional</small> : null}</span>
+        {long ? <textarea rows={2} {...props} /> : <input type="text" {...props} />}
+      </label>
+    );
+  }
 
   return (
     <div className="grid-2 template-grid">
@@ -62,20 +76,17 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
           </ul>
         </fieldset>
 
-        {blanks.length > 0 && (
+        {blanks.some((b) => !isStandard(b.label)) && (
           <fieldset className="field">
-            <legend className="field-head">Fill in <small>The same for everyone in this send. Last values are filled in for you.</small></legend>
-            {blanks.map((b) => {
-              const long = b.label.length > 40 || (values[b.label] || "").length > 60;
-              const props = { value: values[b.label] || "", maxLength: 600, required: !b.optional, placeholder: blankSample(b.label, letter.key) || undefined, onChange: (e) => setValues((v) => ({ ...v, [b.label]: e.target.value })) };
-              return (
-                <label key={b.label} className="field">
-                  <span>{b.label}{b.optional ? <small> optional</small> : null}</span>
-                  {long ? <textarea rows={2} {...props} /> : <input type="text" {...props} />}
-                </label>
-              );
-            })}
+            <legend className="field-head">Fill in for this send <small>The same for everyone in it. Your last answers are filled in for you.</small></legend>
+            {blanks.filter((b) => !isStandard(b.label)).map((b) => blankInput(b))}
           </fieldset>
+        )}
+        {blanks.some((b) => isStandard(b.label)) && (
+          <details className="field letter-standard">
+            <summary className="field-head">Standard details ({blanks.filter((b) => isStandard(b.label)).length}) <small>Filled in by themselves. Open to change them for this send only{detailsHref && <>, or <a href={detailsHref}>edit them for good</a></>}.</small></summary>
+            {blanks.filter((b) => isStandard(b.label)).map((b) => blankInput(b))}
+          </details>
         )}
 
         <div className="actions">
@@ -105,22 +116,18 @@ export default function LetterSend({ letters, letter, blanks, saved, recipients,
             </select>
           </label>
         </div>
-        <div className="letter-email">
-          <p className="small" style={{ margin: 0 }}>Email subject: <strong>{subject}</strong></p>
-          <p className="small letter-cover"><CoverText text={cover} /></p>
-          <p className="small muted" style={{ margin: 0 }}>📎 PDF letter attached</p>
+        <div className="mail-head" aria-label="The email as it arrives">
+          <dl>
+            <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
+            <div><dt>To</dt><dd>{who?.name}{who?.email ? ` <${who.email}>` : " (no email on record)"}</dd></div>
+            <div><dt>Subject</dt><dd><strong>{prepared.subject}</strong></dd></div>
+          </dl>
+          <p className="mail-attachment" title="The letter, filled in for this recipient">
+            <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
+          </p>
         </div>
-        <LetterView text={filled} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
+        <LetterView initial="email" text={filled} email={email} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
       </section>
     </div>
   );
-}
-
-/** The covering email as sent: [label](https://…) shows as a link. */
-function CoverText({ text }) {
-  const parts = String(text || "").split(/(\[[^\]\n]{1,120}\]\(https:\/\/[^\s()<>"]+\))/g);
-  return parts.map((part, i) => {
-    const link = part.match(/^\[([^\]]+)\]\((https:\/\/[^)]+)\)$/);
-    return link ? <a key={i} href={link[2]} target="_blank" rel="noreferrer">{link[1]}</a> : part;
-  });
 }

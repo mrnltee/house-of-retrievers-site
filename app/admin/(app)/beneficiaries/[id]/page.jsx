@@ -1,7 +1,9 @@
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
-import { BENEFICIARY_LETTER, kindLabel, statusLabel } from "../../../../lib/beneficiaries.mjs";
+import { kindLabel, statusLabel } from "../../../../lib/beneficiaries.mjs";
+import { letterFor } from "../../../../lib/contacts.mjs";
+import { groupLetters } from "../../../../lib/letterStore";
 import { removeBeneficiary } from "../../../beneficiaryActions";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead } from "../../ui";
@@ -22,7 +24,7 @@ export default async function BeneficiaryPage({ params, searchParams }) {
     <>
       <p className="small"><a href={`${base}/beneficiaries`}>← Beneficiaries</a></p>
       <PageHead title={row.name} lead={`${kindLabel(row.kind)} · ${statusLabel(row.status)}${row.location ? ` · ${row.location}` : ""}`}>
-        {can(admin, "letters:edit") && <a className="btn ghost" href={`${base}/letters/send?letter=${BENEFICIARY_LETTER}&to=beneficiary:${row.id}`}>✉ Send a letter</a>}
+        {can(admin, "letters:edit") && <a className="btn ghost" href={`${base}/letters/send?letter=${letterFor("beneficiary", await groupLetters())}&to=beneficiary:${row.id}`}>✉ Send a letter</a>}
       </PageHead>
       <Flash params={query} />
       <BeneficiaryForm row={row} canEdit={canEdit} />

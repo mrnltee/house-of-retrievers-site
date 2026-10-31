@@ -1,8 +1,9 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { BENEFICIARY_KINDS, BENEFICIARY_LETTER, BENEFICIARY_STATUSES, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
-import { listLetters } from "../../../lib/letterStore";
+import { BENEFICIARY_KINDS, BENEFICIARY_STATUSES, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
+import { groupLetters, listLetters } from "../../../lib/letterStore";
+import { letterFor } from "../../../lib/contacts.mjs";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import { Avatar } from "../ImageField";
 import TickedSubmit from "../TickedSubmit";
@@ -29,6 +30,7 @@ export default async function BeneficiariesPage({ searchParams }) {
     ),
     listLetters(),
   ]);
+  const letterKey = letterFor("beneficiary", await groupLetters());
   const letterName = (key) => letters.find((l) => l.key === key)?.name || key;
   const filtered = Boolean(kind || status || q);
 
@@ -47,11 +49,11 @@ export default async function BeneficiariesPage({ searchParams }) {
       </form>
 
       <form method="get" action={`${base}/letters/send`} className="card" style={{ marginTop: 16 }}>
-        <input type="hidden" name="letter" value={BENEFICIARY_LETTER} />
+        <input type="hidden" name="letter" value={letterKey} />
         {canSend && rows.length > 0 && (
           <div className="actions" style={{ flexWrap: "wrap" }}>
-            <TickedSubmit>✉ Send the proposal to ticked</TickedSubmit>
-            <span className="small muted">Letter: <a href={`${base}/letters/${BENEFICIARY_LETTER}`}>{letterName(BENEFICIARY_LETTER)}</a>. You can pick another letter on the next page.</span>
+            <TickedSubmit>✉ Send the letter to ticked</TickedSubmit>
+            <span className="small muted">Letter: <a href={`${base}/letters/${letterKey}`}>{letterName(letterKey)}</a>. You can pick another letter on the next page.</span>
           </div>
         )}
         <div className="table-wrap" style={{ marginTop: 10 }}>

@@ -7,7 +7,8 @@ import { emailReady, sendEmail } from "../lib/email";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
-import { loadLetter } from "../lib/letterStore";
+import { listLetters, loadLetter } from "../lib/letterStore";
+import { LETTER_GROUPS } from "../lib/contacts.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -15,6 +16,7 @@ const form = (data, key) => {
 };
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const isKey = (key) => LETTER_STARTERS.some((l) => l.key === key);
+const looksLikeKey = (key) => /^[a-z0-9-]{1,60}$/.test(String(key || ""));
 const looksLikeEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -27,13 +29,13 @@ async function guarded(path, work) {
   }
 }
 
-/** Settings → Letters: save HOR's wording for one letter (replaces the starter). */
+/** Settings → Letters: save HOR's wording for one letter (replaces the starter, or updates HOR's own letter). */
 export async function saveLetter(data) {
   const key = form(data, "key");
-  const back = isKey(key) ? `/letters/${key}` : "/letters";
+  const back = looksLikeKey(key) ? `/letters/${key}` : "/letters";
   return guarded(back, async () => {
     const admin = await actionAdmin("letters:edit");
-    if (!isKey(key)) await backWith("/letters", "error", "That letter doesn't exist.");
+    if (!looksLikeKey(key) || !(await loadLetter(key))) await backWith("/letters", "error", "That letter doesn't exist.");
     const f = { name: form(data, "name").trim(), subject: form(data, "subject").replace(/\s+/g, " ").trim(), cover: form(data, "cover").replace(/\r\n?/g, "\n").trim(), body: form(data, "body").replace(/\r\n?/g, "\n").trim() };
     for (const [field, max] of Object.entries({ name: LETTER_LIMITS.name, subject: LETTER_LIMITS.subject, cover: LETTER_LIMITS.cover, body: LETTER_LIMITS.body })) {
       if (!f[field]) await backWith(back, "error", `The ${field === "body" ? "letter" : field} can't be empty.`);
@@ -55,6 +57,8 @@ export async function resetLetter(data) {
   const back = isKey(key) ? `/letters/${key}` : "/letters";
   return guarded(back, async () => {
     const admin = await actionAdmin("letters:edit");
+    // Only built-in letters have an original to go back to; HOR's own letters are removed instead.
+    if (!isKey(key)) await backWith("/letters", "error", "This letter has no original wording to go back to.");
     await sql("DELETE FROM letter_templates WHERE key = $1", [key]);
     await logActivity(admin.email, "letter.reset", key, { letter: key });
     await backWith(back, "ok", "Back to the original wording.");
@@ -126,7 +130,8 @@ export async function sendLetters(data) {
       if (!value) continue;
       await sql(
         `INSERT INTO letter_saved_values (label, value, updated_by, updated_at) VALUES ($1, $2, $3, now())
-         ON CONFLICT (label) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+         ON CONFLICT (label) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()
+         WHERE NOT letter_saved_values.standard`,
         [label.slice(0, 400), value, admin.email],
       );
     }
@@ -137,3 +142,86 @@ export async function sendLetters(data) {
     await backWith(back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
   });
 }
+
+const slug = (text) => String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "letter";
+
+/** Letters: a new letter of HOR's own, blank or copied from another letter ("from"). */
+export async function createLetter(data) {
+  return guarded("/letters", async () => {
+    const admin = await actionAdmin("letters:edit");
+    const from = form(data, "from");
+    const source = from ? await loadLetter(from) : null;
+    if (from && !source) await backWith("/letters", "error", "The letter to copy wasn't found.");
+    const name = (form(data, "name").trim() || (source ? `Copy of ${source.name}` : "")).slice(0, LETTER_LIMITS.name);
+    if (!name) await backWith("/letters", "error", "Give the new letter a name.");
+    const key = `my-${slug(name)}-${Math.random().toString(36).slice(2, 6)}`;
+    const blank = {
+      subject: "Subject line",
+      cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers Society Inc.\n\nOur letter is attached.",
+      body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: Subject line**\n\nDear [Salutation]:\n\nWrite the letter here.\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
+    };
+    const l = source || blank;
+    await sql(
+      `INSERT INTO letter_templates (key, name, subject, cover, body, updated_by, updated_at, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $6, now(), $6, now())`,
+      [key, name, l.subject, l.cover, l.body, admin.email],
+    );
+    await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null });
+    await backWith(`/letters/${key}`, "ok", source ? `Copied “${source.name}”. Edit the copy, then save.` : "New letter made. Write it, then save.");
+  });
+}
+
+/** Letters: remove one of HOR's own letters (built-in letters can only go back to their original wording). */
+export async function deleteLetter(data) {
+  const key = form(data, "key");
+  return guarded("/letters", async () => {
+    const admin = await actionAdmin("letters:edit");
+    if (!looksLikeKey(key) || isKey(key)) await backWith("/letters", "error", "Built-in letters can't be removed.");
+    const [row] = await sql("UPDATE letter_templates SET deleted_at = now() WHERE key = $1 AND deleted_at IS NULL RETURNING name", [key]);
+    if (row) await logActivity(admin.email, "letter.remove", row.name, { letter: key });
+    await backWith("/letters", "ok", row ? `Removed “${row.name}”.` : "Already removed.");
+  });
+}
+
+/** Letters → Standard details: HOR's usual answers; ticked ones fill in by themselves and aren't asked when sending. */
+export async function saveStandardDetails(data) {
+  return guarded("/letters/details", async () => {
+    const admin = await actionAdmin("letters:edit");
+    const labels = data.getAll("label").filter((v) => typeof v === "string").slice(0, 300);
+    const standard = new Set(data.getAll("standard").filter((v) => typeof v === "string"));
+    for (const [i, label] of labels.entries()) {
+      const value = String(data.getAll("value")[i] ?? "").trim().slice(0, LETTER_LIMITS.value);
+      if (!label || label.length > 400) continue;
+      if (!value) {
+        await sql("DELETE FROM letter_saved_values WHERE label = $1", [label]);
+        continue;
+      }
+      await sql(
+        `INSERT INTO letter_saved_values (label, value, standard, updated_by, updated_at) VALUES ($1, $2, $3, $4, now())
+         ON CONFLICT (label) DO UPDATE SET value = EXCLUDED.value, standard = EXCLUDED.standard, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+        [label, value, standard.has(label), admin.email],
+      );
+    }
+    await logActivity(admin.email, "letter.details", "Standard details", { count: labels.length });
+    await backWith("/letters/details", "ok", "Saved. Letters use these from now on.");
+  });
+}
+
+/** Letters → Which letter each group gets. */
+export async function saveGroupLetters(data) {
+  return guarded("/letters", async () => {
+    const admin = await actionAdmin("letters:edit");
+    const keys = new Set((await listLetters()).map((l) => l.key));
+    for (const group of LETTER_GROUPS) {
+      const letter = form(data, `group-${group.key}`);
+      if (!keys.has(letter)) continue;
+      await sql(
+        `INSERT INTO letter_group_letters (group_key, letter_key, updated_by, updated_at) VALUES ($1, $2, $3, now())
+         ON CONFLICT (group_key) DO UPDATE SET letter_key = EXCLUDED.letter_key, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+        [group.key, letter, admin.email],
+      );
+    }
+    await logActivity(admin.email, "letter.groups", "Which letter each group gets", {});
+    await backWith("/letters", "ok", "Saved which letter each group gets.");
+  });
+}
+
