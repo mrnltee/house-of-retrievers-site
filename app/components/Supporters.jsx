@@ -10,12 +10,15 @@ const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }
 const CAROUSEL_PAGE_SIZE = 5;
 
 function Tile({ supporter, big = false, onOpen }) {
+  // The latest event they were at; an upcoming one only when there's none yet (events come newest first).
+  const now = today();
+  const shown = supporter.events.find((e) => e.date < now) || supporter.events[0];
   return (
     <li>
       <button type="button" className={`supporter-tile${big ? " is-big" : ""}`} onClick={() => onOpen(supporter)} aria-haspopup="dialog">
         <span className="supporter-logo"><img src={supporter.logo} alt="" loading="lazy" /></span>
         <span className="supporter-name">{supporter.name}</span>
-        {supporter.events[0] && <span className="supporter-event">{supporter.events[0].date >= today() ? "Joining" : "At"} {supporter.events[0].title}{supporter.events.length > 1 ? ` +${supporter.events.length - 1} more` : ""}</span>}
+        {shown && <span className="supporter-event">{shown.date >= now ? "Joining" : "At"} {shown.title}{supporter.events.length > 1 ? ` +${supporter.events.length - 1} more` : ""}</span>}
       </button>
     </li>
   );
