@@ -751,6 +751,34 @@ export async function saveAdminPages(data) {
   });
 }
 
+/**
+ * Page access → Save all: every changed person in one go (owner, 2026-10-31).
+ * Sends `email` per person and `pages:<email>` for their pages; nothing is
+ * saved if anyone would be left with no page.
+ */
+export async function saveAllAdminPages(data) {
+  return guarded("/admins", async () => {
+    const admin = await actionAdmin("admins:manage");
+    const emails = [...new Set(data.getAll("email").flatMap((e) => parseEmailList(typeof e === "string" ? e : "")))].slice(0, 100);
+    if (!emails.length) await backWith("/admins", "error", "Nothing to save.");
+    const rows = await sql("SELECT email, roles FROM admins WHERE email = ANY($1::text[]) AND active", [emails]);
+    const updates = [];
+    for (const email of emails) {
+      const target = rows.find((r) => r.email === email);
+      if (!target) await backWith("/admins", "error", `${email} is no longer an admin.`);
+      if (target.roles.includes("owner")) await backWith("/admins", "error", `${email} is an Owner and always sees every page.`);
+      const pages = cleanPages(data.getAll(`pages:${email}`));
+      if (!pages.length) await backWith("/admins", "error", `Give ${email} at least one page, or remove them as an admin.`);
+      updates.push([email, pages]);
+    }
+    for (const [email, pages] of updates) {
+      await sql("UPDATE admins SET pages=$1 WHERE email=$2", [pages, email]);
+      await logActivity(admin.email, "admin.pages", email, { pages });
+    }
+    await backWith("/admins", "ok", `Page access saved for ${updates.length} ${updates.length === 1 ? "person" : "people"}.`);
+  });
+}
+
 /** "Use their roles instead": clears the page ticks (own action; see below). */
 export async function resetAdminPages(data) {
   data.set("mode", "roles");

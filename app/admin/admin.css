@@ -730,3 +730,19 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .mail-attachment { margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--a-line); border-radius: 8px; background: var(--a-ivory); font-size: 13px; max-width: 100%; }
 .mail-attachment > span:first-child { font-size: 22px; }
 .contact-rep { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+
+/* Page access: sticky name column, changed-cell outline + dot, and the Save all bar (owner, 2026-10-31). */
+.page-access .sticky-col { position: sticky; left: 0; z-index: 1; background: #fff; box-shadow: 1px 0 0 var(--a-line); text-align: left; min-width: 160px; }
+.page-access thead .sticky-col { background: var(--a-sand); z-index: 2; }
+.page-access tr.row-changed > * { background: #fbf6e9; }
+.page-access tr.row-changed .sticky-col { background: #fbf6e9; box-shadow: inset 4px 0 0 var(--a-gold), 1px 0 0 var(--a-line); }
+.access-name { display: block; }
+.access-changed-tag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--a-gold-ink); }
+.page-access td.cell-changed { position: relative; }
+.page-access td.cell-changed::after { content: ""; position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--a-gold); }
+.page-access select.access { min-height: 44px; }
+.page-access select.access.is-changed { border: 2px solid var(--a-gold); background: #fff; font-weight: 700; }
+.page-access select.access:focus-visible { outline: 3px solid var(--a-ink); outline-offset: 2px; }
+.access-savebar { position: sticky; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 12px 16px; border: 1px solid var(--a-line); border-radius: 12px; background: var(--a-ivory); }
+.access-savebar.has-changes { border-color: var(--a-gold); box-shadow: 0 -6px 18px rgba(13, 13, 13, .08); }
+

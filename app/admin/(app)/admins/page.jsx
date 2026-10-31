@@ -4,9 +4,10 @@ import { ONLINE_MS } from "../../../lib/admin/auth";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { PAGES, ROLES, ROLE_LABELS, pageLevel, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
 import { startPreview } from "../../previewActions";
-import { inviteAdmin, removeAdmin, saveAdminPages, updateAdmin } from "../../actions";
+import { inviteAdmin, removeAdmin, updateAdmin } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import ConfirmButton from "../ConfirmButton";
+import PageAccessTable from "./PageAccessTable";
 
 const ROLE_HELP = {
   owner: "Everything, including admins and approving payment changes",
@@ -51,62 +52,17 @@ function PageAccess({ admins }) {
   return (
     <section className="card">
       <h2>Page access</h2>
-      <p className="small muted">For each person, set every page to <strong>—</strong> (hidden), <strong>View</strong> (can open and read only) or <strong>Edit</strong> (can also save, send and delete), then press Save on their row. <strong>Preview</strong> shows you the admin exactly as they will see it. Only pages set to View or Edit show in their sidebar; every other page is blocked for them. Owners always see and edit every page.</p>
+      <p className="small muted">For each person, set every page to <strong>—</strong> (hidden), <strong>View</strong> (can open and read only) or <strong>Edit</strong> (can also save, send and delete), then press <strong>Save all</strong> at the bottom. Changed boxes are outlined in gold until saved. <strong>Preview</strong> shows you the admin exactly as they will see it. Only pages set to View or Edit show in their sidebar; every other page is blocked for them. Owners always see and edit every page.</p>
       {people.length === 0 ? (
         <p className="empty">No one to set yet. Invite an admin above and set their pages there.</p>
       ) : (
-        <div className="table-wrap">
-          <table className="page-access">
-            <thead>
-              <tr>
-                <th>Person</th>
-                {PAGES.map((p) => <th key={p.key} scope="col"><span>{p.label}</span></th>)}
-                <th><span className="visually-hidden">Save</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {people.map((a) => {
-                const formId = `pages-${a.email}`;
-                const ticked = Array.isArray(a.pages) ? a.pages : pagesForRoles(a.roles);
-                return (
-                  <tr key={a.email}>
-                    <th scope="row" className="strong">
-                      {a.name || a.email}
-                      {!Array.isArray(a.pages) && <span className="small muted"><br />From their roles — not saved yet</span>}
-                    </th>
-                    {PAGES.map((p) => (
-                      <td key={p.key} className="tick">
-                        <AccessSelect form={formId} page={p} level={pageLevel(ticked, p.key)} label={`${p.label} for ${a.email}`} />
-                      </td>
-                    ))}
-                    <td>
-                      <form action={startPreview}>
-                        <input type="hidden" name="email" value={a.email} />
-                        <ConfirmButton
-                          className="linkish small"
-                          title={`Preview the admin as ${a.email}?`}
-                          items={["You'll see exactly their menu and pages", "Changes are switched off until you exit the preview"]}
-                          yes="Yes, preview"
-                          tone="ink"
-                        >Preview</ConfirmButton>
-                      </form>
-                      <form id={formId} action={saveAdminPages}>
-                        <input type="hidden" name="email" value={a.email} />
-                        <ConfirmButton
-                          className="btn small"
-                          title={`Save page access for ${a.email}?`}
-                          items={["Only pages set to View or Edit show in their sidebar", "Other pages are blocked, even by direct link", "Takes effect on their next page or action"]}
-                          yes="Yes, save pages"
-                          tone="ink"
-                        >Save</ConfirmButton>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <PageAccessTable
+          pages={PAGES.map((p) => ({ key: p.key, label: p.label, canEdit: p.edit.length > 0 }))}
+          people={people.map((a) => {
+            const ticked = Array.isArray(a.pages) ? a.pages : pagesForRoles(a.roles);
+            return { email: a.email, name: a.name || "", fromRoles: !Array.isArray(a.pages), levels: Object.fromEntries(PAGES.map((p) => [p.key, pageLevel(ticked, p.key)])) };
+          })}
+        />
       )}
     </section>
   );
