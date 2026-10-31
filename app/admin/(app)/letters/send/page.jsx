@@ -86,6 +86,7 @@ export default async function SendLetterPage({ searchParams }) {
           standard={standard}
           from={from}
           detailsHref={`${base}/letters/details`}
+          editHref={`${base}/letters/${letter.key}`}
           recipients={recipients}
           max={MAX_LETTER_RECIPIENTS}
           ready={emailReady()}

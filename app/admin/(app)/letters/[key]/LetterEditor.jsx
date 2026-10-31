@@ -105,6 +105,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
           ) : <p className="small muted">Nothing. This letter sends without typing anything.</p>}
         </div>
         <h2 className="letter-step"><span>5</span> Signature <small className="muted">optional</small></h2>
+        {sigChanged && <p className="small sig-status is-warn" role="status" style={{ margin: 0 }}>● Signature changes aren&apos;t saved yet. Press Save below; letters are sent with the saved version.</p>}
         <div className="signature-controls">
           <label className="check"><input type="checkbox" checked={sig.on} onChange={(e) => setSig((s) => ({ ...s, on: e.target.checked }))} /> <span><strong>Add a signature to the PDF</strong> <span className="small muted">· laid on top of the page where the letter says {SIGNATURE_MARK}, usually just above the signatory&apos;s name</span></span></label>
           <input type="hidden" name="signatureOn" value={sig.on ? "1" : ""} />

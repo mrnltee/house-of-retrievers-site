@@ -788,4 +788,6 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .slider-value { display: inline-flex; align-items: center; gap: 4px; flex: none; }
 .admin .slider-value input[type="number"] { width: 84px; min-height: 44px; padding: 6px 8px; text-align: right; font-variant-numeric: tabular-nums; }
 .slider-value span { min-width: 20px; font-size: 13px; color: var(--a-muted); }
+.sig-status.is-on { color: var(--a-success); font-weight: 700; }
+.sig-status.is-warn { color: var(--a-alert); font-weight: 600; }
 
