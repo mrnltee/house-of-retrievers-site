@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
-import { byTier, gaveLine, totals } from "../lib/supporters.mjs";
+import { gaveLine, totals } from "../lib/supporters.mjs";
 
 const formatPeso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const formatDate = (iso) => new Date(`${iso}T00:00:00+08:00`).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", weekday: "short", month: "short", day: "numeric", year: "numeric" });
@@ -15,6 +15,7 @@ function Tile({ supporter, big = false, onOpen }) {
       <button type="button" className={`supporter-tile${big ? " is-big" : ""}`} onClick={() => onOpen(supporter)} aria-haspopup="dialog">
         <span className="supporter-logo"><img src={supporter.logo} alt="" loading="lazy" /></span>
         <span className="supporter-name">{supporter.name}</span>
+        {supporter.events[0] && <span className="supporter-event">{supporter.events[0].date >= today() ? "Joining" : "At"} {supporter.events[0].title}{supporter.events.length > 1 ? ` +${supporter.events.length - 1} more` : ""}</span>}
       </button>
     </li>
   );
@@ -88,7 +89,7 @@ function SupporterDialog({ supporter, onClose }) {
         )}
         {supporter.events.length > 0 && (
           <div className="supporter-events">
-            <p className="supporter-label">Events they backed</p>
+            <p className="supporter-label">Events they joined</p>
             <ul>
               {supporter.events.map((e) => (
                 <li key={e.slug}>
@@ -108,8 +109,9 @@ function SupporterDialog({ supporter, onClose }) {
 }
 
 /**
- * "Our partners & sponsors" on the home page (Figma "Sponsors & partners",
- * W1/W2). Reads /api/supporters; with nothing public yet it renders nothing.
+ * "Brands that have joined our events" on the home page (Figma "Sponsors &
+ * partners", W1/W2; reworded 1 Nov 2026, owner: no formal contracts yet, so it
+ * says what each brand did at our events, not that they're official partners). Reads /api/supporters; with nothing public yet it renders nothing.
  * ?supporter=<slug> (links from event pages) opens that supporter's panel.
  */
 export default function Supporters({ onJoin }) {
@@ -156,31 +158,26 @@ export default function Supporters({ onJoin }) {
     <section className="supporters section-shell" id="partners" aria-labelledby="partners-title">
       <div className="supporters-head">
         <p className="eyebrow">Paws for a purpose, together</p>
-        <h2 id="partners-title">Our partners <em>&amp; sponsors.</em></h2>
-        <p className="supporters-lead">Every run, care visit and fundraiser happens because someone lent a venue, a vet team, treats or funds. Thank you.</p>
+        <h2 id="partners-title">Brands that have <em>joined our events.</em></h2>
+        <p className="supporters-lead">Our runs, care visits and fundraisers happened because these brands lent a venue, a camera, treats or prizes. Thank you.</p>
       </div>
 
       {partners.length > 0 && (
         <div className="supporters-group">
-          <h3>Partners <small>With us in every meaningful moment</small></h3>
-          <SupporterWall items={partners} onOpen={setOpen} label="Partner" />
+          <h3>Worked with us <small>Lent a venue, services or a hand</small></h3>
+          <SupporterWall items={partners} onOpen={setOpen} label="Brands that worked with us" />
         </div>
       )}
 
       {sponsors.length > 0 && (
         <div className="supporters-group">
-          <h3>Sponsors <small>Give funds, products or prizes</small></h3>
-          {byTier(sponsors).map((group) => (
-            <div key={group.key} className="supporter-tier">
-              {group.name && <p className="supporter-label">★ {group.name}</p>}
-              <SupporterWall items={group.items} onOpen={setOpen} label={group.name || "Sponsor"} />
-            </div>
-          ))}
+          <h3>Supported our events <small>Gave funds, products or prizes</small></h3>
+          <SupporterWall items={sponsors} onOpen={setOpen} label="Brands that supported our events" />
           {sum && (sum.cash > 0 || sum.inKind > 0) && (
             <dl className="supporter-totals">
               {sum.cash > 0 && <div><dt>cash from sponsors in {sum.year}</dt><dd>{formatPeso(sum.cash)}</dd></div>}
               {sum.inKind > 0 && <div><dt>in-kind value in {sum.year}</dt><dd>{formatPeso(sum.inKind)}</dd></div>}
-              {sum.events > 0 && <div><dt>events backed</dt><dd>{sum.events}</dd></div>}
+              {sum.events > 0 && <div><dt>events supported</dt><dd>{sum.events}</dd></div>}
             </dl>
           )}
         </div>
@@ -188,10 +185,10 @@ export default function Supporters({ onJoin }) {
 
       <div className="supporters-cta">
         <div>
-          <h3>Want to back the next one?</h3>
-          <p>Venues, clinics, brands and kind humans: tell us what you'd like to support and we'll get in touch.</p>
+          <h3>Want to join the next one?</h3>
+          <p>Venues, clinics, brands and kind humans: tell us how you'd like to take part and we'll get in touch.</p>
         </div>
-        <button type="button" className="button primary" onClick={() => onJoin("Sponsor")}>Become a sponsor or partner <Icon name="arrow" size={16} /></button>
+        <button type="button" className="button primary" onClick={() => onJoin("Sponsor")}>Bring your brand to an event <Icon name="arrow" size={16} /></button>
       </div>
 
       {open && <SupporterDialog supporter={open} onClose={close} />}
