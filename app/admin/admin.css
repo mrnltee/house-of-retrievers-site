@@ -781,3 +781,11 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .signature-controls { display: grid; gap: 10px; }
 .signature-controls input[type="range"] { width: 100%; }
 
+/* Signature sliders: the exact value beside each, in HOR's colours. */
+.slider-field { gap: 4px; }
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input[type="range"] { flex: 1; min-height: 44px; accent-color: var(--a-gold-ink); }
+.slider-value { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.admin .slider-value input[type="number"] { width: 84px; min-height: 44px; padding: 6px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+.slider-value span { min-width: 20px; font-size: 13px; color: var(--a-muted); }
+

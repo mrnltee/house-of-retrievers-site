@@ -118,9 +118,9 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
             ) : (
               <p className="small muted" style={{ margin: 0 }}>Drag the signature in the preview (Letter page view) to move it, or use the sliders. <button type="button" className="linkish" onClick={placeSignature}>Move it above the signatory&apos;s name</button></p>
             )}
-            <label className="field"><span>Left ↔ right</span><input type="range" min={SIGNATURE_LIMITS.x[0]} max={SIGNATURE_LIMITS.x[1]} step={0.01} value={sig.x} onChange={(e) => setSig((s) => ({ ...s, x: Number(e.target.value) }))} /></label>
-            <label className="field"><span>Up ↕ down <small>Up lets it overlap the line above, like a real signature</small></span><input type="range" min={SIGNATURE_LIMITS.dy[0]} max={SIGNATURE_LIMITS.dy[1]} step={1} value={sig.dy} onChange={(e) => setSig((s) => ({ ...s, dy: Number(e.target.value) }))} /></label>
-            <label className="field"><span>Size</span><input type="range" min={SIGNATURE_LIMITS.width[0]} max={SIGNATURE_LIMITS.width[1]} step={2} value={sig.width} onChange={(e) => setSig((s) => ({ ...s, width: Number(e.target.value) }))} /></label>
+            <SliderField label="Left ↔ right" hint="From the left edge of the text" unit="%" min={SIGNATURE_LIMITS.x[0] * 100} max={SIGNATURE_LIMITS.x[1] * 100} step={1} value={Math.round(sig.x * 100)} onChange={(v) => setSig((s) => ({ ...s, x: v / 100 }))} />
+            <SliderField label="Up ↕ down" hint="Minus moves it up, over the line above, like a real signature" unit="pt" min={SIGNATURE_LIMITS.dy[0]} max={SIGNATURE_LIMITS.dy[1]} step={1} value={sig.dy} onChange={(v) => setSig((s) => ({ ...s, dy: v }))} />
+            <SliderField label="Size" hint="Width of the signature" unit="pt" min={SIGNATURE_LIMITS.width[0]} max={SIGNATURE_LIMITS.width[1]} step={1} value={sig.width} onChange={(v) => setSig((s) => ({ ...s, width: v }))} />
           </div>
         </div>
         <div className="actions">
@@ -154,3 +154,31 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
     </div>
   );
 }
+
+/**
+ * A slider with a number box beside it showing the exact value and unit, so a
+ * signature can be placed the same way in every letter. Typing is clamped to
+ * the range when the box loses focus.
+ */
+function SliderField({ label, hint, unit, min, max, step, value, onChange }) {
+  const [draft, setDraft] = useState(null);
+  const clamp = (n) => Math.min(max, Math.max(min, Math.round(n / step) * step));
+  const commit = () => {
+    if (draft !== null && draft.trim() !== "" && Number.isFinite(Number(draft))) onChange(clamp(Number(draft)));
+    setDraft(null);
+  };
+  return (
+    <div className="field slider-field">
+      <span className="field-head">{label} {hint && <small>{hint}</small>}</span>
+      <div className="slider-row">
+        <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} aria-label={label} />
+        <label className="slider-value">
+          <input type="number" min={min} max={max} step={step} value={draft ?? value} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } }} aria-label={`${label} (${unit})`} />
+          <span aria-hidden="true">{unit}</span>
+        </label>
+      </div>
+      <span className="small muted">{min}{unit} to {max}{unit}</span>
+    </div>
+  );
+}
+
