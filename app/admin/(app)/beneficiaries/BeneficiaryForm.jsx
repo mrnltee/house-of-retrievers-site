@@ -1,6 +1,7 @@
 import { BENEFICIARY_KINDS, BENEFICIARY_LIMITS as L, BENEFICIARY_STATUSES } from "../../../lib/beneficiaries.mjs";
 import { saveBeneficiary } from "../../beneficiaryActions";
 import ConfirmButton from "../ConfirmButton";
+import ImageField from "../ImageField";
 
 /** Add or edit a beneficiary: who they are, what they need, and who letters go to. */
 export default function BeneficiaryForm({ row = null, canEdit = true }) {
@@ -16,6 +17,10 @@ export default function BeneficiaryForm({ row = null, canEdit = true }) {
             <label className="field"><span>Type</span><select name="kind" defaultValue={v("kind") || "shelter"}>{BENEFICIARY_KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             <label className="field"><span>Status</span><select name="status" defaultValue={v("status") || "prospect"}>{BENEFICIARY_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             <label className="field"><span>Location <small>e.g. Quezon City</small></span><input type="text" name="location" maxLength={L.location} defaultValue={v("location")} /></label>
+          </div>
+          <div className="row-2">
+            <ImageField name="logo" label="Logo" hint="Their logo. Shown as the avatar when there's no photo." current={v("logo")} />
+            <ImageField name="photo" label="Photo" hint="The shelter, its team or its animals." current={v("photo")} round maxEdge={1000} />
           </div>
           <label className="field"><span>Description <small>Who they are and the animals they care for</small></span><textarea name="description" rows={4} maxLength={L.description} defaultValue={v("description")} /></label>
           <label className="field"><span>What they need <small>Optional, e.g. food, medicine, vet care, volunteers</small></span><textarea name="needs" rows={3} maxLength={L.needs} defaultValue={v("needs")} /></label>

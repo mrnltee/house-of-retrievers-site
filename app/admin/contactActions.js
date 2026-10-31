@@ -4,6 +4,7 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { cleanContact } from "../lib/contacts.mjs";
+import { pictureFrom } from "../lib/admin/imageUpload";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -29,11 +30,14 @@ export async function saveContact(data) {
     const admin = await actionAdmin("guests:edit");
     const { contact: c, error } = cleanContact(fields(data));
     if (error) await backWith(back, "error", error);
+    const photo = await pictureFrom(data, "photo", admin.email);
+    const logo = await pictureFrom(data, "logo", admin.email);
+    if (photo.error || logo.error) await backWith(back, "error", photo.error || logo.error);
     if (isUuid(id)) {
       await sql(
-        `UPDATE letter_contacts SET category=$2, name=$3, organization=$4, email=$5, phone=$6, handle=$7, notes=$8, address=$9, salutation=$10, updated_at=now()
+        `UPDATE letter_contacts SET category=$2, name=$3, organization=$4, email=$5, phone=$6, handle=$7, notes=$8, address=$9, salutation=$10, photo=$11, logo=$12, updated_at=now()
           WHERE id=$1 AND deleted_at IS NULL`,
-        [id, c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, c.address, c.salutation],
+        [id, c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, c.address, c.salutation, photo.url, logo.url],
       );
       await logActivity(admin.email, "contact.update", c.name, { contactId: id });
       await backWith(`/guests?category=${c.category}`, "ok", `Saved ${c.name}.`);
@@ -41,8 +45,8 @@ export async function saveContact(data) {
     const dupe = await sql("SELECT 1 FROM letter_contacts WHERE deleted_at IS NULL AND lower(name)=lower($1) AND category=$2", [c.name, c.category]);
     if (dupe.length) await backWith(`/guests?category=${c.category}`, "error", `${c.name} is already in this category.`);
     await sql(
-      `INSERT INTO letter_contacts (category, name, organization, email, phone, handle, notes, created_by, address, salutation) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, admin.email, c.address, c.salutation],
+      `INSERT INTO letter_contacts (category, name, organization, email, phone, handle, notes, created_by, address, salutation, photo, logo) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, admin.email, c.address, c.salutation, photo.url, logo.url],
     );
     await logActivity(admin.email, "contact.add", c.name, { category: c.category });
     await backWith(`/guests?category=${c.category}`, "ok", `Added ${c.name}.`);

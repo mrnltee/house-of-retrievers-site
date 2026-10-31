@@ -1,4 +1,5 @@
 import { CONTACT_CATEGORIES, CONTACT_LIMITS } from "../../../lib/contacts.mjs";
+import ImageField from "../ImageField";
 
 /** The fields of one Guest list contact (add form and edit page). */
 export default function ContactFields({ row = {}, category = "" }) {
@@ -24,6 +25,10 @@ export default function ContactFields({ row = {}, category = "" }) {
       <div className="row-2">
         <label className="field"><span>Address <small>Optional, one line each, e.g. street, then city</small></span><textarea name="address" rows={2} defaultValue={row.address || ""} maxLength={CONTACT_LIMITS.address} /></label>
         <label className="field"><span>Greeting <small>Optional: “Dear ___,” e.g. Ms. Jessie. Blank = the name</small></span><input name="salutation" defaultValue={row.salutation || ""} maxLength={CONTACT_LIMITS.salutation} placeholder="Ms. Jessie" /></label>
+      </div>
+      <div className="row-2">
+        <ImageField name="photo" label="Photo" hint="A face or profile picture. Shown as their avatar." current={row.photo || ""} round maxEdge={600} />
+        <ImageField name="logo" label="Logo" hint="Their brand or office logo, if any." current={row.logo || ""} />
       </div>
       <label className="field"><span>Notes <small>Optional, only admins see this</small></span><textarea name="notes" rows={2} defaultValue={row.notes || ""} maxLength={CONTACT_LIMITS.notes} /></label>
     </>

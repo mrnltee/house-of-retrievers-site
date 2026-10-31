@@ -4,6 +4,7 @@ import { can } from "../../../lib/admin/roles.mjs";
 import { BENEFICIARY_KINDS, BENEFICIARY_LETTER, BENEFICIARY_STATUSES, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
 import { listLetters } from "../../../lib/letterStore";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
+import { Avatar } from "../ImageField";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
@@ -59,7 +60,7 @@ export default async function BeneficiariesPage({ searchParams }) {
               {rows.map((r) => (
                 <tr key={r.id}>
                   {canSend && <td><input type="checkbox" name="to" value={`beneficiary:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
-                  <td className="strong"><a href={`${base}/beneficiaries/${r.id}`}>{r.name}</a>{r.location && <><br /><span className="small muted">{r.location}</span></>}</td>
+                  <td className="strong"><span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/beneficiaries/${r.id}`}>{r.name}</a>{r.location && <><br /><span className="small muted">{r.location}</span></>}</span></span></td>
                   <td>{kindLabel(r.kind)}</td>
                   <td><span className="chip">{statusLabel(r.status)}</span></td>
                   <td>{r.contact_name || "—"}{r.contact_email ? <><br /><span className="small muted">{r.contact_email}</span></> : <><br /><span className="small muted">No email yet</span></>}</td>

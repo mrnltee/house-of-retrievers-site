@@ -702,3 +702,13 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .letter-format-btn:hover, .letter-format-btn:focus-visible { background: #fff; border-color: var(--a-line); }
 .letter-format-btn.fmt-bold { font-weight: 800; min-width: 32px; }
 .letter-format-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--a-line); }
+
+/* Photo/logo pickers (ImageField.jsx) and the tiny avatar in Guest list and Beneficiaries rows. */
+.logo-preview.round { width: 120px; aspect-ratio: 1; padding: 0; border-radius: 50%; overflow: hidden; }
+.logo-preview.round img { width: 100%; height: 100%; object-fit: cover; }
+.row-name { display: flex; align-items: center; gap: 10px; }
+.row-avatar { flex: none; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--a-sand); border: 1px solid var(--a-line); font-size: 11px; font-weight: 700; color: var(--a-muted); }
+.row-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.row-avatar.is-logo { background: #fff; }
+.row-avatar.is-logo img { object-fit: contain; padding: 3px; }
+

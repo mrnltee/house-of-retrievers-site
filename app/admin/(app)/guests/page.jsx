@@ -11,6 +11,7 @@ import { saveContact } from "../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import ContactFields from "./ContactFields";
 import ConfirmButton from "../ConfirmButton";
+import { Avatar } from "../ImageField";
 
 /**
  * Guest list: celebrities, influencers, politicians, VIPs, media, speakers,
@@ -35,7 +36,7 @@ export default async function GuestsPage({ searchParams }) {
       [only, q],
     ),
     !seeSupporters ? [] : sql(
-      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation FROM supporters WHERE status <> 'ended'
+      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation, logo FROM supporters WHERE status <> 'ended'
           AND ($1 = '' OR name ILIKE '%' || $1 || '%') ORDER BY name`,
       [q],
     ),
@@ -45,9 +46,9 @@ export default async function GuestsPage({ searchParams }) {
   const groups = CONTACT_CATEGORIES.filter((c) => !only || c.key === only).map((c) => ({
     ...c,
     rows: [
-      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, name: r.name, sub: r.organization, email: r.email, greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
+      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: r.organization, email: r.email, greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
       ...supporters.filter((s) => (c.key === "sponsor" && s.kind === "Sponsor") || (c.key === "partner" && s.kind === "Partner"))
-        .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, name: s.name, sub: s.contact_name ? `${s.contact_name} · from Sponsors & partners` : "From Sponsors & partners", email: s.contact_email, greeting: greetingOf(recipientFields({ supporter: s })), href: `${base}/supporters/${s.id}`, last: "" })),
+        .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, logo: s.logo, name: s.name, sub: s.contact_name ? `${s.contact_name} · from Sponsors & partners` : "From Sponsors & partners", email: s.contact_email, greeting: greetingOf(recipientFields({ supporter: s })), href: `${base}/supporters/${s.id}`, last: "" })),
     ],
   }));
 
@@ -94,7 +95,7 @@ export default async function GuestsPage({ searchParams }) {
                   {g.rows.map((r) => (
                     <tr key={r.ref}>
                       {canEdit && <td><input type="checkbox" name="to" value={r.ref} aria-label={`Pick ${r.name}`} /></td>}
-                      <td className="strong"><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</td>
+                      <td className="strong"><span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</span></span></td>
                       <td>{r.email || <span className="muted">No email yet</span>}</td>
                       <td className="small">Dear {r.greeting},</td>
                       <td className="small">{r.last || "—"}</td>
