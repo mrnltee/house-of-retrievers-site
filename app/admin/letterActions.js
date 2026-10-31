@@ -64,15 +64,17 @@ export async function resetLetter(data) {
 /** "supporter:<uuid>" / "person:<uuid>" → rows with who to send to. */
 async function loadRecipients(refs) {
   const ids = (kind) => refs.filter((r) => r.startsWith(`${kind}:`)).map((r) => r.slice(kind.length + 1)).filter(isUuid);
-  const [supporters, people, contacts] = await Promise.all([
+  const [supporters, people, contacts, beneficiaries] = await Promise.all([
     ids("supporter").length ? sql("SELECT id, name, kind, contact_email, contact_name, address, salutation FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
     ids("person").length ? sql("SELECT id, name, email, organization FROM people WHERE id = ANY($1::uuid[])", [ids("person")]) : [],
     ids("contact").length ? sql("SELECT id, name, organization, email, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
+    ids("beneficiary").length ? sql("SELECT id, name, contact_name, contact_email, address, salutation FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("beneficiary")]) : [],
   ]);
   return [
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim() })),
     ...people.map((p) => ({ ref: `person:${p.id}`, id: p.id, type: "person", ...recipientFields({ person: p }), email: (p.email || "").trim() })),
     ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", ...recipientFields({ contact: c }), email: (c.email || "").trim() })),
+    ...beneficiaries.map((b) => ({ ref: `beneficiary:${b.id}`, id: b.id, type: "beneficiary", ...recipientFields({ beneficiary: b }), email: (b.contact_email || "").trim() })),
   ];
 }
 
@@ -115,6 +117,7 @@ export async function sendLetters(data) {
       sent.push(r.name);
       await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email });
       if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
+      if (r.type === "beneficiary") await sql("UPDATE beneficiaries SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second
     }
 

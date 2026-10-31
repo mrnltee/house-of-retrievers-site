@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { LETTER_STARTERS, blanksOf, fillLetter, letterBlocks, letterDate, letterWithOverride, missingBlanks, prepareLetter, recipientName } from "./letters.mjs";
 import { letterPdf, pdfSafe } from "./letterPdf.mjs";
 
-test("the eight starter letters are there, each with a subject", () => {
-  assert.equal(LETTER_STARTERS.length, 8);
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 8);
+test("the nine starter letters are there, each with a subject", () => {
+  assert.equal(LETTER_STARTERS.length, 9);
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 9);
   for (const l of LETTER_STARTERS) {
     assert.ok(l.subject, l.key);
     // The guests-of-honor letter is written to Senator Zubiri by name.
@@ -23,7 +23,7 @@ test("covering emails (owner's brief, 2026-10-27): portfolio link, official name
     assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
     assert.ok(l.cover.length <= 2000, l.key);
   }
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 8, "each cover is its own");
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 9, "each cover is its own");
   assert.deepEqual(blanksOf(`See our ${portfolio}.`).map((b) => b.label), []);
 });
 
@@ -133,7 +133,7 @@ test("a page break never leaves a blank page (doubled, at the start of a page, o
   assert.equal(await count("---page---\n\nOne"), 1);
 });
 
-test("every blank in the eight letters has a sample answer for the send form", async () => {
+test("every blank in the nine letters has a sample answer for the send form", async () => {
   const { blankSample } = await import("./letters/samples.mjs");
   for (const l of LETTER_STARTERS) {
     for (const b of blanksOf(l.subject, l.cover, l.body)) {

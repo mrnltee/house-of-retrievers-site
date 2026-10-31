@@ -60,7 +60,7 @@ export function recipientName({ supporter, person } = {}) {
  * and the name is the contact person; without one, the name is both the
  * [Company Name] and the greeting.
  */
-export function recipientFields({ supporter, person, contact } = {}) {
+export function recipientFields({ supporter, person, contact, beneficiary } = {}) {
   const t = (v) => String(v || "").trim();
   if (contact) {
     const company = t(contact.organization) || t(contact.name);
@@ -68,6 +68,7 @@ export function recipientFields({ supporter, person, contact } = {}) {
     return { name: company, contact: who, address: t(contact.address), salutation: t(contact.salutation) };
   }
   if (supporter) return { name: recipientName({ supporter }), contact: t(supporter.contact_name), address: t(supporter.address), salutation: t(supporter.salutation) };
+  if (beneficiary) return { name: t(beneficiary.name), contact: t(beneficiary.contact_name), address: t(beneficiary.address), salutation: t(beneficiary.salutation) };
   if (person) return { name: recipientName({ person }), contact: t(person.organization) ? t(person.name) : "", address: "", salutation: "" };
   return { name: "", contact: "", address: "", salutation: "" };
 }

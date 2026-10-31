@@ -14,7 +14,7 @@ const page = (key) => {
   return [p.label, p.path, p.view[0]];
 };
 const GROUPS = [
-  ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters"].map(page)],
+  ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters", "beneficiaries", "guests"].map(page)],
   ["Publish", [["Gallery", null], ["Forms", null], page("media"), ["Content", null]]],
   ["Money", [page("payments"), ["Donations & spending", null]]],
   ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],

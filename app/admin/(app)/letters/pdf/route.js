@@ -38,6 +38,9 @@ export async function POST(request) {
   } else if (type === "person" && isUuid(id)) {
     const [row] = await sql("SELECT name, organization FROM people WHERE id = $1", [id]);
     if (row) to = recipientFields({ person: row });
+  } else if (type === "beneficiary" && isUuid(id)) {
+    const [row] = await sql("SELECT name, contact_name, address, salutation FROM beneficiaries WHERE id = $1 AND deleted_at IS NULL", [id]);
+    if (row) to = recipientFields({ beneficiary: row });
   } else if (type === "contact" && isUuid(id)) {
     const [row] = await sql("SELECT name, organization, address, salutation FROM letter_contacts WHERE id = $1 AND deleted_at IS NULL", [id]);
     if (row) to = recipientFields({ contact: row });

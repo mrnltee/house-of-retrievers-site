@@ -45,10 +45,13 @@ export default async function SendLetterPage({ searchParams }) {
   }
   const contactIds = refs.filter((r) => r.startsWith("contact:")).map((r) => r.slice(8)).filter(isUuid);
   const contacts = contactIds.length ? await sql("SELECT id, name, organization, email, category, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [contactIds]) : [];
+  const beneficiaryIds = refs.filter((r) => r.startsWith("beneficiary:")).map((r) => r.slice(12)).filter(isUuid);
+  const beneficiaries = beneficiaryIds.length ? await sql("SELECT id, name, contact_name, contact_email, address, salutation, kind, status FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [beneficiaryIds]) : [];
   const people = personIds.length ? await sql("SELECT id, name, email, organization, kind FROM people WHERE id = ANY($1::uuid[]) ORDER BY name", [personIds]) : [];
   const recipients = [
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim(), note: `${s.kind} · ${s.status}`, href: `${base}/supporters/${s.id}` })),
     ...contacts.map((c) => ({ ref: `contact:${c.id}`, ...recipientFields({ contact: c }), email: (c.email || "").trim(), note: categoryOf(c.category)?.label || "Guest list", href: `${base}/guests/${c.id}`, category: c.category })),
+    ...beneficiaries.map((b) => ({ ref: `beneficiary:${b.id}`, ...recipientFields({ beneficiary: b }), email: (b.contact_email || "").trim(), note: "Beneficiary", href: `${base}/beneficiaries/${b.id}`, category: "beneficiary" })),
     ...people.map((p) => ({ ref: `person:${p.id}`, ...recipientFields({ person: p }), email: (p.email || "").trim(), note: p.organization ? `${p.kind} · ${p.name}` : p.kind, href: `${base}/people/${p.id}` })),
   ];
 

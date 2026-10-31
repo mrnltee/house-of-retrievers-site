@@ -16,6 +16,8 @@ const SAMPLES = {
   "Product / Service and Quantity": "e.g. 150 sample packs of dog treats",
   "Intended Use": "e.g. guest giveaways and goody bags",
   "Brief Summary of the Benefits Offered in Annex A": "e.g. logo on the event poster, a sampling table and a dedicated social post",
+  "Proposed Support": "e.g. a monthly supply of dog food and vitamins, and help with vet bills for rescued animals",
+  "Additional Details": "e.g. We would also like to invite your team to our launch on November 30, 2026.",
   "Reply Deadline": "e.g. November 6, 2026",
   "Proposal Reference": "e.g. HOR-XD-2026-001",
   "Version / Date": "e.g. Version 1 – October 28, 2026",

@@ -18,7 +18,7 @@ export const CONTACT_CATEGORIES = [
 export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
 
 export const categoryOf = (key) => CONTACT_CATEGORIES.find((c) => c.key === key) || null;
-export const letterFor = (key) => categoryOf(key)?.letter || "";
+export const letterFor = (key) => (key === "beneficiary" ? "beneficiary-proposal" : categoryOf(key)?.letter || "");
 
 const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
