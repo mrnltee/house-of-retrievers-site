@@ -2,7 +2,7 @@ import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { emailReady } from "../../../../lib/email";
 import { MAX_LETTER_RECIPIENTS, blanksOf, recipientFields } from "../../../../lib/letters.mjs";
-import { groupLetters, listLetters, savedAnswers } from "../../../../lib/letterStore";
+import { groupLetters, listLetters, savedAnswers, signatureCheck } from "../../../../lib/letterStore";
 import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import LetterSend from "./LetterSend";
@@ -87,6 +87,7 @@ export default async function SendLetterPage({ searchParams }) {
           from={from}
           detailsHref={`${base}/letters/details`}
           editHref={`${base}/letters/${letter.key}`}
+          signatureCheck={await signatureCheck(letter.signature, letter.body)}
           recipients={recipients}
           max={MAX_LETTER_RECIPIENTS}
           ready={emailReady()}

@@ -14,7 +14,7 @@ import LetterView from "../LetterView";
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", recipients, max, ready, pdfAction, back }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back }) {
   const isStandard = (label) => standard.includes(label);
   const [values, setValues] = useState(() => Object.fromEntries(blanks.map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
   const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
@@ -120,7 +120,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             {who?.cc?.length > 0 && <div><dt>Cc</dt><dd>{who.cc.join(", ")}</dd></div>}
             <div><dt>Subject</dt><dd><strong>{prepared.subject}</strong></dd></div>
           </dl>
-          <SignatureStatus letter={letter} editHref={editHref} />
+          <SignatureStatus check={signatureCheck} editHref={editHref} />
           <p className="mail-attachment" title="The letter, filled in for this recipient">
             <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
           </p>
@@ -188,14 +188,11 @@ function RecipientTabs({ recipients, current, picked, onPick }) {
 }
 
 /**
- * Whether the PDF carries the signature, from the letter as saved (sending
- * never uses unsaved edits), and what to do if it doesn't.
+ * Whether the PDF carries the signature: what the server found when it loaded
+ * the letter's saved signature (signatureCheck), and what to do if it isn't.
  */
-function SignatureStatus({ letter, editHref }) {
-  const s = letter.signature || {};
-  const fix = editHref ? <> <a href={editHref}>Set it up in the letter</a> (step 5), then press Save there.</> : null;
-  if (s.on && s.image) return <p className="small sig-status is-on" style={{ margin: 0 }}>✓ Signature included in the PDF{hasSignatureMark(letter.body) ? "" : ", above the signatory's name"}</p>;
-  if (s.on) return <p className="small sig-status is-warn" style={{ margin: 0 }}>Signature is on but has no image saved, so it won&apos;t show.{fix}</p>;
-  return <p className="small muted sig-status" style={{ margin: 0 }}>No signature on this letter.{fix}</p>;
+function SignatureStatus({ check, editHref }) {
+  if (!check) return null;
+  if (check.ok) return <p className="small sig-status is-on" style={{ margin: 0 }}>✓ {check.text}</p>;
+  return <p className="small sig-status is-warn" style={{ margin: 0 }}>{check.text}{editHref && <> <a href={editHref}>Open the letter</a> (step 5), then press Save there.</>}</p>;
 }
-

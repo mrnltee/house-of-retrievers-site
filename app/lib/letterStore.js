@@ -69,7 +69,7 @@ export async function groupLetters() {
 export async function signatureForPdf(settings, upload = "") {
   const { cleanSignature } = await import("./letterSignature.mjs");
   const s = cleanSignature(settings);
-  if (!s.on) return null;
+  if (!s.on) { if (settings) console.info("letter signature: switched off for this letter"); return null; }
   const why = (reason) => { console.error(`letter signature: left out, ${reason}`); return null; };
   try {
     const data = String(upload || "").match(/^data:image\/(?:png|jpeg);base64,([A-Za-z0-9+/=]+)$/);
@@ -86,6 +86,27 @@ export async function signatureForPdf(settings, upload = "") {
     return { buffer: Buffer.from(row.data), x: s.x, dy: s.dy, width: s.width };
   } catch (error) {
     return why(`image couldn't be loaded (${error?.message || error})`);
+  }
+}
+
+/**
+ * What the PDF will get for a letter's saved signature, in words, for the send
+ * page: { ok, text }. Loads the image the same way sending does.
+ */
+export async function signatureCheck(settings, body = "") {
+  const { cleanSignature, hasSignatureMark } = await import("./letterSignature.mjs");
+  const s = cleanSignature(settings);
+  if (!s.on) return { ok: false, text: settings ? "Signature is switched off for this letter." : "No signature on this letter." };
+  if (!s.image) return { ok: false, text: "Signature is on but no image is saved." };
+  if (!hasDatabase()) return { ok: false, text: "The database isn't reachable." };
+  try {
+    const [row] = await sql("SELECT mime, bytes FROM event_images WHERE id = $1", [s.image.split("/").pop()]);
+    if (!row) return { ok: false, text: "The saved signature image couldn't be found. Upload it again and save." };
+    if (!/^image\/(png|jpeg)$/.test(row.mime)) return { ok: false, text: `The saved image is ${row.mime}; PDFs need PNG or JPEG. Upload it again and save.` };
+    const kb = Math.max(1, Math.round(Number(row.bytes || 0) / 1024));
+    return { ok: true, text: `Signature included in the PDF (${row.mime.split("/")[1].toUpperCase()}, ${kb} KB, ${hasSignatureMark(body) ? "where the letter marks it" : "above the signatory's name"}).` };
+  } catch (error) {
+    return { ok: false, text: `The signature image couldn't be loaded (${error?.message || error}).` };
   }
 }
 

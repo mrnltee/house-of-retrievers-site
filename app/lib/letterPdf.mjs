@@ -201,6 +201,7 @@ export async function letterPdf(blocks, options = {}) {
     if (!result.spills) break;
   }
   if (options.signature && !best.signed) console.error("letter signature: switched on, but nothing was drawn (no {signature} place in the letter, or the image couldn't be read)");
+  if (options.signature && best.signed) console.info(`letter signature: drawn (${best.signed}×, ${options.signature.buffer.length} bytes)`);
   return best.pdf;
 }
 
