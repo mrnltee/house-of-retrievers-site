@@ -69,7 +69,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
               <li key={r.ref}>
                 <label className="check">
                   <input type="checkbox" name="to" value={r.ref} checked={picked.has(r.ref)} disabled={!r.email} onChange={() => toggle(r.ref)} />
-                  <span><strong>{r.name}</strong> <span className="small muted">· {r.note} · {r.email || "no email on record — add one to send"}</span></span>
+                  <span><strong>{r.name}</strong> <span className="small muted">· {r.note} · {r.email || "no email on record: add one to send"}{r.cc?.length ? ` (cc ${r.cc.join(", ")})` : ""}</span></span>
                 </label>
               </li>
             ))}
@@ -93,7 +93,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           <ConfirmButton
             disabled={!ready || count === 0 || count > max || missing.length > 0}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
-            items={[`Each gets an email with the letter as a PDF, addressed to them by name`, "Each send is logged in the record's history", "What you typed in the blanks is remembered for next time"]}
+            items={["Each gets an email with the letter as a PDF, addressed to them by name", "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
           >
             Send to {count}
@@ -120,6 +120,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
             <div><dt>To</dt><dd>{who?.name}{who?.email ? ` <${who.email}>` : " (no email on record)"}</dd></div>
+            {who?.cc?.length > 0 && <div><dt>Cc</dt><dd>{who.cc.join(", ")}</dd></div>}
             <div><dt>Subject</dt><dd><strong>{prepared.subject}</strong></dd></div>
           </dl>
           <p className="mail-attachment" title="The letter, filled in for this recipient">

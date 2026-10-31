@@ -23,7 +23,7 @@ export const MAX_LETTER_RECIPIENTS = 25;
 
 /** Blanks the system fills by itself. */
 export const AUTO_BLANKS = {
-  "Company Name": "The sponsor or partner's name (for People: their organization, else their name)",
+  "Company Name": "Who the letter is to: the company, brand or shelter; for a guest with no company, their name",
   // Not "Contact Person": letters use that for HOR's own contact, asked when sending.
   "Their Contact Person": "The representative or contact person on their record (write [Their Contact Person?] to drop the line when there's none)",
   Address: "The address on their record (write [Address?] to drop the line when there's none)",

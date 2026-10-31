@@ -11,7 +11,7 @@ const form = (data, key) => {
   return typeof value === "string" ? value : "";
 };
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
-const FIELDS = ["name", "kind", "status", "description", "needs", "location", "website", "instagram", "contactName", "contactEmail", "contactPhone", "address", "salutation", "notes"];
+const FIELDS = ["name", "kind", "status", "description", "needs", "street", "barangay", "city", "province", "postalCode", "website", "instagram", "contactName", "contactEmail", "contactPhone", "salutation", "notes"];
 
 async function guarded(path, work) {
   try {
@@ -35,19 +35,19 @@ export async function saveBeneficiary(data) {
     if (photo.error || logo.error) await backWith(back, "error", photo.error || logo.error);
     const [taken] = await sql("SELECT id FROM beneficiaries WHERE deleted_at IS NULL AND lower(name) = lower($1) AND id IS DISTINCT FROM $2", [b.name, isUuid(id) ? id : null]);
     if (taken) await backWith(back, "error", `${b.name} is already in Beneficiaries.`);
-    const values = [b.name, b.kind, b.status, b.description, b.needs, b.location, b.website, b.instagram, b.contactName, b.contactEmail, b.contactPhone, b.address, b.salutation, b.notes, photo.url, logo.url];
+    const values = [b.name, b.kind, b.status, b.description, b.needs, b.location, b.website, b.instagram, b.contactName, b.contactEmail, b.contactPhone, b.address, b.salutation, b.notes, photo.url, logo.url, b.street, b.barangay, b.city, b.province, b.postalCode];
     if (isUuid(id)) {
       await sql(
         `UPDATE beneficiaries SET name=$1, kind=$2, status=$3, description=$4, needs=$5, location=$6, website=$7, instagram=$8, contact_name=$9,
-           contact_email=$10, contact_phone=$11, address=$12, salutation=$13, notes=$14, photo=$15, logo=$16, updated_at=now() WHERE id=$17 AND deleted_at IS NULL`,
+           contact_email=$10, contact_phone=$11, address=$12, salutation=$13, notes=$14, photo=$15, logo=$16, street=$17, barangay=$18, city=$19, province=$20, postal_code=$21, updated_at=now() WHERE id=$22 AND deleted_at IS NULL`,
         [...values, id],
       );
       await logActivity(admin.email, "beneficiary.update", b.name, { beneficiaryId: id });
       await backWith(back, "ok", `Saved ${b.name}.`);
     }
     const [row] = await sql(
-      `INSERT INTO beneficiaries (name, kind, status, description, needs, location, website, instagram, contact_name, contact_email, contact_phone, address, salutation, notes, photo, logo, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
+      `INSERT INTO beneficiaries (name, kind, status, description, needs, location, website, instagram, contact_name, contact_email, contact_phone, address, salutation, notes, photo, logo, street, barangay, city, province, postal_code, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING id`,
       [...values, admin.email],
     );
     await logActivity(admin.email, "beneficiary.add", b.name, { beneficiaryId: row.id });

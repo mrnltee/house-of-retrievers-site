@@ -192,8 +192,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 <div className="row-2">
                   <label className="field"><span>Furbaby&apos;s name <small>Optional</small></span><input name="furbabyName" maxLength={120} defaultValue={reg.furbaby_name || ""} /></label>
                   <div className="row-2">
-                    <label className="field"><span>People</span><input name="humanCount" type="number" min="1" max="100" required defaultValue={reg.human_count ?? 1} /></label>
-                    <label className="field"><span>Furbabies</span><input name="furbabyCount" type="number" min="0" max="100" required defaultValue={reg.furbaby_count ?? 0} /></label>
+                    <label className="field"><span>People attending</span><input name="humanCount" type="number" min="1" max="100" required defaultValue={reg.human_count ?? 1} /></label>
+                    <label className="field"><span>Furbabies attending</span><input name="furbabyCount" type="number" min="0" max="100" required defaultValue={reg.furbaby_count ?? 0} /></label>
                   </div>
                 </div>
                 <BreedFields initial={reg.furbaby_breeds || []} count={Math.min(4, Math.max(1, reg.furbaby_count ?? 1))} />
@@ -209,8 +209,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
                   <input name="promoCode" maxLength={30} autoComplete="off" spellCheck={false} style={{ textTransform: "uppercase" }} defaultValue={reg.promo?.code || ""} placeholder="None" />
                 </label>}
                 <label className="check"><input type="checkbox" name="photoConsent" defaultChecked={reg.photo_consent} /> <span>Photos of them are OK</span></label>
-                <label className="check"><input type="checkbox" name="under18" defaultChecked={reg.under_18} /> <span>Under 18</span></label>
-                {reg.under_18 && <label className="field"><span>Guardian&apos;s name</span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
+                <label className="check"><input type="checkbox" name="under18" defaultChecked={reg.under_18} /> <span>Under 18 (comes with a guardian)</span></label>
+                {reg.under_18 && <label className="field"><span>Parent or guardian&apos;s name <small>Only for under 18s</small></span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
                 <label className="check"><input type="checkbox" name="sendEmail" /> <span>Send the updated confirmation or payment instructions after saving</span></label>
                 <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["The paid status, payment amount, reference and QR pass stay unchanged"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
               </form>
@@ -321,7 +321,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                   </label>
                   <label className="field"><span>Amount <small>₱</small></span><input type="text" name="amount" inputMode="decimal" defaultValue={reg.pay_amount ?? due ?? ""} /></label>
                 </div>
-                <label className="field"><span>Reference number <small>Not needed for cash</small></span><input type="text" name="reference" maxLength={40} defaultValue={reg.fee_reference || ""} /></label>
+                <label className="field"><span>Reference number <small>If paid, not needed for cash</small></span><input type="text" name="reference" maxLength={40} defaultValue={reg.fee_reference || ""} /></label>
                 <div className="actions">
                   <ConfirmButton
                     className="btn ghost"

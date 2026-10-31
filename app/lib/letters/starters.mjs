@@ -1,6 +1,7 @@
 // HOR's letter templates, converted from HOR's Word files (Oct 2026). Edit them in the admin
-// (Settings → Letters); these are the starting wording. [Company Name] and [Date] fill in by
-// themselves, [Label?] is optional, and any other [Label] is asked for when sending.
+// (Settings → Letters); these are the starting wording. [Company Name], [Their Contact Person],
+// [Address], [Salutation] and [Date] fill in by themselves (AUTO_BLANKS), [Label?] is optional,
+// and any other [Label] comes from Standard details or is asked for when sending.
 export const LETTER_STARTERS = [
   {
     "key": "sponsorship-letter",

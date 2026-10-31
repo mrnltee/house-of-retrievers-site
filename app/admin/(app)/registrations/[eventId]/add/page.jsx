@@ -90,7 +90,7 @@ export default async function AddRegistration({ params, searchParams }) {
         )}
         <label className="check"><input type="checkbox" name="photoConsent" defaultChecked /> <span>Photos of them are OK</span></label>
         <label className="check"><input type="checkbox" name="under18" /> <span>Under 18 (comes with a guardian)</span></label>
-        <label className="field"><span>Guardian&apos;s name <small>Only for under 18s</small></span><input type="text" name="guardianName" maxLength={120} /></label>
+        <label className="field"><span>Parent or guardian&apos;s name <small>Only for under 18s</small></span><input type="text" name="guardianName" maxLength={120} /></label>
         <label className="check"><input type="checkbox" name="sendEmail" defaultChecked={ready} disabled={!ready} /> <span>Email them now: the QR pass (paid or no fee), or how to pay (pending){!ready && <span className="small muted"> · switches on once the Resend key is in Vercel</span>}</span></label>
         <div className="actions">
           <ConfirmButton

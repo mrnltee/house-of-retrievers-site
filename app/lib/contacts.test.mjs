@@ -15,7 +15,7 @@ test("contacts need a category and a name; email is checked", () => {
   assert.match(cleanContact({ category: "vip" }).error, /name/);
   assert.match(cleanContact({ category: "vip", name: "X", email: "bad" }).error, /email/);
   assert.deepEqual(cleanContact({ category: "media", name: "  Jane   Doe ", email: "J@X.PH", organization: "" }).contact,
-    { category: "media", name: "Jane Doe", email: "j@x.ph", organization: null, phone: null, handle: null, address: null, salutation: null, notes: null });
+    { category: "media", name: "Jane Doe", email: "j@x.ph", organization: null, phone: null, handle: null, address: null, salutation: null, repName: null, repEmail: null, repPhone: null, sendTo: "person", notes: null });
 });
 
 test("a group's letter: the admin's choice, else the default", async () => {
@@ -24,4 +24,14 @@ test("a group's letter: the admin's choice, else the default", async () => {
   assert.equal(letterFor("media", {}), "invite-media");
   assert.equal(letterFor("beneficiary"), "beneficiary-proposal");
   assert.ok(LETTER_GROUPS.some((g) => g.key === "beneficiary"));
+});
+
+test("a guest's letter goes to the person, the representative, or both", async () => {
+  const { letterEmails } = await import("./contacts.mjs");
+  const c = { email: "anne@x.ph", rep_email: "mgr@x.ph" };
+  assert.deepEqual(letterEmails({ ...c, send_to: "person" }), { to: "anne@x.ph", cc: [] });
+  assert.deepEqual(letterEmails({ ...c, send_to: "representative" }), { to: "mgr@x.ph", cc: [] });
+  assert.deepEqual(letterEmails({ ...c, send_to: "both" }), { to: "anne@x.ph", cc: ["mgr@x.ph"] });
+  assert.deepEqual(letterEmails({ rep_email: "mgr@x.ph", send_to: "person" }), { to: "mgr@x.ph", cc: [] });
+  assert.match(cleanContact({ category: "vip", name: "X", repEmail: "bad" }).error, /representative/);
 });

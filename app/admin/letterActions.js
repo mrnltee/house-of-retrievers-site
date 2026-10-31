@@ -8,7 +8,7 @@ import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
 import { listLetters, loadLetter } from "../lib/letterStore";
-import { LETTER_GROUPS } from "../lib/contacts.mjs";
+import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -71,13 +71,13 @@ async function loadRecipients(refs) {
   const [supporters, people, contacts, beneficiaries] = await Promise.all([
     ids("supporter").length ? sql("SELECT id, name, kind, contact_email, contact_name, address, salutation FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
     ids("person").length ? sql("SELECT id, name, email, organization FROM people WHERE id = ANY($1::uuid[])", [ids("person")]) : [],
-    ids("contact").length ? sql("SELECT id, name, organization, email, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
+    ids("contact").length ? sql("SELECT id, name, organization, email, rep_email, send_to, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
     ids("beneficiary").length ? sql("SELECT id, name, contact_name, contact_email, address, salutation FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("beneficiary")]) : [],
   ]);
   return [
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim() })),
     ...people.map((p) => ({ ref: `person:${p.id}`, id: p.id, type: "person", ...recipientFields({ person: p }), email: (p.email || "").trim() })),
-    ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", ...recipientFields({ contact: c }), email: (c.email || "").trim() })),
+    ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", ...recipientFields({ contact: c }), email: letterEmails(c).to, cc: letterEmails(c).cc })),
     ...beneficiaries.map((b) => ({ ref: `beneficiary:${b.id}`, id: b.id, type: "beneficiary", ...recipientFields({ beneficiary: b }), email: (b.contact_email || "").trim() })),
   ];
 }
@@ -116,10 +116,10 @@ export async function sendLetters(data) {
       const prepared = prepareLetter(letter, { ...r, date, values });
       const pdf = await letterPdf(prepared.blocks, { title: prepared.subject });
       const mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename });
-      const result = await sendEmail({ to: r.email, ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
+      const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
-      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email });
+      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(r.cc?.length ? { cc: r.cc } : {}) });
       if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       if (r.type === "beneficiary") await sql("UPDATE beneficiaries SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second

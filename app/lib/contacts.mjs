@@ -17,6 +17,25 @@ export const CONTACT_CATEGORIES = [
 
 export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
 
+/** Who a guest's letters are emailed to. */
+export const SEND_TO = [
+  ["person", "The person"],
+  ["representative", "Their representative"],
+  ["both", "Both (representative copied)"],
+];
+
+/**
+ * The addresses a guest's letter goes to: { to, cc }. Falls back to whichever
+ * address there is, so a missing one never blocks a send.
+ */
+export function letterEmails(c = {}) {
+  const person = String(c.email || "").trim();
+  const rep = String(c.rep_email || "").trim();
+  if (c.send_to === "representative") return { to: rep || person, cc: [] };
+  if (c.send_to === "both" && person && rep && person.toLowerCase() !== rep.toLowerCase()) return { to: person, cc: [rep] };
+  return { to: person || rep, cc: [] };
+}
+
 export const categoryOf = (key) => CONTACT_CATEGORIES.find((c) => c.key === key) || null;
 /** Every group that gets a letter, with its default: the Guest list categories, then Beneficiaries. */
 export const LETTER_GROUPS = [...CONTACT_CATEGORIES, { key: "beneficiary", label: "Beneficiaries (shelters & rescue groups)", letter: "beneficiary-proposal" }];
@@ -32,8 +51,12 @@ export function cleanContact(input = {}) {
   if (!category) return { error: "Pick a category." };
   const name = clean(input.name, CONTACT_LIMITS.name);
   if (!name) return { error: "Type the name as it should appear on the letter." };
+  const looksLikeEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const email = clean(input.email, CONTACT_LIMITS.email).toLowerCase();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "That email doesn't look right." };
+  if (email && !looksLikeEmail(email)) return { error: "That email doesn't look right." };
+  const repEmail = clean(input.repEmail, CONTACT_LIMITS.email).toLowerCase();
+  if (repEmail && !looksLikeEmail(repEmail)) return { error: "The representative's email doesn't look right." };
+  const sendTo = SEND_TO.some(([k]) => k === input.sendTo) ? input.sendTo : "person";
   const notes = String(input.notes ?? "").trim().slice(0, CONTACT_LIMITS.notes);
   return {
     contact: {
@@ -44,6 +67,10 @@ export function cleanContact(input = {}) {
       // An address keeps its line breaks (one line each in the letter).
       address: String(input.address ?? "").replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n").slice(0, CONTACT_LIMITS.address) || null,
       salutation: clean(input.salutation, CONTACT_LIMITS.salutation) || null,
+      repName: clean(input.repName, CONTACT_LIMITS.name) || null,
+      repEmail: repEmail || null,
+      repPhone: clean(input.repPhone, CONTACT_LIMITS.phone) || null,
+      sendTo,
       notes: notes || null,
     },
   };

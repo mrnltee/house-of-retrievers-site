@@ -12,9 +12,9 @@ export function emailReady() {
 /**
  * `idempotencyKey` ("<event>/<id>") stops a retry from sending twice: Resend
  * returns the first result for the same key within 24 hours. `attachments`:
- * [{ filename, content: Buffer }] (a letter's PDF).
+ * [{ filename, content: Buffer }] (a letter's PDF). `cc`: more addresses copied in (a guest's representative).
  */
-export async function sendEmail({ to, subject, html, text, idempotencyKey, attachments }) {
+export async function sendEmail({ to, cc = [], subject, html, text, idempotencyKey, attachments }) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM;
   if (!key || !from || !to) return { skipped: true };
@@ -29,6 +29,7 @@ export async function sendEmail({ to, subject, html, text, idempotencyKey, attac
       body: JSON.stringify({
         from,
         to: [to],
+        ...(cc.length ? { cc } : {}),
         subject,
         html,
         text,

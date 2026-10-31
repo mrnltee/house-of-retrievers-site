@@ -1,7 +1,7 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { CONTACT_CATEGORIES, categoryOf, letterFor } from "../../../lib/contacts.mjs";
+import { CONTACT_CATEGORIES, categoryOf, letterEmails, letterFor } from "../../../lib/contacts.mjs";
 import { groupLetters, listLetters } from "../../../lib/letterStore";
 import { recipientFields } from "../../../lib/letters.mjs";
 
@@ -49,7 +49,7 @@ export default async function GuestsPage({ searchParams }) {
     ...c,
     letter: letterFor(c.key, chosen),
     rows: [
-      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: r.organization, email: r.email, greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
+      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: r.organization, email: letterEmails(r).to, rep: r.rep_name ? `Rep: ${r.rep_name}${r.send_to !== "person" ? " (gets letters)" : ""}` : "", greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
       ...supporters.filter((s) => (c.key === "sponsor" && s.kind === "Sponsor") || (c.key === "partner" && s.kind === "Partner"))
         .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, logo: s.logo, name: s.name, sub: s.contact_name ? `${s.contact_name} · from Sponsors & partners` : "From Sponsors & partners", email: s.contact_email, greeting: greetingOf(recipientFields({ supporter: s })), href: `${base}/supporters/${s.id}`, last: "" })),
     ],
@@ -99,7 +99,7 @@ export default async function GuestsPage({ searchParams }) {
                     <tr key={r.ref}>
                       {canEdit && <td><input type="checkbox" name="to" value={r.ref} aria-label={`Pick ${r.name}`} /></td>}
                       <td className="strong"><span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</span></span></td>
-                      <td>{r.email || <span className="muted">No email yet</span>}</td>
+                      <td>{r.email || <span className="muted">No email yet</span>}{r.rep && <><br /><span className="small muted">{r.rep}</span></>}</td>
                       <td className="small">Dear {r.greeting},</td>
                       <td className="small">{r.last || "—"}</td>
                     </tr>
