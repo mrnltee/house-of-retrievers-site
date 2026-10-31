@@ -7,7 +7,9 @@ import { emailReady, sendEmail } from "../lib/email";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
-import { listLetters, loadLetter } from "../lib/letterStore";
+import { listLetters, loadLetter, signatureForPdf } from "../lib/letterStore";
+import { pictureFrom } from "../lib/admin/imageUpload";
+import { cleanSignature } from "../lib/letterSignature.mjs";
 import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
 
 const form = (data, key) => {
@@ -41,10 +43,15 @@ export async function saveLetter(data) {
       if (!f[field]) await backWith(back, "error", `The ${field === "body" ? "letter" : field} can't be empty.`);
       if (f[field].length > max) await backWith(back, "error", `The ${field === "body" ? "letter" : field} is too long (${max.toLocaleString("en-PH")} characters at most).`);
     }
+    // Signature: switched on or off, where it sits, and its image (PNG or JPEG for the PDF).
+    const image = await pictureFrom(data, "signature", admin.email, { types: /^image\/(?:png|jpeg)$/ });
+    if (image.error) await backWith(back, "error", image.error);
+    const signature = cleanSignature({ on: form(data, "signatureOn"), image: image.url, x: form(data, "signatureX"), dy: form(data, "signatureDy"), width: form(data, "signatureWidth") });
+    if (signature.on && !signature.image) await backWith(back, "error", "Add a signature image, or switch the signature off.");
     await sql(
-      `INSERT INTO letter_templates (key, name, subject, cover, body, updated_by, updated_at) VALUES ($1, $2, $3, $4, $5, $6, now())
-       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, cover = EXCLUDED.cover, body = EXCLUDED.body, updated_by = EXCLUDED.updated_by, updated_at = now()`,
-      [key, f.name, f.subject, f.cover, f.body, admin.email],
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at) VALUES ($1, $2, $3, $4, $5, $7, $6, now())
+       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, cover = EXCLUDED.cover, body = EXCLUDED.body, signature = EXCLUDED.signature, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+      [key, f.name, f.subject, f.cover, f.body, admin.email, JSON.stringify(signature)],
     );
     await logActivity(admin.email, "letter.save", f.name, { letter: key });
     await backWith(back, "ok", "Saved. Letters sent from now on use this wording.");
@@ -108,13 +115,14 @@ export async function sendLetters(data) {
 
     const date = letterDate();
     const batch = Date.now();
+    const signature = await signatureForPdf(letter.signature);
     const sent = [];
     const skipped = [];
     const failed = [];
     for (const r of recipients) {
       if (!looksLikeEmail(r.email)) { skipped.push(r.name); continue; }
       const prepared = prepareLetter(letter, { ...r, date, values });
-      const pdf = await letterPdf(prepared.blocks, { title: prepared.subject });
+      const pdf = await letterPdf(prepared.blocks, { title: prepared.subject, signature });
       const mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename });
       const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
       if (!result.ok) { failed.push(r.name); continue; }
@@ -162,8 +170,8 @@ export async function createLetter(data) {
     };
     const l = source || blank;
     await sql(
-      `INSERT INTO letter_templates (key, name, subject, cover, body, updated_by, updated_at, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $6, now(), $6, now())`,
-      [key, name, l.subject, l.cover, l.body, admin.email],
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $7, $6, now(), $6, now())`,
+      [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null],
     );
     await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null });
     await backWith(`/letters/${key}`, "ok", source ? `Copied “${source.name}”. Edit the copy, then save.` : "New letter made. Write it, then save.");

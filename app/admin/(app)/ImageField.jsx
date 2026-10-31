@@ -3,13 +3,14 @@
 import { useState } from "react";
 
 /** Shrinks a picked picture in the browser, keeping transparency (WebP, else PNG). */
-async function shrink(file, maxEdge) {
+async function shrink(file, maxEdge, format) {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
   canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  if (format === "png") return canvas.toDataURL("image/png");
   const webp = canvas.toDataURL("image/webp", 0.88);
   return webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/png");
 }
@@ -19,7 +20,7 @@ async function shrink(file, maxEdge) {
  * `<name>` (keep the current one) or `<name>Remove`; the server reads them with
  * pictureFrom (app/lib/admin/imageUpload.js).
  */
-export default function ImageField({ name, label, hint, current = "", round = false, maxEdge = 800 }) {
+export default function ImageField({ name, label, hint, current = "", round = false, maxEdge = 800, format = "", onChange }) {
   const [preview, setPreview] = useState(current);
   const [data, setData] = useState("");
   const [removed, setRemoved] = useState(false);
@@ -33,9 +34,10 @@ export default function ImageField({ name, label, hint, current = "", round = fa
       return;
     }
     try {
-      const url = await shrink(file, maxEdge);
+      const url = await shrink(file, maxEdge, format);
       setData(url);
       setPreview(url);
+      onChange?.(url);
       setRemoved(false);
       setNote("");
     } catch {
@@ -53,7 +55,7 @@ export default function ImageField({ name, label, hint, current = "", round = fa
             {preview ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} hidden />
           </label>
-          {preview && <button type="button" className="linkish danger-text" data-confirm="not-needed-read-only" onClick={() => { setPreview(""); setData(""); setRemoved(true); }}>Remove</button>}
+          {preview && <button type="button" className="linkish danger-text" data-confirm="not-needed-read-only" onClick={() => { setPreview(""); setData(""); setRemoved(true); onChange?.(""); }}>Remove</button>}
         </div>
         {note && <p className="small error-text" role="alert">{note}</p>}
       </div>

@@ -120,7 +120,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
           </p>
         </div>
-        <LetterView initial="email" text={filled} email={email} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
+        <LetterView initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
       </section>
     </div>
   );

@@ -3,7 +3,7 @@ import { currentAdmin } from "../../../../lib/admin/auth";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { LETTER_LIMITS, blanksOf, prepareLetter, recipientFields } from "../../../../lib/letters.mjs";
 import { letterPdf } from "../../../../lib/letterPdf.mjs";
-import { loadLetter } from "../../../../lib/letterStore";
+import { loadLetter, signatureForPdf } from "../../../../lib/letterStore";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +46,11 @@ export async function POST(request) {
     if (row) to = recipientFields({ contact: row });
   }
   const prepared = prepareLetter(letter, { ...to, values });
-  const pdf = await letterPdf(prepared.blocks, { title: prepared.subject });
+  // The editor posts its unsaved signature settings (and a new image, if picked) to preview them.
+  let posted = null;
+  if (field("signature") && can(admin, "letters:edit")) { try { posted = JSON.parse(field("signature")); } catch { posted = null; } }
+  const signature = await signatureForPdf(posted || saved.signature, posted ? field("signatureUpload") : "");
+  const pdf = await letterPdf(prepared.blocks, { title: prepared.subject, signature });
   const ascii = prepared.filename.replace(/[^\x20-\x7e]/g, "-").replace(/"/g, "'");
   return new Response(pdf, {
     headers: {

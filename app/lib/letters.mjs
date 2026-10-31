@@ -35,6 +35,7 @@ export const LETTER_HELP = [
   "A blank line starts a new paragraph. Lines inside a paragraph stay as written.",
   "**bold**",
   "# Big heading · ## Section heading · ^ centred line · - bullet",
+  "{signature} on its own line marks where the signature goes (switch it on under Signature).",
   "Tables: one row per line, cells between | bars; start the first row with |! to make it a header.",
   "---page--- starts a new page.",
 ];
@@ -165,6 +166,8 @@ export function letterBlocks(text) {
     const block = chunk.replace(/^\n+|\n+$/g, "");
     if (!block.trim()) continue;
     if (block.trim() === "---page---") { blocks.push({ type: "page" }); continue; }
+    // Where the signature goes, if the letter has one switched on (letterSignature.mjs).
+    if (block.trim() === "{signature}") { blocks.push({ type: "signature" }); continue; }
     const lines = block.split("\n");
     if (lines.every((l) => /^\|/.test(l.trim()))) {
       blocks.push({ type: "table", rows: lines.slice(0, TABLE_LIMITS.rows).map((l) => ({ header: l.trim().startsWith("|!"), cells: capCells(splitRow(l.trim())).map(inlineRuns) })) });
@@ -188,7 +191,7 @@ export function letterWithOverride(key, saved) {
   const starter = LETTER_STARTERS.find((l) => l.key === key);
   if (!starter && !saved) return null;
   const pick = (field) => (saved && typeof saved[field] === "string" && saved[field] ? saved[field] : starter?.[field] || "");
-  return { key, name: pick("name"), subject: pick("subject"), cover: pick("cover"), body: pick("body"), custom: Boolean(saved), starter: Boolean(starter) };
+  return { key, name: pick("name"), subject: pick("subject"), cover: pick("cover"), body: pick("body"), signature: saved?.signature || null, custom: Boolean(saved), starter: Boolean(starter) };
 }
 
 /** Everything one recipient gets: email subject and cover text, and the letter's blocks. */

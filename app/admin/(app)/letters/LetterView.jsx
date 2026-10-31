@@ -15,12 +15,12 @@ const FRAME_HEIGHT = 760;
  * browser's PDF viewer. `fields` are posted to the PDF route; the PDF redraws
  * a moment after they stop changing.
  */
-export default function LetterView({ text, action, fields, email, initial = "page" }) {
+export default function LetterView({ text, action, fields, email, initial = "page", signature = null, onMoveSignature }) {
   const [mode, setMode] = useState(email ? initial : "page");
   const [width, setWidth] = useState("phone");
   const form = useRef(null);
   const frame = `letter-pdf-${useId().replace(/:/g, "")}`;
-  const signature = JSON.stringify(fields);
+  const fieldsKey = JSON.stringify(fields);
   const box = useRef(null);
   const [scale, setScale] = useState(1);
 
@@ -38,7 +38,7 @@ export default function LetterView({ text, action, fields, email, initial = "pag
     if (mode !== "pdf") return undefined;
     const timer = setTimeout(() => form.current?.submit(), 600);
     return () => clearTimeout(timer);
-  }, [mode, signature]);
+  }, [mode, fieldsKey]);
 
   return (
     <>
@@ -77,7 +77,7 @@ export default function LetterView({ text, action, fields, email, initial = "pag
           <p className="small muted" style={{ margin: 0 }}>This is the file that's attached. Highlighted boxes are fields the recipient can type into.</p>
         </>
       ) : (
-        <LetterPreview text={text} />
+        <LetterPreview text={text} signature={signature} onMoveSignature={onMoveSignature} />
       )}
     </>
   );

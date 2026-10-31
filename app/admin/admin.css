@@ -772,3 +772,12 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .profile-avatar { width: 72px; height: 72px; font-size: 24px; }
 .profile-name { margin: 0; font-size: 22px; font-weight: 700; }
 
+/* Letter signature: laid over the page at the {signature} line, taking no room. */
+.letter-sign-spot { position: relative; height: 0; container-type: inline-size; --pt: calc(100cqw / 475); }
+.letter-sign { position: absolute; max-width: none; height: auto; pointer-events: none; }
+.letter-sign.is-movable { pointer-events: auto; cursor: grab; outline: 1px dashed var(--a-gold); outline-offset: 2px; touch-action: none; }
+.letter-sign.is-movable:active { cursor: grabbing; }
+.letter-sign-off { margin: 0; padding: 4px 8px; border: 1px dashed var(--a-line); border-radius: 6px; color: var(--a-muted); font-style: italic; }
+.signature-controls { display: grid; gap: 10px; }
+.signature-controls input[type="range"] { width: 100%; }
+

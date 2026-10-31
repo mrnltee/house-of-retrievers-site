@@ -48,6 +48,7 @@ export const FORMATS = {
   blank: { label: "[ ] Blank", title: "Blank filled in when sending", run: (t, s, e) => wrap(t, s, e, "[", "]", "Blank name") },
   address: { label: "Address block", title: "Address block (contact person, company, address)", run: (t, s, e) => insertBlock(t, s, e, "[Their Contact Person?]\n[Company Name]\n[Address?]") },
   greeting: { label: "Dear name", title: "Greeting name (e.g. Ms. Jessie)", run: (t, s, e) => { const out = t.slice(0, s) + "[Salutation]" + t.slice(e); return { text: out, start: s, end: s + 12 }; } },
+  signature: { label: "Signature", title: "Where the signature goes (switch it on under step 5)", run: (t, s, e) => insertBlock(t, s, e, "{signature}") },
   link: { label: "Link", title: "Link", run: (t, s, e) => { const r = wrap(t, s, e, "[", "](https://)", "Link text"); return { ...r, start: r.end + 2, end: r.end + 10 }; } },
 };
 

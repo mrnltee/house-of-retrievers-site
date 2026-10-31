@@ -1,7 +1,7 @@
 import { hasDatabase, sql } from "./db";
 import { LETTER_STARTERS, letterWithOverride } from "./letters.mjs";
 
-const COLUMNS = "key, name, subject, cover, body, updated_by, updated_at, created_at";
+const COLUMNS = "key, name, subject, cover, body, signature, updated_by, updated_at, created_at";
 const withMeta = (letter, row) => ({ ...letter, updatedBy: row?.updated_by || null, updatedAt: row?.updated_at || null });
 
 /** Saved rows (HOR's wording over a starter, or HOR's own letters), not removed. Never throws. */
@@ -60,3 +60,28 @@ export async function groupLetters() {
     return {};
   }
 }
+
+/**
+ * The signature image to lay over a letter's PDF: { buffer, x, dy, width }, or
+ * null when it's off or has no image. `image` may be a stored address or, from
+ * the editor's unsaved preview, a PNG/JPEG data URL. Never throws.
+ */
+export async function signatureForPdf(settings, upload = "") {
+  const { cleanSignature } = await import("./letterSignature.mjs");
+  const s = cleanSignature(settings);
+  if (!s.on) return null;
+  try {
+    const data = String(upload || "").match(/^data:image\/(?:png|jpeg);base64,([A-Za-z0-9+/=]+)$/);
+    if (data) {
+      const buffer = Buffer.from(data[1], "base64");
+      return buffer.length <= 700 * 1024 ? { buffer, x: s.x, dy: s.dy, width: s.width } : null;
+    }
+    if (!s.image || !hasDatabase()) return null;
+    const [row] = await sql("SELECT mime, data FROM event_images WHERE id = $1", [s.image.split("/").pop()]);
+    // pdfkit draws PNG and JPEG only.
+    return row && /^image\/(png|jpeg)$/.test(row.mime) ? { buffer: Buffer.from(row.data), x: s.x, dy: s.dy, width: s.width } : null;
+  } catch {
+    return null;
+  }
+}
+

@@ -203,7 +203,7 @@ export async function letterPdf(blocks, options = {}) {
   return best.pdf;
 }
 
-function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level = LEVELS[0]) {
+function drawLetter(blocks, { title = "House of Retrievers letter", signature = null } = {}, level = LEVELS[0]) {
   SIZE = level.size;
   GAP = level.gap;
   return new Promise((resolve, reject) => {
@@ -246,11 +246,17 @@ function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level
       drawn = false;
     });
     let spills = 0;
+    // Where to lay the signature: drawn last, on top of the text, so it takes no room.
+    const marks = [];
 
     const room = () => doc.page.height - doc.page.margins.bottom - doc.y;
     const lastContent = blocks.findLastIndex((b) => b.type !== "page");
     for (const [n, block] of blocks.entries()) {
       if (block.type === "page") { if (n < lastContent) breakPage(); continue; }
+      if (block.type === "signature") {
+        if (signature) marks.push({ page: pages.length - 1, x: left + signature.x * width, y: doc.y + signature.dy });
+        continue;
+      }
       drawn = true;
       // Headings keep company with what follows them.
       if ((block.type === "h1" || block.type === "h2") && room() < 110) doc.addPage();
@@ -282,8 +288,13 @@ function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level
     close();
     spills = pages.filter((p) => p.auto && p.end - p.top < usable * 0.2).length;
 
-    // Footers on every page.
     const range = doc.bufferedPageRange();
+    for (const mark of marks) {
+      doc.switchToPage(range.start + mark.page);
+      try { doc.image(signature.buffer, mark.x, Math.max(MARGIN - 20, mark.y), { width: signature.width }); } catch { /* not a PNG or JPEG: leave it out */ }
+    }
+
+    // Footers on every page.
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);
       // The footer sits inside the bottom margin; without this pdfkit adds a blank page per footer.

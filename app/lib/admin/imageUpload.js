@@ -9,12 +9,12 @@ const OWN_IMAGE = /^\/api\/event-image\/[0-9a-f-]{36}$/;
  * is stored in event_images like sponsor logos; `<name>Remove` clears it; else the
  * current address is kept. Returns { url } (null = none) or { error }.
  */
-export async function pictureFrom(data, name, adminEmail) {
+export async function pictureFrom(data, name, adminEmail, { types = /^image\/(?:png|webp|jpeg)$/ } = {}) {
   const get = (key) => (typeof data.get(key) === "string" ? data.get(key) : "");
   const upload = get(`${name}Data`);
   if (upload) {
     const match = upload.match(/^data:(image\/(?:png|webp|jpeg));base64,([A-Za-z0-9+/=]+)$/);
-    if (!match) return { error: "That picture didn't come through. Try a PNG or JPG." };
+    if (!match || !types.test(match[1])) return { error: "That picture didn't come through. Try a PNG or JPG." };
     const bytes = Buffer.from(match[2], "base64");
     if (bytes.length > MAX_IMAGE_BYTES) return { error: "That picture is too large. Try a smaller file." };
     const [saved] = await sql("INSERT INTO event_images (mime, data, bytes, created_by) VALUES ($1, $2, $3, $4) RETURNING id", [match[1], bytes, bytes.length, adminEmail]);
