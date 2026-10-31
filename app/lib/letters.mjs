@@ -24,7 +24,8 @@ export const MAX_LETTER_RECIPIENTS = 25;
 /** Blanks the system fills by itself. */
 export const AUTO_BLANKS = {
   "Company Name": "The sponsor or partner's name (for People: their organization, else their name)",
-  "Contact Person": "The representative or contact person on their record (write [Contact Person?] to drop the line when there's none)",
+  // Not "Contact Person": letters use that for HOR's own contact, asked when sending.
+  "Their Contact Person": "The representative or contact person on their record (write [Their Contact Person?] to drop the line when there's none)",
   Address: "The address on their record (write [Address?] to drop the line when there's none)",
   Salutation: "How to greet them, e.g. Ms. Jessie: the greeting on their record, else the contact person, else the company",
   Date: "The day the letter is sent, e.g. October 24, 2026",
@@ -109,7 +110,7 @@ export function fillLetter(text, { name = "", contact = "", address = "", saluta
   const value = (label) => {
     const base = baseLabel(label);
     if (base === "Company Name") return safe(name);
-    if (base === "Contact Person") return safe(contact);
+    if (base === "Their Contact Person") return safe(contact);
     if (base === "Address") return safe(address);
     if (base === "Salutation") return safe(salutation || contact || name);
     if (base === "Date") return date;
