@@ -1,7 +1,7 @@
 "use client";
 
 import { blankSample } from "../../../../lib/letters/samples.mjs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
 import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { sendLetters } from "../../../letterActions";
@@ -108,14 +108,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       </form>
 
       <section className="card template-preview">
-        <div className="template-preview-head">
-          <label className="field" style={{ margin: 0 }}>
-            <span className="small muted">Preview for</span>
-            <select value={previewRef} onChange={(e) => setPreviewRef(e.target.value)}>
-              {recipients.map((r) => <option key={r.ref} value={r.ref}>{r.name}</option>)}
-            </select>
-          </label>
-        </div>
+        <RecipientTabs recipients={recipients} current={previewRef} picked={picked} onPick={setPreviewRef} />
         <div className="mail-head" aria-label="The email as it arrives">
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
@@ -132,3 +125,60 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
     </div>
   );
 }
+
+/**
+ * One tab per recipient above the preview (owner, 2026-10-31): click, or use
+ * ← → / Home / End, or the ‹ › buttons. Scrolls sideways when there are many.
+ * Unticked people stay as tabs, struck through, so they can be checked too.
+ */
+function RecipientTabs({ recipients, current, picked, onPick }) {
+  const strip = useRef(null);
+  const at = Math.max(0, recipients.findIndex((r) => r.ref === current));
+  const go = (i) => onPick(recipients[(i + recipients.length) % recipients.length].ref);
+  useEffect(() => {
+    strip.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [current]);
+  function onKey(e) {
+    const next = { ArrowRight: at + 1, ArrowLeft: at - 1, Home: 0, End: recipients.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    go(next);
+    requestAnimationFrame(() => strip.current?.querySelector('[aria-selected="true"]')?.focus());
+  }
+  return (
+    <div className="recipient-tabs">
+      <div className="recipient-tabs-head">
+        <span className="small muted">Preview for</span>
+        {recipients.length > 1 && (
+          <span className="recipient-tabs-step">
+            <button type="button" className="btn small ghost" onClick={() => go(at - 1)} aria-label="Previous person" data-confirm="not-needed-read-only">‹</button>
+            <span className="small">{at + 1} of {recipients.length}</span>
+            <button type="button" className="btn small ghost" onClick={() => go(at + 1)} aria-label="Next person" data-confirm="not-needed-read-only">›</button>
+          </span>
+        )}
+      </div>
+      <div ref={strip} className="recipient-tablist" role="tablist" aria-label="Recipients" onKeyDown={onKey}>
+        {recipients.map((r) => {
+          const on = r.ref === current;
+          const out = !picked.has(r.ref);
+          return (
+            <button
+              key={r.ref}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              tabIndex={on ? 0 : -1}
+              className={`recipient-tab${out ? " is-out" : ""}${!r.email ? " no-email" : ""}`}
+              title={out ? `${r.name} (not ticked: won't be sent)` : r.email ? `${r.name} <${r.email}>` : `${r.name} (no email on record)`}
+              onClick={() => onPick(r.ref)}
+              data-confirm="not-needed-read-only"
+            >
+              {r.name}{!r.email ? " ⚠" : ""}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
