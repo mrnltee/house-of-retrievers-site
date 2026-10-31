@@ -57,3 +57,11 @@ test("public beneficiary: matched events, years and no contact details", async (
   const text = JSON.stringify(pub);
   for (const secret of ["x@y.ph", "secret", "1 Road"]) assert.ok(!text.includes(secret));
 });
+
+test("beneficiary types include people-care groups our dogs can visit", async () => {
+  const { kindLabel, cleanBeneficiary: clean } = await import("./beneficiaries.mjs");
+  assert.equal(kindLabel("elderly"), "Elderly care");
+  assert.equal(kindLabel("children"), "Children's home / foster care");
+  assert.equal(kindLabel("patients"), "Hospital & cancer patients");
+  assert.equal(clean({ name: "Home", kind: "elderly" }).beneficiary.kind, "elderly");
+});

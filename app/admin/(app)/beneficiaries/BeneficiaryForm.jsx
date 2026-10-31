@@ -12,16 +12,16 @@ export default function BeneficiaryForm({ row = null, canEdit = true }) {
       <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 16 }}>
         <section className="card form">
           <h2>About</h2>
-          <label className="field"><span>Name <small>The shelter or group</small></span><input type="text" name="name" required maxLength={L.name} defaultValue={v("name")} /></label>
+          <label className="field"><span>Name <small>The shelter, home or group</small></span><input type="text" name="name" required maxLength={L.name} defaultValue={v("name")} /></label>
           <div className="row-2">
             <label className="field"><span>Type</span><select name="kind" defaultValue={v("kind") || "shelter"}>{BENEFICIARY_KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             <label className="field"><span>Status</span><select name="status" defaultValue={v("status") || "prospect"}>{BENEFICIARY_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
           </div>
           <div className="row-2">
             <ImageField name="logo" label="Logo" hint="Their logo. Shown as the avatar when there's no photo." current={v("logo")} />
-            <ImageField name="photo" label="Photo" hint="The shelter, its team or its animals." current={v("photo")} round maxEdge={1000} />
+            <ImageField name="photo" label="Photo" hint="The place, its team, or the animals or people they care for." current={v("photo")} round maxEdge={1000} />
           </div>
-          <label className="field"><span>Description <small>Who they are and the animals they care for</small></span><textarea name="description" rows={4} maxLength={L.description} defaultValue={v("description")} /></label>
+          <label className="field"><span>Description <small>Who they are and who they care for</small></span><textarea name="description" rows={4} maxLength={L.description} defaultValue={v("description")} /></label>
           <label className="field"><span>What they need <small>Optional, e.g. food, medicine, vet care, volunteers</small></span><textarea name="needs" rows={3} maxLength={L.needs} defaultValue={v("needs")} /></label>
           <div className="row-2">
             <label className="field"><span>Website <small>Optional</small></span><input type="text" name="website" placeholder="https://" maxLength={L.website} defaultValue={v("website")} /></label>

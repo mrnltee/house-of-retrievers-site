@@ -1,6 +1,6 @@
 /**
- * Beneficiaries (owner, 2026-10-31): the animal shelters and rescue groups
- * HOR supports or plans to, with what they need and who to write to. Letters
+ * Beneficiaries (owner, 2026-10-31): the animal shelters, rescue groups and
+ * people-care groups (elderly, children, patients…) HOR supports or plans to, with what they need and who to write to. Letters
  * go out like Sponsors & partners; their own letter is the beneficiary proposal.
  * Pure functions, so they can be tested.
  */
@@ -9,6 +9,14 @@ export const BENEFICIARY_KINDS = [
   ["rescue", "Rescue group"],
   ["sanctuary", "Sanctuary"],
   ["clinic", "Clinic / vet partner"],
+  // People our therapy dogs can visit, or whose needs the team can help with (owner, 2026-11-01).
+  ["elderly", "Elderly care"],
+  ["children", "Children's home / foster care"],
+  ["patients", "Hospital & cancer patients"],
+  ["hospice", "Hospice / palliative care"],
+  ["special_needs", "PWD & special needs"],
+  ["wellness", "Mental health & wellness"],
+  ["community", "Community & disaster relief"],
   ["other", "Other"],
 ];
 
@@ -44,7 +52,7 @@ export function composeAddress({ street, barangay, city, province, postalCode } 
 export function cleanBeneficiary(input = {}) {
   const L = BENEFICIARY_LIMITS;
   const name = line(input.name, L.name);
-  if (!name) return { error: "Type the shelter or group's name." };
+  if (!name) return { error: "Type the name of the shelter, home or group." };
   const kind = BENEFICIARY_KINDS.some(([k]) => k === input.kind) ? input.kind : "shelter";
   const status = BENEFICIARY_STATUSES.some(([k]) => k === input.status) ? input.status : "prospect";
   const contactEmail = line(input.contactEmail, L.contactEmail).toLowerCase();

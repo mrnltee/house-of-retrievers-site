@@ -61,7 +61,7 @@ export default function Beneficiaries() {
       <div className="supporters-head">
         <p className="eyebrow">Where the help goes</p>
         <h2 id="beneficiaries-title">The causes <em>our events support.</em></h2>
-        <p className="supporters-lead">Our charity events raise funds and goods for the shelters, rescues and homes below, from our first events to the ones coming up.</p>
+        <p className="supporters-lead">Our charity events raise funds and goods for the shelters, rescues and care homes below, from our first events to the ones coming up.</p>
       </div>
       {now.length > 0 && (
         <div className="supporters-group">
