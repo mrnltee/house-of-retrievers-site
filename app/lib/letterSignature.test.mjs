@@ -43,3 +43,20 @@ test("a letter with the signature on but no {signature} line is still signed", a
   const pdf = await letterPdf(prepareLetter(letter, { name: "X", signed: true }).blocks, { title: "T", signature: { buffer: PNG, x: 0, dy: -20, width: 120 } });
   assert.match(pdf.toString("latin1"), /\/Subtype \/Image/);
 });
+
+test("a large transparent PNG in several chunks (as browsers write them) comes out whole, not broken", async () => {
+  const zlib = await import("node:zlib");
+  const w = 900, h = 300, raw = Buffer.alloc((w * 4 + 1) * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) raw[y * (w * 4 + 1) + 1 + x * 4 + 3] = Math.abs(y - 150 - 90 * Math.sin(x / 40)) < 5 ? 255 : 0;
+  const chunk = (t, d) => { const len = Buffer.alloc(4); len.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t), d]); const crc = Buffer.alloc(4); crc.writeUInt32BE(zlib.crc32(td) >>> 0); return Buffer.concat([len, td, crc]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 6;
+  const z = zlib.deflateSync(raw), parts = [];
+  for (let o = 0; o < z.length; o += 4096) parts.push(chunk("IDAT", z.subarray(o, o + 4096)));
+  const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", ihdr), ...parts, chunk("IEND", Buffer.alloc(0))]);
+  const pdf = (await letterPdf(letterBlocks("Sincerely,\n\n{signature}\n\n**Ms. A**"), { title: "T", signature: { buffer: png, x: 0, dy: -20, width: 150 } })).toString("latin1");
+  // Every image object is complete: it has its dictionary (Subtype) and its data stream.
+  const images = [...pdf.matchAll(/\/Subtype \/Image[\s\S]*?endobj/g)];
+  assert.ok(images.length >= 2, "logo and signature");
+  for (const m of images) assert.match(m[0], /stream/);
+  assert.equal((pdf.match(/\/SMask/g) || []).length >= 2, true, "the signature keeps its transparency");
+});

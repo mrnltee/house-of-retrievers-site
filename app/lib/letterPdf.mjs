@@ -210,6 +210,24 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
   GAP = level.gap;
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margins: { top: MARGIN, bottom: MARGIN + 10, left: MARGIN, right: MARGIN }, bufferPages: true, info: { Title: pdfSafe(title), Author: "The House of Retrievers’ Society, Inc." } });
+    // A transparent PNG signature is decoded by pdfkit in the background. If the file is
+    // closed while that is still going, pdfkit's count of pending objects goes wrong and the
+    // image is written broken (invisible in viewers; owner, 2026-10-31). So it's prepared
+    // here, before anything else, and the letter is laid out once it's ready.
+    let sigImage = null;
+    if (signature) {
+      try {
+        sigImage = doc.openImage(signature.buffer);
+        sigImage.embed(doc);
+      } catch (error) {
+        console.error(`letter signature: image couldn't be read (${error?.message || error})`);
+        sigImage = null;
+      }
+    }
+    const whenReady = (go, tries = 0) => (sigImage?.image && tries < 500 ? setTimeout(() => whenReady(go, tries + 1), 5) : go());
+    whenReady(() => { try { layOut(); } catch (error) { reject(error); } });
+
+    function layOut() {
     doc.font("Helvetica");
     doc.initForm();
     const chunks = [];
@@ -257,7 +275,7 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
     for (const [n, block] of blocks.entries()) {
       if (block.type === "page") { if (n < lastContent) breakPage(); continue; }
       if (block.type === "signature") {
-        if (signature) marks.push({ page: pages.length - 1, x: left + signature.x * width, y: doc.y + signature.dy });
+        if (sigImage) marks.push({ page: pages.length - 1, x: left + signature.x * width, y: doc.y + signature.dy });
         continue;
       }
       drawn = true;
@@ -295,7 +313,7 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
     for (const mark of marks) {
       doc.switchToPage(range.start + mark.page);
       try {
-        doc.image(signature.buffer, mark.x, Math.max(MARGIN - 20, mark.y), { width: signature.width });
+        doc.image(sigImage, mark.x, Math.max(MARGIN - 20, mark.y), { width: signature.width });
         signed += 1;
       } catch (error) {
         console.error(`letter signature: image couldn't be drawn (${error?.message || error})`);
@@ -317,5 +335,6 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
       line(`https://${LEGAL.website}/`, y + 17.5);
     }
     doc.end();
+    }
   });
 }
