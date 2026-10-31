@@ -207,7 +207,7 @@ function drawLetter(blocks, { title = "House of Retrievers letter" } = {}, level
   SIZE = level.size;
   GAP = level.gap;
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margins: { top: MARGIN, bottom: MARGIN + 10, left: MARGIN, right: MARGIN }, bufferPages: true, info: { Title: pdfSafe(title), Author: "The House of Retrievers Society Inc." } });
+    const doc = new PDFDocument({ size: "A4", margins: { top: MARGIN, bottom: MARGIN + 10, left: MARGIN, right: MARGIN }, bufferPages: true, info: { Title: pdfSafe(title), Author: "The House of Retrievers’ Society, Inc." } });
     doc.font("Helvetica");
     doc.initForm();
     const chunks = [];

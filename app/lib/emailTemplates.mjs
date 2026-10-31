@@ -11,7 +11,7 @@ import { EVENTS_URL } from "./eventsHost.mjs";
 import { formatWhen } from "./share.mjs";
 import { paymentNotice } from "./eventPayments.mjs";
 
-const ORG = "The House of Retrievers Society Inc.";
+const ORG = "The House of Retrievers’ Society, Inc.";
 /**
  * The header is one image: the reverse logo already on its ink band
  * (public/email/header.png, 1120×238, shown at 560 wide). Gmail's dark mode
@@ -183,7 +183,7 @@ export const EDITABLE_TEMPLATES = {
       greeting: "Hi {{first_name}},",
       heading: "Welcome to the House! ⚡️",
       message: [
-        "Thank you for registering with The House of Retrievers Society Inc. We’ve successfully received your membership registration.",
+        "Thank you for registering with The House of Retrievers’ Society, Inc. We’ve successfully received your membership registration.",
         "What started as a shared love for dogs has grown into a community built on friendship, kindness, and a genuine desire to give back.",
         "We’re happy you’ve chosen to be part of this journey.",
         "Here at the House, we believe that every paw has a purpose. Whether it’s making new friends, sharing meaningful experiences, or lending a helping paw, there’s so much we can do together.",

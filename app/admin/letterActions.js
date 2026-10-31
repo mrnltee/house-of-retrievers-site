@@ -157,7 +157,7 @@ export async function createLetter(data) {
     const key = `my-${slug(name)}-${Math.random().toString(36).slice(2, 6)}`;
     const blank = {
       subject: "Subject line",
-      cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers Society Inc.\n\nOur letter is attached.",
+      cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers’ Society, Inc.\n\nOur letter is attached.",
       body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: Subject line**\n\nDear [Salutation]:\n\nWrite the letter here.\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
     };
     const l = source || blank;

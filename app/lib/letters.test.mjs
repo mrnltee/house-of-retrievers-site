@@ -18,7 +18,7 @@ test("covering emails (owner's brief, 2026-10-27): portfolio link, official name
   const portfolio = "[Partnership Portfolio](https://www.canva.com/design/DAHWLsiZugc/7RGzvgYEMCjGc67tzRlW2w/view)";
   for (const l of LETTER_STARTERS) {
     assert.ok(l.cover.includes(portfolio), `${l.key}: portfolio link`);
-    assert.match(l.cover, /The House of Retrievers Society Inc/, l.key);
+    assert.match(l.cover, /The House of Retrievers’ Society, Inc\./, l.key); // owner, 2026-10-31
     assert.doesNotMatch(`${l.subject} ${l.cover}`, /beyond/i, l.key);
     assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
     assert.ok(l.cover.length <= 2000, l.key);
@@ -161,4 +161,13 @@ test("address block fills from the record; empty optional lines drop", async () 
   assert.equal(fillLetter(head, guest), "Jessie Mae Gabriel\nModeler Collection\n\nDear Jessie Mae Gabriel:");
   const celeb = recipientFields({ contact: { name: "Anne Curtis", salutation: "Ms. Anne" } });
   assert.equal(fillLetter(head, celeb), "Anne Curtis\n\nDear Ms. Anne:");
+});
+
+test("letters agree on the facts (owner, 2026-10-31): 3:00 PM, “A Golden Beginning: Paws & Purpose”, the org's name", () => {
+  for (const l of LETTER_STARTERS) {
+    const text = `${l.subject}\n${l.cover}\n${l.body}`;
+    assert.doesNotMatch(text, /2:00 PM/, l.key);
+    assert.doesNotMatch(text, /A Golden Beginning ?[-–—] ?Paws/, l.key);
+    assert.doesNotMatch(text, /The House of Retrievers Society Inc/, l.key);
+  }
 });

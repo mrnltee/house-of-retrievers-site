@@ -19,7 +19,7 @@ export default function LetterPreview({ text }) {
   const blocks = letterBlocks(text);
   return (
     <div className="letter-paper">
-      <img className="letter-logo" src="/house-of-retrievers-logo-original.png" alt="The House of Retrievers Society Inc." />
+      <img className="letter-logo" src="/house-of-retrievers-logo-original.png" alt="The House of Retrievers’ Society, Inc." />
       {blocks.map((b, i) => {
         if (b.type === "page") return <hr key={i} className="letter-page" aria-label="New page" />;
         if (b.type === "h1") return <h3 key={i} className="letter-h1"><Runs runs={b.runs} /></h3>;
