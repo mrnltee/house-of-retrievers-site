@@ -1,5 +1,6 @@
 import { pageAdmin, adminBase } from "../../lib/admin/guard";
-import { can, PAGES, ROLE_LABELS } from "../../lib/admin/roles.mjs";
+import { displayName, initialsOf, roleLine } from "../../lib/admin/profile.mjs";
+import { can, PAGES } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 import GuideTour from "./GuideTour";
 import Presence from "./Presence";
@@ -50,6 +51,7 @@ export default async function AdminAppLayout({ children }) {
       levelText: p.level === "edit" && HOW[p.key].edit ? HOW[p.key].edit : HOW[p.key].view,
     })),
     { target: `.admin-side a[href="${href("/start")}"]`, title: "Getting started", text: "Your guide to the admin is always here, with a “Show me around” button to run this tour again." },
+    { target: ".admin-side .me a", title: "Your profile", text: "Your name, role and photo. Open it to edit your profile and see everything you've done in the admin." },
     { target: ".admin-side .me button", title: "Sign out", text: "On a shared or borrowed computer, sign out when you're done. Every change you make is recorded with your name." },
   ];
 
@@ -58,8 +60,7 @@ export default async function AdminAppLayout({ children }) {
       <AdminNav
         groups={groups}
         home={base || "/"}
-        email={admin.email}
-        roles={Array.isArray(admin.pages) && !admin.roles.includes("owner") ? "Chosen pages" : admin.roles.map((role) => ROLE_LABELS[role] || role).join(", ") || "No role yet"}
+        me={{ name: displayName(admin), role: roleLine(admin), photo: admin.photo || "", initials: initialsOf(admin), email: admin.email, href: `${base}/profile` }}
       />
       {!admin.preview && <GuideTour steps={tour} autoStart={!admin.guide_hidden} hidden={Boolean(admin.guide_hidden)} sessionKey={`hor-guide-${admin.authTime || 0}`} />}
       {!admin.preview && <Presence />}

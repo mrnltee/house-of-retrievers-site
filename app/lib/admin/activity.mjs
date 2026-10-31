@@ -70,6 +70,19 @@ export const ACTION_LABELS = {
   "admin.pages": "Changed an admin's page access",
   "admin.preview": "Previewed the admin as someone",
   "admin.remove": "Removed an admin",
+  "admin.profile": "Updated their profile",
+  "letter.create": "Made a new letter",
+  "letter.remove": "Removed a letter",
+  "letter.details": "Saved the letters' standard details",
+  "letter.groups": "Changed which letter each group gets",
+  "contact.add": "Added someone to the Guest list",
+  "contact.update": "Updated someone on the Guest list",
+  "contact.remove": "Removed someone from the Guest list",
+  "contact.letter": "Sent a letter",
+  "beneficiary.add": "Added a beneficiary",
+  "beneficiary.update": "Updated a beneficiary",
+  "beneficiary.remove": "Removed a beneficiary",
+  "beneficiary.letter": "Sent a letter",
 };
 
 export const actionLabel = (action) => ACTION_LABELS[action] || action;

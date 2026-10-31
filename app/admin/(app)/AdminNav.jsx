@@ -3,7 +3,7 @@
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
-export default function AdminNav({ groups, home, email, roles }) {
+export default function AdminNav({ groups, home, me }) {
   const pathname = usePathname();
   const isCurrent = (href) => (href === home ? pathname === home || pathname === `${home}/` : pathname === href || pathname.startsWith(`${href}/`));
 
@@ -31,9 +31,10 @@ export default function AdminNav({ groups, home, email, roles }) {
         </div>
       ))}
       <div className="me">
-        <span>Signed in as</span>
-        <strong>{email}</strong>
-        <span>{roles}</span>
+        <a className="me-card" href={me.href} title={`${me.email} · Your profile`} aria-current={isCurrent(me.href) ? "page" : undefined}>
+          <span className="me-avatar" aria-hidden="true">{me.photo ? <img src={me.photo} alt="" /> : me.initials}</span>
+          <span className="me-text"><strong>{me.name}</strong><span>{me.role}</span></span>
+        </a>
         <button type="button" onClick={() => signOut({ callbackUrl: `${home === "/" ? "" : home}/sign-in` })}>Sign out</button>
       </div>
     </nav>

@@ -132,7 +132,7 @@ export async function currentAdmin() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const rows = await sql("SELECT email, name, roles, pages, welcomed_at, guide_hidden, last_active_at, chat_read_id FROM admins WHERE email = $1 AND active", [email]);
+  const rows = await sql("SELECT email, name, first_name, furbaby_name, photo, show_as, roles, pages, welcomed_at, guide_hidden, last_active_at, chat_read_id FROM admins WHERE email = $1 AND active", [email]);
   if (!rows.length) return null;
   await markActive(rows[0]);
   const me = { ...rows[0], authTime: session.authTime };
@@ -140,7 +140,7 @@ export async function currentAdmin() {
   // menu and pages, read only. actionAdmin refuses every change while it's on.
   const previewEmail = me.roles.includes("owner") ? (await cookies()).get(PREVIEW_COOKIE)?.value?.toLowerCase() : null;
   if (previewEmail && previewEmail !== me.email) {
-    const [them] = await sql("SELECT email, name, roles, pages FROM admins WHERE email = $1 AND active", [previewEmail]);
+    const [them] = await sql("SELECT email, name, first_name, furbaby_name, photo, show_as, roles, pages FROM admins WHERE email = $1 AND active", [previewEmail]);
     if (them) return { ...them, welcomed_at: true, guide_hidden: true, authTime: me.authTime, preview: true, previewBy: me.email };
   }
   return me;
