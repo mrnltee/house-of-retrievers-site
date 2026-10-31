@@ -171,3 +171,14 @@ test("letters agree on the facts (owner, 2026-10-31): 3:00 PM, “A Golden Begin
     assert.doesNotMatch(text, /The House of Retrievers Society Inc/, l.key);
   }
 });
+
+test("letters name HOR's beneficiaries (owner, 2026-10-31), not “selected animal shelters”", () => {
+  for (const l of LETTER_STARTERS.filter((x) => x.key !== "beneficiary-proposal")) {
+    const text = `${l.cover}\n${l.body}`;
+    assert.doesNotMatch(text, /(selected|chosen) (animal )?shelters/i, l.key);
+  }
+  for (const key of ["sponsorship-letter", "donation-letter", "invite-media"]) {
+    const l = LETTER_STARTERS.find((x) => x.key === key);
+    assert.match(l.cover, /Pawssion Project Foundation Inc\..*Little Sisters of the Abandoned Elderly – Sta\. Teresa Jornet Home/, key);
+  }
+});
