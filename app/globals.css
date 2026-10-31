@@ -1273,8 +1273,8 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .supporter-tile:hover .supporter-logo { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(17, 17, 17, .08); }
 .supporter-tile:focus-visible { outline: none; }
 .supporter-tile:focus-visible .supporter-logo { outline: 3px solid var(--gold); outline-offset: 3px; }
-.supporter-name { font-size: 15px; font-weight: 700; text-align: center; }
-.supporter-event { font-size: 13px; color: var(--muted-on-light); text-align: center; line-height: 1.35; }
+.supporter-name { font-size: 15px; font-weight: 700; text-align: center; text-wrap: balance; }
+.supporter-event { font-size: 13px; color: var(--muted-on-light); text-align: center; line-height: 1.35; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .supporter-totals { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 20px 48px; padding: 20px 24px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
 .supporter-totals div { display: flex; flex-direction: column-reverse; gap: 2px; }
 .supporter-totals dd { margin: 0; font: 400 30px/1.1 "DM Serif Display", serif; }

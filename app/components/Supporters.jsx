@@ -7,7 +7,7 @@ import { gaveLine, totals } from "../lib/supporters.mjs";
 const formatPeso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const formatDate = (iso) => new Date(`${iso}T00:00:00+08:00`).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", weekday: "short", month: "short", day: "numeric", year: "numeric" });
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
-const CAROUSEL_PAGE_SIZE = 5;
+const CAROUSEL_PAGE_SIZE = 4; // 5+ logos in a group become a carousel, 4 per page
 
 function Tile({ supporter, big = false, onOpen }) {
   // The latest event they were at; an upcoming one only when there's none yet (events come newest first).
