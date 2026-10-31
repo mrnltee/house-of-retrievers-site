@@ -10,6 +10,7 @@ import InstagramFeed from "./InstagramFeed";
 import Pack from "./Pack";
 import FinalCta from "./FinalCta";
 import Supporters from "./Supporters";
+import Beneficiaries from "./Beneficiaries";
 import Footer from "./Footer";
 import JoinModal from "./JoinModal";
 import SupportModal from "./SupportModal";
@@ -93,6 +94,7 @@ export default function HomePage({ journeySettings, journeyStops }) {
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
       <Supporters onJoin={openJoin} />
+      <Beneficiaries />
       <FinalCta onJoin={openJoin} />
       </main>
       <Footer />

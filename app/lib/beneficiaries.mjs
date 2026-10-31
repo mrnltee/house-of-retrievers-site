@@ -20,7 +20,7 @@ export const BENEFICIARY_STATUSES = [
 ];
 
 export const BENEFICIARY_LETTER = "beneficiary-proposal";
-export const BENEFICIARY_LIMITS = { street: 200, barangay: 80, city: 80, province: 80, postalCode: 10, name: 120, description: 2000, needs: 1000, location: 120, website: 300, instagram: 120, contactName: 120, contactEmail: 200, contactPhone: 60, address: 300, salutation: 120, notes: 2000 };
+export const BENEFICIARY_LIMITS = { street: 200, barangay: 80, city: 80, province: 80, postalCode: 10, name: 120, description: 2000, needs: 1000, location: 120, website: 300, instagram: 120, contactName: 120, contactEmail: 200, contactPhone: 60, address: 300, salutation: 120, notes: 2000, blurb: 280 };
 
 const label = (list, key) => list.find(([k]) => k === key)?.[1] || "";
 export const kindLabel = (key) => label(BENEFICIARY_KINDS, key);
@@ -74,6 +74,58 @@ export function cleanBeneficiary(input = {}) {
       address: composeAddress({ street: lines(input.street, L.street), barangay: line(input.barangay, L.barangay), city: line(input.city, L.city), province: line(input.province, L.province), postalCode: line(input.postalCode, L.postalCode) }).slice(0, L.address) || null,
       salutation: line(input.salutation, L.salutation) || null,
       notes: text(input.notes, L.notes) || null,
+      showOnSite: input.showOnSite === true || input.showOnSite === "on",
+      blurb: line(input.blurb, L.blurb) || null,
     },
   };
+}
+
+/**
+ * The website shows a beneficiary when an admin switched it on, it's Partnered
+ * (supporting now) or Ended (helped before), and it has a short public line.
+ */
+export const PUBLIC_STATUSES = ["partnered", "ended"];
+export const isPublicBeneficiary = (row) => Boolean(row?.show_on_site && PUBLIC_STATUSES.includes(row.status) && String(row.blurb || "").trim());
+
+/** Events that name this beneficiary in "Supports" (either name may be the shorter one). */
+export function eventsFor(name, events = []) {
+  const n = String(name || "").toLowerCase().trim();
+  return events.filter((e) => {
+    const s = String(e.supports || "").toLowerCase().trim();
+    return n && s.length >= 4 && (s.includes(n) || n.includes(s));
+  });
+}
+
+const instagramUrl = (value) => {
+  const v = String(value || "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  const handle = v.replace(/^@/, "").replace(/[^A-Za-z0-9._]/g, "");
+  return handle ? `https://www.instagram.com/${handle}/` : null;
+};
+
+/** What the website may show: never contact details, address or notes. `events` are newest first. */
+export function publicBeneficiary(row, events = []) {
+  const years = events.map((e) => Number(String(e.date).slice(0, 4))).filter(Boolean);
+  return {
+    id: row.id,
+    name: row.name,
+    kind: kindLabel(row.kind),
+    location: row.location || null,
+    blurb: String(row.blurb || "").trim(),
+    logo: row.logo || row.photo || null,
+    website: row.website || null,
+    instagram: instagramUrl(row.instagram),
+    current: row.status === "partnered",
+    from: years.length ? Math.min(...years) : null,
+    to: years.length ? Math.max(...years) : null,
+    events: events.map((e) => ({ slug: e.slug, title: e.title, date: String(e.date).slice(0, 10), url: e.url })),
+  };
+}
+
+/** "Since 2025" (supporting now) or "2024–2025" / "2025" (helped before); "" without events. */
+export function yearsLine({ current, from, to }) {
+  if (!from) return "";
+  if (current) return `Since ${from}`;
+  return from === to ? String(from) : `${from}–${to}`;
 }

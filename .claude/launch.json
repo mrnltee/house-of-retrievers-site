@@ -1,0 +1,53 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hor-local-safe",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DATABASE_URL=postgres://postgres@localhost:5433/hor",
+        "DATABASE_URL_UNPOOLED=",
+        "RESEND_API_KEY=",
+        "EMAIL_FROM=",
+        "GOOGLE_APPS_SCRIPT_URL=",
+        "JOIN_FORM_SECRET=",
+        "CLOUDINARY_API_SECRET=",
+        "GEMINI_API_KEY=",
+        "ADMIN_DEV_LOGIN=1",
+        "ADMIN_OWNER_EMAILS=owner@example.test",
+        "NEXTAUTH_SECRET=local-dev-secret-local-dev-secret",
+        "NEXTAUTH_URL=http://localhost:3000",
+        "npx",
+        "next",
+        "dev",
+        "-p",
+        "3000"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "hor-local-join-test",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DATABASE_URL=postgres://postgres@localhost:5433/hor",
+        "DATABASE_URL_UNPOOLED=",
+        "RESEND_API_KEY=",
+        "EMAIL_FROM=",
+        "GOOGLE_APPS_SCRIPT_URL=http://127.0.0.1:8799/exec",
+        "JOIN_FORM_SECRET=local-test-secret",
+        "CLOUDINARY_API_SECRET=",
+        "GEMINI_API_KEY=",
+        "ADMIN_DEV_LOGIN=1",
+        "ADMIN_OWNER_EMAILS=owner@example.test",
+        "NEXTAUTH_SECRET=local-dev-secret-local-dev-secret",
+        "NEXTAUTH_URL=http://localhost:3000",
+        "npx",
+        "next",
+        "dev",
+        "-p",
+        "3000"
+      ],
+      "port": 3000
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { BENEFICIARY_KINDS, BENEFICIARY_STATUSES, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
+import { BENEFICIARY_KINDS, BENEFICIARY_STATUSES, isPublicBeneficiary, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
 import { groupLetters, listLetters } from "../../../lib/letterStore";
 import { letterFor } from "../../../lib/contacts.mjs";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
@@ -65,7 +65,7 @@ export default async function BeneficiariesPage({ searchParams }) {
                   {canSend && <td><input type="checkbox" name="to" value={`beneficiary:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong"><span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/beneficiaries/${r.id}`}>{r.name}</a>{r.location && <><br /><span className="small muted">{r.location}</span></>}</span></span></td>
                   <td>{kindLabel(r.kind)}</td>
-                  <td><span className="chip">{statusLabel(r.status)}</span></td>
+                  <td><span className="chip">{statusLabel(r.status)}</span>{isPublicBeneficiary(r) && <><br /><span className="small muted">On the website</span></>}</td>
                   <td>{r.contact_name || "—"}{r.contact_email ? <><br /><span className="small muted">{r.contact_email}</span></> : <><br /><span className="small muted">No email yet</span></>}</td>
                   <td className="small">Dear {r.salutation || r.contact_name || r.name},</td>
                   <td className="small">{r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "—"}</td>
