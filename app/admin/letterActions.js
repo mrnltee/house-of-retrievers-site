@@ -121,7 +121,7 @@ export async function sendLetters(data) {
     const failed = [];
     for (const r of recipients) {
       if (!looksLikeEmail(r.email)) { skipped.push(r.name); continue; }
-      const prepared = prepareLetter(letter, { ...r, date, values });
+      const prepared = prepareLetter(letter, { ...r, date, values, signed: Boolean(signature) });
       const pdf = await letterPdf(prepared.blocks, { title: prepared.subject, signature });
       const mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename });
       const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });

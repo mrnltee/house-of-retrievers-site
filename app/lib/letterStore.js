@@ -70,18 +70,22 @@ export async function signatureForPdf(settings, upload = "") {
   const { cleanSignature } = await import("./letterSignature.mjs");
   const s = cleanSignature(settings);
   if (!s.on) return null;
+  const why = (reason) => { console.error(`letter signature: left out, ${reason}`); return null; };
   try {
     const data = String(upload || "").match(/^data:image\/(?:png|jpeg);base64,([A-Za-z0-9+/=]+)$/);
     if (data) {
       const buffer = Buffer.from(data[1], "base64");
-      return buffer.length <= 700 * 1024 ? { buffer, x: s.x, dy: s.dy, width: s.width } : null;
+      return buffer.length <= 700 * 1024 ? { buffer, x: s.x, dy: s.dy, width: s.width } : why("the new image is over 700 KB");
     }
-    if (!s.image || !hasDatabase()) return null;
+    if (!s.image) return why("no image saved");
+    if (!hasDatabase()) return null;
     const [row] = await sql("SELECT mime, data FROM event_images WHERE id = $1", [s.image.split("/").pop()]);
     // pdfkit draws PNG and JPEG only.
-    return row && /^image\/(png|jpeg)$/.test(row.mime) ? { buffer: Buffer.from(row.data), x: s.x, dy: s.dy, width: s.width } : null;
-  } catch {
-    return null;
+    if (!row) return why(`image ${s.image} not found`);
+    if (!/^image\/(png|jpeg)$/.test(row.mime)) return why(`image is ${row.mime}, not PNG or JPEG`);
+    return { buffer: Buffer.from(row.data), x: s.x, dy: s.dy, width: s.width };
+  } catch (error) {
+    return why(`image couldn't be loaded (${error?.message || error})`);
   }
 }
 

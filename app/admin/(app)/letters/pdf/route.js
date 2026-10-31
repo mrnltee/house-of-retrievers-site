@@ -45,11 +45,11 @@ export async function POST(request) {
     const [row] = await sql("SELECT name, organization, address, salutation FROM letter_contacts WHERE id = $1 AND deleted_at IS NULL", [id]);
     if (row) to = recipientFields({ contact: row });
   }
-  const prepared = prepareLetter(letter, { ...to, values });
   // The editor posts its unsaved signature settings (and a new image, if picked) to preview them.
   let posted = null;
   if (field("signature") && can(admin, "letters:edit")) { try { posted = JSON.parse(field("signature")); } catch { posted = null; } }
   const signature = await signatureForPdf(posted || saved.signature, posted ? field("signatureUpload") : "");
+  const prepared = prepareLetter(letter, { ...to, values, signed: Boolean(signature) });
   const pdf = await letterPdf(prepared.blocks, { title: prepared.subject, signature });
   const ascii = prepared.filename.replace(/[^\x20-\x7e]/g, "-").replace(/"/g, "'");
   return new Response(pdf, {

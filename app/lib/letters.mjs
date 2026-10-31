@@ -13,6 +13,7 @@
  *   that send.
  */
 import { LETTER_STARTERS } from "./letters/starters.mjs";
+import { hasSignatureMark, placeSignatureMark } from "./letterSignature.mjs";
 
 export { LETTER_STARTERS };
 
@@ -195,13 +196,14 @@ export function letterWithOverride(key, saved) {
 }
 
 /** Everything one recipient gets: email subject and cover text, and the letter's blocks. */
-export function prepareLetter(letter, { name, contact = "", address = "", salutation = "", date = letterDate(), values = {} }) {
+export function prepareLetter(letter, { name, contact = "", address = "", salutation = "", date = letterDate(), values = {}, signed = false }) {
   const who = { name, contact, address, salutation, date, values };
   const fill = (t) => fillLetter(t, who);
   return {
     subject: fill(letter.subject).replace(/\s+/g, " ").trim(),
     cover: fillLetter(letter.cover, who, { plain: true }),
-    blocks: letterBlocks(fill(letter.body)),
+    // A signature that is on but has no {signature} line still gets a place (letterSignature.mjs).
+    blocks: letterBlocks(signed && !hasSignatureMark(letter.body) ? placeSignatureMark(fill(letter.body)) : fill(letter.body)),
     filename: `HOR ${letter.name.replace(/[^\w ()&,.–—-]+/g, "").trim()}${name ? ` – ${name.replace(/[^\w ()&,.-]+/g, "").trim()}` : ""}.pdf`.slice(0, 140),
   };
 }

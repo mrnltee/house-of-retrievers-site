@@ -200,6 +200,7 @@ export async function letterPdf(blocks, options = {}) {
     if (!best || result.spills < best.spills) best = result;
     if (!result.spills) break;
   }
+  if (options.signature && !best.signed) console.error("letter signature: switched on, but nothing was drawn (no {signature} place in the letter, or the image couldn't be read)");
   return best.pdf;
 }
 
@@ -212,7 +213,7 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
     doc.initForm();
     const chunks = [];
     doc.on("data", (c) => chunks.push(c));
-    doc.on("end", () => resolve({ pdf: Buffer.concat(chunks), spills }));
+    doc.on("end", () => resolve({ pdf: Buffer.concat(chunks), spills, signed }));
     doc.on("error", reject);
 
     const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
@@ -248,6 +249,7 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
     let spills = 0;
     // Where to lay the signature: drawn last, on top of the text, so it takes no room.
     const marks = [];
+    let signed = 0;
 
     const room = () => doc.page.height - doc.page.margins.bottom - doc.y;
     const lastContent = blocks.findLastIndex((b) => b.type !== "page");
@@ -291,7 +293,12 @@ function drawLetter(blocks, { title = "House of Retrievers letter", signature = 
     const range = doc.bufferedPageRange();
     for (const mark of marks) {
       doc.switchToPage(range.start + mark.page);
-      try { doc.image(signature.buffer, mark.x, Math.max(MARGIN - 20, mark.y), { width: signature.width }); } catch { /* not a PNG or JPEG: leave it out */ }
+      try {
+        doc.image(signature.buffer, mark.x, Math.max(MARGIN - 20, mark.y), { width: signature.width });
+        signed += 1;
+      } catch (error) {
+        console.error(`letter signature: image couldn't be drawn (${error?.message || error})`);
+      }
     }
 
     // Footers on every page.

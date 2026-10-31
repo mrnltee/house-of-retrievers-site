@@ -27,3 +27,19 @@ test("the PDF draws with or without a signature", async () => {
   assert.ok(signed.length > plain.length, "the signed PDF carries the image");
   assert.match(signed.toString("latin1"), /\/Subtype \/Image/);
 });
+
+test("with no {signature} line, the signature goes above the signatory, else after the sign-off", async () => {
+  const { placeSignatureMark } = await import("./letterSignature.mjs");
+  assert.equal(placeSignatureMark("Hi.\n\nSincerely yours,\n\n**MS. ALYZZA ANGELES**\n**President**"), "Hi.\n\nSincerely yours,\n\n{signature}\n\n**MS. ALYZZA ANGELES**\n**President**");
+  assert.equal(placeSignatureMark("Hi.\n\nSincerely,\n\nAna"), "Hi.\n\nSincerely,\n\n{signature}\n\nAna");
+  assert.equal(placeSignatureMark("Hi.\n\n{signature}\n\nWarm regards,\n\n**[Signatory Name]**"), "Hi.\n\nWarm regards,\n\n{signature}\n\n**[Signatory Name]**");
+});
+
+test("a letter with the signature on but no {signature} line is still signed", async () => {
+  const { prepareLetter } = await import("./letters.mjs");
+  const letter = { name: "L", subject: "S", cover: "C", body: "Hi.\n\nSincerely yours,\n\n**MS. A**" };
+  assert.ok(prepareLetter(letter, { name: "X", signed: true }).blocks.some((b) => b.type === "signature"));
+  assert.ok(!prepareLetter(letter, { name: "X" }).blocks.some((b) => b.type === "signature"));
+  const pdf = await letterPdf(prepareLetter(letter, { name: "X", signed: true }).blocks, { title: "T", signature: { buffer: PNG, x: 0, dy: -20, width: 120 } });
+  assert.match(pdf.toString("latin1"), /\/Subtype \/Image/);
+});

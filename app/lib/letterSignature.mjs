@@ -29,5 +29,20 @@ export function cleanSignature(input) {
   };
 }
 
+/**
+ * Where the signature goes when the letter doesn't say: before the paragraph
+ * naming who signs ([Signatory Name], or a bold "MS./MR./DR." line), else right
+ * after the sign-off ("Sincerely…"), else at the end. Returns the text with a
+ * {signature} line added (any old one moved).
+ */
+export function placeSignatureMark(text) {
+  const blocks = String(text || "").replace(/\r\n?/g, "\n").split(/\n{2,}/).filter((b) => b.trim() !== SIGNATURE_MARK);
+  let at = blocks.findIndex((b) => /\[Signatory Name\]|^\*{0,2}(MS|MR|MRS|DR|ATTY|ENGR)\.? /i.test(b.trim()));
+  if (at < 0) at = blocks.findIndex((b) => /^(sincerely|with warm regards|warm regards|respectfully|with love|yours truly)/i.test(b.trim())) + 1;
+  if (at <= 0) at = blocks.length;
+  blocks.splice(at, 0, SIGNATURE_MARK);
+  return blocks.join("\n\n");
+}
+
 /** Does this letter text have a place for the signature? */
 export const hasSignatureMark = (text) => String(text || "").split(/\n{2,}/).some((b) => b.trim() === SIGNATURE_MARK);

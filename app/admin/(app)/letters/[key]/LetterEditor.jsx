@@ -8,7 +8,7 @@ import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
 import ImageField from "../../ImageField";
-import { SIGNATURE_LIMITS, SIGNATURE_MARK, cleanSignature, hasSignatureMark } from "../../../../lib/letterSignature.mjs";
+import { SIGNATURE_LIMITS, SIGNATURE_MARK, cleanSignature, hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import LetterView from "../LetterView";
 
 const SAMPLE = "Pawsome Pet Shop";
@@ -27,13 +27,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const moveSig = ({ x, dy }) => setSig((s) => ({ ...s, x: Math.min(SIGNATURE_LIMITS.x[1], Math.max(0, Math.round(x * 1000) / 1000)), dy: Math.min(SIGNATURE_LIMITS.dy[1], Math.max(SIGNATURE_LIMITS.dy[0], Math.round(dy))) }));
   // "Put it above the signatory's name": before the line naming who signs, else the sign-off.
   function placeSignature() {
-    const text = fields.body.replace(/\n*\{signature\}\n*/g, "\n\n");
-    const blocks = text.split(/\n{2,}/);
-    let at = blocks.findIndex((b) => /\[Signatory Name\]|^\*\*(MS|MR|DR)\.? /i.test(b.trim()));
-    if (at < 0) at = blocks.findIndex((b) => /^(sincerely|with warm regards|warm regards|respectfully|with love)/i.test(b.trim())) + 1;
-    if (at <= 0) at = blocks.length;
-    blocks.splice(at, 0, SIGNATURE_MARK);
-    setFields((f) => ({ ...f, body: blocks.join("\n\n") }));
+    setFields((f) => ({ ...f, body: placeSignatureMark(f.body) }));
   }
   // Leaving (Back, Previous, Next) with unsaved wording asks first.
   useEffect(() => {

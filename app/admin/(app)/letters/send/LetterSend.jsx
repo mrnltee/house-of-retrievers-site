@@ -4,7 +4,7 @@ import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
 import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
-import { hasSignatureMark } from "../../../../lib/letterSignature.mjs";
+import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
 import LetterView from "../LetterView";
@@ -22,8 +22,11 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
   const date = letterDate();
   const to = { name: who?.name || "", contact: who?.contact || "", address: who?.address || "", salutation: who?.salutation || "", date, values };
-  const filled = useMemo(() => fillLetter(letter.body, to), [letter.body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
-  const prepared = useMemo(() => prepareLetter(letter, to), [letter, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Same as the PDF: a signature that is on, with an image, gets a place even if the letter has no {signature} line.
+  const signed = Boolean(letter.signature?.on && letter.signature?.image);
+  const body = signed && !hasSignatureMark(letter.body) ? placeSignatureMark(letter.body) : letter.body;
+  const filled = useMemo(() => fillLetter(body, to), [body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
+  const prepared = useMemo(() => prepareLetter(letter, { ...to, signed }), [letter, who, date, values, signed]); // eslint-disable-line react-hooks/exhaustive-deps
   const email = useMemo(() => letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename }), [prepared]);
   const missing = missingBlanks(blanks, values);
   const count = picked.size;
@@ -191,8 +194,7 @@ function RecipientTabs({ recipients, current, picked, onPick }) {
 function SignatureStatus({ letter, editHref }) {
   const s = letter.signature || {};
   const fix = editHref ? <> <a href={editHref}>Set it up in the letter</a> (step 5), then press Save there.</> : null;
-  if (s.on && s.image && hasSignatureMark(letter.body)) return <p className="small sig-status is-on" style={{ margin: 0 }}>✓ Signature included in the PDF</p>;
-  if (s.on && s.image) return <p className="small sig-status is-warn" style={{ margin: 0 }}>Signature is on, but the letter has no place for it, so it won&apos;t show.{fix}</p>;
+  if (s.on && s.image) return <p className="small sig-status is-on" style={{ margin: 0 }}>✓ Signature included in the PDF{hasSignatureMark(letter.body) ? "" : ", above the signatory's name"}</p>;
   if (s.on) return <p className="small sig-status is-warn" style={{ margin: 0 }}>Signature is on but has no image saved, so it won&apos;t show.{fix}</p>;
   return <p className="small muted sig-status" style={{ margin: 0 }}>No signature on this letter.{fix}</p>;
 }
