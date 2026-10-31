@@ -5,7 +5,7 @@ import { eventsFor, isPublicBeneficiary, publicBeneficiary } from "./beneficiari
 /**
  * Beneficiaries the website may show (switched on, Partnered or Ended, with a
  * short line), each with the published charity events that name it in
- * "Supports", newest first. Supporting now comes first, then by latest event.
+ * "Supports", newest first. Currently supporting comes first, then by latest event.
  * Empty without a database, so the home page leaves the section out.
  */
 export async function loadPublicBeneficiaries() {

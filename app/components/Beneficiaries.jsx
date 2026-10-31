@@ -65,13 +65,13 @@ export default function Beneficiaries() {
       </div>
       {now.length > 0 && (
         <div className="supporters-group">
-          <h3>Supporting now <small>Beneficiaries of our current events</small></h3>
+          <h3>Currently supporting <small>Beneficiaries of our current events</small></h3>
           <ul className="beneficiary-grid">{now.map((b) => <Card key={b.id} b={b} />)}</ul>
         </div>
       )}
       {before.length > 0 && (
         <div className="supporters-group">
-          <h3>Helped before <small>Beneficiaries of our past events</small></h3>
+          <h3>Past beneficiaries <small>Helped through our earlier events</small></h3>
           <ul className="beneficiary-grid">{before.map((b) => <Card key={b.id} b={b} />)}</ul>
         </div>
       )}
