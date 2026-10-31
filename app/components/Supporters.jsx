@@ -7,14 +7,16 @@ import { gaveLine, totals } from "../lib/supporters.mjs";
 const formatPeso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const formatDate = (iso) => new Date(`${iso}T00:00:00+08:00`).toLocaleDateString("en-PH", { timeZone: "Asia/Manila", weekday: "short", month: "short", day: "numeric", year: "numeric" });
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
-const CAROUSEL_PAGE_SIZE = 4; // 5+ logos in a group become a carousel, 4 per page
+const SLIDE_MIN = 3; // groups this size or bigger slide on their own; smaller ones stay still
+const SLIDE_FILL = 8; // tiles in one loop, so the row never runs out of logos on a wide screen
+const SECONDS_PER_TILE = 4;
 
-function Tile({ supporter, big = false, onOpen }) {
+function Tile({ supporter, big = false, onOpen, clone = false }) {
   // The latest event they were at; an upcoming one only when there's none yet (events come newest first).
   const now = today();
   const shown = supporter.events.find((e) => e.date < now) || supporter.events[0];
   return (
-    <li>
+    <li inert={clone || undefined}>
       <button type="button" className={`supporter-tile${big ? " is-big" : ""}`} onClick={() => onOpen(supporter)} aria-haspopup="dialog">
         <span className="supporter-logo"><img src={supporter.logo} alt="" loading="lazy" /></span>
         <span className="supporter-name">{supporter.name}</span>
@@ -24,30 +26,20 @@ function Tile({ supporter, big = false, onOpen }) {
   );
 }
 
-function SupporterWall({ items, onOpen, label }) {
-  const carousel = items.length > CAROUSEL_PAGE_SIZE;
-  const pageCount = Math.ceil(items.length / CAROUSEL_PAGE_SIZE);
-  const [page, setPage] = useState(0);
-  const start = page * CAROUSEL_PAGE_SIZE;
-  const visible = carousel ? items.slice(start, start + CAROUSEL_PAGE_SIZE) : items;
-
-  useEffect(() => {
-    setPage((current) => Math.min(current, Math.max(0, pageCount - 1)));
-  }, [pageCount]);
-
+/**
+ * A row of logos that slides on its own, left or right, and pauses on hover or focus.
+ * The list repeats so the loop is seamless; repeats are hidden from screen readers
+ * and the keyboard. With reduced motion it's a still wall of the real logos.
+ */
+function SupporterWall({ items, onOpen, label, direction = "left" }) {
+  if (items.length < SLIDE_MIN) {
+    return <ul className="supporter-wall" aria-label={`${label} logos`}>{items.map((s) => <Tile key={s.slug} supporter={s} onOpen={onOpen} />)}</ul>;
+  }
+  const loop = Array.from({ length: Math.ceil(SLIDE_FILL / items.length) }, () => items).flat();
   return (
-    <div className={`supporter-carousel${carousel ? " is-carousel" : ""}`} aria-label={`${label} logos`}>
-      {carousel && (
-        <div className="supporter-carousel-controls">
-          <p aria-live="polite">Showing {start + 1}–{Math.min(start + CAROUSEL_PAGE_SIZE, items.length)} of {items.length}</p>
-          <div>
-            <button type="button" onClick={() => setPage((current) => Math.max(0, current - 1))} disabled={page === 0} aria-label={`Previous ${label.toLowerCase()} logos`}><span aria-hidden="true">←</span></button>
-            <button type="button" onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))} disabled={page === pageCount - 1} aria-label={`Next ${label.toLowerCase()} logos`}><span aria-hidden="true">→</span></button>
-          </div>
-        </div>
-      )}
-      <ul className="supporter-wall">
-        {visible.map((s) => <Tile key={s.slug} supporter={s} onOpen={onOpen} />)}
+    <div className={`supporter-slider is-${direction}`}>
+      <ul className="supporter-track" aria-label={`${label} logos`} style={{ "--slide-duration": `${loop.length * SECONDS_PER_TILE}s` }}>
+        {[...loop, ...loop].map((s, i) => <Tile key={`${s.slug}-${i}`} supporter={s} onOpen={onOpen} clone={i >= items.length} />)}
       </ul>
     </div>
   );
@@ -168,7 +160,7 @@ export default function Supporters({ onJoin }) {
       {partners.length > 0 && (
         <div className="supporters-group">
           <h3>Worked with us <small>Lent a venue, services or a hand</small></h3>
-          <SupporterWall items={partners} onOpen={setOpen} label="Brands that worked with us" />
+          <SupporterWall items={partners} onOpen={setOpen} label="Brands that worked with us" direction="right" />
         </div>
       )}
 
