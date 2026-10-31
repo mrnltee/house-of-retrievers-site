@@ -3,6 +3,7 @@ import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { STATUSES, givesLabel, isPublic, statusLabel, supporterNumber, tierLabel } from "../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../ui";
+import TickedSubmit from "../TickedSubmit";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
@@ -115,7 +116,7 @@ export default async function SupportersPage({ searchParams }) {
         <form method="get" action={`${base}/letters/send`}>
         {canEdit && (
           <div className="actions supporter-letter-bar">
-            <button type="submit" className="btn dark" data-confirm="not-needed-read-only">✉ Send a letter to ticked</button>
+            <TickedSubmit>✉ Send a letter to ticked</TickedSubmit>
             <a className="btn ghost" href={allShown}>Send a letter to all {rows.length} shown</a>
             <span className="small muted">Pick the letter and check it before anything is sent.</span>
           </div>

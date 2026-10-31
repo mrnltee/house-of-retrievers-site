@@ -12,6 +12,7 @@ import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import ContactFields from "./ContactFields";
 import ConfirmButton from "../ConfirmButton";
 import { Avatar } from "../ImageField";
+import TickedSubmit from "../TickedSubmit";
 
 /**
  * Guest list: celebrities, influencers, politicians, VIPs, media, speakers,
@@ -85,7 +86,7 @@ export default async function GuestsPage({ searchParams }) {
                 <h2 style={{ margin: 0 }}>{g.label} <span className="muted small">({g.rows.length})</span></h2>
                 <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${g.letter}`}>{letterName(g.letter)}</a></p>
               </div>
-              {canEdit && g.rows.length > 0 && <button type="submit" className="btn dark" data-confirm="not-needed-read-only">✉ Send this letter to ticked</button>}
+              {canEdit && g.rows.length > 0 && <TickedSubmit>✉ Send this letter to ticked</TickedSubmit>}
             </div>
             {/* The table shows even when empty, with an add link that picks this category. */}
             <div className="table-wrap" style={{ marginTop: 10 }}>

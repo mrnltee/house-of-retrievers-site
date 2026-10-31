@@ -5,6 +5,7 @@ import { BENEFICIARY_KINDS, BENEFICIARY_LETTER, BENEFICIARY_STATUSES, kindLabel,
 import { listLetters } from "../../../lib/letterStore";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import { Avatar } from "../ImageField";
+import TickedSubmit from "../TickedSubmit";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
@@ -49,7 +50,7 @@ export default async function BeneficiariesPage({ searchParams }) {
         <input type="hidden" name="letter" value={BENEFICIARY_LETTER} />
         {canSend && rows.length > 0 && (
           <div className="actions" style={{ flexWrap: "wrap" }}>
-            <button type="submit" className="btn dark" data-confirm="not-needed-read-only">✉ Send the proposal to ticked</button>
+            <TickedSubmit>✉ Send the proposal to ticked</TickedSubmit>
             <span className="small muted">Letter: <a href={`${base}/letters/${BENEFICIARY_LETTER}`}>{letterName(BENEFICIARY_LETTER)}</a>. You can pick another letter on the next page.</span>
           </div>
         )}
