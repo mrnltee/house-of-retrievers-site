@@ -1,5 +1,5 @@
 import { saveSupporter } from "../../supporterActions";
-import { BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, STATUSES, TIERS, isPublic, supporterNumber } from "../../../lib/supporters.mjs";
+import { AGREEMENT_STATUSES, BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, INVITE_STATUSES, RSVP_STATUSES, STATUSES, TIERS, isPublic, supporterNumber } from "../../../lib/supporters.mjs";
 import LogoField from "./LogoField";
 import SupporterIdentityFields from "./SupporterIdentityFields";
 import ConfirmButton from "../ConfirmButton";
@@ -76,6 +76,32 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
             <input type="checkbox" name="amountsAgreed" defaultChecked={Boolean(row?.amounts_agreed_at)} />
             <span><strong>The sponsor knows these amounts are public</strong> <span className="small muted">Amounts appear on the website (HOR's transparency promise) only once this is ticked.{row?.amounts_agreed_at && ` Confirmed ${String(row.amounts_agreed_at).slice(0, 10)} by ${row.amounts_agreed_by}.`}</span></span>
           </label>
+        </section>
+
+        <section className="card form">
+          <h2>Outreach <span className="chip">Admins only</span></h2>
+          <p className="small muted" style={{ margin: 0 }}>The Brand Tracker columns: where the invitation stands, their reply, the agreement and who follows up.</p>
+          <div className="row-3">
+            <label className="field"><span>Invitation</span>
+              <select name="inviteStatus" defaultValue={v("invite_status")}><option value="">—</option>{INVITE_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+            </label>
+            <label className="field"><span>RSVP</span>
+              <select name="rsvpStatus" defaultValue={v("rsvp_status")}><option value="">—</option>{RSVP_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+            </label>
+            <label className="field"><span>Agreement</span>
+              <select name="agreementStatus" defaultValue={v("agreement_status")}><option value="">—</option>{AGREEMENT_STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+            </label>
+          </div>
+          <div className="row-3">
+            <label className="field"><span>Invited on</span><input type="date" name="invitedOn" defaultValue={v("invited_on")} /></label>
+            <label className="field"><span>Follow up on</span><input type="date" name="followUpOn" defaultValue={v("follow_up_on")} /></label>
+            <label className="field"><span>Assigned to <small>Team member following up</small></span><input type="text" name="assignedTo" maxLength={120} defaultValue={v("assigned_to")} /></label>
+          </div>
+          <div className="row-3">
+            <label className="field"><span>Representatives attending</span><input type="number" name="repsAttending" min={0} max={500} defaultValue={v("reps_attending")} /></label>
+            <label className="field"><span>Dogs attending</span><input type="number" name="dogsAttending" min={0} max={500} defaultValue={v("dogs_attending")} /></label>
+          </div>
+          <label className="field"><span>Booth requirements <small>Only if they have a booth: table, power, space…</small></span><textarea name="boothNeeds" rows={2} maxLength={500} defaultValue={v("booth_needs")} /></label>
         </section>
 
         <section className="card form">

@@ -4,6 +4,7 @@ import { sql, transaction } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { supporterNumber, supporterSlug, validateSupporter } from "../lib/supporters.mjs";
+import { saveOutreach } from "../lib/supporterOutreach";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -101,6 +102,8 @@ export async function saveSupporter(data) {
     }
     // Letter address block (migration 064).
     await sql("UPDATE supporters SET address=$2, salutation=$3 WHERE id=$1", [recordId, value.address, value.salutation]);
+    // Outreach, from the Brand Tracker (migration 074).
+    await saveOutreach(recordId, value);
 
     // First time Confirmed: HOR-XXXX-YY-NNNN, YY = the year they registered
     // (the Join form if they came through it, else when the record was made).

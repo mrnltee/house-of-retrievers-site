@@ -1,7 +1,7 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { STATUSES, givesLabel, isPublic, statusLabel, supporterNumber, tierLabel } from "../../../lib/supporters.mjs";
+import { outreachLine, STATUSES, givesLabel, isPublic, statusLabel, supporterNumber, tierLabel } from "../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../ui";
 import TickedSubmit from "../TickedSubmit";
 
@@ -123,7 +123,7 @@ export default async function SupportersPage({ searchParams }) {
         )}
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Organization</th><th>ID</th><th>Relationship</th><th>Status</th><th>Support</th><th>Events</th><th>Website</th></tr></thead>
+            <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Organization</th><th>ID</th><th>Relationship</th><th>Status</th><th>Outreach</th><th>Support</th><th>Events</th><th>Website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
                 const linkedEvents = backed(row);
@@ -134,6 +134,7 @@ export default async function SupportersPage({ searchParams }) {
                     <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
                     <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}{row.tier && <span className={`chip tier-${row.tier}`}>★ {tierLabel(row.tier)}</span>}</span></td>
                     <td><span className={`chip status-${row.status}`}>{statusLabel(row.status)}</span></td>
+                    <td className="supporter-list-support">{outreachLine(row) || "—"}</td>
                     <td className="supporter-list-support">{supportLine(row) || "—"}</td>
                     <td>{linkedEvents.length || "—"}</td>
                     <td>{row.website ? <a href={row.website} target="_blank" rel="noreferrer">Open ↗</a> : "—"}</td>

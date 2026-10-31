@@ -46,3 +46,43 @@ test("people: join type and status checked", () => {
   assert.match(rowInput("people", { name: "Ana", email: "a@x.ph", kind: "Fan" }).error, /Join type/);
   assert.match(rowInput("people", { name: "Ana", email: "nope", kind: "Member" }).error, /email/);
 });
+
+test("Brand Tracker sheet: its columns match the sponsor record", () => {
+  const heads = ["Brand Name", "Contact Person", "Email Address", "Contact Number", "IG / Website", "Participation Type", "Booth Requested?", "Booth Fee / Donation (PHP)",
+    "Item Donation Details", "Quantity of Items", "Cash / In-kind Value (PHP)", "Booth Requirements", "Representatives Attending", "Dogs Attending", "Invitation Status",
+    "RSVP Status", "Invitation Date", "Follow-up Date", "Agreement Status", "Assigned Team Member", "Notes", "Guest Classification"];
+  const m = autoMatch(heads, "supporters");
+  const at = (key) => heads[m[key]];
+  assert.equal(at("name"), "Brand Name");
+  assert.equal(at("contactName"), "Contact Person");
+  assert.equal(at("contactPhone"), "Contact Number");
+  assert.equal(at("link"), "IG / Website");
+  assert.equal(at("cashAmount"), "Booth Fee / Donation (PHP)");
+  assert.equal(at("inKindValue"), "Cash / In-kind Value (PHP)");
+  assert.equal(at("repsAttending"), "Representatives Attending");
+  assert.equal(at("followUpOn"), "Follow-up Date");
+  assert.ok(!Object.values(m).includes(heads.indexOf("Guest Classification")), "guest classification belongs to the Guest list");
+});
+
+test("Brand Tracker rows: messy cells are sorted, not rejected", () => {
+  const { input } = rowInput("supporters", {
+    name: "Boop", contactEmail: "a@boop.ph , b@boop.ph", contactPhone: "9063151918", link: "asking for proposal",
+    participation: "Cash Donation", booth: "Yes", inKindValue: "5,000", inKindNote: "Treats", itemQty: "20",
+    inviteStatus: "Follow-up Needed", rsvpStatus: "No Response", agreementStatus: "Not Started", followUpOn: "11/5/2026", notes: "Call first",
+  });
+  assert.equal(input.contactEmail, "a@boop.ph");
+  assert.equal(input.contactPhone, "09063151918");
+  assert.deepEqual(input.gives, ["cash", "booth"]);
+  assert.equal(input.cashAmount, "5000");
+  assert.equal(input.inKindValue, "");
+  assert.equal(input.inKindNote, "Treats ×20");
+  assert.equal(input.inviteStatus, "follow_up");
+  assert.equal(input.rsvpStatus, "no_response");
+  assert.equal(input.followUpOn, "2026-11-05");
+  assert.equal(input.notes, "Call first\nIG / Website: asking for proposal\nOther emails: b@boop.ph");
+  assert.equal(rowInput("supporters", { name: "X", contactEmail: "declined" }).input.notes, "Email column: declined");
+  assert.equal(rowInput("supporters", { name: "X", link: "@boopph" }).input.instagram, "@boopph");
+  assert.equal(rowInput("supporters", { name: "X", link: "`" }).input.website, "");
+  assert.match(rowInput("supporters", { name: "X", rsvpStatus: "Maybe" }).error, /RSVP status/);
+  assert.match(rowInput("supporters", { name: "X", participation: "Raffle" }).error, /Participation type/);
+});

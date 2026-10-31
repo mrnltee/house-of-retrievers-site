@@ -6,6 +6,7 @@ import { actionAdmin } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { IMPORT_TARGETS, MAX_IMPORT_ROWS, rowInput } from "../lib/admin/sheetImport.mjs";
 import { supporterSlug, validateSupporter } from "../lib/supporters.mjs";
+import { saveOutreach } from "../lib/supporterOutreach";
 import { newCheckInCode, validateRsvp } from "../lib/admin/registrations.mjs";
 import { eventTiers } from "../lib/admin/events.mjs";
 import { chooseTicket, owesPayment, validateProof } from "../lib/eventPayments.mjs";
@@ -78,6 +79,7 @@ async function insertRow(target, value, event, admin) {
       [value.kind, value.name, slug, value.status, value.tier, value.website, value.instagram, value.blurb, value.gives, value.supportYear,
         value.cashAmount, value.inKindValue, value.inKindNote, value.contactName, value.contactEmail, value.contactPhone, value.notes, value.categoryLabel, value.code],
     ).then(async ([row]) => {
+      await saveOutreach(row.id, value);
       // Confirmed ones get their HOR number now, as when saved in the form (same lock and rule as saveSupporter).
       if (value.status !== "confirmed") return;
       await transaction(async (tx) => {

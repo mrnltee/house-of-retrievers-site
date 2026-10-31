@@ -6,7 +6,7 @@
  * Rows that match an existing record are skipped and listed, never changed,
  * and nothing is emailed.
  */
-import { GIVES, KINDS as SUPPORTER_KINDS, STATUSES, TIERS } from "../supporters.mjs";
+import { AGREEMENT_STATUSES, GIVES, INVITE_STATUSES, KINDS as SUPPORTER_KINDS, RSVP_STATUSES, STATUSES, TIERS } from "../supporters.mjs";
 import { PEOPLE_KINDS, PEOPLE_STATUSES } from "./people.mjs";
 
 export const MAX_IMPORT_ROWS = 500;
@@ -27,12 +27,25 @@ export const IMPORT_TARGETS = {
       { key: "contactName", label: "Contact name", aliases: ["contact name", "contact person", "contact", "representative"] },
       { key: "contactEmail", label: "Contact email", aliases: ["contact email", "email", "e-mail"] },
       { key: "contactPhone", label: "Contact phone", aliases: ["contact phone", "phone", "mobile", "contact number", "number"] },
+      { key: "link", label: "IG or website (one column)", aliases: ["ig / website", "ig/website", "instagram / website", "website / ig", "social / website"], hint: "Sorted into Instagram or Website; anything else goes to Notes" },
       { key: "website", label: "Website", aliases: ["website", "site", "url", "web"] },
       { key: "instagram", label: "Instagram", aliases: ["instagram", "ig", "social"] },
-      { key: "gives", label: "What they give", aliases: ["gives", "support type", "contribution type"], hint: "Cash, In-kind, Services, Venue (comma-separated)" },
-      { key: "cashAmount", label: "Cash amount (₱)", aliases: ["cash amount", "cash", "amount"] },
-      { key: "inKindValue", label: "In-kind value (₱)", aliases: ["in-kind value", "in kind value", "in-kind"] },
-      { key: "inKindNote", label: "In-kind note", aliases: ["in-kind note", "in kind note", "items"] },
+      { key: "gives", label: "What they give", aliases: ["gives", "support type", "contribution type"], hint: "Cash, In-kind, Services, Venue, Booth (comma-separated)" },
+      { key: "participation", label: "Participation type", aliases: ["participation type", "participation"], hint: "Brand Booth, Item Donation, Cash Donation, Booth + Donation or Other; added to What they give" },
+      { key: "booth", label: "Booth requested?", aliases: ["booth requested", "booth?"], hint: "Yes adds Booth to What they give" },
+      { key: "cashAmount", label: "Cash amount (₱)", aliases: ["cash amount", "booth fee", "cash", "amount"] },
+      { key: "inKindValue", label: "In-kind value (₱)", aliases: ["in-kind value", "in kind value", "cash / in-kind value", "cash/in-kind value", "in-kind"], hint: "Counted as cash when the participation is Cash Donation" },
+      { key: "inKindNote", label: "In-kind note", aliases: ["in-kind note", "in kind note", "item donation details", "item donation", "items"] },
+      { key: "itemQty", label: "Quantity of items", aliases: ["quantity of items", "quantity", "qty"], hint: "Added to the in-kind note" },
+      { key: "inviteStatus", label: "Invitation status", aliases: ["invitation status", "invite status", "invitation"], hint: INVITE_STATUSES.map(([, l]) => l).join(", ") },
+      { key: "invitedOn", label: "Invitation date", aliases: ["invitation date", "invited on", "date invited"] },
+      { key: "followUpOn", label: "Follow-up date", aliases: ["follow-up date", "follow up date", "follow-up", "follow up"] },
+      { key: "rsvpStatus", label: "RSVP status", aliases: ["rsvp status", "rsvp"], hint: RSVP_STATUSES.map(([, l]) => l).join(", ") },
+      { key: "agreementStatus", label: "Agreement status", aliases: ["agreement status", "agreement", "contract status"], hint: AGREEMENT_STATUSES.map(([, l]) => l).join(", ") },
+      { key: "assignedTo", label: "Assigned team member", aliases: ["assigned team member", "assigned to", "assigned", "team member"] },
+      { key: "boothNeeds", label: "Booth requirements", aliases: ["booth requirements", "booth needs"] },
+      { key: "repsAttending", label: "Representatives attending", aliases: ["representatives attending", "reps attending", "expected hoomans", "expected humans"] },
+      { key: "dogsAttending", label: "Dogs attending", aliases: ["dogs attending", "expected dogs"] },
       { key: "supportYear", label: "Year", aliases: ["year", "support year"] },
       { key: "categoryLabel", label: "Relationship label", aliases: ["relationship", "label", "role"] },
       { key: "blurb", label: "Short blurb", aliases: ["blurb", "description", "about"] },
@@ -125,6 +138,37 @@ const yesNo = (text) => {
 };
 const pesoText = (text) => String(text ?? "").replace(/[₱,\s]|php/gi, "");
 
+/** Brand Tracker "Participation Type" → what it adds to "What they give". */
+const PARTICIPATION = {
+  "brand booth": ["booth"], booth: ["booth"], "item donation": ["in-kind"], "cash donation": ["cash"],
+  "booth + donation": ["booth"], other: [],
+};
+
+/** A sheet date: YYYY-MM-DD (Excel dates arrive like this) or M/D/YYYY. "" when blank, null when unreadable. */
+export function sheetDate(text) {
+  const t = String(text ?? "").trim();
+  if (!t) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}` : null;
+}
+
+/** Excel keeps 0917… numbers as 9170000000 (or 9.17E9): give the 0 back. */
+export function phoneText(text) {
+  let t = String(text ?? "").trim();
+  if (/^\d(\.\d+)?e\+?\d+$/i.test(t)) t = String(Math.round(Number(t)));
+  return /^9\d{9}$/.test(t) ? `0${t}` : t;
+}
+
+/** One "IG / Website" cell → { instagram } or { website }; anything else is kept as { note }. */
+export function sortLink(text) {
+  const t = String(text ?? "").trim();
+  if (!t || /^[`'"\-–—.]+$/.test(t)) return {};
+  if (/instagram\.com\//i.test(t) || /^@[A-Za-z0-9._]{1,30}$/.test(t)) return { instagram: t };
+  if (/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(t)) return { website: t };
+  return { note: t };
+}
+
 /**
  * Turns a mapped sheet row into the input the record's own checker expects.
  * Returns { input } or { error } (in plain words, for the preview).
@@ -140,12 +184,37 @@ export function rowInput(target, fields, { tickets = [] } = {}) {
     if (tier === null) return { error: `Tier "${f("tier")}" isn't one of ${TIERS.map(([, l]) => l).join(", ")}` };
     const gives = f("gives") ? f("gives").split(/[,;/]+/).map((g) => pick(GIVES, g)) : [];
     if (gives.includes(null)) return { error: `"What they give" should list ${GIVES.map(([, l]) => l).join(", ")}` };
+    const takes = PARTICIPATION[norm(f("participation")).replace(/\s*\+\s*/g, " + ")];
+    if (f("participation") && !takes) return { error: `Participation type "${f("participation")}" should be Brand Booth, Item Donation, Cash Donation, Booth + Donation or Other` };
+    const booth = yesNo(f("booth"));
+    if (booth === null) return { error: `Booth requested "${f("booth")}" should be Yes or No` };
+    for (const g of [...(takes || []), ...(booth === "yes" ? ["booth"] : [])]) if (!gives.includes(g)) gives.push(g);
+    const outreach = {};
+    for (const [key, list, name] of [["inviteStatus", INVITE_STATUSES, "Invitation status"], ["rsvpStatus", RSVP_STATUSES, "RSVP status"], ["agreementStatus", AGREEMENT_STATUSES, "Agreement status"]]) {
+      outreach[key] = pick(list, f(key));
+      if (outreach[key] === null) return { error: `${name} "${f(key)}" should be ${list.map(([, l]) => l).join(", ")}` };
+    }
+    for (const [key, name] of [["invitedOn", "Invitation date"], ["followUpOn", "Follow-up date"]]) {
+      outreach[key] = sheetDate(f(key));
+      if (outreach[key] === null) return { error: `${name} "${f(key)}" isn't a date; use 2026-11-05 or 11/5/2026` };
+    }
+    const link = sortLink(f("link"));
+    const qty = f("itemQty").replace(/\.0+$/, "");
+    let cash = pesoText(f("cashAmount"));
+    let inKind = pesoText(f("inKindValue"));
+    if (takes?.includes("cash") && !takes.includes("in-kind") && inKind && !cash) [cash, inKind] = [inKind, ""];
+    // A cell with two emails: the first is the contact, the others go to Notes
+    // (so does a note typed in the email column, like "declined").
+    const emails = f("contactEmail").match(/[^\s@,;:<>()]+@[^\s@,;:<>()]+\.[A-Za-z]{2,}/g) || [];
+    const notes = [f("notes"), link.note && `IG / Website: ${link.note}`, emails.length > 1 && `Other emails: ${emails.slice(1).join(", ")}`, !emails.length && f("contactEmail") && `Email column: ${f("contactEmail")}`].filter(Boolean).join("\n");
     return {
       input: {
         name: f("name"), kind, status: status || "inquiry", tier: tier || "", gives, code: f("code"),
-        contactName: f("contactName"), contactEmail: f("contactEmail"), contactPhone: f("contactPhone"),
-        website: f("website"), instagram: f("instagram"), cashAmount: pesoText(f("cashAmount")), inKindValue: pesoText(f("inKindValue")),
-        inKindNote: f("inKindNote"), supportYear: f("supportYear"), categoryLabel: f("categoryLabel"), blurb: f("blurb"), notes: f("notes"),
+        contactName: f("contactName"), contactEmail: emails[0] || "", contactPhone: phoneText(f("contactPhone")),
+        website: f("website") || link.website || "", instagram: f("instagram") || link.instagram || "", cashAmount: cash, inKindValue: inKind,
+        inKindNote: [f("inKindNote"), qty && `×${qty}`].filter(Boolean).join(" "), supportYear: f("supportYear"), categoryLabel: f("categoryLabel"), blurb: f("blurb"), notes,
+        ...outreach, assignedTo: f("assignedTo"), boothNeeds: f("boothNeeds"),
+        repsAttending: f("repsAttending").replace(/\.0+$/, ""), dogsAttending: f("dogsAttending").replace(/\.0+$/, ""),
       },
     };
   }

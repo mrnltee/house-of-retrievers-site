@@ -24,6 +24,32 @@ export const GIVES = [
   ["in-kind", "In-kind"],
   ["services", "Services"],
   ["venue", "Venue"],
+  ["booth", "Booth"],
+];
+
+/**
+ * Outreach, from HOR's Brand Tracker sheet (owner, 2026-11-01). Same choices
+ * as the sheet's dropdowns, so a pasted or imported value matches.
+ */
+export const INVITE_STATUSES = [
+  ["not_sent", "Not sent"],
+  ["to_invite", "To invite"],
+  ["sent", "Sent"],
+  ["follow_up", "Follow-up needed"],
+  ["replied", "Replied"],
+];
+export const RSVP_STATUSES = [
+  ["pending", "Pending"],
+  ["confirmed", "Confirmed"],
+  ["declined", "Declined"],
+  ["tentative", "Tentative"],
+  ["no_response", "No response"],
+];
+export const AGREEMENT_STATUSES = [
+  ["not_started", "Not started"],
+  ["sent", "Sent"],
+  ["signed", "Signed"],
+  ["not_applicable", "Not applicable"],
 ];
 
 export const BLURB_MAX = 200;
@@ -33,6 +59,19 @@ const label = (list, key) => list.find(([k]) => k === key)?.[1] || "";
 export const statusLabel = (key) => label(STATUSES, key);
 export const tierLabel = (key) => label(TIERS, key);
 export const givesLabel = (key) => label(GIVES, key);
+export const inviteLabel = (key) => label(INVITE_STATUSES, key);
+export const rsvpLabel = (key) => label(RSVP_STATUSES, key);
+export const agreementLabel = (key) => label(AGREEMENT_STATUSES, key);
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const oneOf = (list, key) => (list.some(([k]) => k === key) ? key : null);
+/** A head count: blank → null, a whole number 0–500, else undefined (an error). */
+function count(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const n = Number(text);
+  return Number.isInteger(n) && n >= 0 && n <= 500 ? n : undefined;
+}
 
 const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -104,6 +143,15 @@ export function validateSupporter(input, { legacyCode = null } = {}) {
     contactPhone: clean(input?.contactPhone, 40) || null,
     address: String(input?.address ?? "").replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n").slice(0, 300) || null,
     salutation: clean(input?.salutation, 120) || null,
+    inviteStatus: oneOf(INVITE_STATUSES, input?.inviteStatus),
+    rsvpStatus: oneOf(RSVP_STATUSES, input?.rsvpStatus),
+    agreementStatus: oneOf(AGREEMENT_STATUSES, input?.agreementStatus),
+    invitedOn: DATE.test(String(input?.invitedOn || "")) ? input.invitedOn : null,
+    followUpOn: DATE.test(String(input?.followUpOn || "")) ? input.followUpOn : null,
+    assignedTo: clean(input?.assignedTo, 120) || null,
+    boothNeeds: String(input?.boothNeeds ?? "").trim().slice(0, 500) || null,
+    repsAttending: count(input?.repsAttending),
+    dogsAttending: count(input?.dogsAttending),
     notes: String(input?.notes ?? "").trim().slice(0, 2000) || null,
     logo: clean(input?.logo, 300) || null,
     code: String(input?.code ?? "").trim().toUpperCase() || null,
@@ -114,6 +162,7 @@ export function validateSupporter(input, { legacyCode = null } = {}) {
   if (value.instagram === undefined) return { error: "Instagram should be a handle like @name, or the profile link." };
   if (value.cashAmount === undefined || value.inKindValue === undefined) return { error: "Amounts should be numbers in pesos, like 15000." };
   if (value.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.contactEmail)) return { error: "The contact email doesn't look right." };
+  if (value.repsAttending === undefined || value.dogsAttending === undefined) return { error: "People and dogs attending should be whole numbers, like 2." };
   if (value.supportYear != null && !(Number.isInteger(value.supportYear) && value.supportYear >= 2020 && value.supportYear <= 2100)) return { error: "Pick the year these amounts are for." };
   if (value.logo && !value.logo.startsWith("/api/event-image/")) value.logo = null;
   const keepsLegacyCode = /^[A-Z]{3}$/.test(legacyCode || "") && value.code === legacyCode;
@@ -167,6 +216,15 @@ export function supporterNumber(row) {
   const year = Number(row?.number_year);
   if (!row?.code || !Number.isInteger(n) || n < 1 || !Number.isInteger(year)) return "";
   return `HOR-${row.code}-${String(year % 100).padStart(2, "0")}-${String(n).padStart(4, "0")}`;
+}
+
+/** "Invite sent · RSVP pending · follow up 2026-11-05" for the list; "" when none is set. */
+export function outreachLine(row) {
+  return [
+    row?.invite_status && `Invite: ${inviteLabel(row.invite_status).toLowerCase()}`,
+    row?.rsvp_status && `RSVP: ${rsvpLabel(row.rsvp_status).toLowerCase()}`,
+    row?.follow_up_on && `follow up ${row.follow_up_on}`,
+  ].filter(Boolean).join(" · ");
 }
 
 /** Whether a DB row may appear on the website. */

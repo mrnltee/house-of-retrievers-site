@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { byTier, gaveLine, isPublic, publicSupporter, suggestCode, supporterNumber, supporterSlug, totals, validateSupporter } from "./supporters.mjs";
+import { byTier, gaveLine, isPublic, outreachLine, publicSupporter, suggestCode, supporterNumber, supporterSlug, totals, validateSupporter } from "./supporters.mjs";
 
 test("the form is cleaned; the website switch needs confirmed + logo + blurb", () => {
   const { value, notes } = validateSupporter({ kind: "Sponsor", name: "  Sponsor  A ", status: "talking", showOnSite: "on", website: "sponsor-a.example", instagram: "https://instagram.com/sponsor.a", cashAmount: "₱15,000", gives: ["cash", "nope"] });
@@ -45,4 +45,15 @@ test("ID codes and numbers: HOR-XXXX-YY-NNNN", () => {
   assert.equal(suggestCode(""), "");
   assert.equal(supporterNumber({ code: "NVTL", number_year: 2026, number_no: 1 }), "HOR-NVTL-26-0001");
   assert.equal(supporterNumber({ code: "NVTL", number_year: null, number_no: null }), "");
+});
+
+test("outreach from the Brand Tracker: kept when valid, listed in one line", () => {
+  const { value } = validateSupporter({ name: "Boop", kind: "Sponsor", inviteStatus: "sent", rsvpStatus: "maybe", followUpOn: "2026-11-05", repsAttending: "2", assignedTo: " Shey " });
+  assert.equal(value.inviteStatus, "sent");
+  assert.equal(value.rsvpStatus, null);
+  assert.equal(value.repsAttending, 2);
+  assert.equal(value.assignedTo, "Shey");
+  assert.match(validateSupporter({ name: "Boop", kind: "Sponsor", dogsAttending: "1.5" }).error, /whole numbers/);
+  assert.equal(outreachLine({ invite_status: "sent", rsvp_status: "pending", follow_up_on: "2026-11-05" }), "Invite: sent · RSVP: pending · follow up 2026-11-05");
+  assert.equal(outreachLine({}), "");
 });
