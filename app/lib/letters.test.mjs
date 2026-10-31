@@ -182,3 +182,9 @@ test("letters name HOR's beneficiaries (owner, 2026-10-31), not “selected anim
     assert.match(l.cover, /Pawssion Project Foundation Inc\..*Little Sisters of the Abandoned Elderly – Sta\. Teresa Jornet Home/, key);
   }
 });
+
+test("the event's name is a fill-in, set once in Standard details (owner, 2026-10-31)", () => {
+  for (const l of LETTER_STARTERS) assert.doesNotMatch(`${l.subject}\n${l.cover}\n${l.body}`, /A Golden Beginning/, l.key);
+  const out = fillLetter("Join us at “**[Event Name]**” ([Event Short Name]).", { values: { "Event Name": "A Golden Beginning: Paws & Purpose", "Event Short Name": "A Golden Beginning" } });
+  assert.equal(out, "Join us at “**A Golden Beginning: Paws & Purpose**” (A Golden Beginning).");
+});
