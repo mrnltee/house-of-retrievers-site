@@ -4,6 +4,8 @@ import LogoField from "./LogoField";
 import SupporterIdentityFields from "./SupporterIdentityFields";
 import ConfirmButton from "../ConfirmButton";
 
+const SHOW_OUTREACH = false;
+
 /** Sponsor or partner record (Figma S2). `row` is a DB row or null; `person` prefills a new one. */
 export default function SupporterForm({ row, person = null, canEdit = true }) {
   const v = (key, fallback = "") => row?.[key] ?? fallback;
@@ -78,6 +80,8 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
           </label>
         </section>
 
+        {/* Outreach (Brand Tracker columns) is hidden (owner, 1 Nov 2026); saved values and the sheet import stay. */}
+        {SHOW_OUTREACH && (
         <section className="card form">
           <h2>Outreach <span className="chip">Admins only</span></h2>
           <p className="small muted" style={{ margin: 0 }}>The Brand Tracker columns: where the invitation stands, their reply, the agreement and who follows up.</p>
@@ -103,6 +107,7 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
           </div>
           <label className="field"><span>Booth requirements <small>Only if they have a booth: table, power, space…</small></span><textarea name="boothNeeds" rows={2} maxLength={500} defaultValue={v("booth_needs")} /></label>
         </section>
+        )}
 
         <section className="card form">
           <h2>Contact <span className="chip">Admins only</span></h2>

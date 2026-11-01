@@ -102,8 +102,9 @@ export async function saveSupporter(data) {
     }
     // Letter address block (migration 064).
     await sql("UPDATE supporters SET address=$2, salutation=$3 WHERE id=$1", [recordId, value.address, value.salutation]);
-    // Outreach, from the Brand Tracker (migration 074).
-    await saveOutreach(recordId, value);
+    // Outreach, from the Brand Tracker (migration 074). The form hides these fields
+    // for now, so only save them when they were sent; saved values stay untouched.
+    if (data.has("inviteStatus")) await saveOutreach(recordId, value);
 
     // First time Confirmed: HOR-XXXX-YY-NNNN, YY = the year they registered
     // (the Join form if they came through it, else when the record was made).
