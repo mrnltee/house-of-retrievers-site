@@ -5,6 +5,8 @@ import { toPublicEvent } from "./admin/events.mjs";
 import { withPoster } from "./posterFrame.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { supporterLinks } from "./publicSupporters";
+import { yesBrandsByEvent } from "./eventBrandsStore";
+import { publicNames } from "./eventBrands.mjs";
 import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL } from "./eventCapacity.mjs";
 
 export function manilaToday() {
@@ -17,13 +19,30 @@ const PUBLIC_EVENTS = `SELECT e.*, (SELECT ${CAPACITY_USED_SQL} FROM registratio
   FROM events e WHERE e.status IN ('published', 'cancelled')`;
 
 /**
+ * An event's partners and sponsors as the site shows them: brands that said Yes
+ * on its Brand tracker, then names typed into the event that aren't directory
+ * brands. If the trackers can't be read, the typed names are used as before.
+ */
+async function withBrands(rows) {
+  if (!rows.length) return rows;
+  try {
+    const [yes, directory] = await Promise.all([yesBrandsByEvent(rows.map((r) => r.id)), sql("SELECT name FROM supporters")]);
+    const names = directory.map((d) => d.name.toLowerCase());
+    const of = (id, role) => (yes[id] || []).filter((b) => b.role === role).map((b) => b.name);
+    return rows.map((r) => ({ ...r, partners: publicNames(r.partners || [], of(r.id, "Partner"), names), sponsors: publicNames(r.sponsors || [], of(r.id, "Sponsor"), names) }));
+  } catch {
+    return rows;
+  }
+}
+
+/**
  * Published events from the admin once its database is connected; until then,
  * the hand-edited list in app/content/events.js.
  */
 export async function loadEvents() {
   if (!hasDatabase()) return contentEvents;
   try {
-    const rows = await sql(`${PUBLIC_EVENTS} ORDER BY e.date`);
+    const rows = await withBrands(await sql(`${PUBLIC_EVENTS} ORDER BY e.date`));
     // Every cover is shown at 4:5 (owner, 2026-10-30), even one saved before posters were 4:5.
     return rows.map((row) => withPoster(toPublicEvent(row, row.confirmed), row));
   } catch {
@@ -36,7 +55,7 @@ export async function loadEvent(slug) {
   if (!/^[a-z0-9-]{1,120}$/.test(String(slug || ""))) return null;
   if (!hasDatabase()) return contentEvents.find((event) => event.slug === slug) || null;
   try {
-    const [row] = await sql(`${PUBLIC_EVENTS} AND e.slug = $1`, [slug]);
+    const [row] = await withBrands(await sql(`${PUBLIC_EVENTS} AND e.slug = $1`, [slug]));
     if (!row) return null;
     const event = withPoster(toPublicEvent(row, row.confirmed), row);
     // Partners and sponsors with a public record get their logo and a link.

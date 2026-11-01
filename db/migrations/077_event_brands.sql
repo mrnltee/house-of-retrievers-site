@@ -36,7 +36,7 @@ SELECT DISTINCT ON (l.event_id, s.id) l.event_id, s.id, l.role, 'yes', now(), 'm
     UNION ALL
     SELECT e.id, n, 'Sponsor' FROM events e, unnest(e.sponsors) n
   ) l
-  JOIN supporters s ON s.deleted_at IS NULL AND lower(trim(s.name)) = lower(trim(l.name))
+  JOIN supporters s ON lower(trim(s.name)) = lower(trim(l.name))
 ON CONFLICT (event_id, supporter_id) DO NOTHING;
 
 -- Backfill B: the Brand Tracker sheet (imported 1 Nov 2026) was for Golden Beginning.
@@ -53,7 +53,7 @@ SELECT e.id, s.id, s.kind,
        'migration 077 (Brand Tracker)'
   FROM supporters s
   JOIN events e ON e.id = '2d974ade-c0f6-4a01-8540-9049010366cf'
- WHERE s.deleted_at IS NULL AND s.kind IN ('Partner', 'Sponsor')
+ WHERE s.kind IN ('Partner', 'Sponsor')
    AND (s.invite_status IS NOT NULL OR s.rsvp_status IS NOT NULL OR s.agreement_status IS NOT NULL
         OR s.invited_on IS NOT NULL OR s.follow_up_on IS NOT NULL OR s.assigned_to IS NOT NULL
         OR s.booth_needs IS NOT NULL OR s.reps_attending IS NOT NULL OR s.dogs_attending IS NOT NULL)
@@ -70,7 +70,7 @@ DECLARE r record;
 BEGIN
   FOR r IN
     SELECT DISTINCT e.title, n AS name FROM events e, unnest(e.partners || e.sponsors) n
-     WHERE NOT EXISTS (SELECT 1 FROM supporters s WHERE s.deleted_at IS NULL AND lower(trim(s.name)) = lower(trim(n)))
+     WHERE NOT EXISTS (SELECT 1 FROM supporters s WHERE lower(trim(s.name)) = lower(trim(n)))
   LOOP
     RAISE NOTICE 'Not in the brand directory: "%" (on %)', r.name, r.title;
   END LOOP;

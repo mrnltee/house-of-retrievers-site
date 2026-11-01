@@ -41,7 +41,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
   const canSend = can(admin, "letters:edit");
   const [rows, directory, letters, chosen] = await Promise.all([
     trackerRows(event.id),
-    sql("SELECT id, name, kind, logo, contact_email FROM supporters WHERE deleted_at IS NULL ORDER BY lower(name)"),
+    sql("SELECT id, name, kind, logo, contact_email FROM supporters ORDER BY lower(name)"),
     listLetters(),
     groupLetters(),
   ]);
@@ -110,7 +110,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                 <tr key={r.supporter_id}>
                   {canSend && <td><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong">
-                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}{r.deleted_at ? " · Removed from directory" : ""}</span></span></span>
+                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}</span></span></span>
                     {canEdit && (
                       <details className="tracker-edit">
                         <summary className="small">Edit</summary>

@@ -227,9 +227,13 @@ export function outreachLine(row) {
   ].filter(Boolean).join(" · ");
 }
 
-/** Whether a DB row may appear on the website: switched on, not Ended, with a logo and a blurb. */
-export function isPublic(row) {
-  return row.status !== "ended" && Boolean(row.show_on_site) && Boolean(row.logo) && Boolean(row.blurb);
+/**
+ * Whether a brand may appear on the website: switched on, with a logo and a
+ * blurb, and said Yes to at least one published event (`joined`, from the
+ * Brand trackers). Its directory status doesn't matter (owner, 2026-11-01).
+ */
+export function isPublic(row, { joined = 0 } = {}) {
+  return joined > 0 && Boolean(row.show_on_site) && Boolean(row.logo) && Boolean(row.blurb);
 }
 
 /** DB row → what the website shows. Amounts only once the sponsor was told. */

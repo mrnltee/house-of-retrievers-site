@@ -25,7 +25,7 @@ test("the form is cleaned; the website switch needs a logo + blurb (any status b
 
 test("public view: amounts only once the sponsor was told", () => {
   const row = { slug: "sponsor-a", kind: "Sponsor", name: "Sponsor A", tier: "pack-leader", logo: "/api/event-image/1", blurb: "B", status: "confirmed", show_on_site: true, gives: ["cash", "in-kind"], support_year: 2026, cash_amount: 15000, in_kind_value: 6000, in_kind_note: "treats" };
-  assert.equal(isPublic(row), true);
+  assert.equal(isPublic(row, { joined: 1 }), true);
   assert.equal(publicSupporter(row).cash, null);
   const told = publicSupporter({ ...row, amounts_agreed_at: "2026-10-10" });
   assert.equal(told.tierLabel, "Pack Leader");
@@ -58,9 +58,11 @@ test("outreach from the Brand Tracker: kept when valid, listed in one line", () 
   assert.equal(outreachLine({}), "");
 });
 
-test("brands can show without a signed agreement; Ended never shows", () => {
+test("a brand shows on the website once it said Yes to an event; its status doesn't matter", () => {
   const row = { logo: "/api/event-image/1", blurb: "B", show_on_site: true };
-  for (const status of ["inquiry", "talking", "confirmed"]) assert.equal(isPublic({ ...row, status }), true);
-  assert.equal(isPublic({ ...row, status: "ended" }), false);
-  assert.equal(isPublic({ ...row, status: "talking", logo: null }), false);
+  assert.equal(isPublic(row, { joined: 0 }), false);
+  assert.equal(isPublic(row), false);
+  for (const status of ["inquiry", "talking", "confirmed", "ended"]) assert.equal(isPublic({ ...row, status }, { joined: 1 }), true);
+  assert.equal(isPublic({ ...row, logo: null }, { joined: 2 }), false);
+  assert.equal(isPublic({ ...row, show_on_site: false }, { joined: 2 }), false);
 });

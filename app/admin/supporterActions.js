@@ -155,6 +155,9 @@ export async function deleteSupporter(data) {
   const back = isUuid(id) ? `/supporters/${id}` : "/supporters";
   return guarded(back, async () => {
     const admin = await actionAdmin("supporters:edit");
+    // A brand on an event's Brand tracker keeps its history: take it off those first.
+    const [{ n = 0 } = {}] = isUuid(id) ? await sql("SELECT count(*)::int AS n FROM event_brands WHERE supporter_id = $1", [id]) : [];
+    if (n) await backWith(`/supporters/${id}`, "error", `This brand is on ${n} event Brand tracker${n === 1 ? "" : "s"}. Take it off ${n === 1 ? "that event" : "those events"} first, or keep it in the directory.`);
     const [gone] = isUuid(id) ? await sql("DELETE FROM supporters WHERE id = $1 RETURNING name", [id]) : [];
     if (!gone) await backWith("/supporters", "error", "That record no longer exists.");
     await logActivity(admin.email, "supporter.delete", gone.name, { supporterId: id });

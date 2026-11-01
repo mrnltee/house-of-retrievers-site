@@ -3,7 +3,7 @@ import { sql } from "./db";
 /** One event's Brand tracker: invited brands with their directory details. Waiting first, then Yes, then No. */
 export function trackerRows(eventId) {
   return sql(
-    `SELECT eb.*, s.name, s.slug, s.logo, s.kind, s.contact_name, s.contact_email, s.code, s.number_no, s.deleted_at
+    `SELECT eb.*, s.name, s.slug, s.logo, s.kind, s.contact_name, s.contact_email, s.code, s.number_no
        FROM event_brands eb JOIN supporters s ON s.id = eb.supporter_id
       WHERE eb.event_id = $1
       ORDER BY array_position(ARRAY['waiting','yes','no'], eb.reply), lower(s.name)`,
@@ -16,7 +16,7 @@ export async function inviteBrands(eventId, supporterIds, by) {
   if (!supporterIds?.length) return { added: 0, already: 0 };
   const rows = await sql(
     `INSERT INTO event_brands (event_id, supporter_id, role, added_by)
-     SELECT $1, s.id, s.kind, $3 FROM supporters s WHERE s.id = ANY($2::uuid[]) AND s.deleted_at IS NULL
+     SELECT $1, s.id, s.kind, $3 FROM supporters s WHERE s.id = ANY($2::uuid[])
      ON CONFLICT (event_id, supporter_id) DO NOTHING RETURNING supporter_id`,
     [eventId, supporterIds, by],
   );
@@ -41,13 +41,13 @@ export function removeFromTracker(eventId, supporterId) {
   return sql("DELETE FROM event_brands WHERE event_id = $1 AND supporter_id = $2 RETURNING supporter_id", [eventId, supporterId]);
 }
 
-/** { eventId → [{ supporterId, name, slug, logo, role }] } brands that said Yes (directory brand not removed). */
+/** { eventId → [{ supporterId, name, slug, logo, role }] } brands that said Yes. */
 export async function yesBrandsByEvent(eventIds) {
   if (!eventIds?.length) return {};
   const rows = await sql(
     `SELECT eb.event_id, eb.role, s.id AS supporter_id, s.name, s.slug, s.logo
        FROM event_brands eb JOIN supporters s ON s.id = eb.supporter_id
-      WHERE eb.event_id = ANY($1::uuid[]) AND eb.reply = 'yes' AND s.deleted_at IS NULL ORDER BY lower(s.name)`,
+      WHERE eb.event_id = ANY($1::uuid[]) AND eb.reply = 'yes' ORDER BY lower(s.name)`,
     [eventIds],
   );
   const out = {};
