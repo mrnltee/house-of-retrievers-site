@@ -32,3 +32,8 @@ test("public names: Yes brands, then hand-typed names not in the directory", () 
   assert.deepEqual(publicNames(["Novotel ", "Kuya's Cafe"], ["Vitality"], ["novotel", "vitality"]), ["Vitality", "Kuya's Cafe"]);
   assert.deepEqual(publicNames(["vitality"], ["Vitality"], []), ["Vitality"]);
 });
+
+test("if the trackers can't be read, an event shows no brand names rather than unchecked ones", async () => {
+  const { withoutBrands } = await import("./eventBrands.mjs");
+  assert.deepEqual(withoutBrands({ id: "e1", title: "T", partners: ["Novotel"], sponsors: ["GRWM"] }), { id: "e1", title: "T", partners: [], sponsors: [] });
+});

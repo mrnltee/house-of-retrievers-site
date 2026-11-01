@@ -6,7 +6,7 @@ import { withPoster } from "./posterFrame.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { supporterLinks } from "./publicSupporters";
 import { yesBrandsByEvent } from "./eventBrandsStore";
-import { publicNames } from "./eventBrands.mjs";
+import { publicNames, withoutBrands } from "./eventBrands.mjs";
 import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL } from "./eventCapacity.mjs";
 
 export function manilaToday() {
@@ -21,7 +21,7 @@ const PUBLIC_EVENTS = `SELECT e.*, (SELECT ${CAPACITY_USED_SQL} FROM registratio
 /**
  * An event's partners and sponsors as the site shows them: brands that said Yes
  * on its Brand tracker, then names typed into the event that aren't directory
- * brands. If the trackers can't be read, the typed names are used as before.
+ * brands. If the trackers can't be read, no names show (a brand that said No must never appear).
  */
 async function withBrands(rows) {
   if (!rows.length) return rows;
@@ -31,7 +31,7 @@ async function withBrands(rows) {
     const of = (id, role) => (yes[id] || []).filter((b) => b.role === role).map((b) => b.name);
     return rows.map((r) => ({ ...r, partners: publicNames(r.partners || [], of(r.id, "Partner"), names), sponsors: publicNames(r.sponsors || [], of(r.id, "Sponsor"), names) }));
   } catch {
-    return rows;
+    return rows.map(withoutBrands);
   }
 }
 

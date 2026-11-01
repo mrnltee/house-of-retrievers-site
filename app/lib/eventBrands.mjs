@@ -81,3 +81,6 @@ export function publicNames(arrayNames = [], yesNames = [], directoryNames = [])
   }
   return out;
 }
+
+/** When the Brand trackers can't be read: no brand names at all, never unchecked ones (a "No" must not show). */
+export const withoutBrands = (row) => ({ ...row, partners: [], sponsors: [] });
