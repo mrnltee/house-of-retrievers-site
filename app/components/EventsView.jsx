@@ -565,7 +565,7 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
               <ul>
                 {event.beneficiaries.map((b) => (
                   <li key={b.id} className="event-beneficiary">
-                    <span className="event-beneficiary-logo" aria-hidden="true">{b.logo ? <img src={b.logo} alt="" loading="lazy" /> : b.name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}</span>
+                    <span className="event-beneficiary-logo" aria-hidden="true">{b.logo ? <img src={b.logo} alt="" loading="lazy" style={{ transform: `scale(${(b.logoScale || 100) / 100})` }} /> : b.name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}</span>
                     <span className="event-beneficiary-body">
                       <strong>{b.name}</strong>
                       <span className="event-beneficiary-meta">{[b.kind, b.location].filter(Boolean).join(" · ")}</span>

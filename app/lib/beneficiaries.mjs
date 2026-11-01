@@ -48,6 +48,12 @@ export function composeAddress({ street, barangay, city, province, postalCode } 
   return [String(street || "").trim(), join(barangay, city), [String(province || "").trim(), String(postalCode || "").trim()].filter(Boolean).join(" ")].filter(Boolean).join("\n");
 }
 
+/** Logo size in its circle on the website, in percent: 50–200, 100 by default. */
+export function logoScale(value) {
+  const n = Math.round(Number(value));
+  return Number.isFinite(n) && String(value ?? "").trim() !== "" ? Math.min(200, Math.max(50, n)) : 100;
+}
+
 /** Form fields → { beneficiary } or { error }. */
 export function cleanBeneficiary(input = {}) {
   const L = BENEFICIARY_LIMITS;
@@ -83,6 +89,7 @@ export function cleanBeneficiary(input = {}) {
       salutation: line(input.salutation, L.salutation) || null,
       notes: text(input.notes, L.notes) || null,
       showOnSite: input.showOnSite === true || input.showOnSite === "on",
+      logoScale: logoScale(input.logoScale),
       blurb: line(input.blurb, L.blurb) || null,
     },
   };
@@ -122,6 +129,7 @@ export function publicBeneficiary(row, events = []) {
     location: row.location || null,
     blurb: String(row.blurb || "").trim(),
     logo: row.logo || row.photo || null,
+    logoScale: row.logo_scale || 100,
     website: row.website || null,
     instagram: instagramUrl(row.instagram),
     current: row.status === "partnered",

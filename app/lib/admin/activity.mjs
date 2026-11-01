@@ -83,6 +83,8 @@ export const ACTION_LABELS = {
   "beneficiary.update": "Updated a beneficiary",
   "beneficiary.remove": "Removed a beneficiary",
   "beneficiary.letter": "Sent a letter",
+  "beneficiary.event": "Picked for an event",
+  "beneficiary.unevent": "Taken off an event",
 };
 
 export const actionLabel = (action) => ACTION_LABELS[action] || action;

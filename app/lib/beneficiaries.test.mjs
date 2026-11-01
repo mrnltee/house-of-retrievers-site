@@ -65,3 +65,14 @@ test("beneficiary types include people-care groups our dogs can visit", async ()
   assert.equal(kindLabel("patients"), "Hospital & cancer patients");
   assert.equal(clean({ name: "Home", kind: "elderly" }).beneficiary.kind, "elderly");
 });
+
+test("logo size is a percent from 50 to 200, 100 by default, and reaches the website", async () => {
+  const { cleanBeneficiary: clean, publicBeneficiary } = await import("./beneficiaries.mjs");
+  assert.equal(clean({ name: "A" }).beneficiary.logoScale, 100);
+  assert.equal(clean({ name: "A", logoScale: "140" }).beneficiary.logoScale, 140);
+  assert.equal(clean({ name: "A", logoScale: "999" }).beneficiary.logoScale, 200);
+  assert.equal(clean({ name: "A", logoScale: "10" }).beneficiary.logoScale, 50);
+  assert.equal(clean({ name: "A", logoScale: "x" }).beneficiary.logoScale, 100);
+  assert.equal(publicBeneficiary({ id: "1", name: "A", kind: "shelter", status: "partnered", logo_scale: 130 }).logoScale, 130);
+  assert.equal(publicBeneficiary({ id: "1", name: "A", kind: "shelter", status: "partnered" }).logoScale, 100);
+});

@@ -12,7 +12,7 @@ function Card({ b }) {
   const years = yearsLine(b);
   return (
     <li className="beneficiary-card">
-      <span className="beneficiary-logo" aria-hidden="true">{b.logo ? <img src={b.logo} alt="" loading="lazy" /> : initials(b.name)}</span>
+      <span className="beneficiary-logo" aria-hidden="true">{b.logo ? <span className="beneficiary-logo-circle"><img src={b.logo} alt="" loading="lazy" style={{ transform: `scale(${(b.logoScale || 100) / 100})` }} /></span> : initials(b.name)}</span>
       <div className="beneficiary-body">
         <p className="beneficiary-meta">{[b.kind, b.location].filter(Boolean).join(" · ")}</p>
         <h4>{b.name}</h4>

@@ -226,7 +226,11 @@ export async function saveEvent(data) {
     // The event's beneficiaries: the ticked ones, in order; none when it isn't a charity event.
     if (picker || !value.isCharity) {
       const keep = value.isCharity ? picks : [];
+      const had = (await sql("SELECT beneficiary_id FROM event_beneficiaries WHERE event_id = $1", [eventId])).map((r) => r.beneficiary_id);
       await sql("DELETE FROM event_beneficiaries WHERE event_id = $1 AND NOT (beneficiary_id = ANY($2::uuid[]))", [eventId, keep]);
+      // Each beneficiary's history shows the events it was picked for or taken off.
+      for (const beneficiaryId of keep.filter((b) => !had.includes(b))) await logActivity(admin.email, "beneficiary.event", value.title, { beneficiaryId, eventId });
+      for (const beneficiaryId of had.filter((b) => !keep.includes(b))) await logActivity(admin.email, "beneficiary.unevent", value.title, { beneficiaryId, eventId });
       for (const [i, beneficiaryId] of keep.entries()) {
         await sql(
           `INSERT INTO event_beneficiaries (event_id, beneficiary_id, position) VALUES ($1, $2, $3)

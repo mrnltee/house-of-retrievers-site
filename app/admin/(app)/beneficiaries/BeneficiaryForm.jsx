@@ -2,6 +2,7 @@ import { BENEFICIARY_KINDS, BENEFICIARY_LIMITS as L, BENEFICIARY_STATUSES } from
 import { saveBeneficiary } from "../../beneficiaryActions";
 import ConfirmButton from "../ConfirmButton";
 import ImageField from "../ImageField";
+import LogoScaleField from "./LogoScaleField";
 
 /** Add or edit a beneficiary: who they are, what they need, and who letters go to. */
 export default function BeneficiaryForm({ row = null, canEdit = true }) {
@@ -44,7 +45,9 @@ export default function BeneficiaryForm({ row = null, canEdit = true }) {
         <section className="card form">
           <h2>On the website</h2>
           <p className="small muted" style={{ margin: 0 }}>The home page lists beneficiaries under the brands: Partnered ones under “Currently supporting”, Ended ones under “Past beneficiaries”, with the events that named them. Prospects and groups you&apos;re still talking to never show. Contact details, address and notes stay here.</p>
+          <LogoScaleField logo={v("logo") || v("photo")} value={row?.logo_scale ?? 100} />
           <label className="check"><input type="checkbox" name="showOnSite" defaultChecked={Boolean(row?.show_on_site)} /> <span>Show on the website</span></label>
+          <LogoScaleField logo={v("logo") || v("photo")} value={row?.logo_scale ?? 100} />
           <label className="field"><span>Short line for the website <small>Needed to show. One or two sentences, e.g. “Rescues and rehomes senior dogs in Rizal.”</small></span><textarea name="blurb" rows={2} maxLength={L.blurb} defaultValue={v("blurb")} /></label>
         </section>
         <section className="card form">
