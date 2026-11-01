@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { byTier, gaveLine, isPublic, outreachLine, publicSupporter, suggestCode, supporterNumber, supporterSlug, totals, validateSupporter } from "./supporters.mjs";
 
-test("the form is cleaned; the website switch needs confirmed + logo + blurb", () => {
+test("the form is cleaned; the website switch needs a logo + blurb (any status but Ended)", () => {
   const { value, notes } = validateSupporter({ kind: "Sponsor", name: "  Sponsor  A ", status: "talking", showOnSite: "on", website: "sponsor-a.example", instagram: "https://instagram.com/sponsor.a", cashAmount: "₱15,000", gives: ["cash", "nope"] });
   assert.equal(value.name, "Sponsor A");
   assert.equal(value.website, "https://sponsor-a.example/");
@@ -10,7 +10,7 @@ test("the form is cleaned; the website switch needs confirmed + logo + blurb", (
   assert.equal(value.cashAmount, 15000);
   assert.deepEqual(value.gives, ["cash"]);
   assert.equal(value.showOnSite, false);
-  assert.match(notes[0], /Confirmed status, a logo, a blurb/);
+  assert.match(notes[0], /needs a logo, a blurb/);
   const ok = validateSupporter({ kind: "Sponsor", name: "S", status: "confirmed", showOnSite: "on", logo: "/api/event-image/abc", blurb: "Hi", code: "nvtl", categoryLabel: " Venue partner " });
   assert.equal(ok.value.code, "NVTL");
   assert.equal(ok.value.categoryLabel, "Venue partner");
@@ -56,4 +56,11 @@ test("outreach from the Brand Tracker: kept when valid, listed in one line", () 
   assert.match(validateSupporter({ name: "Boop", kind: "Sponsor", dogsAttending: "1.5" }).error, /whole numbers/);
   assert.equal(outreachLine({ invite_status: "sent", rsvp_status: "pending", follow_up_on: "2026-11-05" }), "Invite: sent · RSVP: pending · follow up 2026-11-05");
   assert.equal(outreachLine({}), "");
+});
+
+test("brands can show without a signed agreement; Ended never shows", () => {
+  const row = { logo: "/api/event-image/1", blurb: "B", show_on_site: true };
+  for (const status of ["inquiry", "talking", "confirmed"]) assert.equal(isPublic({ ...row, status }), true);
+  assert.equal(isPublic({ ...row, status: "ended" }), false);
+  assert.equal(isPublic({ ...row, status: "talking", logo: null }), false);
 });

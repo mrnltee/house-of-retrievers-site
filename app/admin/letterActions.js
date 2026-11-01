@@ -4,6 +4,7 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { emailReady, sendEmail } from "../lib/email";
+import { logSend } from "../lib/letterSendsStore";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
@@ -125,6 +126,7 @@ export async function sendLetters(data) {
       const pdf = await letterPdf(prepared.blocks, { title: prepared.subject, signature });
       const mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename });
       const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
+      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
       await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(r.cc?.length ? { cc: r.cc } : {}) });

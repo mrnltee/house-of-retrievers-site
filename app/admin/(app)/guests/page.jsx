@@ -9,6 +9,8 @@ import { recipientFields } from "../../../lib/letters.mjs";
 const greetingOf = (f) => f.salutation || f.contact || f.name;
 import { saveContact } from "../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
+import SendStatus from "../SendStatus";
+import { refreshSends, sendsFor } from "../../../lib/letterSendsStore";
 import ContactFields from "./ContactFields";
 import ConfirmButton from "../ConfirmButton";
 import { Avatar } from "../ImageField";
@@ -54,6 +56,10 @@ export default async function GuestsPage({ searchParams }) {
         .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, logo: s.logo, name: s.name, sub: s.contact_name ? `${s.contact_name} · from Sponsors & partners` : "From Sponsors & partners", email: s.contact_email, greeting: greetingOf(recipientFields({ supporter: s })), href: `${base}/supporters/${s.id}`, last: "" })),
     ],
   }));
+  // Letter email status: check Resend for recent sends, then read each person's log.
+  const refs = groups.flatMap((g) => g.rows.map((r) => r.ref));
+  await refreshSends(refs);
+  const sends = await sendsFor(refs);
 
   return (
     <>
@@ -93,7 +99,7 @@ export default async function GuestsPage({ searchParams }) {
             {/* The table shows even when empty, with an add link that picks this category. */}
             <div className="table-wrap" style={{ marginTop: 10 }}>
               <table>
-                <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Name</th><th>Email</th><th>Greeting</th><th>Last letter</th></tr></thead>
+                <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Name</th><th>Email</th><th>Greeting</th><th>Email status</th></tr></thead>
                 <tbody>
                   {g.rows.map((r) => (
                     <tr key={r.ref}>
@@ -101,7 +107,7 @@ export default async function GuestsPage({ searchParams }) {
                       <td className="strong"><span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</span></span></td>
                       <td>{r.email || <span className="muted">No email yet</span>}{r.rep && <><br /><span className="small muted">{r.rep}</span></>}</td>
                       <td className="small">Dear {r.greeting},</td>
-                      <td className="small">{r.last || "—"}</td>
+                      <td className="small"><SendStatus sends={sends[r.ref]} letterName={letterName} before={r.last} /></td>
                     </tr>
                   ))}
                   {g.rows.length === 0 && <tr><td colSpan={canEdit ? 5 : 4} className="muted">No one here yet.</td></tr>}

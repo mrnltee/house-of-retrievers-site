@@ -3,7 +3,7 @@ import { EVENTS_URL } from "./eventsHost.mjs";
 import { isPublic, publicSupporter } from "./supporters.mjs";
 
 const PUBLIC = `SELECT * FROM supporters
-  WHERE status = 'confirmed' AND show_on_site AND logo IS NOT NULL AND coalesce(blurb, '') <> ''`;
+  WHERE status <> 'ended' AND show_on_site AND logo IS NOT NULL AND coalesce(blurb, '') <> ''`;
 
 /**
  * Supporters the website may show, each with the published events that list

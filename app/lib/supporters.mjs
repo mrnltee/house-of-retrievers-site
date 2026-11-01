@@ -118,7 +118,8 @@ const on = (v) => v === true || v === "on" || v === "true";
 
 /**
  * Checks the admin form. `show_on_site` is kept only when the record can
- * actually be public: confirmed, with a logo and a blurb. Ended switches it off.
+ * actually be public: a logo and a blurb (no paperwork needed: any status but
+ * Ended, owner 2026-11-01). Ended switches it off.
  * @returns {{ value?: object, error?: string, notes?: string[] }}
  */
 export function validateSupporter(input, { legacyCode = null } = {}) {
@@ -173,7 +174,6 @@ export function validateSupporter(input, { legacyCode = null } = {}) {
   const notes = [];
   if (value.showOnSite) {
     const missing = [];
-    if (value.status !== "confirmed") missing.push("Confirmed status");
     if (!value.logo) missing.push("a logo");
     if (!value.blurb) missing.push("a blurb");
     if (missing.length) {
@@ -227,9 +227,9 @@ export function outreachLine(row) {
   ].filter(Boolean).join(" · ");
 }
 
-/** Whether a DB row may appear on the website. */
+/** Whether a DB row may appear on the website: switched on, not Ended, with a logo and a blurb. */
 export function isPublic(row) {
-  return row.status === "confirmed" && row.show_on_site && Boolean(row.logo) && Boolean(row.blurb);
+  return row.status !== "ended" && Boolean(row.show_on_site) && Boolean(row.logo) && Boolean(row.blurb);
 }
 
 /** DB row → what the website shows. Amounts only once the sponsor was told. */

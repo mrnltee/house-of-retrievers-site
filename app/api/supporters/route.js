@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * The home page's "Brands that have joined our events" section reads this. Only public
- * records (confirmed, switched on, with a logo and a blurb); never contact
+ * records (switched on, not Ended, with a logo and a blurb); never contact
  * details. Cached at the edge for five minutes.
  */
 export async function GET() {

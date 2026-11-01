@@ -39,12 +39,37 @@ export async function sendEmail({ to, cc = [], subject, html, text, idempotencyK
       signal: AbortSignal.timeout(attachments?.length ? 20000 : 10000),
     });
     if (!response.ok) {
-      console.warn("email not sent", response.status, (await response.text()).slice(0, 200));
-      return { ok: false };
+      const body = (await response.text()).slice(0, 200);
+      console.warn("email not sent", response.status, body);
+      let message = "";
+      try { message = JSON.parse(body)?.message || ""; } catch {}
+      return { ok: false, error: `${response.status}${message ? `: ${message}` : ""}`.slice(0, 300) };
     }
-    return { ok: true };
+    // Resend's id for this email, so its delivery can be checked later.
+    const { id = null } = await response.json().catch(() => ({}));
+    return { ok: true, id };
   } catch (error) {
     console.warn("email not sent", error?.message);
-    return { ok: false };
+    return { ok: false, error: String(error?.message || "Couldn't reach the mail service").slice(0, 300) };
+  }
+}
+
+/**
+ * Resend's latest event for one email ("delivered", "bounced"…), or null when
+ * it can't be read (no key, a send-only key, or the service is down).
+ */
+export async function emailLastEvent(id) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !id) return null;
+  try {
+    const response = await fetch(`https://api.resend.com/emails/${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return null;
+    const body = await response.json();
+    return body?.last_event || null;
+  } catch {
+    return null;
   }
 }

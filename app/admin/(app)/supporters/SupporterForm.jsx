@@ -52,7 +52,7 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
           </div>
           <label className="check">
             <input type="checkbox" name="showOnSite" defaultChecked={row ? row.show_on_site : false} />
-            <span><strong>Show on the website</strong> <span className="small muted">Needs Confirmed status, a logo and a blurb. Switches off by itself when the status becomes Ended.{row && (isPublic(row) ? " Showing now." : " Not showing now.")}</span></span>
+            <span><strong>Show on the website</strong> <span className="small muted">Needs a logo and a blurb; no signed agreement needed. Switches off by itself when the status becomes Ended.{row && (isPublic(row) ? " Showing now." : " Not showing now.")}</span></span>
           </label>
         </section>
 
