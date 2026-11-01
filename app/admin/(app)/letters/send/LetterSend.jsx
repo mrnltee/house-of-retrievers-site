@@ -14,7 +14,7 @@ import LetterView from "../LetterView";
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back, eventId = "" }) {
   const isStandard = (label) => standard.includes(label);
   const [values, setValues] = useState(() => Object.fromEntries(blanks.map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
   const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
@@ -58,6 +58,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       <form action={sendLetters} className="form card">
         <input type="hidden" name="letter" value={letter.key} />
         <input type="hidden" name="back" value={back} />
+        {eventId && <input type="hidden" name="event" value={eventId} />}
         <input type="hidden" name="values" value={JSON.stringify(values)} />
         <label className="field">
           <span>Letter</span>

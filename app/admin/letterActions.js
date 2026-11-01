@@ -5,6 +5,7 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { emailReady, sendEmail } from "../lib/email";
 import { logSend } from "../lib/letterSendsStore";
+import { EVENT_BLANKS } from "../lib/letterEvent.mjs";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
@@ -113,6 +114,9 @@ export async function sendLetters(data) {
     if (!refs.length) await backWith(back, "error", "Tick at least one recipient.");
     if (refs.length > MAX_LETTER_RECIPIENTS) await backWith(back, "error", `Send to ${MAX_LETTER_RECIPIENTS} at most at a time.`);
     const recipients = await loadRecipients(refs);
+    // Sent from an event's Brand tracker: the sends belong to that event.
+    const eventId = isUuid(form(data, "event")) ? form(data, "event") : null;
+    const [event] = eventId ? await sql("SELECT id FROM events WHERE id = $1", [eventId]) : [];
 
     const date = letterDate();
     const batch = Date.now();
@@ -126,7 +130,7 @@ export async function sendLetters(data) {
       const pdf = await letterPdf(prepared.blocks, { title: prepared.subject, signature });
       const mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename });
       const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, attachments: [{ filename: prepared.filename, content: pdf }], idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
-      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email });
+      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email, eventId: event?.id || null });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
       await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(r.cc?.length ? { cc: r.cc } : {}) });
@@ -138,6 +142,7 @@ export async function sendLetters(data) {
     // Remember what was typed for next time (contact person, signatory, bank details…).
     for (const [label, value] of Object.entries(values)) {
       if (!value) continue;
+      if (event && EVENT_BLANKS.includes(label)) continue; // this event's own name, not the default
       await sql(
         `INSERT INTO letter_saved_values (label, value, updated_by, updated_at) VALUES ($1, $2, $3, now())
          ON CONFLICT (label) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()
@@ -149,7 +154,7 @@ export async function sendLetters(data) {
     const parts = [sent.length ? `Sent “${letter.name}” to ${sent.length}` : "Nothing sent"];
     if (skipped.length) parts.push(`no email for ${skipped.join(", ")}`);
     if (failed.length) parts.push(`didn't go through for ${failed.join(", ")} (try again)`);
-    await backWith(back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
+    await backWith(event ? `/events/${event.id}/brands` : back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
   });
 }
 

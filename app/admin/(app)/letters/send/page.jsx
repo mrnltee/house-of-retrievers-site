@@ -6,6 +6,7 @@ import { groupLetters, listLetters, savedAnswers, signatureCheck } from "../../.
 import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import LetterSend from "./LetterSend";
+import { eventBlankValues } from "../../../../lib/letterEvent.mjs";
 import { categoryOf, letterEmails, letterFor } from "../../../../lib/contacts.mjs";
 
 export const maxDuration = 120;
@@ -61,17 +62,21 @@ export default async function SendLetterPage({ searchParams }) {
 
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
   const answers = await savedAnswers(blanks.map((b) => b.label));
-  const saved = answers.values;
+  // From an event's Brand tracker: that event's name fills its blanks.
+  const [event] = isUuid(params?.event) ? await sql("SELECT id, title FROM events WHERE id = $1", [params.event]) : [];
+  const saved = { ...answers.values, ...(event ? eventBlankValues(event.title) : {}) };
   const standard = [...answers.standard];
   // Who the email comes from, as recipients see it (e.g. "House of Retrievers <hello@…>").
   const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM || "";
   const backQuery = new URLSearchParams();
   backQuery.set("letter", letter.key);
   for (const r of recipients) backQuery.append("to", r.ref);
+  if (event) backQuery.set("event", event.id);
 
   return (
     <>
       <p className="small">Back to <a href={`${base}/guests`}>Guest list</a> · <a href={`${base}/beneficiaries`}>Beneficiaries</a> · <a href={`${base}/supporters?view=list`}>Sponsors & partners</a> · <a href={`${base}/letters`}>Letters</a></p>
+      {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={`${base}/events/${event.id}/brands`}>Brand tracker</a>, and its name fills in [Event Name].</p>}
       <PageHead title="Send a letter" lead={`The letter is filled in with each recipient's name and sent as a PDF attached to a short email. Up to ${MAX_LETTER_RECIPIENTS} at a time.`} />
       <Flash params={params} />
       {mismatched.length > 0 && <p className="card" role="alert" style={{ borderLeft: "4px solid #b8860b" }}>Check the letter: {mismatched.map((r) => `${r.name} (${r.note})`).join(", ")} {mismatched.length === 1 ? "is" : "are"} usually sent a different letter.</p>}
@@ -93,6 +98,7 @@ export default async function SendLetterPage({ searchParams }) {
           ready={emailReady()}
           pdfAction={`${base}/letters/pdf`}
           back={`/letters/send?${backQuery.toString()}`}
+          eventId={event?.id || ""}
         />
       )}
     </>
