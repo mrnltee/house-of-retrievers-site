@@ -1202,6 +1202,18 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .event-included ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .event-included li { display: flex; align-items: center; gap: 10px; font-size: 16px; }
 .event-included svg { flex: none; width: 22px; height: 22px; padding: 4px; border-radius: 50%; background: var(--gold); color: var(--ink); stroke-width: 3; }
+/* Event page: the beneficiaries this charity event picked ("Where your support goes"). */
+.event-beneficiaries { display: grid; gap: 12px; }
+.event-beneficiaries ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.event-beneficiary { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+.event-beneficiary-logo { width: 64px; height: 64px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 1px var(--line); font: 400 22px/1 "DM Serif Display", serif; color: var(--gold-on-light); }
+.event-beneficiary-logo img { width: 100%; height: 100%; object-fit: cover; }
+.event-beneficiary-body { display: grid; gap: 3px; min-width: 0; }
+.event-beneficiary-body strong { font-size: 16px; text-wrap: balance; }
+.event-beneficiary-meta { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-on-light); }
+.event-beneficiary-blurb { font-size: 14px; line-height: 1.55; text-wrap: pretty; }
+.event-beneficiary-links { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; font-weight: 700; }
+.event-beneficiary-links a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--ink); text-underline-offset: 3px; }
 .event-supporters { display: grid; gap: 12px; }
 .event-supporters h3 { font: 400 22px/1.2 "DM Serif Display", serif; margin: 0; }
 .event-supporters-role { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-on-light); }

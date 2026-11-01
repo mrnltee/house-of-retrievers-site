@@ -98,8 +98,12 @@ export function SupportersField({ name, label, hint, initial, suggestions = [] }
   );
 }
 
-/** "This is a charity event" reveals the beneficiary field. */
-export function CharityField({ isCharity, supports }) {
+/**
+ * "This is a charity event" reveals the beneficiaries: tick them from the
+ * Beneficiaries list (shown on the event page as "Where your support goes"),
+ * and the "For" line, filled in from the picks when left blank.
+ */
+export function CharityField({ isCharity, supports, options = [], picked = [], beneficiariesHref = "" }) {
   const [on, setOn] = useState(Boolean(isCharity));
   return (
     <div className="form" style={{ gap: 10 }}>
@@ -107,10 +111,25 @@ export function CharityField({ isCharity, supports }) {
         <input type="checkbox" name="isCharity" checked={on} onChange={(e) => setOn(e.target.checked)} /> This is a charity event
       </label>
       {on && (
-        <label className="field">
-          <span>Beneficiary <small>Who the event supports, named up front, e.g. a shelter or a rescue group. Not confirmed yet? Leave the box unticked for now.</small></span>
-          <input type="text" name="supports" maxLength={160} defaultValue={supports || ""} required autoFocus={!isCharity} />
-        </label>
+        <>
+          <input type="hidden" name="beneficiaryPicker" value="1" />
+          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend>Beneficiaries <small>Tick who this event supports. The event page shows them under “Where your support goes”.</small></legend>
+            {options.length ? (
+              <ul className="beneficiary-pick">
+                {options.map((b) => (
+                  <li key={b.id}><label className="check"><input type="checkbox" name="beneficiaries" value={b.id} defaultChecked={picked.includes(b.id)} /> <span>{b.name} <span className="small muted">· {b.kindLabel}{b.statusLabel ? ` · ${b.statusLabel}` : ""}</span></span></label></li>
+                ))}
+              </ul>
+            ) : (
+              <p className="small muted" style={{ margin: 0 }}>No beneficiaries yet. {beneficiariesHref && <a href={beneficiariesHref}>Add them in Beneficiaries</a>}.</p>
+            )}
+          </fieldset>
+          <label className="field">
+            <span>“For” line <small>Shown on the event as “For …”. Leave blank to use the names you ticked.</small></span>
+            <input type="text" name="supports" maxLength={160} defaultValue={supports || ""} />
+          </label>
+        </>
       )}
     </div>
   );

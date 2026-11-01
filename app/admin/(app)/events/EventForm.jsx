@@ -8,6 +8,8 @@ import EventPreview from "./EventPreview";
 import PromoCodesField from "./PromoCodesField";
 import { PROMO_USED_WHERE } from "../../../lib/promoStore";
 import { sql } from "../../../lib/db";
+import { adminBase } from "../../../lib/admin/guard";
+import { kindLabel, statusLabel as beneficiaryStatusLabel } from "../../../lib/beneficiaries.mjs";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
 import { CharityField, CheckinSettings, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
@@ -31,11 +33,15 @@ async function supporterNames(kind) {
 }
 
 export default async function EventForm({ event, autoDescribe = false }) {
-  const [partnerNames, sponsorNames, emailTemplates, ticketCounts, promoUses] = await Promise.all([
+  const [partnerNames, sponsorNames, emailTemplates, ticketCounts, promoUses, beneficiaryOptions, pickedBeneficiaries] = await Promise.all([
     supporterNames("Partner"), supporterNames("Sponsor"), listCustomTemplates("event"),
     event ? sql(TICKET_COUNTS_SQL, [event.id]).then(countsFromRows).catch(() => ({})) : {},
     // Uses per promo code (same rule as the use limit), shown beside each code.
     event ? sql(`SELECT promo->>'code' AS code, count(*)::int AS used FROM registrations WHERE event_id=$1 AND promo IS NOT NULL AND ${PROMO_USED_WHERE} GROUP BY 1`, [event.id]).then((rows) => Object.fromEntries(rows.map((r) => [r.code, r.used]))).catch(() => ({})) : {},
+    // The Beneficiaries list, partnered first, and the ones this event picked.
+    sql(`SELECT id, name, kind, status FROM beneficiaries WHERE deleted_at IS NULL
+          ORDER BY array_position(ARRAY['partnered','talking','prospect','ended'], status), lower(name)`).catch(() => []),
+    event ? sql("SELECT beneficiary_id FROM event_beneficiaries WHERE event_id = $1 ORDER BY position", [event.id]).then((rows) => rows.map((r) => r.beneficiary_id)).catch(() => []) : [],
   ]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);
   const missing = event
@@ -83,7 +89,13 @@ export default async function EventForm({ event, autoDescribe = false }) {
         <label className="field"><span>What's included <small>Optional. One per line, up to 10, e.g. what a pass or ticket gets you. Shown as a checklist, so it's readable even when it's also on the poster.</small></span>
           <textarea name="included" rows={4} maxLength={900} defaultValue={(event?.included || []).join("\n")} placeholder={"Bedazzling kit\n1 drink\nFurbaby treat"} />
         </label>
-        <CharityField isCharity={event?.is_charity} supports={event?.supports} />
+        <CharityField
+          isCharity={event?.is_charity}
+          supports={event?.supports}
+          options={beneficiaryOptions.map((b) => ({ id: b.id, name: b.name, kindLabel: kindLabel(b.kind), statusLabel: beneficiaryStatusLabel(b.status) }))}
+          picked={pickedBeneficiaries}
+          beneficiariesHref={`${await adminBase()}/beneficiaries`}
+        />
         <HashtagField hashtags={event?.hashtags} />
         <SupportersField name="partners" label="Partners" hint="Optional. Groups or businesses running this with HOR, e.g. a venue or a vet clinic" initial={event?.partners} suggestions={partnerNames} />
         <SupportersField name="sponsors" label="Sponsors" hint="Optional. Who is giving money, products or prizes" initial={event?.sponsors} suggestions={sponsorNames} />

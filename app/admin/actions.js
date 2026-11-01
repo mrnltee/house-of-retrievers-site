@@ -5,6 +5,7 @@ import { cleanRainbow, livingFurbabyNames } from "../lib/attendeeNames.mjs";
 import { cleanCustomQuestions } from "../lib/customQuestions.mjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { pickedIds, supportsLine } from "../lib/eventBeneficiaries.mjs";
 import { sql, transaction } from "../lib/db";
 import { actionAdmin, adminHref, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
@@ -129,6 +130,15 @@ export async function saveEvent(data) {
     }
     if (!input.image) input.imageAlt = "";
 
+    // Beneficiaries ticked from the list (charity events); the "For" line fills in from them when left blank.
+    const picker = data.has("beneficiaryPicker");
+    let picks = [];
+    if (picker) {
+      const listed = await sql("SELECT id, name FROM beneficiaries WHERE deleted_at IS NULL");
+      picks = pickedIds(data.getAll("beneficiaries").filter((v) => typeof v === "string"), listed.map((b) => b.id));
+      if (!String(input.supports || "").trim() && picks.length) input.supports = supportsLine(picks.map((id) => listed.find((b) => b.id === id).name));
+    }
+
     // Validate as a draft first, so a failed Publish still saves what was typed.
     const { value, error, missing } = validateEvent(input);
     if (error) await backWith(back, "error", error);
@@ -213,6 +223,18 @@ export async function saveEvent(data) {
       "UPDATE events SET is_charity=$1, purpose=$2, hashtags=$3, venue_lat=$4, venue_lng=$5, map_url=$6 WHERE id=$7",
       [value.isCharity, value.purpose, value.hashtags, value.venueLat, value.venueLng, value.mapUrl, eventId],
     );
+    // The event's beneficiaries: the ticked ones, in order; none when it isn't a charity event.
+    if (picker || !value.isCharity) {
+      const keep = value.isCharity ? picks : [];
+      await sql("DELETE FROM event_beneficiaries WHERE event_id = $1 AND NOT (beneficiary_id = ANY($2::uuid[]))", [eventId, keep]);
+      for (const [i, beneficiaryId] of keep.entries()) {
+        await sql(
+          `INSERT INTO event_beneficiaries (event_id, beneficiary_id, position) VALUES ($1, $2, $3)
+           ON CONFLICT (event_id, beneficiary_id) DO UPDATE SET position = EXCLUDED.position`,
+          [eventId, beneficiaryId, i],
+        );
+      }
+    }
     // Sent only by editors that have these fields, so an older open tab can't blank them.
     if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
     if (data.has("allDaySent")) await sql("UPDATE events SET all_day=$1 WHERE id=$2", [value.allDay, eventId]);

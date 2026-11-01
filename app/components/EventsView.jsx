@@ -559,6 +559,29 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
               </ul>
             </section>
           )}
+          {event.beneficiaries?.length > 0 && (
+            <section className="event-beneficiaries" aria-labelledby="beneficiaries-title">
+              <h3 id="beneficiaries-title">Where your support goes</h3>
+              <ul>
+                {event.beneficiaries.map((b) => (
+                  <li key={b.id} className="event-beneficiary">
+                    <span className="event-beneficiary-logo" aria-hidden="true">{b.logo ? <img src={b.logo} alt="" loading="lazy" /> : b.name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}</span>
+                    <span className="event-beneficiary-body">
+                      <strong>{b.name}</strong>
+                      <span className="event-beneficiary-meta">{[b.kind, b.location].filter(Boolean).join(" · ")}</span>
+                      {b.blurb && <span className="event-beneficiary-blurb">{b.blurb}</span>}
+                      {(b.instagram || b.website) && (
+                        <span className="event-beneficiary-links">
+                          {b.instagram && <a href={b.instagram} target="_blank" rel="noopener noreferrer">Instagram <Icon name="external" size={12} /></a>}
+                          {b.website && <a href={b.website} target="_blank" rel="noopener noreferrer">Website <Icon name="external" size={12} /></a>}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {(event.partners || event.sponsors) && (
             <section className="event-supporters" aria-labelledby="supporters-title">
               <h3 id="supporters-title">With thanks to</h3>

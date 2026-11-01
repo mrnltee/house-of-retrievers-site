@@ -5,6 +5,7 @@ import { toPublicEvent } from "./admin/events.mjs";
 import { withPoster } from "./posterFrame.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { supporterLinks } from "./publicSupporters";
+import { beneficiariesForEvent } from "./publicBeneficiaries";
 import { yesBrandsByEvent } from "./eventBrandsStore";
 import { publicNames, withoutBrands } from "./eventBrands.mjs";
 import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL } from "./eventCapacity.mjs";
@@ -61,6 +62,11 @@ export async function loadEvent(slug) {
     // Partners and sponsors with a public record get their logo and a link.
     const links = await supporterLinks([...(event.partners || []), ...(event.sponsors || [])]);
     if (Object.keys(links).length) event.supporterLinks = links;
+    // Where your support goes: the beneficiaries this charity event picked.
+    if (row.is_charity) {
+      const beneficiaries = await beneficiariesForEvent(row.id);
+      if (beneficiaries.length) event.beneficiaries = beneficiaries;
+    }
     return event;
   } catch {
     return null;
