@@ -1,9 +1,10 @@
 import { sql } from "../../../../lib/db";
 import { currentAdmin } from "../../../../lib/admin/auth";
 import { can } from "../../../../lib/admin/roles.mjs";
-import { LETTER_LIMITS, blanksOf, prepareLetter, recipientFields } from "../../../../lib/letters.mjs";
+import { LETTER_LIMITS, blanksOf, letterValues, prepareLetter, recipientFields } from "../../../../lib/letters.mjs";
 import { letterPdf } from "../../../../lib/letterPdf.mjs";
-import { loadLetter, signatureForPdf } from "../../../../lib/letterStore";
+import { loadLetter, savedAnswers, signatureForPdf } from "../../../../lib/letterStore";
+import { eventFills } from "../../../../lib/letterEventStore";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,13 @@ export async function POST(request) {
   let typed = {};
   try { typed = JSON.parse(field("values") || "{}"); } catch { typed = {}; }
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
-  const values = Object.fromEntries(blanks.map((b) => [b.label, String(typed[b.label] ?? "").slice(0, LETTER_LIMITS.value) || (field("sample") ? b.suggestion || `[${b.label}]` : "")]));
+  // The same values the page view and the sent letter use: Payment settings' bank (always), what was
+  // typed, standard details and the event's fill-ins (the letter's own event, or the send's), then the sample.
+  const answers = await savedAnswers();
+  const eventId = isUuid(field("event")) ? field("event") : saved.eventId || null;
+  const known = { ...Object.fromEntries([...answers.standard].map((label) => [label, answers.values[label]])), ...(eventId ? await eventFills(eventId) : {}) };
+  const forced = Object.fromEntries([...answers.fromPayments].map((label) => [label, answers.values[label]]));
+  const values = letterValues(blanks, { forced, typed, known, sample: Boolean(field("sample")) });
 
   let to = { name: "Pawsome Pet Shop", contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
   // The send page posts its whole form: "previewTo" is the recipient shown in the preview.

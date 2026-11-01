@@ -207,3 +207,14 @@ export function prepareLetter(letter, { name, contact = "", address = "", saluta
     filename: `HOR ${letter.name.replace(/[^\w ()&,.–—-]+/g, "").trim()}${name ? ` – ${name.replace(/[^\w ()&,.-]+/g, "").trim()}` : ""}.pdf`.slice(0, 140),
   };
 }
+
+/**
+ * Each blank's value for a letter preview or PDF, in order of precedence:
+ * `forced` (Payment settings' bank and GCash), what was typed on the send page,
+ * `known` answers (standard details, the event's fill-ins), then, in the
+ * editor, the blank's sample. So the PDF matches the page view.
+ */
+export function letterValues(blanks = [], { forced = {}, typed = {}, known = {}, sample = false } = {}) {
+  const pick = (...vals) => vals.map((v) => String(v ?? "").trim()).find(Boolean) || "";
+  return Object.fromEntries(blanks.map((b) => [b.label, pick(forced[b.label], typed[b.label], known[b.label], sample ? b.suggestion || `[${b.label}]` : "").slice(0, LETTER_LIMITS.value)]));
+}
