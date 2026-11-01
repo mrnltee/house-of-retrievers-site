@@ -60,7 +60,6 @@ export async function saveSupporter(data) {
 
     const { value, error, notes } = validateSupporter(input, { legacyCode: before?.code?.length === 3 ? before.code : null });
     if (error) await backWith(back, "error", error);
-    if (value.status === "ended") value.showOnSite = false;
 
     const [clash] = await sql("SELECT id FROM supporters WHERE lower(name) = lower($1) AND id IS DISTINCT FROM $2", [value.name, isUuid(id) ? id : null]);
     if (clash) await backWith(back, "error", `There's already a record called "${value.name}".`);

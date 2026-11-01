@@ -1,13 +1,14 @@
 import { saveSupporter } from "../../supporterActions";
-import { AGREEMENT_STATUSES, BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, INVITE_STATUSES, RSVP_STATUSES, STATUSES, TIERS, isPublic, supporterNumber } from "../../../lib/supporters.mjs";
+import { AGREEMENT_STATUSES, BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, INVITE_STATUSES, RSVP_STATUSES, isPublic, supporterNumber } from "../../../lib/supporters.mjs";
 import LogoField from "./LogoField";
 import SupporterIdentityFields from "./SupporterIdentityFields";
 import ConfirmButton from "../ConfirmButton";
 
 const SHOW_OUTREACH = false;
+const SHOW_GIVING = false;
 
 /** Sponsor or partner record (Figma S2). `row` is a DB row or null; `person` prefills a new one. */
-export default function SupporterForm({ row, person = null, canEdit = true }) {
+export default function SupporterForm({ row, person = null, canEdit = true, joined = 0 }) {
   const v = (key, fallback = "") => row?.[key] ?? fallback;
   const year = new Date().getFullYear();
   const kind = row?.kind || person?.kind || "Sponsor";
@@ -39,23 +40,20 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
           <label className="field"><span>Short blurb <small>Up to {BLURB_MAX} characters, shown under the logo when someone opens it</small></span>
             <textarea name="blurb" rows={3} maxLength={BLURB_MAX} defaultValue={v("blurb")} placeholder="e.g. A local pet supply store that has kept our care visits stocked since 2025." />
           </label>
-          <div className="row-2">
-            <label className="field"><span>Status</span>
-              <select name="status" defaultValue={v("status", "inquiry")}>{STATUSES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
-            </label>
-            <label className="field"><span>Tier <small>Sponsors only</small></span>
-              <select name="tier" defaultValue={v("tier")}><option value="">No tier</option>{TIERS.map(([k, l]) => <option key={k} value={k}>★ {l}</option>)}</select>
-            </label>
-          </div>
+          {/* Brands are a directory now (owner, 2026-11-01): commitment is per event, on each event's Brand tracker. Status and tier are kept as saved. */}
+          <input type="hidden" name="status" value={v("status", "inquiry")} />
+          <input type="hidden" name="tier" value={v("tier")} />
           <div className="field"><span>Number</span>
-            <p style={{ margin: "10px 0 0" }}>{supporterNumber(row) ? <strong>{supporterNumber(row)}</strong> : <span className="small muted">Given the first time the record is saved as Confirmed: the year they registered, then the next number for that year. The four-letter code can't change after that.</span>}</p>
+            <p style={{ margin: "10px 0 0" }}>{supporterNumber(row) ? <strong>{supporterNumber(row)}</strong> : <span className="small muted">Given the first time they say Yes to an event (on that event's Brand tracker): the year they registered, then the next number for that year. The four-letter code can't change after that.</span>}</p>
           </div>
           <label className="check">
             <input type="checkbox" name="showOnSite" defaultChecked={row ? row.show_on_site : false} />
-            <span><strong>Show on the website</strong> <span className="small muted">Needs a logo and a blurb; no signed agreement needed. Switches off by itself when the status becomes Ended.{row && (isPublic(row) ? " Showing now." : " Not showing now.")}</span></span>
+            <span><strong>Show on the website</strong> <span className="small muted">Shows on the home page once they&apos;ve said Yes to an event (on that event&apos;s Brand tracker). Needs a logo and a blurb.{row && (isPublic(row, { joined }) ? " Showing now." : joined ? " Not showing now." : " Not showing yet: no Yes on an event so far.")}</span></span>
           </label>
         </section>
 
+        {/* What they give is recorded per event on the Brand tracker now; the brand's old values are kept as saved. */}
+        {SHOW_GIVING ? (
         <section className="card form">
           <h2>What they gave</h2>
           <fieldset className="plain">
@@ -79,6 +77,16 @@ export default function SupporterForm({ row, person = null, canEdit = true }) {
             <span><strong>The sponsor knows these amounts are public</strong> <span className="small muted">Amounts appear on the website (HOR's transparency promise) only once this is ticked.{row?.amounts_agreed_at && ` Confirmed ${String(row.amounts_agreed_at).slice(0, 10)} by ${row.amounts_agreed_by}.`}</span></span>
           </label>
         </section>
+        ) : (
+          <>
+            {(row?.gives || []).map((g) => <input key={g} type="hidden" name="gives" value={g} />)}
+            <input type="hidden" name="supportYear" value={v("support_year", year)} />
+            <input type="hidden" name="cashAmount" value={v("cash_amount")} />
+            <input type="hidden" name="inKindValue" value={v("in_kind_value")} />
+            <input type="hidden" name="inKindNote" value={v("in_kind_note")} />
+            {row?.amounts_agreed_at && <input type="hidden" name="amountsAgreed" value="on" />}
+          </>
+        )}
 
         {/* Outreach (Brand Tracker columns) is hidden (owner, 1 Nov 2026); saved values and the sheet import stay. */}
         {SHOW_OUTREACH && (

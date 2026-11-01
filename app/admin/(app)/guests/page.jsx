@@ -18,30 +18,24 @@ import TickedSubmit from "../TickedSubmit";
 
 /**
  * Guest list: celebrities, influencers, politicians, VIPs, media, speakers,
- * sponsors and partners, grouped by the letter each category gets. Sponsors
- * and partners already in Sponsors & partners show in their groups too.
+ * sponsors and partners, grouped by the letter each category gets. Brands from
+ * Sponsors & partners are invited per event on its Brand tracker (owner, 2026-11-01).
  */
 export default async function GuestsPage({ searchParams }) {
   const params = await searchParams;
   const { admin, allowed } = await pageAdmin("guests:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
-  // Sending still needs letters:edit; sponsor rows only for those who may see Sponsors & partners.
+  // Sending still needs letters:edit.
   const canEdit = can(admin, "guests:edit") && can(admin, "letters:edit");
-  const seeSupporters = can(admin, "supporters:view");
   const only = categoryOf(params?.category)?.key || "";
   const q = String(params?.q || "").trim().slice(0, 80);
-  const [contacts, supporters, letters, chosen] = await Promise.all([
+  const [contacts, letters, chosen] = await Promise.all([
     sql(
       `SELECT * FROM letter_contacts WHERE deleted_at IS NULL AND ($1 = '' OR category = $1)
           AND ($2 = '' OR name ILIKE '%' || $2 || '%' OR coalesce(organization,'') ILIKE '%' || $2 || '%' OR coalesce(email,'') ILIKE '%' || $2 || '%')
         ORDER BY name`,
       [only, q],
-    ),
-    !seeSupporters ? [] : sql(
-      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation, logo FROM supporters WHERE status <> 'ended'
-          AND ($1 = '' OR name ILIKE '%' || $1 || '%') ORDER BY name`,
-      [q],
     ),
     listLetters(),
     groupLetters(),
@@ -52,8 +46,6 @@ export default async function GuestsPage({ searchParams }) {
     letter: letterFor(c.key, chosen),
     rows: [
       ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: r.organization, email: letterEmails(r).to, rep: r.rep_name ? `Rep: ${r.rep_name}${r.send_to !== "person" ? " (gets letters)" : ""}` : "", greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
-      ...supporters.filter((s) => (c.key === "sponsor" && s.kind === "Sponsor") || (c.key === "partner" && s.kind === "Partner"))
-        .map((s) => ({ ref: `supporter:${s.id}`, id: s.id, logo: s.logo, name: s.name, sub: s.contact_name ? `${s.contact_name} · from Sponsors & partners` : "From Sponsors & partners", email: s.contact_email, greeting: greetingOf(recipientFields({ supporter: s })), href: `${base}/supporters/${s.id}`, last: "" })),
     ],
   }));
   // Letter email status: check Resend for recent sends, then read each person's log.
@@ -93,6 +85,7 @@ export default async function GuestsPage({ searchParams }) {
               <div>
                 <h2 style={{ margin: 0 }}>{g.label} <span className="muted small">({g.rows.length})</span></h2>
                 <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${g.letter}`}>{letterName(g.letter)}</a></p>
+                {(g.key === "sponsor" || g.key === "partner") && <p className="small" style={{ margin: "4px 0 0" }}>Brands are invited per event: open an event, then <strong>Brands &amp; partnerships</strong>. This list is for other people in this group.</p>}
               </div>
               {canEdit && g.rows.length > 0 && <TickedSubmit />}
             </div>

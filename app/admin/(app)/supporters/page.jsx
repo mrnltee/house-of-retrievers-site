@@ -1,36 +1,36 @@
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { STATUSES, givesLabel, isPublic, statusLabel, supporterNumber, tierLabel } from "../../../lib/supporters.mjs";
+import { isPublic, supporterNumber } from "../../../lib/supporters.mjs";
+import { joinedCounts } from "../../../lib/eventBrandsStore";
 import { Flash, NotAllowed, PageHead } from "../ui";
 import TickedSubmit from "../TickedSubmit";
 
-const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
-/** Sponsors & partners: switchable cards/table with kind, status and relationship filters. */
+/** Sponsors & partners: the brand directory (owner, 2026-11-01), cards or table; invites and replies live on each event's Brand tracker. */
 export default async function SupportersPage({ searchParams }) {
   const params = await searchParams;
   const { admin, allowed } = await pageAdmin("supporters:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const kind = ["Sponsor", "Partner"].includes(params?.kind) ? params.kind : "";
-  const status = STATUSES.some(([key]) => key === params?.status) ? params.status : "";
+  const status = ""; // A directory now: commitment is per event (Brand tracker), so no status filter.
   const label = cleanParam(params?.label, 60);
   const q = cleanParam(params?.q);
   const view = params?.view === "list" ? "list" : "cards";
-  const [rows, counts, events, waiting, labels] = await Promise.all([
+  const [rows, counts, joined, waiting, labels] = await Promise.all([
     sql(
       `SELECT * FROM supporters
         WHERE ($1 = '' OR kind = $1)
           AND ($2 = '' OR status = $2)
           AND ($3 = '' OR category_label = $3)
           AND ($4 = '' OR name ILIKE '%' || $4 || '%' OR coalesce(code, '') ILIKE '%' || $4 || '%' OR coalesce(category_label, '') ILIKE '%' || $4 || '%')
-        ORDER BY array_position(ARRAY['confirmed','talking','inquiry','ended'], status), name`,
+        ORDER BY lower(name)`,
       [kind, status, label, q],
     ),
     sql("SELECT kind, count(*)::int AS n FROM supporters GROUP BY kind"),
-    sql("SELECT title, date, partners, sponsors FROM events WHERE status <> 'draft' AND (cardinality(partners) > 0 OR cardinality(sponsors) > 0) ORDER BY date DESC"),
+    joinedCounts(),
     sql(
       `SELECT p.id, p.name, p.organization, p.kind FROM people p
         WHERE p.kind IN ('Sponsor','Partner')
@@ -41,15 +41,8 @@ export default async function SupportersPage({ searchParams }) {
   ]);
   const count = (key) => counts.find((item) => item.kind === key)?.n || 0;
   const canEdit = can(admin, "supporters:edit");
-  const backed = (row) => {
-    const field = row.kind === "Partner" ? "partners" : "sponsors";
-    return events.filter((event) => (event[field] || []).some((name) => name.toLowerCase() === row.name.toLowerCase()));
-  };
-  const supportLine = (row) => [
-    row.cash_amount ? `Cash · ${peso(row.cash_amount)}` : "",
-    row.in_kind_value || row.in_kind_note ? `In-kind${row.in_kind_value ? ` · ${peso(row.in_kind_value)}` : ""}${row.in_kind_note ? ` · ${row.in_kind_note}` : ""}` : "",
-    ...(row.gives || []).filter((give) => !["cash", "in-kind"].includes(give)).map(givesLabel),
-  ].filter(Boolean).join(" · ");
+  // Published events each brand said Yes to, from the Brand trackers.
+  const joinedOf = (row) => joined[row.id] || 0;
   const current = { ...(kind && { kind }), ...(status && { status }), ...(label && { label }), ...(q && { q }), ...(view === "list" && { view }) };
   const href = (changes = {}) => {
     const next = { ...current, ...changes };
@@ -84,10 +77,6 @@ export default async function SupportersPage({ searchParams }) {
         </nav>
       </div>
 
-      <nav className="tabs small-tabs" aria-label="Status">
-        <a href={href({ status: null })} aria-current={!status ? "page" : undefined}>Any status</a>
-        {STATUSES.map(([key, text]) => <a key={key} href={href({ status: key })} aria-current={status === key ? "page" : undefined}>{text}</a>)}
-      </nav>
 
       <form method="get" action={`${base}/supporters`} className="card supporter-filters" role="search">
         {kind && <input type="hidden" name="kind" value={kind} />}
@@ -123,19 +112,16 @@ export default async function SupportersPage({ searchParams }) {
         )}
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Organization</th><th>ID</th><th>Relationship</th><th>Status</th><th>Support</th><th>Events</th><th>Website</th></tr></thead>
+            <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Organization</th><th>ID</th><th>Usually</th><th>Joined</th><th>Website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
-                const linkedEvents = backed(row);
                 return (
                   <tr key={row.id}>
                     {canEdit && <td><input type="checkbox" name="to" value={`supporter:${row.id}`} aria-label={`Pick ${row.name}`} /></td>}
                     <td className="strong"><span className="supporter-list-name"><span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span><a href={`${base}/supporters/${row.id}`}>{row.name}</a></span></td>
                     <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
-                    <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}{row.tier && <span className={`chip tier-${row.tier}`}>★ {tierLabel(row.tier)}</span>}</span></td>
-                    <td><span className={`chip status-${row.status}`}>{statusLabel(row.status)}</span></td>
-                    <td className="supporter-list-support">{supportLine(row) || "—"}</td>
-                    <td>{linkedEvents.length || "—"}</td>
+                    <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}</span></td>
+                    <td>{joinedOf(row) ? `${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : "—"}</td>
                     <td>{row.website ? <a href={row.website} target="_blank" rel="noreferrer">Open ↗</a> : "—"}</td>
                   </tr>
                 );
@@ -154,8 +140,6 @@ export default async function SupportersPage({ searchParams }) {
         )}
         <ul className="supporter-cards">
           {rows.map((row) => {
-            const linkedEvents = backed(row);
-            const gave = supportLine(row);
             return (
               <li key={row.id}>
                 <a className="card supporter-card" href={`${base}/supporters/${row.id}`}>
@@ -167,14 +151,12 @@ export default async function SupportersPage({ searchParams }) {
                       <span className="chips">
                         <span className="chip">{row.kind}</span>
                         {row.category_label && <span className="chip">{row.category_label}</span>}
-                        {row.tier && <span className={`chip tier-${row.tier}`}>★ {tierLabel(row.tier)}</span>}
-                        <span className={`chip status-${row.status}`}>{statusLabel(row.status)}</span>
                       </span>
                     </span>
                   </span>
-                  <span className="small">{gave || "Nothing recorded yet"}</span>
-                  <span className="small muted">{linkedEvents.length ? `${linkedEvents.length} event${linkedEvents.length === 1 ? "" : "s"} · last ${String(linkedEvents[0].date).slice(0, 10)}` : "Not linked to an event yet"}</span>
-                  <span className={`supporter-card-site${isPublic(row) ? " is-on" : ""}`}>{isPublic(row) ? "● On the website" : "○ Not on the website"}</span>
+                  <span className="small">{row.contact_name || row.contact_email ? [row.contact_name, row.contact_email].filter(Boolean).join(" · ") : "No contact yet"}</span>
+                  <span className="small muted">{joinedOf(row) ? `Joined ${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : "Hasn't joined an event yet"}</span>
+                  <span className={`supporter-card-site${isPublic(row, { joined: joinedOf(row) }) ? " is-on" : ""}`}>{isPublic(row, { joined: joinedOf(row) }) ? "● On the website" : "○ Not on the website"}</span>
                 </a>
               </li>
             );
