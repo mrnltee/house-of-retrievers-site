@@ -5,6 +5,7 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { cleanBeneficiary } from "../lib/beneficiaries.mjs";
 import { pictureFrom } from "../lib/admin/imageUpload";
+import { saveSocials, socialsFrom } from "../lib/socialsStore";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -30,6 +31,8 @@ export async function saveBeneficiary(data) {
     const admin = await actionAdmin("beneficiaries:edit");
     const { beneficiary: b, error } = cleanBeneficiary(Object.fromEntries(FIELDS.map((k) => [k, form(data, k)])));
     if (error) await backWith(back, "error", error);
+    const socials = socialsFrom(data);
+    if (socials.error) await backWith(back, "error", socials.error);
     const photo = await pictureFrom(data, "photo", admin.email);
     const logo = await pictureFrom(data, "logo", admin.email);
     if (photo.error || logo.error) await backWith(back, "error", photo.error || logo.error);
@@ -42,6 +45,7 @@ export async function saveBeneficiary(data) {
            contact_email=$10, contact_phone=$11, address=$12, salutation=$13, notes=$14, photo=$15, logo=$16, street=$17, barangay=$18, city=$19, province=$20, postal_code=$21, show_on_site=$22, blurb=$23, logo_scale=$24, updated_at=now() WHERE id=$25 AND deleted_at IS NULL`,
         [...values, id],
       );
+      await saveSocials("beneficiaries", id, socials.values);
       await logActivity(admin.email, "beneficiary.update", b.name, { beneficiaryId: id });
       await backWith(back, "ok", `Saved ${b.name}.`);
     }
@@ -50,6 +54,7 @@ export async function saveBeneficiary(data) {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) RETURNING id`,
       [...values, admin.email],
     );
+    await saveSocials("beneficiaries", row.id, socials.values);
     await logActivity(admin.email, "beneficiary.add", b.name, { beneficiaryId: row.id });
     await backWith(`/beneficiaries/${row.id}`, "ok", `Added ${b.name}.`);
   });

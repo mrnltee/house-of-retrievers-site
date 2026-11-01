@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
+import { socialLinks } from "../lib/socials.mjs";
 import { gaveLine, totals } from "../lib/supporters.mjs";
 
 const formatPeso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
@@ -76,10 +77,9 @@ function SupporterDialog({ supporter, onClose }) {
         </div>
         <p className="supporter-blurb">{supporter.blurb}</p>
         {gave && <p className="supporter-gave">{gave}</p>}
-        {(supporter.website || supporter.instagram) && (
+        {socialLinks(supporter).length > 0 && (
           <p className="supporter-links">
-            {supporter.website && <a href={supporter.website} target="_blank" rel="noopener noreferrer">Website <Icon name="external" size={13} /></a>}
-            {supporter.instagram && <a href={supporter.instagram} target="_blank" rel="noopener noreferrer">Instagram <Icon name="external" size={13} /></a>}
+            {socialLinks(supporter).map((l) => <a key={l.key} href={l.url} target="_blank" rel="noopener noreferrer">{l.label} <Icon name="external" size={13} /></a>)}
           </p>
         )}
         {supporter.events.length > 0 && (

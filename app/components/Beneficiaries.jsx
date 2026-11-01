@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Icon from "./Icon";
+import { socialLinks } from "../lib/socials.mjs";
 import { yearsLine } from "../lib/beneficiaries.mjs";
 
 const initials = (name) => name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -23,10 +24,9 @@ function Card({ b }) {
             {latest && <span>Through <a href={latest.url}>{latest.title}</a>{b.events.length > 1 ? ` +${b.events.length - 1} more` : ""}</span>}
           </p>
         )}
-        {(b.instagram || b.website) && (
+        {socialLinks(b).length > 0 && (
           <p className="beneficiary-links">
-            {b.instagram && <a href={b.instagram} target="_blank" rel="noopener noreferrer">Instagram <Icon name="external" size={13} /></a>}
-            {b.website && <a href={b.website} target="_blank" rel="noopener noreferrer">Website <Icon name="external" size={13} /></a>}
+            {socialLinks(b).map((l) => <a key={l.key} href={l.url} target="_blank" rel="noopener noreferrer">{l.label} <Icon name="external" size={13} /></a>)}
           </p>
         )}
       </div>

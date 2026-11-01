@@ -1,4 +1,5 @@
 import { BENEFICIARY_KINDS, BENEFICIARY_LIMITS as L, BENEFICIARY_STATUSES } from "../../../lib/beneficiaries.mjs";
+import SocialFields from "../SocialFields";
 import { saveBeneficiary } from "../../beneficiaryActions";
 import ConfirmButton from "../ConfirmButton";
 import ImageField from "../ImageField";
@@ -28,6 +29,7 @@ export default function BeneficiaryForm({ row = null, canEdit = true }) {
             <label className="field"><span>Website <small>Optional</small></span><input type="text" name="website" placeholder="https://" maxLength={L.website} defaultValue={v("website")} /></label>
             <label className="field"><span>Instagram <small>Optional</small></span><input type="text" name="instagram" placeholder="@name" maxLength={L.instagram} defaultValue={v("instagram")} /></label>
           </div>
+          <SocialFields row={row} />
         </section>
         <section className="card form">
           <h2>Address</h2>

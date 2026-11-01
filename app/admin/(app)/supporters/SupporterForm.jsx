@@ -1,4 +1,5 @@
 import { saveSupporter } from "../../supporterActions";
+import SocialFields from "../SocialFields";
 import { AGREEMENT_STATUSES, BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, INVITE_STATUSES, RSVP_STATUSES, isPublic, supporterNumber } from "../../../lib/supporters.mjs";
 import LogoField from "./LogoField";
 import SupporterIdentityFields from "./SupporterIdentityFields";
@@ -37,6 +38,7 @@ export default function SupporterForm({ row, person = null, canEdit = true, join
             <label className="field"><span>Website <small>Optional</small></span><input type="text" name="website" inputMode="url" maxLength={300} defaultValue={v("website")} placeholder="https://" /></label>
             <label className="field"><span>Instagram <small>Optional</small></span><input type="text" name="instagram" maxLength={80} defaultValue={row?.instagram ? `@${row.instagram}` : ""} placeholder="@name" /></label>
           </div>
+          <SocialFields row={row} />
           <label className="field"><span>Short blurb <small>Up to {BLURB_MAX} characters, shown under the logo when someone opens it</small></span>
             <textarea name="blurb" rows={3} maxLength={BLURB_MAX} defaultValue={v("blurb")} placeholder="e.g. A local pet supply store that has kept our care visits stocked since 2025." />
           </label>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
+import { socialLinks } from "../lib/socials.mjs";
 import LogoMoments from "./LogoMoments";
 import Footer from "./Footer";
 import JoinModal from "./JoinModal";
@@ -570,10 +571,9 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
                       <strong>{b.name}</strong>
                       <span className="event-beneficiary-meta">{[b.kind, b.location].filter(Boolean).join(" · ")}</span>
                       {b.blurb && <span className="event-beneficiary-blurb">{b.blurb}</span>}
-                      {(b.instagram || b.website) && (
+                      {socialLinks(b).length > 0 && (
                         <span className="event-beneficiary-links">
-                          {b.instagram && <a href={b.instagram} target="_blank" rel="noopener noreferrer">Instagram <Icon name="external" size={12} /></a>}
-                          {b.website && <a href={b.website} target="_blank" rel="noopener noreferrer">Website <Icon name="external" size={12} /></a>}
+                          {socialLinks(b).map((l) => <a key={l.key} href={l.url} target="_blank" rel="noopener noreferrer">{l.label} <Icon name="external" size={12} /></a>)}
                         </span>
                       )}
                     </span>

@@ -6,6 +6,7 @@ import { logActivity } from "../lib/admin/log";
 import { supporterSlug, validateSupporter } from "../lib/supporters.mjs";
 import { saveOutreach } from "../lib/supporterOutreach";
 import { issueSupporterNumber } from "../lib/supporterNumbers";
+import { saveSocials, socialsFrom } from "../lib/socialsStore";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -60,6 +61,8 @@ export async function saveSupporter(data) {
 
     const { value, error, notes } = validateSupporter(input, { legacyCode: before?.code?.length === 3 ? before.code : null });
     if (error) await backWith(back, "error", error);
+    const socials = socialsFrom(data);
+    if (socials.error) await backWith(back, "error", socials.error);
 
     const [clash] = await sql("SELECT id FROM supporters WHERE lower(name) = lower($1) AND id IS DISTINCT FROM $2", [value.name, isUuid(id) ? id : null]);
     if (clash) await backWith(back, "error", `There's already a record called "${value.name}".`);
@@ -105,6 +108,8 @@ export async function saveSupporter(data) {
     // Outreach, from the Brand Tracker (migration 074). The form hides these fields
     // for now, so only save them when they were sent; saved values stay untouched.
     if (data.has("inviteStatus")) await saveOutreach(recordId, value);
+    // Facebook, TikTok, X and Threads (forms that don't have them leave them as they are).
+    if (data.has("facebook")) await saveSocials("supporters", recordId, socials.values);
 
     // First time Confirmed: HOR-XXXX-YY-NNNN, YY = the year they registered
     // (the Join form if they came through it, else when the record was made).

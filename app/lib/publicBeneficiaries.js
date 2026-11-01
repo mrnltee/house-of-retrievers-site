@@ -45,8 +45,8 @@ export async function beneficiariesForEvent(eventId) {
       [eventId],
     );
     return rows.map((row) => {
-      const { id, name, kind, location, blurb, logo, logoScale, website, instagram } = publicBeneficiary(row);
-      return { id, name, kind, location, blurb: blurb || null, logo, logoScale, website, instagram };
+      const { id, name, kind, location, blurb, logo, logoScale, website, instagram, facebook, tiktok, x, threads } = publicBeneficiary(row);
+      return { id, name, kind, location, blurb: blurb || null, logo, logoScale, website, instagram, facebook, tiktok, x, threads };
     });
   } catch {
     return [];
