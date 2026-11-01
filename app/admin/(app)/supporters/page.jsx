@@ -4,7 +4,6 @@ import { can } from "../../../lib/admin/roles.mjs";
 import { isPublic, supporterNumber } from "../../../lib/supporters.mjs";
 import { joinedCounts } from "../../../lib/eventBrandsStore";
 import { Flash, NotAllowed, PageHead } from "../ui";
-import TickedSubmit from "../TickedSubmit";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
@@ -51,11 +50,6 @@ export default async function SupportersPage({ searchParams }) {
     return `${base}/supporters${query ? `?${query}` : ""}`;
   };
   const filtered = Boolean(kind || status || label || q);
-  // "Send a letter to everyone shown" carries the same filters to the send page.
-  const allShown = (() => {
-    const query = new URLSearchParams({ all: "1", ...(kind && { kind }), ...(status && { status }), ...(label && { label }), ...(q && { q }) });
-    return `${base}/letters/send?${query.toString()}`;
-  })();
 
   return (
     <>
@@ -102,22 +96,15 @@ export default async function SupportersPage({ searchParams }) {
       {rows.length === 0 ? (
         <p className="card muted">{filtered ? "No sponsors or partners match these filters." : "No sponsors or partners yet. Add one, or open a Sponsor or Partner in People and choose “Make a sponsor record”."}</p>
       ) : view === "list" ? (
-        <form method="get" action={`${base}/letters/send`}>
-        {canEdit && (
-          <div className="actions supporter-letter-bar">
-            <TickedSubmit />
-            <a className="btn ghost" href={allShown}>Send a letter to all {rows.length} shown</a>
-            <span className="small muted">Pick the letter and check it before anything is sent.</span>
-          </div>
-        )}
+        <>
+        <p className="small muted" style={{ margin: "0 0 8px" }}>Letters to brands are sent from each event: open the event, then <strong>Brands &amp; partnerships</strong>.</p>
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr>{canEdit && <th><span className="sr-only">Pick</span></th>}<th>Organization</th><th>ID</th><th>Usually</th><th>Joined</th><th>Website</th></tr></thead>
+            <thead><tr><th>Organization</th><th>ID</th><th>Usually</th><th>Joined</th><th>Website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
                 return (
                   <tr key={row.id}>
-                    {canEdit && <td><input type="checkbox" name="to" value={`supporter:${row.id}`} aria-label={`Pick ${row.name}`} /></td>}
                     <td className="strong"><span className="supporter-list-name"><span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span><a href={`${base}/supporters/${row.id}`}>{row.name}</a></span></td>
                     <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
                     <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}</span></td>
@@ -129,15 +116,10 @@ export default async function SupportersPage({ searchParams }) {
             </tbody>
           </table>
         </div>
-        </form>
+        </>
       ) : (
         <>
-        {canEdit && (
-          <div className="actions supporter-letter-bar">
-            <a className="btn ghost" href={allShown}>✉ Send a letter to all {rows.length} shown</a>
-            <span className="small muted">To pick some, switch to <a href={href({ view: "list" })}>List</a> and tick them.</span>
-          </div>
-        )}
+        <p className="small muted" style={{ margin: "0 0 8px" }}>Letters to brands are sent from each event: open the event, then <strong>Brands &amp; partnerships</strong>.</p>
         <ul className="supporter-cards">
           {rows.map((row) => {
             return (
