@@ -1,10 +1,11 @@
 "use server";
 
-import { sql, transaction } from "../lib/db";
+import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
-import { supporterNumber, supporterSlug, validateSupporter } from "../lib/supporters.mjs";
+import { supporterSlug, validateSupporter } from "../lib/supporters.mjs";
 import { saveOutreach } from "../lib/supporterOutreach";
+import { issueSupporterNumber } from "../lib/supporterNumbers";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -109,21 +110,7 @@ export async function saveSupporter(data) {
     // First time Confirmed: HOR-XXXX-YY-NNNN, YY = the year they registered
     // (the Join form if they came through it, else when the record was made).
     let numbered = "";
-    if (value.status === "confirmed" && !before?.number_no) {
-      numbered = await transaction(async (tx) => {
-        await tx.sql("SELECT pg_advisory_xact_lock(727011)");
-        const [row] = await tx.sql(
-          `WITH me AS (
-             SELECT extract(year FROM coalesce(p.created_at, s.created_at) AT TIME ZONE 'Asia/Manila')::smallint AS y
-               FROM supporters s LEFT JOIN people p ON p.id = s.person_id WHERE s.id = $1)
-           UPDATE supporters SET number_year = (SELECT y FROM me),
-             number_no = (SELECT coalesce(max(number_no), 0) + 1 FROM supporters WHERE number_year = (SELECT y FROM me))
-           WHERE id = $1 AND number_no IS NULL RETURNING code, number_year, number_no`,
-          [recordId],
-        );
-        return supporterNumber(row);
-      });
-    }
+    if (value.status === "confirmed" && !before?.number_no) numbered = await issueSupporterNumber(recordId);
 
     const details = { supporterId: recordId };
     if (numbered) details.number = numbered;

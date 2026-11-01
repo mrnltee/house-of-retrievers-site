@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
+import { can } from "../../../../lib/admin/roles.mjs";
 import { Flash, NotAllowed, PageHead, isoDate } from "../../ui";
 import EventForm from "../EventForm";
 import { deleteEvent } from "../../../actions";
@@ -15,7 +16,7 @@ import ConfirmButton from "../../ConfirmButton";
 export default async function EditEventPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { allowed } = await pageAdmin("events:view");
+  const { admin, allowed } = await pageAdmin("events:view");
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const [event] = await sql("SELECT * FROM events WHERE id = $1", [id]);
@@ -26,6 +27,7 @@ export default async function EditEventPage({ params, searchParams }) {
   return (
     <>
       <PageHead title={event.title} lead={`Status: ${event.status}`}>
+        {can(admin, "supporters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/brands`}>Brands &amp; partnerships</a>}
         {event.registration === "required" && <a className="btn ghost" href={`${base}/registrations/${event.id}`}>RSVPs</a>}
         {event.status === "published" && <a className="btn ghost" href={eventUrl(event.slug)} target="_blank" rel="noreferrer">View event page</a>}
       </PageHead>

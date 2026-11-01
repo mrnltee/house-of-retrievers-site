@@ -15,10 +15,11 @@ export default function TickedSubmit({ className = "btn dark" }) {
   useEffect(() => {
     const form = button.current?.form;
     if (!form) return undefined;
-    const update = () => setCount(form.querySelectorAll('input[name="to"]:checked').length);
+    // form.elements also counts boxes outside the form linked with form="…" (Brand tracker).
+    const update = () => setCount([...form.elements].filter((el) => el.name === "to" && el.checked).length);
     update();
-    form.addEventListener("change", update);
-    return () => form.removeEventListener("change", update);
+    document.addEventListener("change", update);
+    return () => document.removeEventListener("change", update);
   }, []);
   return (
     <>

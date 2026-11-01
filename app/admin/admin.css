@@ -814,3 +814,11 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .send-detail { color: var(--a-alert); }
 .send-log summary { cursor: pointer; color: var(--a-gold-ink); font-weight: 600; min-height: 28px; display: flex; align-items: center; }
 .send-log ol { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+
+/* Brand tracker (events/[id]/brands): counts, invite picker, per-row edit. */
+.tracker-summary { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tracker-pick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; max-height: 360px; overflow-y: auto; }
+.tracker-pick .check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.tracker-edit { margin-top: 6px; font-weight: 400; }
+.tracker-edit summary { cursor: pointer; color: var(--a-gold-ink); font-weight: 600; min-height: 28px; display: flex; align-items: center; }
+.tracker-edit .form { margin-top: 10px; min-width: min(560px, 80vw); gap: 12px; }
