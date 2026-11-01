@@ -1,5 +1,5 @@
 /**
- * Brands per event (owner, 2026-11-01): Sponsors & partners is a directory;
+ * Brands per event (owner, 2026-11-01): Brands & Partners is a directory;
  * each event's Brand tracker records who was invited, their reply and what
  * they're giving for that event only. Pure functions, so they can be tested.
  */

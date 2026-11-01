@@ -8,7 +8,7 @@ import TickedSubmit from "../TickedSubmit";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
-/** Sponsors & partners: the brand directory (owner, 2026-11-01), cards or table; invites and replies live on each event's Brand tracker. */
+/** Brands & Partners: the brand directory (owner, 2026-11-01), cards or table; invites and replies live on each event's Brand tracker. */
 export default async function SupportersPage({ searchParams }) {
   const params = await searchParams;
   const { admin, allowed } = await pageAdmin("supporters:view");
@@ -59,7 +59,7 @@ export default async function SupportersPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Sponsors & partners" lead="Who backs HOR and how. Add a clear relationship label, then use cards for a quick scan or the list when the records grow.">
+      <PageHead title="Brands & Partners" lead="Who backs HOR and how. Add a clear relationship label, then use cards for a quick scan or the list when the records grow.">
         {canEdit && <a className="btn ghost" href={`${base}/supporters/import`}>Import from Excel</a>}
         {canEdit && <a className="btn gold" href={`${base}/supporters/new`}>+ Add sponsor or partner</a>}
       </PageHead>

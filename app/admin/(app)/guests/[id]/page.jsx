@@ -12,6 +12,7 @@ const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9
 export default async function ContactPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
+  const eventId = /^[0-9a-f-]{36}$/i.test(String(query?.event || "")) ? query.event : "";
   const { allowed } = await pageAdmin("guests:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
@@ -20,10 +21,12 @@ export default async function ContactPage({ params, searchParams }) {
   const cat = categoryOf(row.category);
   return (
     <>
-      <p className="small"><a href={`${base}/guests`}>← Guest list</a></p>
+      {/* Opened from an event's guest list: go back there (and saving returns there too). */}
+      {eventId ? <p className="small"><a href={`${base}/events/${eventId}/guests`}>← Event guest list</a></p> : <p className="small"><a href={`${base}/events`}>← Events</a></p>}
       <PageHead title={row.name} lead={cat ? `${cat.label}. Gets the letter set for this category.` : ""} />
       <Flash params={query} />
       <form action={saveContact} className="card form">
+        {eventId && <input type="hidden" name="event" value={eventId} />}
         <input type="hidden" name="id" value={row.id} />
         <ContactFields row={row} />
         <div className="actions">

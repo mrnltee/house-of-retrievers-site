@@ -1,5 +1,5 @@
 /**
- * Importing a spreadsheet (Excel or CSV) into Sponsors & partners, an event's
+ * Importing a spreadsheet (Excel or CSV) into Brands & Partners, an event's
  * registrations, or People (owner, 2026-10-27). The browser reads the file;
  * its columns are matched to a record's fields by name (the admin can change
  * any match), then each row is checked with the same rules as the Add forms.
@@ -17,7 +17,7 @@ export const MAX_IMPORT_ROWS = 500;
  */
 export const IMPORT_TARGETS = {
   supporters: {
-    title: "Sponsors & partners",
+    title: "Brands & Partners",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["name", "company", "organization", "organisation", "brand", "business name", "sponsor", "partner"] },
       { key: "kind", label: "Type (Sponsor or Partner)", aliases: ["type", "kind", "category"], hint: "Sponsor if blank" },

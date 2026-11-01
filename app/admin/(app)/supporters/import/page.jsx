@@ -9,7 +9,7 @@ export default async function ImportSupportersPage() {
   const base = await adminBase();
   return (
     <>
-      <p className="small"><a href={`${base}/supporters`}>← Sponsors & partners</a></p>
+      <p className="small"><a href={`${base}/supporters`}>← Brands & Partners</a></p>
       <PageHead title="Import sponsors & partners" lead="Add many at once from Excel or a CSV. Names already here are skipped, imported records start hidden from the website, and no emails are sent." />
       <SheetImport target="supporters" backHref={`${base}/supporters`} />
     </>

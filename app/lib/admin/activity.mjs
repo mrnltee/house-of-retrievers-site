@@ -84,6 +84,9 @@ export const ACTION_LABELS = {
   "beneficiary.remove": "Removed a beneficiary",
   "beneficiary.letter": "Sent a letter",
   "beneficiary.event": "Picked for an event",
+  "event.guest.add": "Added guests to an event",
+  "event.guest.save": "Saved a guest's reply",
+  "event.guest.remove": "Took a guest off an event",
   "beneficiary.unevent": "Taken off an event",
 };
 

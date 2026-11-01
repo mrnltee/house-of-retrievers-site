@@ -1,5 +1,6 @@
 import { hasDatabase, sql } from "./db";
 import { LETTER_STARTERS, letterWithOverride } from "./letters.mjs";
+import { paymentLetterFills } from "./admin/payments.mjs";
 
 const COLUMNS = "key, name, subject, cover, body, signature, updated_by, updated_at, created_at, event_id, based_on";
 const withMeta = (letter, row) => ({ ...letter, updatedBy: row?.updated_by || null, updatedAt: row?.updated_at || null, eventId: row?.event_id || null, basedOn: row?.based_on || null });
@@ -36,14 +37,26 @@ export async function listLetters() {
   return [...builtIn, ...own];
 }
 
-/** Saved answers for blank labels: { values: { label: value }, standard: Set of labels filled automatically }. Never throws. */
+/**
+ * Saved answers for blank labels: { values: { label: value }, standard: Set of
+ * labels filled automatically, fromPayments: Set of labels taken from Payment
+ * settings ([HOR Bank]…, always filled automatically) }. Never throws.
+ */
 export async function savedAnswers(labels = null) {
-  if (!hasDatabase()) return { values: {}, standard: new Set() };
+  if (!hasDatabase()) return { values: {}, standard: new Set(), fromPayments: new Set() };
   try {
-    const rows = await sql("SELECT label, value, standard FROM letter_saved_values WHERE $1::text[] IS NULL OR label = ANY($1::text[]) ORDER BY label", [labels]);
-    return { values: Object.fromEntries(rows.map((r) => [r.label, r.value])), standard: new Set(rows.filter((r) => r.standard).map((r) => r.label)) };
+    const [rows, methods] = await Promise.all([
+      sql("SELECT label, value, standard FROM letter_saved_values WHERE $1::text[] IS NULL OR label = ANY($1::text[]) ORDER BY label", [labels]),
+      sql("SELECT key, enabled, details FROM payment_methods").catch(() => []),
+    ]);
+    const payments = Object.fromEntries(Object.entries(paymentLetterFills(methods)).filter(([label]) => !labels || labels.includes(label)));
+    return {
+      values: { ...Object.fromEntries(rows.map((r) => [r.label, r.value])), ...payments },
+      standard: new Set([...rows.filter((r) => r.standard).map((r) => r.label), ...Object.keys(payments)]),
+      fromPayments: new Set(Object.keys(payments)),
+    };
   } catch {
-    return { values: {}, standard: new Set() };
+    return { values: {}, standard: new Set(), fromPayments: new Set() };
   }
 }
 

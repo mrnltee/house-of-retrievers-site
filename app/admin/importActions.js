@@ -55,7 +55,7 @@ function checkRow(target, fields, event) {
 async function duplicateOf(target, value, eventId) {
   if (target === "supporters") {
     const [hit] = await sql("SELECT name FROM supporters WHERE lower(name) = lower($1) LIMIT 1", [value.name]);
-    if (hit) return `already in Sponsors & partners as "${hit.name}"`;
+    if (hit) return `already in Brands & Partners as "${hit.name}"`;
     return "";
   }
   if (target === "people") {

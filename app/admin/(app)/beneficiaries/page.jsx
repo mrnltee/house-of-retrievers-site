@@ -12,7 +12,7 @@ import { refreshSends, sendsFor } from "../../../lib/letterSendsStore";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
-/** Beneficiaries: shelters and rescue groups, with filters, and letters like Sponsors & partners. */
+/** Beneficiaries: shelters and rescue groups, with filters, and letters like Brands & Partners. */
 export default async function BeneficiariesPage({ searchParams }) {
   const params = await searchParams;
   const { admin, allowed } = await pageAdmin("beneficiaries:view");

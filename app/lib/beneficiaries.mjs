@@ -1,7 +1,7 @@
 /**
  * Beneficiaries (owner, 2026-10-31): the animal shelters, rescue groups and
  * people-care groups (elderly, children, patients…) HOR supports or plans to, with what they need and who to write to. Letters
- * go out like Sponsors & partners; their own letter is the beneficiary proposal.
+ * go out like Brands & Partners; their own letter is the beneficiary proposal.
  * Pure functions, so they can be tested.
  */
 export const BENEFICIARY_KINDS = [

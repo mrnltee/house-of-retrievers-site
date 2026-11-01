@@ -4,8 +4,6 @@ import { CAPACITY_USED_AGGREGATE_SQL } from "../../../lib/eventCapacity.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, manilaToday } from "../ui";
-import ConfirmButton from "../ConfirmButton";
-import { reframePosters } from "../../posterActions";
 
 const TABS = [["upcoming", "Upcoming"], ["drafts", "Drafts"], ["past", "Past"]];
 
@@ -34,16 +32,6 @@ export default async function EventsPage({ searchParams }) {
   return (
     <>
       <PageHead title="Events" lead="Drafts stay private. An event goes public only once every fact the page shows is filled in.">
-        {canEdit && (
-          <form action={reframePosters}>
-            <ConfirmButton
-              className="btn ghost"
-              title="Re-frame every event poster to 4:5?"
-              items={["Each poster that isn't 4:5 is cut again from its kept original, centred where its old crop was", "Posters already 4:5 are left alone", "You can fine-tune any of them afterwards in the event's cropper"]}
-              yes="Yes, re-frame posters"
-            >Re-frame posters to 4:5</ConfirmButton>
-          </form>
-        )}
         {canEdit && <a className="btn gold" href={`${base}/events/new`}>Create event</a>}
       </PageHead>
       <Flash params={params} />
@@ -60,7 +48,7 @@ export default async function EventsPage({ searchParams }) {
             {rows.map((event) => (
               <tr key={event.id}>
                 <td>{formatDay(event.date)}</td>
-                <td className="strong">{event.title}</td>
+                <td className="strong"><a href={`${base}/events/${event.id}`}>{event.title}</a></td>
                 <td>
                   {event.registration === "required" ? `Required${event.cost ? ` · ${event.cost}` : ""}` : "None needed"}
                   {event.registration === "required" && event.rsvp_opens_at && opensLater(new Date(event.rsvp_opens_at).toISOString()) && <><br /><span className="small muted">Opens {formatOpens(new Date(event.rsvp_opens_at).toISOString())}</span></>}

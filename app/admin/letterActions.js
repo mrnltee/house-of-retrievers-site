@@ -10,7 +10,10 @@ import { eventFills } from "../lib/letterEventStore";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
-import { listLetters, loadLetter, signatureForPdf } from "../lib/letterStore";
+import { listLetters, loadLetter, savedAnswers, signatureForPdf } from "../lib/letterStore";
+
+// The letter blanks Payment settings fills (see paymentLetterFills).
+const fromPaymentsLabels = ["HOR Bank", "HOR Account Name", "HOR Account Number", "HOR GCash Number / Name"];
 import { pictureFrom } from "../lib/admin/imageUpload";
 import { cleanSignature } from "../lib/letterSignature.mjs";
 import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
@@ -108,6 +111,9 @@ export async function sendLetters(data) {
     let typed = {};
     try { typed = JSON.parse(form(data, "values") || "{}"); } catch { typed = {}; }
     const values = Object.fromEntries(blanks.map((b) => [b.label, String(typed[b.label] ?? "").trim().slice(0, LETTER_LIMITS.value)]));
+    // HOR's bank and GCash always come from Payment settings, whatever was typed.
+    const { values: paid, fromPayments } = await savedAnswers([...fromPaymentsLabels]);
+    for (const label of fromPayments) if (label in values) values[label] = paid[label];
     // For an event (from its Brand tracker, or the event's own letter): event fill-ins left empty come from the event.
     const eventId = isUuid(form(data, "event")) ? form(data, "event") : letter.eventId || null;
     const [event] = eventId ? await sql("SELECT id FROM events WHERE id = $1", [eventId]) : [];
@@ -148,6 +154,7 @@ export async function sendLetters(data) {
     for (const [label, value] of Object.entries(values)) {
       if (!value) continue;
       if (event && EVENT_BLANKS.includes(label)) continue; // this event's own name, not the default
+      if (fromPayments.has(label)) continue; // kept in Payment settings
       await sql(
         `INSERT INTO letter_saved_values (label, value, updated_by, updated_at) VALUES ($1, $2, $3, now())
          ON CONFLICT (label) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()

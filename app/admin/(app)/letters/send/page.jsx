@@ -16,7 +16,7 @@ const list = (value) => (Array.isArray(value) ? value : value ? [value] : []).fi
 const clean = (value, max = 80) => String(value || "").trim().slice(0, max);
 
 /**
- * Send a letter. Recipients come from Sponsors & partners (?to=supporter:<id>,
+ * Send a letter. Recipients come from Brands & Partners (?to=supporter:<id>,
  * or ?all=1 with that page's filters) or People (?to=person:<id>).
  */
 export default async function SendLetterPage({ searchParams }) {
@@ -80,13 +80,13 @@ export default async function SendLetterPage({ searchParams }) {
 
   return (
     <>
-      <p className="small">Back to <a href={`${base}/guests`}>Guest list</a> · <a href={`${base}/beneficiaries`}>Beneficiaries</a> · <a href={`${base}/supporters?view=list`}>Sponsors & partners</a> · <a href={`${base}/letters`}>Letters</a></p>
+      <p className="small">Back to <a href={`${base}/guests`}>Guest list</a> · <a href={`${base}/beneficiaries`}>Beneficiaries</a> · <a href={`${base}/supporters?view=list`}>Brands & Partners</a> · <a href={`${base}/letters`}>Letters</a></p>
       {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={`${base}/events/${event.id}/brands`}>Brand tracker</a>, and its details fill in [Event Name], [Event Date], [Event Sponsors] and the other event fill-ins.</p>}
       <PageHead title="Send a letter" lead={`The letter is filled in with each recipient's name and sent as a PDF attached to a short email. Up to ${MAX_LETTER_RECIPIENTS} at a time.`} />
       <Flash params={params} />
       {mismatched.length > 0 && <p className="card" role="alert" style={{ borderLeft: "4px solid #b8860b" }}>Check the letter: {mismatched.map((r) => `${r.name} (${r.note})`).join(", ")} {mismatched.length === 1 ? "is" : "are"} usually sent a different letter.</p>}
       {recipients.length === 0 ? (
-        <p className="card muted">No recipients picked. In the <a href={`${base}/guests`}>Guest list</a>, <a href={`${base}/beneficiaries`}>Beneficiaries</a> or <a href={`${base}/supporters?view=list`}>Sponsors & partners</a>, tick people and press Send, or open someone in People and choose “Send a letter”.</p>
+        <p className="card muted">No recipients picked. In the <a href={`${base}/guests`}>Guest list</a>, <a href={`${base}/beneficiaries`}>Beneficiaries</a> or <a href={`${base}/supporters?view=list`}>Brands & Partners</a>, tick people and press Send, or open someone in People and choose “Send a letter”.</p>
       ) : (
         <LetterSend
           letters={letters.map((l) => ({ key: l.key, name: l.name }))}

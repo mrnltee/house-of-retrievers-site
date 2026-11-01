@@ -23,7 +23,7 @@ export default async function LettersPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Letters" lead="Each letter is a PDF sent with a short covering email, addressed to each recipient by name. Send them from the Guest list, Beneficiaries or Sponsors & partners by ticking people.">
+      <PageHead title="Letters" lead="Each letter is a PDF sent with a short covering email, addressed to each recipient by name. Send them from the Guest list, Beneficiaries or Brands & Partners by ticking people.">
         {canEdit && <a className="btn ghost" href={`${base}/letters/details`}>Standard details ({answers.standard.size})</a>}
       </PageHead>
       <Flash params={params} />
@@ -33,7 +33,7 @@ export default async function LettersPage({ searchParams }) {
         <ol className="small">
           <li><strong>Write the letter once</strong> with [blanks] where details change, e.g. <span className="tag-badge">[Company Name]</span>.</li>
           <li><strong>Blanks fill in three ways:</strong> from each recipient&apos;s record (name, contact person, address, greeting), from your <a href={`${base}/letters/details`}>standard details</a> (contact person, signatory, bank details…), or you type them when sending.</li>
-          <li><strong>Tick people</strong> in the Guest list, Beneficiaries or Sponsors & partners and press Send. You see each person&apos;s email and PDF before anything goes out.</li>
+          <li><strong>Tick people</strong> in the Guest list, Beneficiaries or Brands & Partners and press Send. You see each person&apos;s email and PDF before anything goes out.</li>
         </ol>
       </div>
 

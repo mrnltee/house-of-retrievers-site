@@ -49,6 +49,13 @@ export default async function StandardDetailsPage({ searchParams }) {
                       <span className="tag-badge">[{r.label}]</span>
                       <br /><span className="small muted">Used in {r.letters.length === letters.length ? "every letter" : r.letters.length === 1 ? r.letters[0] : `${r.letters.length} letters`}</span>
                     </td>
+                    {answers.fromPayments.has(r.label) ? (
+                      <>
+                        <td><strong>{value}</strong><br /><span className="small muted">From <a href={`${base}/payments`}>Payment settings</a>; change it there.</span></td>
+                        <td><span className="small">Always</span></td>
+                      </>
+                    ) : (
+                    <>
                     <td>
                       <input type="hidden" name="label" value={r.label} />
                       {long
@@ -56,6 +63,8 @@ export default async function StandardDetailsPage({ searchParams }) {
                         : <input type="text" name="value" maxLength={600} defaultValue={value} placeholder={r.sample || ""} disabled={!canEdit} aria-label={r.label} />}
                     </td>
                     <td><label className="check"><input type="checkbox" name="standard" value={r.label} defaultChecked={answers.standard.has(r.label)} disabled={!canEdit} /> <span className="small">Don&apos;t ask</span></label></td>
+                    </>
+                    )}
                   </tr>
                 );
               })}

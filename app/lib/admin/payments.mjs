@@ -123,3 +123,23 @@ export function publicMethods(rows) {
     })
     .sort((a, b) => METHOD_KEYS.indexOf(a.key) - METHOD_KEYS.indexOf(b.key));
 }
+
+/**
+ * HOR's bank and GCash for letters (owner, 2026-11-01): the payment blanks in
+ * letters ([HOR Bank]…) come from Payment settings, enabled methods only, so
+ * there's one place to keep them right. Full numbers: letters go to people HOR
+ * invites to pay.
+ */
+export function paymentLetterFills(rows = []) {
+  const on = (key) => rows.find((r) => r.key === key && r.enabled)?.details || null;
+  const out = {};
+  const bank = on("bank");
+  if (bank) {
+    if (bank.bankName) out["HOR Bank"] = bank.bankName;
+    if (bank.accountName) out["HOR Account Name"] = bank.accountName;
+    if (bank.accountNumber) out["HOR Account Number"] = bank.accountNumber;
+  }
+  const gcash = on("gcash");
+  if (gcash?.number) out["HOR GCash Number / Name"] = [formatMobile(gcash.number), gcash.accountName].filter(Boolean).join(" / ");
+  return out;
+}

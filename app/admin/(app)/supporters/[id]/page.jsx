@@ -30,7 +30,7 @@ export default async function SupporterPage({ params, searchParams }) {
   const shown = isPublic(row, { joined });
   return (
     <>
-      <p className="small"><a href={`${base}/supporters`}>← Sponsors & partners</a></p>
+      <p className="small"><a href={`${base}/supporters`}>← Brands & Partners</a></p>
       <PageHead title={row.name} lead={[`Usually ${row.kind}`, row.category_label, supporterNumber(row), joined ? `Joined ${joined} event${joined === 1 ? "" : "s"}` : "", shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
         <a className="btn ghost" href={`${base}/letters/send?to=supporter:${row.id}`}>✉ Send a letter</a>
         {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}

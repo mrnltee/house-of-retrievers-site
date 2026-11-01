@@ -94,6 +94,16 @@
   width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--a-field); border-radius: 8px; background: var(--a-ivory); color: var(--a-ink); font: inherit; font-size: 15px;
 }
 .admin textarea { min-height: 96px; resize: vertical; }
+/* Dropdowns: our own chevron (the browser's sat on the edge and looked thin), with room so text never runs under it. */
+.admin select {
+  appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 44px; text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center; background-size: 16px;
+  transition: border-color .15s, background-color .15s;
+}
+.admin select:hover:not(:disabled) { border-color: var(--a-gold-ink); background-color: #fff; }
+.admin select:disabled { cursor: not-allowed; opacity: .6; }
+.admin select[multiple] { background-image: none; padding-right: 14px; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
 .check input { width: 20px; height: 20px; margin: 0; accent-color: var(--a-ink); flex: none; }
 .row-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -646,7 +656,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .page-access tbody th { text-align: left; white-space: nowrap; }
 .page-access td.tick input { width: 20px; height: 20px; accent-color: var(--a-ink); }
 .page-ticks { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
-.page-access select.access, .page-ticks select.access { min-width: 76px; padding: 6px 8px; font-size: 13px; }
+.page-access select.access, .page-ticks select.access { min-width: 76px; padding: 6px 30px 6px 8px; font-size: 13px; background-position: right 10px center; background-size: 12px; }
 
 /* Getting started guide. */
 .guide-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }

@@ -64,9 +64,10 @@ export const PAGES = [
   { key: "registrations", label: "Registrations", group: "Run", path: "/registrations", view: ["registrations:view"], edit: ["registrations:edit", "registrations:fees"] },
   { key: "checkin", label: "Check-in", group: "Run", path: "/checkin", view: ["checkin:view"], edit: ["checkin"] },
   { key: "people", label: "People", group: "Run", path: "/people", view: ["people:view"], edit: ["people:edit"] },
-  { key: "supporters", label: "Sponsors & partners", group: "Run", path: "/supporters", view: ["supporters:view"], edit: ["supporters:edit"] },
+  { key: "supporters", label: "Brands & Partners", group: "Run", path: "/supporters", view: ["supporters:view"], edit: ["supporters:edit"] },
   { key: "beneficiaries", label: "Beneficiaries", group: "Run", path: "/beneficiaries", view: ["beneficiaries:view"], edit: ["beneficiaries:edit"] },
-  { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["guests:view"], edit: ["guests:edit"] },
+  // Opened from each event (its own guest list, owner 2026-11-01), not the sidebar; kept here for access settings.
+  { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["guests:view"], edit: ["guests:edit"], fromEvents: true },
   { key: "media", label: "Media hub", group: "Publish", path: "/media", view: ["media:view"], edit: ["media:edit"] },
   { key: "payments", label: "Payment settings", group: "Money", path: "/payments", view: ["payments:view"], edit: ["payments:request"] },
   { key: "emails", label: "Email templates", group: "Settings", path: "/emails", view: ["emails:view"], edit: ["emails:edit"] },

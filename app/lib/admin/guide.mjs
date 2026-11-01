@@ -23,5 +23,6 @@ export const HOW = {
 
 /** The pages this admin can use, in menu order, each with level "view" or "edit". */
 export function guidePages(admin) {
-  return PAGES.map((p) => ({ ...p, level: p.edit.some((cap) => can(admin, cap)) ? "edit" : can(admin, p.view[0]) ? "view" : "" })).filter((p) => p.level);
+  // The tour walks the sidebar; pages opened from events (the guest list) aren't there.
+  return PAGES.filter((p) => !p.fromEvents).map((p) => ({ ...p, level: p.edit.some((cap) => can(admin, cap)) ? "edit" : can(admin, p.view[0]) ? "view" : "" })).filter((p) => p.level);
 }

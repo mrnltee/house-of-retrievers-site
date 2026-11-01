@@ -26,7 +26,7 @@ function giving(r) {
 /**
  * Brand tracker (owner, 2026-11-01): the brands invited to one event, their
  * invite letter and its email status, their reply and what they give, for this
- * event only. Brands come from Sponsors & partners (the directory).
+ * event only. Brands come from Brands & Partners (the directory).
  */
 export default async function BrandTrackerPage({ params, searchParams }) {
   const { id } = await params;
