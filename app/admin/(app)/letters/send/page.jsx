@@ -6,7 +6,7 @@ import { groupLetters, listLetters, savedAnswers, signatureCheck } from "../../.
 import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import LetterSend from "./LetterSend";
-import { eventBlankValues } from "../../../../lib/letterEvent.mjs";
+import { eventFills } from "../../../../lib/letterEventStore";
 import { categoryOf, letterEmails, letterFor } from "../../../../lib/contacts.mjs";
 
 export const maxDuration = 120;
@@ -24,8 +24,15 @@ export default async function SendLetterPage({ searchParams }) {
   const { allowed } = await pageAdmin("letters:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
-  const letters = await listLetters();
-  const letter = letters.find((l) => l.key === params?.letter) || letters[0];
+  const allLetters = await listLetters();
+  const picked = allLetters.find((l) => l.key === params?.letter) || allLetters[0];
+
+  // For an event (from its Brand tracker, or an event's own letter): its details fill the [Event …] blanks.
+  const eventId = isUuid(params?.event) ? params.event : picked?.eventId || null;
+  const [event] = eventId ? await sql("SELECT id, title FROM events WHERE id = $1", [eventId]) : [];
+  // The letters to choose from: the general ones, plus this event's own.
+  const letters = allLetters.filter((l) => !l.eventId || l.eventId === event?.id);
+  const letter = letters.find((l) => l.key === picked?.key) || letters[0];
 
   const refs = list(params?.to);
   const supporterIds = refs.filter((r) => r.startsWith("supporter:")).map((r) => r.slice(10)).filter(isUuid);
@@ -62,9 +69,7 @@ export default async function SendLetterPage({ searchParams }) {
 
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
   const answers = await savedAnswers(blanks.map((b) => b.label));
-  // From an event's Brand tracker: that event's name fills its blanks.
-  const [event] = isUuid(params?.event) ? await sql("SELECT id, title FROM events WHERE id = $1", [params.event]) : [];
-  const saved = { ...answers.values, ...(event ? eventBlankValues(event.title) : {}) };
+  const saved = { ...answers.values, ...(event ? await eventFills(event.id) : {}) };
   const standard = [...answers.standard];
   // Who the email comes from, as recipients see it (e.g. "House of Retrievers <hello@…>").
   const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM || "";
@@ -76,7 +81,7 @@ export default async function SendLetterPage({ searchParams }) {
   return (
     <>
       <p className="small">Back to <a href={`${base}/guests`}>Guest list</a> · <a href={`${base}/beneficiaries`}>Beneficiaries</a> · <a href={`${base}/supporters?view=list`}>Sponsors & partners</a> · <a href={`${base}/letters`}>Letters</a></p>
-      {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={`${base}/events/${event.id}/brands`}>Brand tracker</a>, and its name fills in [Event Name].</p>}
+      {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={`${base}/events/${event.id}/brands`}>Brand tracker</a>, and its details fill in [Event Name], [Event Date], [Event Sponsors] and the other event fill-ins.</p>}
       <PageHead title="Send a letter" lead={`The letter is filled in with each recipient's name and sent as a PDF attached to a short email. Up to ${MAX_LETTER_RECIPIENTS} at a time.`} />
       <Flash params={params} />
       {mismatched.length > 0 && <p className="card" role="alert" style={{ borderLeft: "4px solid #b8860b" }}>Check the letter: {mismatched.map((r) => `${r.name} (${r.note})`).join(", ")} {mismatched.length === 1 ? "is" : "are"} usually sent a different letter.</p>}

@@ -49,7 +49,8 @@ export default async function BrandTrackerPage({ params, searchParams }) {
   await refreshSends(refs);
   const sends = await sendsFor(refs, { eventId: event.id });
   const letterName = (key) => letters.find((l) => l.key === key)?.name || key;
-  const letter = letterFor("sponsor", chosen);
+  // This event's own letter first (its Letters page), else the usual Sponsors letter.
+  const letter = letters.find((l) => l.eventId === event.id)?.key || letterFor("sponsor", chosen);
   const invited = new Set(rows.map((r) => r.supporter_id));
   const notInvited = directory.filter((d) => !invited.has(d.id));
   const counts = trackerCounts(rows);
@@ -97,7 +98,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
           <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
             <div>
               <h2 style={{ margin: 0 }}>Invited brands <span className="muted small">({rows.length})</span></h2>
-              <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${letter}`}>{letterName(letter)}</a>. You can pick another letter on the next page.</p>
+              <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${letter}`}>{letterName(letter)}</a>. You can pick another letter on the next page, or <a href={`${base}/events/${event.id}/letters`}>make one for this event</a>.</p>
             </div>
             {canSend && rows.length > 0 && <TickedSubmit />}
           </div>

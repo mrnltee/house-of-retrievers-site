@@ -832,3 +832,9 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .logo-scale-preview { width: 96px; height: 96px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px var(--a-line); }
 .logo-scale-preview img { width: 100%; height: 100%; object-fit: contain; transform-origin: center; }
 .logo-scale-row input[type="range"] { flex: 1; min-width: 160px; accent-color: var(--a-gold); min-height: 44px; }
+
+/* Letter editor: event fill-ins, click to insert ([Event Name]…). */
+.event-fills { display: grid; gap: 4px; }
+.event-fills button.var-chip { cursor: pointer; border: 0; font: inherit; min-height: 28px; }
+.event-fills button.var-chip:hover, .event-fills button.var-chip:focus-visible { outline: 2px solid var(--a-gold); outline-offset: 1px; }
+.event-fills button.var-chip.is-used { background: var(--a-success); color: #fff; }

@@ -1,8 +1,8 @@
 import { hasDatabase, sql } from "./db";
 import { LETTER_STARTERS, letterWithOverride } from "./letters.mjs";
 
-const COLUMNS = "key, name, subject, cover, body, signature, updated_by, updated_at, created_at";
-const withMeta = (letter, row) => ({ ...letter, updatedBy: row?.updated_by || null, updatedAt: row?.updated_at || null });
+const COLUMNS = "key, name, subject, cover, body, signature, updated_by, updated_at, created_at, event_id, based_on";
+const withMeta = (letter, row) => ({ ...letter, updatedBy: row?.updated_by || null, updatedAt: row?.updated_at || null, eventId: row?.event_id || null, basedOn: row?.based_on || null });
 
 /** Saved rows (HOR's wording over a starter, or HOR's own letters), not removed. Never throws. */
 async function savedRows(key = null) {
@@ -22,7 +22,10 @@ export async function loadLetter(key) {
   return letter ? withMeta(letter, row) : null;
 }
 
-/** Every letter: the built-in ones in starter order, then HOR's own in the order they were made. */
+/**
+ * Every letter: the built-in ones in starter order, then HOR's own in the order
+ * they were made (event letters included; lists filter with `l.eventId`).
+ */
 export async function listLetters() {
   const rows = await savedRows();
   const builtIn = LETTER_STARTERS.map((starter) => {
@@ -110,3 +113,8 @@ export async function signatureCheck(settings, body = "") {
   }
 }
 
+
+/** The letters made for one event (its Letters page), oldest first. */
+export async function eventLetters(eventId) {
+  return (await listLetters()).filter((l) => l.eventId === eventId);
+}

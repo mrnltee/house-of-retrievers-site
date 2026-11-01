@@ -5,7 +5,8 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { emailReady, sendEmail } from "../lib/email";
 import { logSend } from "../lib/letterSendsStore";
-import { EVENT_BLANKS } from "../lib/letterEvent.mjs";
+import { EVENT_BLANKS, eventLetterKey } from "../lib/letterEvent.mjs";
+import { eventFills } from "../lib/letterEventStore";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
@@ -107,6 +108,13 @@ export async function sendLetters(data) {
     let typed = {};
     try { typed = JSON.parse(form(data, "values") || "{}"); } catch { typed = {}; }
     const values = Object.fromEntries(blanks.map((b) => [b.label, String(typed[b.label] ?? "").trim().slice(0, LETTER_LIMITS.value)]));
+    // For an event (from its Brand tracker, or the event's own letter): event fill-ins left empty come from the event.
+    const eventId = isUuid(form(data, "event")) ? form(data, "event") : letter.eventId || null;
+    const [event] = eventId ? await sql("SELECT id FROM events WHERE id = $1", [eventId]) : [];
+    if (event) {
+      const fills = await eventFills(event.id);
+      for (const label of EVENT_BLANKS) if (label in values && !values[label] && fills[label]) values[label] = fills[label];
+    }
     const missing = missingBlanks(blanks, values);
     if (missing.length) await backWith(back, "error", `Fill in: ${missing.slice(0, 4).join(", ")}${missing.length > 4 ? ` and ${missing.length - 4} more` : ""}.`);
 
@@ -114,9 +122,6 @@ export async function sendLetters(data) {
     if (!refs.length) await backWith(back, "error", "Tick at least one recipient.");
     if (refs.length > MAX_LETTER_RECIPIENTS) await backWith(back, "error", `Send to ${MAX_LETTER_RECIPIENTS} at most at a time.`);
     const recipients = await loadRecipients(refs);
-    // Sent from an event's Brand tracker: the sends belong to that event.
-    const eventId = isUuid(form(data, "event")) ? form(data, "event") : null;
-    const [event] = eventId ? await sql("SELECT id FROM events WHERE id = $1", [eventId]) : [];
 
     const date = letterDate();
     const batch = Date.now();
@@ -185,15 +190,44 @@ export async function createLetter(data) {
   });
 }
 
+/** An event's Letters page: a new letter for that event, copied from an existing letter or blank. */
+export async function createEventLetter(data) {
+  const eventId = form(data, "event");
+  const back = isUuid(eventId) ? `/events/${eventId}/letters` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("letters:edit");
+    const [event] = isUuid(eventId) ? await sql("SELECT id, title FROM events WHERE id = $1", [eventId]) : [];
+    if (!event) await backWith("/events", "error", "That event wasn't found.");
+    const from = form(data, "from");
+    const source = from ? await loadLetter(from) : null;
+    if (from && !source) await backWith(back, "error", "The letter to start from wasn't found.");
+    const name = (form(data, "name").trim() || (source ? `${source.name} — ${event.title}` : `Letter — ${event.title}`)).slice(0, LETTER_LIMITS.name);
+    const key = eventLetterKey(name);
+    const blank = {
+      subject: "[Event Name]",
+      cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers’ Society, Inc.\n\nOur letter about [Event Name] on [Event Date] is attached.",
+      body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: [Event Name]**\n\nDear [Salutation]:\n\nWrite the letter here. [Event Name] is on [Event Date], [Event Time], at [Event Location].\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
+    };
+    const l = source || blank;
+    await sql(
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at, created_by, created_at, event_id, based_on)
+       VALUES ($1, $2, $3, $4, $5, $7, $6, now(), $6, now(), $8, $9)`,
+      [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null, event.id, source?.key || null],
+    );
+    await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null, eventId: event.id });
+    await backWith(`/letters/${key}`, "ok", source ? `Made “${name}” from “${source.name}” for this event. Edit it, then save.` : "New event letter made. Write it, then save.");
+  });
+}
+
 /** Letters: remove one of HOR's own letters (built-in letters can only go back to their original wording). */
 export async function deleteLetter(data) {
   const key = form(data, "key");
   return guarded("/letters", async () => {
     const admin = await actionAdmin("letters:edit");
     if (!looksLikeKey(key) || isKey(key)) await backWith("/letters", "error", "Built-in letters can't be removed.");
-    const [row] = await sql("UPDATE letter_templates SET deleted_at = now() WHERE key = $1 AND deleted_at IS NULL RETURNING name", [key]);
+    const [row] = await sql("UPDATE letter_templates SET deleted_at = now() WHERE key = $1 AND deleted_at IS NULL RETURNING name, event_id", [key]);
     if (row) await logActivity(admin.email, "letter.remove", row.name, { letter: key });
-    await backWith("/letters", "ok", row ? `Removed “${row.name}”.` : "Already removed.");
+    await backWith(row?.event_id ? `/events/${row.event_id}/letters` : "/letters", "ok", row ? `Removed “${row.name}”.` : "Already removed.");
   });
 }
 

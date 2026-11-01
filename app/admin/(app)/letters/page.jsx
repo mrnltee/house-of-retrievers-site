@@ -17,7 +17,8 @@ export default async function LettersPage({ searchParams }) {
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const canEdit = can(admin, "letters:edit");
-  const [letters, chosen, answers] = await Promise.all([listLetters(), groupLetters(), savedAnswers()]);
+  // Letters made for an event live on that event's Letters page.
+  const [letters, chosen, answers] = await Promise.all([listLetters().then((all) => all.filter((l) => !l.eventId)), groupLetters(), savedAnswers()]);
   const usedBy = (key) => LETTER_GROUPS.filter((g) => letterFor(g.key, chosen) === key).map((g) => g.label);
 
   return (

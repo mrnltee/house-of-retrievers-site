@@ -16,7 +16,7 @@ const SAMPLE = "Pawsome Pet Shop";
 const TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
 
 /** Edits one letter with a live preview. "Preview PDF" posts the unsaved wording to the PDF route. */
-export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "" }) {
+export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "", eventFills = null, eventTitle = "" }) {
   const [fields, setFields] = useState({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const savedSig = cleanSignature(letter.signature);
   // Signature settings; `upload` is a newly picked image (a data URL) until saved.
@@ -39,13 +39,25 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const blanks = useMemo(() => blanksOf(fields.subject, fields.cover, fields.body), [fields]);
   // The automatic blanks this letter uses, e.g. [Company Name].
   const autos = useMemo(() => Object.keys(AUTO_BLANKS).filter((label) => [fields.subject, fields.cover, fields.body].some((t) => t.includes(`[${label}]`) || t.includes(`[${label}?]`))), [fields]);
-  const fromDetails = blanks.filter((b) => standard[b.label] !== undefined);
-  const asked = blanks.filter((b) => standard[b.label] === undefined);
-  const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values: standard }), [fields.body, standard]);
+  // An event's letter: its [Event …] blanks show that event's real details, and aren't asked when sending.
+  const values = useMemo(() => ({ ...standard, ...(eventFills || {}) }), [standard, eventFills]);
+  const fromEvent = eventFills ? blanks.filter((b) => eventFills[b.label] !== undefined) : [];
+  const fromDetails = blanks.filter((b) => standard[b.label] !== undefined && !fromEvent.includes(b));
+  const asked = blanks.filter((b) => values[b.label] === undefined);
+  const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values }), [fields.body, values]);
   const email = useMemo(() => {
-    const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { ...TO, values: standard });
+    const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { ...TO, values });
     return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename });
-  }, [fields, letter.name, standard]);
+  }, [fields, letter.name, values]);
+  // Puts [Label] where the cursor is in the letter (or at the end).
+  const insertBlank = (label) => {
+    const el = bodyRef.current;
+    const text = fields.body;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    put("body")(`${text.slice(0, start)}[${label}]${text.slice(end)}`);
+    requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(start + label.length + 2, start + label.length + 2); });
+  };
   const set = (name) => (e) => setFields((f) => ({ ...f, [name]: e.target.value }));
   const put = (name) => (text) => setFields((f) => ({ ...f, [name]: text }));
   const coverRef = useRef(null);
@@ -85,6 +97,19 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
         <h2 className="letter-step"><span>4</span> Blanks in this letter</h2>
         <p className="small muted" style={{ margin: 0 }}>Words in [square brackets] are filled in for each recipient. A ? (like [Address?]) makes it optional: its line is left out when there&apos;s nothing to put.</p>
         <div className="template-vars letter-blanks">
+          {eventFills && (
+            <>
+              <span className="field-head">From the event{eventTitle ? ` · ${eventTitle}` : ""} <small>Filled in by themselves · click one to put it where the cursor is in the letter</small></span>
+              <ul className="event-fills">
+                {Object.entries(eventFills).map(([label, value]) => (
+                  <li key={label}>
+                    <button type="button" className={`tag-badge var-chip${fromEvent.some((b) => b.label === label) ? " is-used" : ""}`} onClick={() => insertBlank(label)}>[{label}]</button>{" "}
+                    <span className="small">{value || <span className="muted">not set yet</span>}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           <span className="field-head">From each recipient&apos;s record <small>Nothing to do</small></span>
           {autos.length ? (
             <ul>{autos.map((label) => <li key={label}><span className="tag-badge var-chip">[{label}]</span> <span className="small muted">{AUTO_BLANKS[label]}</span></li>)}</ul>
@@ -133,7 +158,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
         <div className="template-preview-head">
           <div>
             <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {SAMPLE}</p>
-            <p className="template-subject"><strong>{fillLetter(fields.subject, { ...TO, values: standard })}</strong></p>
+            <p className="template-subject"><strong>{fillLetter(fields.subject, { ...TO, values })}</strong></p>
           </div>
           <form method="post" action={pdfAction} target="_blank">
             <input type="hidden" name="letter" value={letter.key} />
