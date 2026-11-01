@@ -10,6 +10,8 @@ const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "db", 
 
 export async function migrate(connectionString) {
   const client = new pg.Client({ connectionString, ssl: sslFor(connectionString) });
+  // A migration's RAISE NOTICE lines (e.g. names it couldn't match) show in the build log.
+  client.on("notice", (n) => console.log(`  ${n.message}`));
   await client.connect();
   try {
     // Two deployments building at once must not both apply the same file.
