@@ -59,6 +59,22 @@ export function recipientName({ supporter, person } = {}) {
 /** "Apple" → "Apple team" (a name already ending in "team" is left as it is). */
 export const teamOf = (name) => (/\bteam$/i.test(String(name).trim()) ? String(name).trim() : `${String(name).trim()} team`);
 
+/** How letters greet a brand (owner, 2026-11-02), stored on supporters.greeting. */
+export const GREETINGS = [
+  ["auto", "Automatic"],
+  ["contact", "Contact person"],
+  ["team", "Brand team"],
+  ["custom", "My own wording"],
+];
+
+/** The "Dear ___," for a brand, from its greeting choice. */
+export function brandGreeting({ name = "", contactName = "", salutation = "", greeting = "auto" } = {}) {
+  const team = name ? teamOf(name) : "";
+  if (greeting === "team") return team;
+  if (greeting === "contact") return contactName || team;
+  return salutation || contactName || team;
+}
+
 /**
  * What a recipient's record gives the address block: { name, contact, address, salutation }.
  * Guest list: with a company/brand filled in, the company is [Company Name]
@@ -76,7 +92,10 @@ export function recipientFields({ supporter, person, contact, beneficiary } = {}
     const brandOnly = !who && ["sponsor", "partner"].includes(contact.category);
     return { name: company, contact: who, address: t(contact.address), salutation: t(contact.salutation) || (brandOnly && company ? teamOf(company) : "") };
   }
-  if (supporter) return { ...org(recipientName({ supporter }), t(supporter.contact_name), t(supporter.salutation)), address: t(supporter.address) };
+  if (supporter) {
+    const name = recipientName({ supporter });
+    return { name, contact: t(supporter.contact_name), address: t(supporter.address), salutation: brandGreeting({ name, contactName: t(supporter.contact_name), salutation: t(supporter.salutation), greeting: supporter.greeting }) };
+  }
   if (beneficiary) return { ...org(t(beneficiary.name), t(beneficiary.contact_name), t(beneficiary.salutation)), address: t(beneficiary.address) };
   if (person) return { name: recipientName({ person }), contact: t(person.organization) ? t(person.name) : "", address: "", salutation: "" };
   return { name: "", contact: "", address: "", salutation: "" };

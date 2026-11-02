@@ -82,7 +82,7 @@ export async function resetLetter(data) {
 async function loadRecipients(refs) {
   const ids = (kind) => refs.filter((r) => r.startsWith(`${kind}:`)).map((r) => r.slice(kind.length + 1)).filter(isUuid);
   const [supporters, people, contacts, beneficiaries] = await Promise.all([
-    ids("supporter").length ? sql("SELECT id, name, kind, contact_email, contact_name, address, salutation FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
+    ids("supporter").length ? sql("SELECT id, name, kind, contact_email, contact_name, address, salutation, greeting FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
     ids("person").length ? sql("SELECT id, name, email, organization FROM people WHERE id = ANY($1::uuid[])", [ids("person")]) : [],
     ids("contact").length ? sql("SELECT id, name, organization, email, rep_email, send_to, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
     ids("beneficiary").length ? sql("SELECT id, name, contact_name, contact_email, address, salutation FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("beneficiary")]) : [],

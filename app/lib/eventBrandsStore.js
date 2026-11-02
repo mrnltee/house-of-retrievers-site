@@ -3,7 +3,7 @@ import { sql } from "./db";
 /** One event's Brand tracker: invited brands with their directory details. Waiting first, then Yes, then No. */
 export function trackerRows(eventId) {
   return sql(
-    `SELECT eb.*, s.name, s.slug, s.logo, s.kind, s.contact_name, s.contact_email, s.code, s.number_no
+    `SELECT eb.*, s.name, s.slug, s.logo, s.kind, s.contact_name, s.contact_email, s.salutation, s.greeting, s.code, s.number_no
        FROM event_brands eb JOIN supporters s ON s.id = eb.supporter_id
       WHERE eb.event_id = $1
       ORDER BY array_position(ARRAY['waiting','yes','no'], eb.reply), lower(s.name)`,

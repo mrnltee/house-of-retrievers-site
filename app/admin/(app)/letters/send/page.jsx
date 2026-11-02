@@ -37,14 +37,14 @@ export default async function SendLetterPage({ searchParams }) {
   const refs = list(params?.to);
   const supporterIds = refs.filter((r) => r.startsWith("supporter:")).map((r) => r.slice(10)).filter(isUuid);
   const personIds = refs.filter((r) => r.startsWith("person:")).map((r) => r.slice(7)).filter(isUuid);
-  let supporters = supporterIds.length ? await sql("SELECT id, name, kind, status, contact_email, contact_name, address, salutation FROM supporters WHERE id = ANY($1::uuid[]) ORDER BY name", [supporterIds]) : [];
+  let supporters = supporterIds.length ? await sql("SELECT id, name, kind, status, contact_email, contact_name, address, salutation, greeting FROM supporters WHERE id = ANY($1::uuid[]) ORDER BY name", [supporterIds]) : [];
   if (params?.all === "1") {
     const kind = ["Sponsor", "Partner"].includes(params?.kind) ? params.kind : "";
     const status = STATUSES.some(([key]) => key === params?.status) ? params.status : "";
     const label = clean(params?.label, 60);
     const q = clean(params?.q);
     supporters = await sql(
-      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation FROM supporters
+      `SELECT id, name, kind, status, contact_email, contact_name, address, salutation, greeting FROM supporters
         WHERE ($1 = '' OR kind = $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR category_label = $3)
           AND ($4 = '' OR name ILIKE '%' || $4 || '%' OR coalesce(code, '') ILIKE '%' || $4 || '%' OR coalesce(category_label, '') ILIKE '%' || $4 || '%')
         ORDER BY name`,

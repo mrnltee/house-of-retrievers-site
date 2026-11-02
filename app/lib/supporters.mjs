@@ -144,6 +144,7 @@ export function validateSupporter(input, { legacyCode = null } = {}) {
     contactPhone: clean(input?.contactPhone, 40) || null,
     address: String(input?.address ?? "").replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n").slice(0, 300) || null,
     salutation: clean(input?.salutation, 120) || null,
+    greeting: ["contact", "team", "custom"].includes(input?.greeting) ? input.greeting : "auto",
     inviteStatus: oneOf(INVITE_STATUSES, input?.inviteStatus),
     rsvpStatus: oneOf(RSVP_STATUSES, input?.rsvpStatus),
     agreementStatus: oneOf(AGREEMENT_STATUSES, input?.agreementStatus),

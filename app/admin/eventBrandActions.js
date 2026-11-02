@@ -63,6 +63,11 @@ export async function saveTrackerEntry(data) {
     }
     const before = await saveTrackerRow(event.id, supporterId, value);
     if (!before) await backWith(back, "error", "That brand isn't on this event's tracker.");
+    // The greeting belongs to the brand, so it's the same at every event.
+    if (data.has("greeting")) {
+      const greeting = ["contact", "team", "custom"].includes(form(data, "greeting")) ? form(data, "greeting") : "auto";
+      await sql("UPDATE supporters SET greeting=$2, salutation=$3 WHERE id=$1", [supporterId, greeting, form(data, "salutation").replace(/\s+/g, " ").trim().slice(0, 120) || null]);
+    }
     const numbered = value.reply === "yes" && brand && !brand.number_no ? await issueSupporterNumber(supporterId) : "";
     await logActivity(admin.email, "event.brand.save", brand?.name || "", { eventId: event.id, supporterId, reply: value.reply, ...(numbered ? { number: numbered } : {}) });
     await backWith(back, "ok", `Saved ${brand?.name}: ${replyLabel(value.reply)}.${numbered ? ` Their number is ${numbered}.` : ""}`);

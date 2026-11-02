@@ -40,7 +40,7 @@ export async function POST(request) {
   // The send page posts its whole form: "previewTo" is the recipient shown in the preview.
   const [type, id] = (field("previewTo") || field("to")).split(":");
   if (type === "supporter" && isUuid(id)) {
-    const [row] = await sql("SELECT name, contact_name, address, salutation FROM supporters WHERE id = $1", [id]);
+    const [row] = await sql("SELECT name, contact_name, address, salutation, greeting FROM supporters WHERE id = $1", [id]);
     if (row) to = recipientFields({ supporter: row });
   } else if (type === "person" && isUuid(id)) {
     const [row] = await sql("SELECT name, organization FROM people WHERE id = $1", [id]);

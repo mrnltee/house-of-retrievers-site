@@ -4,6 +4,7 @@ import { AGREEMENT_STATUSES, BLURB_MAX, CATEGORY_LABEL_MAX, GIVES, INVITE_STATUS
 import LogoField from "./LogoField";
 import SupporterIdentityFields from "./SupporterIdentityFields";
 import ConfirmButton from "../ConfirmButton";
+import GreetingFields from "./GreetingFields";
 
 const SHOW_OUTREACH = false;
 const SHOW_GIVING = false;
@@ -128,8 +129,8 @@ export default function SupporterForm({ row, person = null, canEdit = true, join
           </div>
           <div className="row-2">
             <label className="field"><span>Address <small>For letters, one line each: street, then city</small></span><textarea name="address" rows={2} maxLength={300} defaultValue={v("address")} /></label>
-            <label className="field"><span>Greeting <small>How letters greet them: “Dear ___,” e.g. Ms. Jessie. Blank = the contact person, else the name</small></span><input type="text" name="salutation" maxLength={120} defaultValue={v("salutation")} placeholder="Ms. Jessie" /></label>
           </div>
+          <GreetingFields row={row || {}} />
           <label className="field"><span>Notes <small>Only admins see these</small></span><textarea name="notes" rows={3} maxLength={2000} defaultValue={v("notes")} /></label>
         </section>
       </fieldset>

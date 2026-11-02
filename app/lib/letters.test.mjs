@@ -209,3 +209,14 @@ test("a brand or organization with no contact person is greeted as its team", ()
   assert.equal(filled(recipientFields({ contact: { category: "sponsor", name: "Jessie", organization: "Aquaflask" } })), "Dear Jessie,");
   assert.equal(filled(recipientFields({ contact: { category: "donor", name: "Jessie Gabriel" } })), "Dear Jessie Gabriel,");
 });
+
+test("a brand's greeting choice: contact person, brand team, or own wording", () => {
+  const dear = (supporter) => fillLetter("Dear [Salutation],", recipientFields({ supporter }));
+  const apple = { name: "Apple", contact_name: "Tim Cook", salutation: "Mr. Cook" };
+  assert.equal(dear({ ...apple, greeting: "auto" }), "Dear Mr. Cook,");
+  assert.equal(dear({ ...apple, greeting: "contact" }), "Dear Tim Cook,");
+  assert.equal(dear({ ...apple, greeting: "team" }), "Dear Apple team,");
+  assert.equal(dear({ ...apple, greeting: "custom" }), "Dear Mr. Cook,");
+  assert.equal(dear({ name: "Apple", greeting: "contact" }), "Dear Apple team,", "no contact person yet: the team");
+  assert.equal(dear({ name: "Apple", contact_name: "Tim Cook" }), "Dear Tim Cook,", "no choice saved: automatic");
+});

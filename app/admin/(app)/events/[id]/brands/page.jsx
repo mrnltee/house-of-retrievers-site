@@ -1,3 +1,5 @@
+import GreetingFields from "../../../supporters/GreetingFields";
+import { recipientFields } from "../../../../../lib/letters.mjs";
 import { notFound } from "next/navigation";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
@@ -139,6 +141,10 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                           </div>
                           <label className="field"><span>Booth requirements <small>Table, power, space…</small></span><textarea name="boothNeeds" rows={2} maxLength={500} defaultValue={r.booth_needs || ""} /></label>
                           <label className="field"><span>Notes <small>Only admins see these</small></span><textarea name="notes" rows={2} maxLength={2000} defaultValue={r.notes || ""} /></label>
+                          <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+                            <legend>Greeting <small className="muted">For this brand&apos;s letters at every event</small></legend>
+                            <GreetingFields row={r} />
+                          </fieldset>
                           <div className="actions">
                             <ConfirmButton className="btn dark" title={`Save ${r.name} for this event?`} items={["Updates their reply and giving for this event only.", "A Yes shows them on this event's page and the home page."]}>Save</ConfirmButton>
                             <ConfirmButton className="btn ghost" formAction={removeTrackerEntry} tone="alert" title={`Take ${r.name} off this event?`} items={["They stay in the brand directory.", "Their letters for this event stay in the log."]}>Remove from this event</ConfirmButton>
@@ -147,7 +153,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                       </details>
                     )}
                   </td>
-                  <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span></td>
+                  <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
                   <td className="small"><SendStatus sends={sends[`supporter:${r.supporter_id}`]} letterName={letterName} /></td>
                   <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
                   <td className="small">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} people`, r.dogs_attending && `${r.dogs_attending} dogs`].filter(Boolean).join(", ")} coming</span></> : null}</td>
