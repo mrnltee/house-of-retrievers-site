@@ -9,6 +9,7 @@ import { replyLabel } from "../../../../lib/eventBrands.mjs";
 import { HOME_URL } from "../../../../lib/siteSeo.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import SupporterForm from "../SupporterForm";
+import RecordNav from "./RecordNav";
 import ConfirmButton from "../../ConfirmButton";
 import { deleteSupporter } from "../../../supporterActions";
 
@@ -40,14 +41,12 @@ export default async function SupporterPage({ params, searchParams }) {
   const shown = isPublic(row, { joined });
   return (
     <>
-      <nav className="record-nav small" aria-label="Brands">
-        <a href={`${base}/supporters`}>← Brands & Partners</a>
-        <span className="record-nav-step">
-          {prev ? <a className="btn ghost small" href={`${base}/supporters/${prev.id}`} title={prev.name}>‹ Previous</a> : <span className="btn ghost small" aria-disabled="true">‹ Previous</span>}
-          {here && <span className="muted">{here.n} of {here.total}</span>}
-          {next ? <a className="btn ghost small" href={`${base}/supporters/${next.id}`} title={next.name}>Next ›</a> : <span className="btn ghost small" aria-disabled="true">Next ›</span>}
-        </span>
-      </nav>
+      <RecordNav
+        backHref={`${base}/supporters`}
+        prev={prev && { href: `${base}/supporters/${prev.id}`, name: prev.name }}
+        next={next && { href: `${base}/supporters/${next.id}`, name: next.name }}
+        here={here && { n: here.n, total: here.total }}
+      />
       <PageHead title={row.name} lead={[`Usually ${row.kind}`, row.category_label, supporterNumber(row), joined ? `Joined ${joined} event${joined === 1 ? "" : "s"}` : "", shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
         {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}
       </PageHead>
