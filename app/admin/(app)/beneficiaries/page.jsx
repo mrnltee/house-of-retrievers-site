@@ -4,6 +4,7 @@ import { can } from "../../../lib/admin/roles.mjs";
 import { BENEFICIARY_KINDS, BENEFICIARY_STATUSES, isPublicBeneficiary, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
 import { groupLetters, listLetters } from "../../../lib/letterStore";
 import { letterFor } from "../../../lib/contacts.mjs";
+import { recipientFields } from "../../../lib/letters.mjs";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import { Avatar } from "../ImageField";
 import TickedSubmit from "../TickedSubmit";
@@ -73,7 +74,7 @@ export default async function BeneficiariesPage({ searchParams }) {
                   <td>{kindLabel(r.kind)}</td>
                   <td><span className="chip">{statusLabel(r.status)}</span>{isPublicBeneficiary(r) && <><br /><span className="small muted">On the website</span></>}</td>
                   <td>{r.contact_name || "—"}{r.contact_email ? <><br /><span className="small muted">{r.contact_email}</span></> : <><br /><span className="small muted">No email yet</span></>}</td>
-                  <td className="small">Dear {r.salutation || r.contact_name || r.name},</td>
+                  <td className="small">Dear {recipientFields({ beneficiary: r }).salutation || r.contact_name || r.name},</td>
                   <td className="small"><SendStatus sends={sends[`beneficiary:${r.id}`]} letterName={letterName} before={r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : ""} /></td>
                 </tr>
               ))}

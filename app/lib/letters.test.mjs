@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LETTER_STARTERS, blanksOf, fillLetter, letterBlocks, letterDate, letterWithOverride, missingBlanks, prepareLetter, recipientName } from "./letters.mjs";
+import { LETTER_STARTERS, blanksOf, fillLetter, letterBlocks, letterDate, letterWithOverride, missingBlanks, prepareLetter, recipientFields, recipientName } from "./letters.mjs";
 import { letterPdf, pdfSafe } from "./letterPdf.mjs";
 
 test("the ten starter letters are there, each with a subject", () => {
@@ -157,7 +157,7 @@ test("address block fills from the record; empty optional lines drop", async () 
   const full = recipientFields({ supporter: { name: "Modeler Collection", contact_name: "Jessie Mae Gabriel", address: "1 Main St.\nQuezon City", salutation: "Ms. Jessie" } });
   assert.equal(fillLetter(head, full), "Jessie Mae Gabriel\nModeler Collection\n1 Main St.\nQuezon City\n\nDear Ms. Jessie:");
   const bare = recipientFields({ supporter: { name: "Pawsome" } });
-  assert.equal(fillLetter(head, bare), "Pawsome\n\nDear Pawsome:");
+  assert.equal(fillLetter(head, bare), "Pawsome\n\nDear Pawsome team:");
   const guest = recipientFields({ contact: { name: "Jessie Mae Gabriel", organization: "Modeler Collection" } });
   assert.equal(fillLetter(head, guest), "Jessie Mae Gabriel\nModeler Collection\n\nDear Jessie Mae Gabriel:");
   const celeb = recipientFields({ contact: { name: "Anne Curtis", salutation: "Ms. Anne" } });
@@ -196,4 +196,16 @@ test("the open donation letter has no addressee, so it can go out in any DM", ()
   for (const auto of ["Company Name", "Salutation", "Their Contact Person", "Address"]) assert.ok(!blanks.includes(auto), auto);
   assert.match(letter.body, /CASH DONATION FORM/);
   assert.match(letter.body, /\[HOR Account Number\]/);
+});
+
+test("a brand or organization with no contact person is greeted as its team", () => {
+  const filled = (to) => fillLetter("Dear [Salutation],", to);
+  assert.equal(filled(recipientFields({ supporter: { name: "Apple" } })), "Dear Apple team,");
+  assert.equal(filled(recipientFields({ supporter: { name: "Apple", contact_name: "Tim Cook" } })), "Dear Tim Cook,");
+  assert.equal(filled(recipientFields({ supporter: { name: "Apple", salutation: "Mr. Cook" } })), "Dear Mr. Cook,");
+  assert.equal(filled(recipientFields({ supporter: { name: "GRWM Team" } })), "Dear GRWM Team,");
+  assert.equal(filled(recipientFields({ beneficiary: { name: "Pawssion Project" } })), "Dear Pawssion Project team,");
+  assert.equal(filled(recipientFields({ contact: { category: "sponsor", name: "Aquaflask" } })), "Dear Aquaflask team,");
+  assert.equal(filled(recipientFields({ contact: { category: "sponsor", name: "Jessie", organization: "Aquaflask" } })), "Dear Jessie,");
+  assert.equal(filled(recipientFields({ contact: { category: "donor", name: "Jessie Gabriel" } })), "Dear Jessie Gabriel,");
 });
