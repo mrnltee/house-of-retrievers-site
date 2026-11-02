@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 import { LETTER_STARTERS, blanksOf, fillLetter, letterBlocks, letterDate, letterWithOverride, missingBlanks, prepareLetter, recipientName } from "./letters.mjs";
 import { letterPdf, pdfSafe } from "./letterPdf.mjs";
 
-test("the nine starter letters are there, each with a subject", () => {
-  assert.equal(LETTER_STARTERS.length, 9);
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 9);
+test("the ten starter letters are there, each with a subject", () => {
+  assert.equal(LETTER_STARTERS.length, 10);
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 10);
   for (const l of LETTER_STARTERS) {
     assert.ok(l.subject, l.key);
+    if (l.key === "open-donation-letter") continue; // no addressee: its own test below
     // The guests-of-honor letter is written to Senator Zubiri by name.
     assert.match(l.cover, l.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : /^Dear \[Salutation\],/, l.key);
     if (l.key !== "invite-guests-of-honor") assert.match(l.body, /\[Their Contact Person\?\]\n\[Company Name\]\n\[Address\?\]/, l.key);
@@ -23,7 +24,7 @@ test("covering emails (owner's brief, 2026-10-27): portfolio link, official name
     assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
     assert.ok(l.cover.length <= 2000, l.key);
   }
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 9, "each cover is its own");
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 10, "each cover is its own");
   assert.deepEqual(blanksOf(`See our ${portfolio}.`).map((b) => b.label), []);
 });
 
@@ -81,7 +82,7 @@ test("every starter fills in and renders to a PDF", async () => {
     const values = Object.fromEntries(blanks.map((b) => [b.label, b.suggestion || "Sample"]));
     const p = prepareLetter(letter, { name: "Bark Boulevard PH", date: letterDate(new Date("2026-10-24T03:00:00Z")), values });
     assert.doesNotMatch(p.cover, /\[[^\]]+\](?!\(https:)/, `${letter.key}: cover still has a blank`);
-    assert.match(p.cover, letter.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : /^Dear Bark Boulevard PH,/);
+    assert.match(p.cover, letter.key === "invite-guests-of-honor" ? /^Dear Senator Zubiri,/ : letter.key === "open-donation-letter" ? /^Hi!/ : /^Dear Bark Boulevard PH,/);
     const pdf = await letterPdf(p.blocks, { title: p.subject });
     assert.equal(pdf.subarray(0, 5).toString(), "%PDF-", letter.key);
   }
@@ -187,4 +188,12 @@ test("the event's name is a fill-in, set once in Standard details (owner, 2026-1
   for (const l of LETTER_STARTERS) assert.doesNotMatch(`${l.subject}\n${l.cover}\n${l.body}`, /A Golden Beginning/, l.key);
   const out = fillLetter("Join us at “**[Event Name]**” ([Event Short Name]).", { values: { "Event Name": "A Golden Beginning: Paws & Purpose", "Event Short Name": "A Golden Beginning" } });
   assert.equal(out, "Join us at “**A Golden Beginning: Paws & Purpose**” (A Golden Beginning).");
+});
+
+test("the open donation letter has no addressee, so it can go out in any DM", () => {
+  const letter = LETTER_STARTERS.find((l) => l.key === "open-donation-letter");
+  const blanks = blanksOf(letter.subject, letter.cover, letter.body).map((b) => b.label);
+  for (const auto of ["Company Name", "Salutation", "Their Contact Person", "Address"]) assert.ok(!blanks.includes(auto), auto);
+  assert.match(letter.body, /CASH DONATION FORM/);
+  assert.match(letter.body, /\[HOR Account Number\]/);
 });
