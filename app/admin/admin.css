@@ -864,3 +864,8 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .paste-zone.paste-drop::after { opacity: 1; background: var(--a-success); border-color: var(--a-success); color: #fff; content: "Drop to upload"; }
 @media (hover: none) { .paste-zone::after { content: none !important; } .paste-zone { outline: 0 !important; } }
 @media (prefers-reduced-motion: reduce) { .paste-zone, .paste-zone::after { transition: none; } }
+
+/* Brand page: back link with Previous / Next through the directory (A–Z). */
+.record-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 12px; }
+.record-nav-step { display: inline-flex; align-items: center; gap: 8px; }
+.record-nav-step [aria-disabled="true"] { opacity: .4; pointer-events: none; }

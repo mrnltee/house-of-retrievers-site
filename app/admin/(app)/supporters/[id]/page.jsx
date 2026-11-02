@@ -22,15 +22,32 @@ export default async function SupporterPage({ params, searchParams }) {
   const [row] = await sql("SELECT * FROM supporters WHERE id = $1", [id]);
   if (!row) notFound();
   const base = await adminBase();
-  const [events, history] = await Promise.all([
+  const [events, history, around] = await Promise.all([
     brandHistory(row.id),
     sql("SELECT at, actor_email, action, details FROM activity_log WHERE details->>'supporterId' = $1 ORDER BY at DESC LIMIT 30", [id]),
+    // This brand and its neighbours in the directory's A–Z order, for Previous / Next.
+    sql(
+      `WITH o AS (SELECT id, name, row_number() OVER (ORDER BY lower(name), id)::int AS n, count(*) OVER ()::int AS total FROM supporters),
+            me AS (SELECT n FROM o WHERE id = $1)
+       SELECT o.id, o.name, o.n, o.total, o.n - me.n AS step FROM o, me WHERE o.n BETWEEN me.n - 1 AND me.n + 1 ORDER BY o.n`,
+      [id],
+    ),
   ]);
+  const prev = around.find((r) => r.step === -1);
+  const next = around.find((r) => r.step === 1);
+  const here = around.find((r) => r.step === 0);
   const joined = events.filter((e) => e.reply === "yes" && e.status === "published").length;
   const shown = isPublic(row, { joined });
   return (
     <>
-      <p className="small"><a href={`${base}/supporters`}>← Brands & Partners</a></p>
+      <nav className="record-nav small" aria-label="Brands">
+        <a href={`${base}/supporters`}>← Brands & Partners</a>
+        <span className="record-nav-step">
+          {prev ? <a className="btn ghost small" href={`${base}/supporters/${prev.id}`} title={prev.name}>‹ Previous</a> : <span className="btn ghost small" aria-disabled="true">‹ Previous</span>}
+          {here && <span className="muted">{here.n} of {here.total}</span>}
+          {next ? <a className="btn ghost small" href={`${base}/supporters/${next.id}`} title={next.name}>Next ›</a> : <span className="btn ghost small" aria-disabled="true">Next ›</span>}
+        </span>
+      </nav>
       <PageHead title={row.name} lead={[`Usually ${row.kind}`, row.category_label, supporterNumber(row), joined ? `Joined ${joined} event${joined === 1 ? "" : "s"}` : "", shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
         {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}
       </PageHead>
