@@ -848,3 +848,10 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .event-fills button.var-chip { cursor: pointer; border: 0; font: inherit; min-height: 28px; }
 .event-fills button.var-chip:hover, .event-fills button.var-chip:focus-visible { outline: 2px solid var(--a-gold); outline-offset: 1px; }
 .event-fills button.var-chip.is-used { background: var(--a-success); color: #fff; }
+
+/* Paste an image into an upload (PasteImages.jsx): a short note at the bottom. */
+.paste-toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 12px); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 999px; background: var(--a-ink); color: var(--a-ivory); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 60; }
+.paste-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .paste-toast { transition: none; } }
+.file-btn::after { content: " · or paste"; font-weight: 400; opacity: .7; }
+@media (hover: none) { .file-btn::after { content: none; } }
