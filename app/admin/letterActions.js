@@ -166,7 +166,8 @@ export async function sendLetters(data) {
     const parts = [sent.length ? `Sent “${letter.name}” to ${sent.length}` : "Nothing sent"];
     if (skipped.length) parts.push(`no email for ${skipped.join(", ")}`);
     if (failed.length) parts.push(`didn't go through for ${failed.join(", ")} (try again)`);
-    await backWith(event ? `/events/${event.id}/brands` : back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
+    const list = new URLSearchParams(back.split("?")[1] || "").get("list");
+    await backWith(event ? `/events/${event.id}/${["guests", "donors"].includes(list) ? list : "brands"}` : back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
   });
 }
 

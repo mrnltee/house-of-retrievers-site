@@ -104,6 +104,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
           <form id={`send-${g.key}`} method="get" action={`${base}/letters/send`}>
             <input type="hidden" name="letter" value={g.letter} />
             <input type="hidden" name="event" value={event.id} />
+            <input type="hidden" name="list" value="guests" />
             <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
                 <h2 style={{ margin: 0 }}>{g.label} <span className="muted small">({g.rows.length})</span></h2>

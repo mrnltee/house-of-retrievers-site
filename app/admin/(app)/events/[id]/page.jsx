@@ -29,6 +29,7 @@ export default async function EditEventPage({ params, searchParams }) {
       <PageHead title={event.title} lead={`Status: ${event.status}`}>
         {can(admin, "supporters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/brands`}>Brands &amp; partnerships</a>}
         {can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/guests`}>Guest list</a>}
+        {can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/donors`}>Donors</a>}
         {can(admin, "letters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/letters`}>Letters</a>}
         {event.registration === "required" && <a className="btn ghost" href={`${base}/registrations/${event.id}`}>RSVPs</a>}
         {event.status === "published" && <a className="btn ghost" href={eventUrl(event.slug)} target="_blank" rel="noreferrer">View event page</a>}

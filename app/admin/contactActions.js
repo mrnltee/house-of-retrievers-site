@@ -4,6 +4,7 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { cleanContact } from "../lib/contacts.mjs";
+import { cleanEventDonor } from "../lib/eventDonors.mjs";
 import { pictureFrom } from "../lib/admin/imageUpload";
 
 const form = (data, key) => {
@@ -11,6 +12,12 @@ const form = (data, key) => {
   return typeof value === "string" ? value : "";
 };
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
+// An event's guest list, or its donor list (owner, 2026-11-02): the same people, a different table.
+const LISTS = {
+  guests: { table: "event_guests", one: "guest", name: "guest list" },
+  donors: { table: "event_donors", one: "donor", name: "donor list" },
+};
+const listOf = (data) => (form(data, "list") === "donors" ? "donors" : "guests");
 const fields = (data) => Object.fromEntries(["category", "name", "organization", "email", "phone", "handle", "address", "salutation", "notes", "repName", "repEmail", "repPhone", "sendTo"].map((k) => [k, form(data, k)]));
 
 async function guarded(path, work) {
@@ -27,7 +34,9 @@ export async function saveContact(data) {
   const id = form(data, "id");
   // From an event's guest list: the new guest joins that event, and every step goes back there.
   const eventId = isUuid(form(data, "event")) ? form(data, "event") : null;
-  const eventBack = eventId ? `/events/${eventId}/guests` : null;
+  const list = listOf(data);
+  const { table } = LISTS[list];
+  const eventBack = eventId ? `/events/${eventId}/${list}` : null;
   const back = eventBack || (isUuid(id) ? `/guests/${id}` : "/guests");
   return guarded(back, async () => {
     const admin = await actionAdmin("guests:edit");
@@ -49,16 +58,16 @@ export async function saveContact(data) {
     if (dupe && !eventId) await backWith(`/guests?category=${c.category}`, "error", `${c.name} is already in this category.`);
     if (dupe) {
       // Already a guest from another event: add that same person to this event.
-      await sql("INSERT INTO event_guests (event_id, contact_id, added_by) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", [eventId, dupe.id, admin.email]);
+      await sql(`INSERT INTO ${table} (event_id, contact_id, added_by) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [eventId, dupe.id, admin.email]);
       await backWith(eventBack, "ok", `${c.name} was already in your guests; added them to this event.`);
     }
     const [row] = await sql(
       `INSERT INTO letter_contacts (category, name, organization, email, phone, handle, notes, created_by, address, salutation, photo, logo, rep_name, rep_email, rep_phone, send_to) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
       [c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, admin.email, c.address, c.salutation, photo.url, logo.url, c.repName, c.repEmail, c.repPhone, c.sendTo],
     );
-    if (eventId) await sql("INSERT INTO event_guests (event_id, contact_id, added_by) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", [eventId, row.id, admin.email]);
+    if (eventId) await sql(`INSERT INTO ${table} (event_id, contact_id, added_by) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [eventId, row.id, admin.email]);
     await logActivity(admin.email, "contact.add", c.name, { category: c.category, contactId: row.id, ...(eventId ? { eventId } : {}) });
-    await backWith(eventBack || `/guests?category=${c.category}`, "ok", `Added ${c.name}${eventId ? " to this event's guest list" : ""}.`);
+    await backWith(eventBack || `/guests?category=${c.category}`, "ok", `Added ${c.name}${eventId ? ` to this event's ${LISTS[list].name}` : ""}.`);
   });
 }
 
@@ -74,10 +83,12 @@ export async function removeContact(data) {
   });
 }
 
-/** An event's guest list: add people from earlier guest lists. Nothing is emailed. */
+/** An event's guest or donor list: add people from earlier lists. Nothing is emailed. */
 export async function addGuestsToEvent(data) {
   const eventId = form(data, "event");
-  const back = isUuid(eventId) ? `/events/${eventId}/guests` : "/events";
+  const list = listOf(data);
+  const { table, one } = LISTS[list];
+  const back = isUuid(eventId) ? `/events/${eventId}/${list}` : "/events";
   return guarded(back, async () => {
     const admin = await actionAdmin("guests:edit");
     const [event] = isUuid(eventId) ? await sql("SELECT id, title FROM events WHERE id = $1", [eventId]) : [];
@@ -85,13 +96,13 @@ export async function addGuestsToEvent(data) {
     const ids = [...new Set(data.getAll("contact").filter(isUuid))];
     if (!ids.length) await backWith(back, "error", "Tick at least one person to add.");
     const added = await sql(
-      `INSERT INTO event_guests (event_id, contact_id, added_by)
+      `INSERT INTO ${table} (event_id, contact_id, added_by)
        SELECT $1, c.id, $3 FROM letter_contacts c WHERE c.id = ANY($2::uuid[]) AND c.deleted_at IS NULL
        ON CONFLICT DO NOTHING RETURNING contact_id`,
       [event.id, ids, admin.email],
     );
-    if (added.length) await logActivity(admin.email, "event.guest.add", event.title, { eventId: event.id, added: added.length });
-    await backWith(back, "ok", `Added ${added.length} guest${added.length === 1 ? "" : "s"} to this event. Nothing was emailed.`);
+    if (added.length) await logActivity(admin.email, `event.${one}.add`, event.title, { eventId: event.id, added: added.length });
+    await backWith(back, "ok", `Added ${added.length} ${one}${added.length === 1 ? "" : "s"} to this event. Nothing was emailed.`);
   });
 }
 
@@ -124,5 +135,41 @@ export async function removeEventGuest(data) {
     const gone = isUuid(eventId) && isUuid(contactId) ? await sql("DELETE FROM event_guests WHERE event_id=$1 AND contact_id=$2 RETURNING contact_id", [eventId, contactId]) : [];
     if (gone.length) await logActivity(admin.email, "event.guest.remove", "", { eventId, contactId });
     await backWith(back, "ok", gone.length ? "Taken off this event's guest list." : "Already off the list.");
+  });
+}
+
+/** An event's donor list: save one donor's donation for this event (amounts, receipt, thanks). */
+export async function saveEventDonor(data) {
+  const eventId = form(data, "event");
+  const back = isUuid(eventId) ? `/events/${eventId}/donors` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("guests:edit");
+    const contactId = form(data, "contact");
+    const { donor: d, error } = cleanEventDonor(Object.fromEntries(["status", "askedVia", "amount", "method", "receivedOn", "reference", "receiptName", "receiptAddress", "acknowledge", "publicName", "notes"].map((k) => [k, form(data, k)])));
+    if (error) await backWith(back, "error", error);
+    const [row] = isUuid(eventId) && isUuid(contactId)
+      ? await sql(
+        `UPDATE event_donors SET status=$3, asked_via=$4, amount=$5, method=$6, received_on=$7, reference=$8, receipt_name=$9, receipt_address=$10, acknowledge=$11, public_name=$12, notes=$13, updated_at=now()
+          WHERE event_id=$1 AND contact_id=$2 RETURNING contact_id`,
+        [eventId, contactId, d.status, d.askedVia, d.amount, d.method, d.receivedOn, d.reference, d.receiptName, d.receiptAddress, d.acknowledge, d.publicName, d.notes],
+      )
+      : [];
+    if (!row) await backWith(back, "error", "That donor isn't on this event's list.");
+    const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
+    await logActivity(admin.email, "event.donor.save", c?.name || "", { eventId, contactId, status: d.status, amount: d.amount });
+    await backWith(back, "ok", `Saved ${c?.name || "the donor"}.`);
+  });
+}
+
+/** An event's donor list: take someone off this event (they stay available for other events). */
+export async function removeEventDonor(data) {
+  const eventId = form(data, "event");
+  const back = isUuid(eventId) ? `/events/${eventId}/donors` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("guests:edit");
+    const contactId = form(data, "contact");
+    const gone = isUuid(eventId) && isUuid(contactId) ? await sql("DELETE FROM event_donors WHERE event_id=$1 AND contact_id=$2 RETURNING contact_id", [eventId, contactId]) : [];
+    if (gone.length) await logActivity(admin.email, "event.donor.remove", "", { eventId, contactId });
+    await backWith(back, "ok", gone.length ? "Taken off this event's donor list." : "Already off the list.");
   });
 }
