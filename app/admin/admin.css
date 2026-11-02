@@ -853,5 +853,14 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .paste-toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 12px); max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 999px; background: var(--a-ink); color: var(--a-ivory); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 60; }
 .paste-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .paste-toast { transition: none; } }
-.file-btn::after { content: " · or paste"; font-weight: 400; opacity: .7; }
-@media (hover: none) { .file-btn::after { content: none; } }
+/* Image upload boxes (PasteImages.jsx): hover says how to paste; a clicked box is ready for ⌘V; drag a file onto it. */
+.paste-zone { position: relative; border-radius: 10px; outline: 2px dashed transparent; outline-offset: 4px; transition: outline-color .15s ease; }
+.paste-zone::after { position: absolute; right: 6px; top: -14px; padding: 3px 10px; border-radius: 999px; background: var(--a-ivory); border: 1px solid var(--a-line); color: var(--a-gold-ink); font-size: 12px; font-weight: 600; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s ease; z-index: 2; content: "Click here to paste an image"; }
+.paste-zone:hover { outline-color: var(--a-line); cursor: copy; }
+.paste-zone:hover::after { opacity: 1; }
+.paste-zone.paste-ready { outline-color: var(--a-gold); }
+.paste-zone.paste-ready::after { opacity: 1; background: var(--a-gold); border-color: var(--a-gold); color: var(--a-ink); content: "Now press " attr(data-paste-key) " to paste"; }
+.paste-zone.paste-drop { outline-color: var(--a-success); }
+.paste-zone.paste-drop::after { opacity: 1; background: var(--a-success); border-color: var(--a-success); color: #fff; content: "Drop to upload"; }
+@media (hover: none) { .paste-zone::after { content: none !important; } .paste-zone { outline: 0 !important; } }
+@media (prefers-reduced-motion: reduce) { .paste-zone, .paste-zone::after { transition: none; } }

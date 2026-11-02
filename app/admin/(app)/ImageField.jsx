@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PasteButton from "./PasteButton";
 
 /** Shrinks a picked picture in the browser, keeping transparency (WebP, else PNG). */
 async function shrink(file, maxEdge, format) {
@@ -55,6 +56,7 @@ export default function ImageField({ name, label, hint, current = "", round = fa
             {preview ? `Replace ${label.toLowerCase()}` : `Upload ${label.toLowerCase()}`}
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} hidden />
           </label>
+          <PasteButton />
           {preview && <button type="button" className="linkish danger-text" data-confirm="not-needed-read-only" onClick={() => { setPreview(""); setData(""); setRemoved(true); onChange?.(""); }}>Remove</button>}
         </div>
         {note && <p className="small error-text" role="alert">{note}</p>}

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { loadBitmap } from "../../../lib/resizeImage";
 import { removePersonPhoto, uploadPersonPhoto } from "../../actions";
 import ConfirmButton from "../ConfirmButton";
+import PasteButton from "../PasteButton";
 
 /** Longest side sent up; the server keeps a 480 px WebP copy. */
 const EDGE = 960;
@@ -60,6 +61,7 @@ export default function PersonPhotoField({ personId, current, name }) {
             {current ? "Change photo" : "Add a photo"}
             <input ref={input} type="file" accept="image/*" onChange={pick} hidden />
           </label>
+          <PasteButton />
           {current && (
             <form action={removePersonPhoto}>
               <input type="hidden" name="id" value={personId} />

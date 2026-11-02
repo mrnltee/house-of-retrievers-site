@@ -5,6 +5,7 @@ import { loadBitmap } from "../../../lib/resizeImage";
 import { uploadWelcomePhoto, useInitialsWelcomePhoto, useProfileWelcomePhoto } from "../../registrationActions";
 import { welcomePhotoOptions } from "../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../ConfirmButton";
+import PasteButton from "../PasteButton";
 
 /** Longest side sent up; the server keeps a 480 px WebP copy. */
 const EDGE = 960;
@@ -78,6 +79,7 @@ export default function WelcomePhotoField({ registrationId, name, source, hasMat
             {source === "own" ? "Change photo" : "Upload a photo"}
             <input ref={input} type="file" accept="image/*" onChange={pick} hidden />
           </label>
+          <PasteButton />
           {options.useProfile && (
             <form action={useProfileWelcomePhoto}>
               <input type="hidden" name="id" value={registrationId} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PasteButton from "../PasteButton";
 
 /** Longest side of a stored logo; plenty for a 360 px tile on a retina screen. */
 const MAX_EDGE = 800;
@@ -52,6 +53,7 @@ export default function LogoField({ current }) {
             {preview ? "Replace logo" : "Upload logo"}
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} hidden />
           </label>
+          <PasteButton />
           {preview && (
             <button type="button" className="linkish danger-text" onClick={() => { setPreview(""); setData(""); setRemoved(true); }}>Remove</button>
           )}

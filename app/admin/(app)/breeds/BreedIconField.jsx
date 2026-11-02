@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { uploadBreedIcon } from "../../breedActions";
 import ConfirmButton from "../ConfirmButton";
+import PasteButton from "../PasteButton";
 
 /** Pick a file, see it next to the current icon, then save (asks first). */
 export default function BreedIconField({ breedKey, label }) {
@@ -31,7 +32,8 @@ export default function BreedIconField({ breedKey, label }) {
           <button type="button" className="linkish" onClick={() => { setFile(null); if (input.current) input.current.value = ""; }}>Cancel</button>
         </form>
       ) : (
-        <label className="btn ghost small file-btn">Upload icon<input ref={input} type="file" accept="image/svg+xml,image/png,image/webp" onChange={pick} hidden /></label>
+        <><label className="btn ghost small file-btn">Upload icon<input ref={input} type="file" accept="image/svg+xml,image/png,image/webp" onChange={pick} hidden /></label>
+          <PasteButton /></>
       )}
       {note && <p className="small error-text" role="alert">{note}</p>}
     </div>
