@@ -1225,7 +1225,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .event-supporters li.has-logo a:hover, .event-supporters li.has-logo a:focus-visible { background: rgba(167, 132, 64, .12); }
 .event-supporters li.has-initial { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; }
 .event-supporter-logo { display: inline-grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid rgba(13, 13, 13, .14); border-radius: 50%; background: var(--paper); overflow: hidden; }
-.event-supporter-logo img { width: 32px; height: 32px; border-radius: 50%; object-fit: contain; }
+.event-supporter-logo img { width: 24px; height: 24px; object-fit: contain; }
 .event-supporter-initial { font-size: 15px; font-weight: 700; line-height: 1; color: var(--gold-on-light); }
 .event-supporters li.has-logo svg { color: var(--gold-on-light); }
 .event-map { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 16px; margin-top: 8px; }
@@ -1286,7 +1286,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .supporter-wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 200px)); justify-content: start; gap: 20px; }
 .supporter-tile { width: 100%; display: grid; gap: 10px; justify-items: center; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; font: inherit; }
 .supporter-tile .supporter-logo { width: 100%; aspect-ratio: 1; }
-.supporter-logo { display: grid; place-items: center; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px 22px; transition: box-shadow .2s, transform .2s; }
+.supporter-logo { display: grid; place-items: center; aspect-ratio: 1; background: #fff; border: 1px solid var(--line); border-radius: 50%; padding: 17%; overflow: hidden; transition: box-shadow .2s, transform .2s; }
 .supporter-logo img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
 .supporter-tile:hover .supporter-logo { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(17, 17, 17, .08); }
 .supporter-tile:focus-visible { outline: none; }
@@ -1304,7 +1304,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 @media (max-width: 1120px) { .supporter-wall { grid-template-columns: repeat(4, minmax(0, 200px)); } }
 @media (max-width: 900px) { .supporter-wall { grid-template-columns: repeat(3, minmax(0, 200px)); } }
 @media (max-width: 700px) { .supporter-wall { grid-template-columns: repeat(2, minmax(0, 200px)); } }
-@media (max-width: 560px) { .supporters-cta .button { width: 100%; } .supporter-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } .supporter-slider { --slide-gap: 14px; --slide-tile: 150px; } .supporter-logo { padding: 12px 14px; border-radius: 14px; } }
+@media (max-width: 560px) { .supporters-cta .button { width: 100%; } .supporter-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } .supporter-slider { --slide-gap: 14px; --slide-tile: 150px; } .supporter-logo { padding: 16%; } }
 
 .beneficiaries { padding-top: clamp(64px, 8vw, 110px); padding-bottom: clamp(64px, 8vw, 110px); }
 .supporters + .beneficiaries { padding-top: 0; }
@@ -1333,7 +1333,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .supporter-dialog::backdrop { background: rgba(13, 13, 13, .78); backdrop-filter: blur(6px); }
 .supporter-dialog-body { padding: clamp(22px, 4vw, 34px); display: grid; gap: 16px; }
 .supporter-dialog-top { display: grid; grid-template-columns: 132px 1fr auto; gap: 16px; align-items: center; }
-.supporter-dialog-top .supporter-logo { aspect-ratio: 3 / 2; padding: 12px; border-radius: 14px; }
+.supporter-dialog-top .supporter-logo { width: 116px; justify-self: center; padding: 18px; }
 .supporter-dialog h3 { font: 400 clamp(26px, 3vw, 32px)/1.1 "DM Serif Display", serif; margin: 6px 0 0; }
 .supporter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 .supporter-chip { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: var(--taupe); font-size: 12px; font-weight: 700; color: var(--ink); }

@@ -482,7 +482,7 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .supporter-card:hover, .supporter-card:focus-visible { border-color: var(--a-ink); }
 .supporter-card-top { display: flex; gap: 14px; align-items: center; }
 .supporter-card-top strong { display: block; font-size: 16px; margin-bottom: 6px; }
-.supporter-card-logo { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 12px; background: white; border: 1px solid var(--a-line, #cfc8b6); font-weight: 700; color: var(--a-muted); overflow: hidden; padding: 6px; }
+.supporter-card-logo { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: white; border: 1px solid var(--a-line, #cfc8b6); font-weight: 700; color: var(--a-muted); overflow: hidden; padding: 9px; }
 .supporter-card-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip.tier-pack-leader { background: var(--a-ink); color: #c9a95c; }
@@ -495,12 +495,14 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .supporter-grid { grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); align-items: start; }
 @media (max-width: 1000px) { .supporter-grid { grid-template-columns: 1fr; } }
 .supporter-list-name { display: flex; align-items: center; gap: 10px; min-width: 220px; }
-.supporter-list-name .supporter-card-logo { width: 42px; height: 42px; border-radius: 10px; }
+.supporter-list-name .supporter-card-logo { width: 42px; height: 42px; padding: 7px; }
 .supporter-id-cell { font: 600 12px/1.4 ui-monospace, Menlo, monospace; white-space: nowrap; }
 .supporter-list-support { min-width: 200px; max-width: 340px; }
 .logo-field { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
 .logo-preview { width: 200px; aspect-ratio: 27 / 14; display: grid; place-items: center; background: white; border: 1px solid var(--a-line, #cfc8b6); border-radius: 14px; padding: 14px; }
 .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* Brand logos sit in a white circle, as on the website. */
+.logo-preview.brand-circle { width: 180px; aspect-ratio: 1; border-radius: 50%; padding: 30px; overflow: hidden; }
 .file-btn { cursor: pointer; }
 .danger-text { color: #be4040; }
 .error-text { color: #be4040; margin: 0; }

@@ -45,9 +45,9 @@ export default function LogoField({ current }) {
 
   return (
     <div className="logo-field">
-      <div className="logo-preview">{preview ? <img src={preview} alt="Logo preview" /> : <span className="muted small">No logo yet</span>}</div>
+      <div className="logo-preview brand-circle">{preview ? <img src={preview} alt="Logo preview" /> : <span className="muted small">No logo yet</span>}</div>
       <div className="form" style={{ gap: 8 }}>
-        <span className="field-head">Logo <small>PNG with a transparent background works best. Shown in a white tile, so dark and light logos both read.</small></span>
+        <span className="field-head">Logo <small>PNG with a transparent background works best. Shown in a white circle, so dark and light logos both read.</small></span>
         <div className="actions">
           <label className="btn ghost small file-btn">
             {preview ? "Replace logo" : "Upload logo"}
