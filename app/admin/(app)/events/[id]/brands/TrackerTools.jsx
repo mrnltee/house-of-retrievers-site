@@ -20,7 +20,7 @@ export default function TrackerTools({ counts, sort }) {
   useEffect(() => {
     let n = 0;
     rowsOf().forEach((tr) => {
-      const show = (!reply || tr.dataset.reply === reply) && fuzzyMatch(q, tr.dataset.search);
+      const show = (!reply || (reply === "unsent" ? tr.dataset.sent === "no" : tr.dataset.reply === reply)) && fuzzyMatch(q, tr.dataset.search);
       tr.hidden = !show;
       if (show) n++;
     });
@@ -33,14 +33,14 @@ export default function TrackerTools({ counts, sort }) {
     router.refresh();
   }
 
-  const filters = [["", `All ${counts.invited}`, ""], ["yes", `Said yes ${counts.yes}`, "good"], ["no", `Said no ${counts.no}`, "alert"], ["waiting", `No reply yet ${counts.waiting}`, ""]];
+  const filters = [["", `All ${counts.invited}`, ""], ["yes", `Said yes ${counts.yes}`, "good"], ["no", `Said no ${counts.no}`, "alert"], ["waiting", `No reply yet ${counts.waiting}`, ""], ["unsent", `No invite sent ${counts.unsent}`, ""]];
   return (
     <div className="tracker-tools">
       <label className="tracker-search">
         <span className="sr-only">Search the tracker</span>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search brand, contact, email, letter…" autoComplete="off" />
       </label>
-      <div className="tracker-filters" role="group" aria-label="Show by reply">
+      <div className="tracker-filters" role="group" aria-label="Show by reply or invite">
         {filters.map(([key, label, tone]) => (
           <button key={key || "all"} type="button" data-confirm="not-needed-read-only" className={`chip ${tone} tracker-filter`.trim()} aria-pressed={reply === key} onClick={() => setReply(key)}>{label}</button>
         ))}

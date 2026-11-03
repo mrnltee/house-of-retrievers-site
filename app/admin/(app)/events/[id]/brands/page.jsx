@@ -105,13 +105,13 @@ export default async function BrandTrackerPage({ params, searchParams }) {
             {canSend && rows.length > 0 && <TickedSubmit />}
           </div>
         </form>
-        {rows.length > 0 && <TrackerTools counts={counts} sort={sort} />}
+        {rows.length > 0 && <TrackerTools counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} />}
         <div className="table-wrap tracker-table">
           <table>
             <thead><tr>{canSend && <th>{rows.length > 0 ? <SelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Brand</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
             <tbody id="tracker-rows">
               {sorted.map((r) => (
-                <tr key={r.supporter_id} data-row="" data-reply={r.reply} data-search={searchText(r)}>
+                <tr key={r.supporter_id} data-row="" data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
                   {canSend && <td><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong">
                     <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}</span></span></span>
