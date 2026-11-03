@@ -11,7 +11,7 @@ const rowsOf = () => [...document.querySelectorAll("#tracker-rows > tr[data-row]
  * The Brand tracker's toolbar: forgiving search, reply filter (with counts) and sort.
  * Search and filter hide rows in place; sorting is done by the server and remembered.
  */
-export default function TrackerTools({ counts, sort }) {
+export default function TrackerTools({ counts, sort, publicNote = "" }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [reply, setReply] = useState("");
@@ -33,7 +33,7 @@ export default function TrackerTools({ counts, sort }) {
     router.refresh();
   }
 
-  const filters = [["", `All ${counts.invited}`, ""], ["yes", `Said yes ${counts.yes}`, "good"], ["no", `Said no ${counts.no}`, "alert"], ["waiting", `No reply yet ${counts.waiting}`, ""], ["unsent", `No invite sent ${counts.unsent}`, ""]];
+  const filters = [["", "All", counts.invited, ""], ["yes", "Said yes", counts.yes, "good"], ["no", "Said no", counts.no, "alert"], ["waiting", "No reply yet", counts.waiting, ""], ["unsent", "No invite sent", counts.unsent, ""]];
   return (
     <div className="tracker-tools">
       <label className="tracker-search">
@@ -41,17 +41,19 @@ export default function TrackerTools({ counts, sort }) {
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search brand, contact, email, letter…" autoComplete="off" />
       </label>
       <div className="tracker-filters" role="group" aria-label="Show by reply or invite">
-        {filters.map(([key, label, tone]) => (
-          <button key={key || "all"} type="button" data-confirm="not-needed-read-only" className={`chip ${tone} tracker-filter`.trim()} aria-pressed={reply === key} onClick={() => setReply(key)}>{label}</button>
+        {filters.map(([key, label, n, tone]) => (
+          <button key={key || "all"} type="button" data-confirm="not-needed-read-only" className={`tracker-filter ${tone}`.trim()} aria-pressed={reply === key} onClick={() => setReply(key)} title={key === "yes" ? publicNote : undefined}>
+            {label} <span className="tracker-count">{n}</span>
+          </button>
         ))}
       </div>
       <label className="tracker-sort">
-        <span className="small muted">Sort</span>
+        <span className="sr-only">Sort</span>
         <select value={sort} onChange={(e) => pickSort(e.target.value)}>
           {TRACKER_SORTS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select>
       </label>
-      {(q || reply) && <p className="small muted tracker-shown" aria-live="polite">{shown ? `Showing ${shown} of ${counts.invited}` : "No brands match. Try fewer or different words."}</p>}
+      <p className="small muted tracker-shown" aria-live="polite">{q || reply ? (shown ? `Showing ${shown} of ${counts.invited}. ` : "No brands match. Try fewer or different words. ") : ""}{publicNote}</p>
     </div>
   );
 }

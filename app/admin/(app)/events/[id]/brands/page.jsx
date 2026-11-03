@@ -16,7 +16,7 @@ import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
 import SendStatus from "../../../SendStatus";
-import TickedSubmit from "../../../TickedSubmit";
+import SelectionBar from "./SelectionBar";
 import TrackerTools from "./TrackerTools";
 import SelectAll from "./SelectAll";
 import InviteDialog from "./InviteDialog";
@@ -69,8 +69,8 @@ export default async function BrandTrackerPage({ params, searchParams }) {
 
   return (
     <>
-      <PageHead title="Brand tracker" lead={`${event.title} · ${event.date ? formatDay(event.date) : "date to be set"}. Brands invited to this event only: their invite letter, their reply and what they're giving.`}>
-        <a className="btn ghost" href={`${base}/events/${event.id}`}>Back to the event</a>
+      <p className="small"><a href={`${base}/events/${event.id}`}>← {event.title}</a></p>
+      <PageHead title="Brand tracker" lead={`${event.date ? formatDay(event.date) : "Date to be set"} · who you invited, their reply and what they're giving.`}>
         <a className="btn ghost" href={`${base}/supporters`}>Brand directory</a>
         {canEdit && (
           <InviteDialog>
@@ -97,15 +97,9 @@ export default async function BrandTrackerPage({ params, searchParams }) {
         <form id="tracker-send" method="get" action={`${base}/letters/send`}>
           <input type="hidden" name="letter" value={letter} />
           <input type="hidden" name="event" value={event.id} />
-          <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-            <div>
-              <h2 style={{ margin: 0 }}>Invited brands <span className="muted small">({rows.length})</span></h2>
-              <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${letter}`}>{letterName(letter)}</a>. You can pick another letter on the next page, or <a href={`${base}/events/${event.id}/letters`}>make one for this event</a>. Only brands that said <strong>Yes</strong> show on this event&apos;s page and on the home page.</p>
-            </div>
-            {canSend && rows.length > 0 && <TickedSubmit hint="Select at least one brand" />}
-          </div>
         </form>
-        {rows.length > 0 && <TrackerTools counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} />}
+        {rows.length > 0 && <TrackerTools publicNote="Only brands that said Yes show on this event’s page and on the home page." counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} />}
+        {canSend && rows.length > 0 && <SelectionBar letterHref={`${base}/letters/${letter}`} letterName={letterName(letter)} ownLetterHref={`${base}/events/${event.id}/letters`} />}
         <div className="table-wrap tracker-table">
           <table>
             <thead><tr>{canSend && <th>{rows.length > 0 ? <SelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Brand</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
@@ -155,7 +149,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                     )}
                   </td>
                   <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
-                  <td className="small"><SendStatus sends={sendsOf(r)} letterName={letterName} /></td>
+                  <td className="small"><SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} /></td>
                   <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
                   <td className="small">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} people`, r.dogs_attending && `${r.dogs_attending} dogs`].filter(Boolean).join(", ")} coming</span></> : null}</td>
                 </tr>
