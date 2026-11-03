@@ -8,7 +8,7 @@ import { useEffect, useId, useRef, useState } from "react";
  * person's email and PDF) and sends nothing itself, hence "Review & send",
  * with the count when more than one is ticked (owner, 2026-10-31).
  */
-export default function TickedSubmit({ className = "btn dark" }) {
+export default function TickedSubmit({ className = "btn dark", hint: hintText = "Tick at least one person" }) {
   const button = useRef(null);
   const [count, setCount] = useState(0);
   const hint = useId();
@@ -26,7 +26,7 @@ export default function TickedSubmit({ className = "btn dark" }) {
       <button ref={button} type="submit" className={className} disabled={count === 0} aria-describedby={count === 0 ? hint : undefined} data-confirm="not-needed-read-only">
         {count > 1 ? `Review & send (${count})` : "Review & send"}
       </button>
-      {count === 0 && <span id={hint} className="small muted">Tick at least one person</span>}
+      {count === 0 && <span id={hint} className="small muted">{hintText}</span>}
     </>
   );
 }

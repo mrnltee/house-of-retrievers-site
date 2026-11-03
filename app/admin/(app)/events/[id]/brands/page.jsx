@@ -102,7 +102,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
               <h2 style={{ margin: 0 }}>Invited brands <span className="muted small">({rows.length})</span></h2>
               <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${letter}`}>{letterName(letter)}</a>. You can pick another letter on the next page, or <a href={`${base}/events/${event.id}/letters`}>make one for this event</a>. Only brands that said <strong>Yes</strong> show on this event&apos;s page and on the home page.</p>
             </div>
-            {canSend && rows.length > 0 && <TickedSubmit />}
+            {canSend && rows.length > 0 && <TickedSubmit hint="Select at least one brand" />}
           </div>
         </form>
         {rows.length > 0 && <TrackerTools counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} />}
