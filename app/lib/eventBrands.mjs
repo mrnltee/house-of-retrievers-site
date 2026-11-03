@@ -84,3 +84,32 @@ export function publicNames(arrayNames = [], yesNames = [], directoryNames = [])
 
 /** When the Brand trackers can't be read: no brand names at all, never unchecked ones (a "No" must not show). */
 export const withoutBrands = (row) => ({ ...row, partners: [], sponsors: [] });
+
+/** Brand tracker sort choices (remembered in the tracker_sort cookie). */
+export const TRACKER_SORTS = [
+  ["name", "Name A–Z"],
+  ["name-desc", "Name Z–A"],
+  ["sent-new", "Sent: newest first"],
+  ["sent-old", "Sent: oldest first"],
+  ["reply", "Reply: yes, waiting, no"],
+];
+export const trackerSort = (value) => (TRACKER_SORTS.some(([k]) => k === value) ? value : "name");
+
+/**
+ * Orders tracker rows. `sentAt(row)` gives the latest letter time (Date, string or null);
+ * rows never sent go last for both "sent" orders. Ties fall back to name A–Z.
+ */
+export function sortTracker(rows = [], sort = "name", sentAt = () => null) {
+  const name = (r) => String(r.name || "").toLocaleLowerCase("en");
+  const byName = (a, b) => name(a).localeCompare(name(b), "en");
+  const time = (r) => { const t = sentAt(r); return t ? new Date(t).getTime() : null; };
+  const replyRank = { yes: 0, waiting: 1, no: 2 };
+  const pick = {
+    name: byName,
+    "name-desc": (a, b) => byName(b, a),
+    "sent-new": (a, b) => (time(a) == null) - (time(b) == null) || (time(b) ?? 0) - (time(a) ?? 0) || byName(a, b),
+    "sent-old": (a, b) => (time(a) == null) - (time(b) == null) || (time(a) ?? 0) - (time(b) ?? 0) || byName(a, b),
+    reply: (a, b) => (replyRank[a.reply] ?? 1) - (replyRank[b.reply] ?? 1) || byName(a, b),
+  }[trackerSort(sort)];
+  return [...rows].sort(pick);
+}

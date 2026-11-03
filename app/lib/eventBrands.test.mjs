@@ -37,3 +37,23 @@ test("if the trackers can't be read, an event shows no brand names rather than u
   const { withoutBrands } = await import("./eventBrands.mjs");
   assert.deepEqual(withoutBrands({ id: "e1", title: "T", partners: ["Novotel"], sponsors: ["GRWM"] }), { id: "e1", title: "T", partners: [], sponsors: [] });
 });
+
+test("tracker sort: names both ways, sent newest/oldest with unsent last, reply", async () => {
+  const { sortTracker, trackerSort } = await import("./eventBrands.mjs");
+  const rows = [
+    { name: "bravo", reply: "no" },
+    { name: "Alpha", reply: "waiting" },
+    { name: "Charlie", reply: "yes" },
+    { name: "Delta", reply: "waiting" },
+  ];
+  const sent = { bravo: "2026-11-02T10:00:00Z", Alpha: "2026-11-03T09:00:00Z", Charlie: null, Delta: "2026-11-01T08:00:00Z" };
+  const at = (r) => sent[r.name];
+  const names = (sort) => sortTracker(rows, sort, at).map((r) => r.name).join(",");
+  assert.equal(names("name"), "Alpha,bravo,Charlie,Delta");
+  assert.equal(names("name-desc"), "Delta,Charlie,bravo,Alpha");
+  assert.equal(names("sent-new"), "Alpha,bravo,Delta,Charlie");
+  assert.equal(names("sent-old"), "Delta,bravo,Alpha,Charlie");
+  assert.equal(names("reply"), "Charlie,Alpha,Delta,bravo");
+  assert.equal(trackerSort("nonsense"), "name");
+  assert.equal(names("nonsense"), "Alpha,bravo,Charlie,Delta");
+});

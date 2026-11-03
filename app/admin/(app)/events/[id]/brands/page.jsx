@@ -1,11 +1,12 @@
 import GreetingFields from "../../../supporters/GreetingFields";
 import { recipientFields } from "../../../../../lib/letters.mjs";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
 import { GIVES } from "../../../../../lib/supporters.mjs";
-import { REPLIES, ROLES, replyLabel, trackerCounts } from "../../../../../lib/eventBrands.mjs";
+import { REPLIES, ROLES, replyLabel, sortTracker, trackerCounts, trackerSort } from "../../../../../lib/eventBrands.mjs";
 import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
@@ -16,6 +17,9 @@ import { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
 import SendStatus from "../../../SendStatus";
 import TickedSubmit from "../../../TickedSubmit";
+import TrackerTools from "./TrackerTools";
+import SelectAll from "./SelectAll";
+import InviteDialog from "./InviteDialog";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
@@ -56,61 +60,58 @@ export default async function BrandTrackerPage({ params, searchParams }) {
   const invited = new Set(rows.map((r) => r.supporter_id));
   const notInvited = directory.filter((d) => !invited.has(d.id));
   const counts = trackerCounts(rows);
+  const sendsOf = (r) => sends[`supporter:${r.supporter_id}`] || [];
+  const lastSent = (r) => sendsOf(r).reduce((max, x) => (!max || new Date(x.sent_at) > new Date(max) ? x.sent_at : max), null);
+  const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value);
+  const sorted = sortTracker(rows, sort, lastSent);
+  // Words the tracker search looks through for each row.
+  const searchText = (r) => [r.name, r.role, r.contact_name, r.contact_email, recipientFields({ supporter: r }).salutation, replyLabel(r.reply), giving(r), ...sendsOf(r).slice(0, 1).flatMap((x) => [letterName(x.letter_key), x.status])].filter(Boolean).join(" ");
 
   return (
     <>
       <PageHead title="Brand tracker" lead={`${event.title} · ${event.date ? formatDay(event.date) : "date to be set"}. Brands invited to this event only: their invite letter, their reply and what they're giving.`}>
         <a className="btn ghost" href={`${base}/events/${event.id}`}>Back to the event</a>
         <a className="btn ghost" href={`${base}/supporters`}>Brand directory</a>
+        {canEdit && (
+          <InviteDialog>
+            {notInvited.length === 0 ? (
+              <p className="small muted">Every brand in the directory is already on this tracker. <a href={`${base}/supporters/new`}>Add a brand</a>.</p>
+            ) : (
+              <form action={inviteToEvent} className="form">
+                <input type="hidden" name="event" value={event.id} />
+                <p className="small muted" style={{ margin: 0 }}>Tick the brands to invite. This only adds them here; nothing is emailed until you send a letter.</p>
+                <ul className="tracker-pick">
+                  {notInvited.map((d) => (
+                    <li key={d.id}><label className="check"><input type="checkbox" name="brand" value={d.id} /> <Avatar logo={d.logo} name={d.name} /> <span>{d.name} <span className="small muted">· usually {d.kind}{d.contact_email ? "" : " · no email yet"}</span></span></label></li>
+                  ))}
+                </ul>
+                <div className="actions"><ConfirmButton className="btn dark" title="Add these brands to this event?" items={["They show on this tracker as No reply yet.", "Nothing is emailed."]}>Add to this event</ConfirmButton></div>
+              </form>
+            )}
+          </InviteDialog>
+        )}
       </PageHead>
       <Flash params={query} />
 
-      <section className="card tracker-summary">
-        <span className="chip">{counts.invited} invited</span>
-        <span className="chip good">{counts.yes} said yes</span>
-        <span className="chip alert">{counts.no} said no</span>
-        <span className="chip">{counts.waiting} no reply yet</span>
-        <p className="small muted" style={{ flexBasis: "100%", margin: "6px 0 0" }}>Only brands that said <strong>Yes</strong> show on this event&apos;s page and on the home page.</p>
-      </section>
-
-      {canEdit && (
-        <details className="card" open={rows.length === 0}>
-          <summary className="strong">+ Invite brands</summary>
-          {notInvited.length === 0 ? (
-            <p className="small muted" style={{ marginTop: 10 }}>Every brand in the directory is already on this tracker. <a href={`${base}/supporters/new`}>Add a brand</a>.</p>
-          ) : (
-            <form action={inviteToEvent} className="form" style={{ marginTop: 12 }}>
-              <input type="hidden" name="event" value={event.id} />
-              <p className="small muted" style={{ margin: 0 }}>Tick the brands to invite. This only adds them here; nothing is emailed until you send a letter.</p>
-              <ul className="tracker-pick">
-                {notInvited.map((d) => (
-                  <li key={d.id}><label className="check"><input type="checkbox" name="brand" value={d.id} /> <Avatar logo={d.logo} name={d.name} /> <span>{d.name} <span className="small muted">· usually {d.kind}{d.contact_email ? "" : " · no email yet"}</span></span></label></li>
-                ))}
-              </ul>
-              <div className="actions"><ConfirmButton className="btn dark" title="Add these brands to this event?" items={["They show on this tracker as No reply yet.", "Nothing is emailed."]}>Add to this event</ConfirmButton></div>
-            </form>
-          )}
-        </details>
-      )}
-
-      <section className="card">
+      <section className="card tracker-page">
         <form id="tracker-send" method="get" action={`${base}/letters/send`}>
           <input type="hidden" name="letter" value={letter} />
           <input type="hidden" name="event" value={event.id} />
           <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
             <div>
               <h2 style={{ margin: 0 }}>Invited brands <span className="muted small">({rows.length})</span></h2>
-              <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${letter}`}>{letterName(letter)}</a>. You can pick another letter on the next page, or <a href={`${base}/events/${event.id}/letters`}>make one for this event</a>.</p>
+              <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${letter}`}>{letterName(letter)}</a>. You can pick another letter on the next page, or <a href={`${base}/events/${event.id}/letters`}>make one for this event</a>. Only brands that said <strong>Yes</strong> show on this event&apos;s page and on the home page.</p>
             </div>
             {canSend && rows.length > 0 && <TickedSubmit />}
           </div>
         </form>
-        <div className="table-wrap" style={{ marginTop: 10 }}>
+        {rows.length > 0 && <TrackerTools counts={counts} sort={sort} />}
+        <div className="table-wrap tracker-table">
           <table>
-            <thead><tr>{canSend && <th><span className="sr-only">Pick</span></th>}<th>Brand</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.supporter_id}>
+            <thead><tr>{canSend && <th>{rows.length > 0 ? <SelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Brand</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
+            <tbody id="tracker-rows">
+              {sorted.map((r) => (
+                <tr key={r.supporter_id} data-row="" data-reply={r.reply} data-search={searchText(r)}>
                   {canSend && <td><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong">
                     <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}</span></span></span>
@@ -154,12 +155,12 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                     )}
                   </td>
                   <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
-                  <td className="small"><SendStatus sends={sends[`supporter:${r.supporter_id}`]} letterName={letterName} /></td>
+                  <td className="small"><SendStatus sends={sendsOf(r)} letterName={letterName} /></td>
                   <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
                   <td className="small">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} people`, r.dogs_attending && `${r.dogs_attending} dogs`].filter(Boolean).join(", ")} coming</span></> : null}</td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={canSend ? 6 : 5} className="muted">No brands invited yet.{canEdit && " Use + Invite brands above."}</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={canSend ? 6 : 5} className="muted">No brands invited yet.{canEdit && " Use + Invite brands at the top."}</td></tr>}
             </tbody>
           </table>
         </div>
