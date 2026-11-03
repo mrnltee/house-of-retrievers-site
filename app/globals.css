@@ -1636,3 +1636,6 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
 .lenis.lenis-stopped { overflow: clip; }
 
+
+/* Round logo frames take the colour around the logo's edge (LogoTint), so a logo on a coloured square blends in. */
+.has-logo-bg { background: var(--logo-bg) !important; }
