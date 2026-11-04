@@ -52,6 +52,10 @@ export default async function EventRegistrations({ params, searchParams }) {
   const paid = confirmed.filter((r) => r.fee_status === "paid");
   const capacityUsed = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at })).reduce((sum, r) => sum + capacityUnits(event.capacity_basis, { humans: r.human_count, furbabies: r.furbaby_count }), 0);
   const capacityLabel = capacityUnitLabel(event.capacity_basis);
+  // Who's coming (owner, 2026-11-04): hoomans and furbabies on spots that count (as Capacity used), and how many of those are paid.
+  const holding = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }));
+  const total = (rows, key, none) => rows.reduce((sum, r) => sum + (r[key] ?? none), 0);
+  const heads = { humans: total(holding, "human_count", 1), furbabies: total(holding, "furbaby_count", 0), paidHumans: total(paid, "human_count", 1), paidFurbabies: total(paid, "furbaby_count", 0) };
   const FILTERS = paidEvent ? PAY_FILTERS : BASE_FILTERS;
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
@@ -92,6 +96,10 @@ export default async function EventRegistrations({ params, searchParams }) {
       </PageHead>
       <Flash params={query} />
 
+      <section className="grid-4" aria-label="Who's coming">
+        <div className="stat"><span className="label">Hoomans registered</span><span className="value">{heads.humans}</span><span className="small muted">{paidEvent ? `${heads.paidHumans} paid · ${heads.humans - heads.paidHumans} holding a spot` : "On confirmed spots"}</span></div>
+        <div className="stat"><span className="label">Furbabies registered</span><span className="value">{heads.furbabies}</span><span className="small muted">{paidEvent ? `${heads.paidFurbabies} paid · ${heads.furbabies - heads.paidFurbabies} holding a spot` : "On confirmed spots"}</span></div>
+      </section>
       <section className="grid-4" aria-label="Counts">
         {paidEvent ? (
           <>
