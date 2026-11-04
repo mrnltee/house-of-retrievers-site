@@ -7,6 +7,8 @@ import { STATUSES } from "../../../../lib/supporters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import LetterSend from "./LetterSend";
 import { eventFills } from "../../../../lib/letterEventStore";
+import { listDesigns, loadDesign, loadHouse } from "../../../../lib/emailDesignStore";
+import { designTexts } from "../../../../lib/emailDesign.mjs";
 import { categoryOf, letterEmails, letterFor } from "../../../../lib/contacts.mjs";
 
 export const maxDuration = 120;
@@ -68,7 +70,12 @@ export default async function SendLetterPage({ searchParams }) {
   const mismatched = recipients.filter((r) => r.category && letterFor(r.category, chosen) !== letter.key);
 
   const blanks = blanksOf(letter.subject, letter.cover, letter.body);
-  const answers = await savedAnswers(blanks.map((b) => b.label));
+  // Brand email designs to pick from: this event's copies first, then the library, with their documents.
+  const designRows = await listDesigns({ eventId: event?.id || null });
+  const designs = (await Promise.all(designRows.map((d) => loadDesign(d.id)))).filter(Boolean)
+    .map((d) => ({ id: d.id, kind: d.kind, name: d.name, subject: d.subject, doc: d.doc, forEvent: Boolean(d.event_id) }));
+  const designLabels = designs.flatMap((d) => blanksOf(...designTexts(d.doc, d.subject)).map((b) => b.label));
+  const answers = await savedAnswers([...new Set([...blanks.map((b) => b.label), ...designLabels])]);
   const saved = { ...answers.values, ...(event ? await eventFills(event.id) : {}) };
   const standard = [...answers.standard];
   // Who the email comes from, as recipients see it (e.g. "House of Retrievers <hello@…>").
@@ -106,6 +113,8 @@ export default async function SendLetterPage({ searchParams }) {
           pdfAction={`${base}/letters/pdf`}
           back={`/letters/send?${backQuery.toString()}`}
           eventId={event?.id || ""}
+          designs={designs}
+          house={designs.length ? await loadHouse() : null}
         />
       )}
     </>

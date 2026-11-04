@@ -3,11 +3,11 @@ import { emailLastEvent } from "./email";
 import { settled, statusFromEvent } from "./letterSends.mjs";
 
 /** Logs one letter email: sent (with Resend's id) or failed (with why). Never stops a send. */
-export async function logSend({ ref, letterKey, to, cc = [], result, by, eventId = null }) {
+export async function logSend({ ref, letterKey, to, cc = [], result, by, eventId = null, designId = null }) {
   try {
     await sql(
-      `INSERT INTO letter_sends (ref, letter_key, email_to, cc, provider_id, status, detail, sent_by, event_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [ref, letterKey, to, cc, result?.id || null, result?.ok ? "sent" : "failed", result?.ok ? null : result?.error || null, by, eventId],
+      `INSERT INTO letter_sends (ref, letter_key, email_to, cc, provider_id, status, detail, sent_by, event_id, design_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [ref, letterKey, to, cc, result?.id || null, result?.ok ? "sent" : "failed", result?.ok ? null : result?.error || null, by, eventId, designId],
     );
   } catch (error) {
     console.warn("letter send not logged", error?.message);

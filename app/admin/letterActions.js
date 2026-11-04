@@ -8,7 +8,9 @@ import { logSend } from "../lib/letterSendsStore";
 import { EVENT_BLANKS, eventLetterKey } from "../lib/letterEvent.mjs";
 import { eventFills } from "../lib/letterEventStore";
 import { letterBodyEmail, letterCoverEmail } from "../lib/emailTemplates.mjs";
-import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
+import { escapeFills, fillDesign, renderDesign, sendBlanks } from "../lib/emailDesign.mjs";
+import { loadDesign, loadHouse } from "../lib/emailDesignStore";
+import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, fillLetter, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
 import { listLetters, loadLetter, savedAnswers, signatureForPdf } from "../lib/letterStore";
 
@@ -107,7 +109,11 @@ export async function sendLetters(data) {
     if (!emailReady()) await backWith(back, "error", "Email isn't set up yet (Resend key missing).");
     const letter = await loadLetter(form(data, "letter"));
     if (!letter) await backWith(back, "error", "Pick a letter.");
-    const blanks = blanksOf(letter.subject, letter.cover, letter.body);
+    const attach = form(data, "attach") !== "no";
+    // A brand email design (Email templates → Brand email designs), when one was picked.
+    const design = isUuid(form(data, "design")) ? await loadDesign(form(data, "design")) : null;
+    if (form(data, "design") && (!design || design.kind === "house")) await backWith(back, "error", "That email design wasn't found. Pick another.");
+    const blanks = sendBlanks(letter, design, attach);
     let typed = {};
     try { typed = JSON.parse(form(data, "values") || "{}"); } catch { typed = {}; }
     const values = Object.fromEntries(blanks.map((b) => [b.label, String(typed[b.label] ?? "").trim().slice(0, LETTER_LIMITS.value)]));
@@ -129,7 +135,7 @@ export async function sendLetters(data) {
     if (refs.length > MAX_LETTER_RECIPIENTS) await backWith(back, "error", `Send to ${MAX_LETTER_RECIPIENTS} at most at a time.`);
     const recipients = await loadRecipients(refs);
 
-    const attach = form(data, "attach") !== "no";
+    const house = design ? await loadHouse() : null;
     const date = letterDate();
     const batch = Date.now();
     const signature = attach ? await signatureForPdf(letter.signature) : null;
@@ -139,15 +145,23 @@ export async function sendLetters(data) {
     for (const r of recipients) {
       if (!looksLikeEmail(r.email)) { skipped.push(r.name); continue; }
       const prepared = prepareLetter(letter, { ...r, date, values, signed: Boolean(signature) });
-      // With the PDF: a short cover email with the letter attached. Without: the letter is the email.
-      const mail = attach
+      // A design: its email, filled in for this recipient (PDF attached when on). Else, with the
+      // PDF: a short cover email with the letter attached; without: the letter is the email.
+      let mail;
+      if (design) {
+        const to = { name: r.name, contact: r.contact, address: r.address, salutation: r.salutation, date, values };
+        const escaped = escapeFills(to);
+        const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
+        mail = renderDesign(filled.doc, { house, subject: filled.subject });
+        if (attach) mail.attachments = [{ filename: prepared.filename, content: await letterPdf(prepared.blocks, { title: prepared.subject, signature }) }];
+      } else mail = attach
         ? { ...letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename }), attachments: [{ filename: prepared.filename, content: await letterPdf(prepared.blocks, { title: prepared.subject, signature }) }] }
         : letterBodyEmail({ subject: prepared.subject, blocks: prepared.blocks });
       const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
-      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email, eventId: event?.id || null });
+      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email, eventId: event?.id || null, designId: design?.id || null });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
-      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(r.cc?.length ? { cc: r.cc } : {}) });
+      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(r.cc?.length ? { cc: r.cc } : {}) });
       if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       if (r.type === "beneficiary") await sql("UPDATE beneficiaries SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second

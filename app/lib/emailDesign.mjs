@@ -7,6 +7,7 @@
 
 import { HOME_URL } from "./siteSeo.mjs";
 import { LEGAL } from "./legal.mjs";
+import { blanksOf } from "./letters.mjs";
 
 /** The kinds of design (spec: five types for brand outreach under an event). */
 export const KINDS = [
@@ -394,3 +395,25 @@ export const STARTERS = {
     SIGN,
   ]),
 };
+
+// ---------- Sending (send page and sendLetters agree through these) ----------
+
+
+/**
+ * The fill-ins a send asks for: the letter's alone (no design), the letter's and the
+ * design's (design with the PDF attached), or only the design's (design without the
+ * PDF, where the letter itself isn't sent).
+ */
+export function sendBlanks(letter, design, attach) {
+  const letterTexts = [letter.subject, letter.cover, letter.body];
+  if (!design) return blanksOf(...letterTexts);
+  const own = designTexts(design.doc, design.subject);
+  return attach ? blanksOf(...letterTexts, ...own) : blanksOf(...own);
+}
+
+/** A recipient's fill-ins with every value escaped, for filling a design's HTML. */
+export function escapeFills(to = {}) {
+  const out = {};
+  for (const [k, v] of Object.entries(to)) out[k] = k === "values" ? Object.fromEntries(Object.entries(v || {}).map(([a, b]) => [a, escHtml(b)])) : typeof v === "string" ? escHtml(v) : v;
+  return out;
+}

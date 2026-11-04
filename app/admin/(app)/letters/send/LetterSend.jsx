@@ -4,6 +4,7 @@ import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
 import { letterBodyEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { escapeFills, fillDesign, kindLabel, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
@@ -14,9 +15,12 @@ import LetterView from "../LetterView";
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back, eventId = "" }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back, eventId = "", designs = [], house = null }) {
   const isStandard = (label) => standard.includes(label);
-  const [values, setValues] = useState(() => Object.fromEntries(blanks.map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
+  // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
+  const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
+  const [designId, setDesignId] = useState("");
+  const design = designs.find((d) => d.id === designId) || null;
   const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
   const [previewRef, setPreviewRef] = useState(recipients.find((r) => r.email)?.ref || recipients[0]?.ref);
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
@@ -29,10 +33,18 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const prepared = useMemo(() => prepareLetter(letter, { ...to, signed }), [letter, who, date, values, signed]); // eslint-disable-line react-hooks/exhaustive-deps
   // Attach the PDF (a short cover email), or send the letter itself as the email (owner, 2026-11-04).
   const [attach, setAttach] = useState(true);
-  const email = useMemo(() => (attach
-    ? letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename })
-    : letterBodyEmail({ subject: prepared.subject, blocks: prepared.blocks })), [prepared, attach]);
-  const missing = missingBlanks(blanks, values);
+  const shownBlanks = useMemo(() => sendBlanks(letter, design, attach), [letter, design, attach]);
+  const email = useMemo(() => {
+    if (design) {
+      const escaped = escapeFills(to);
+      const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
+      return renderDesign(filled.doc, { house, subject: filled.subject });
+    }
+    return attach
+      ? letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename })
+      : letterBodyEmail({ subject: prepared.subject, blocks: prepared.blocks });
+  }, [prepared, attach, design, house, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
+  const missing = missingBlanks(shownBlanks, values);
   const count = picked.size;
 
   function switchLetter(key) {
@@ -65,6 +77,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         {eventId && <input type="hidden" name="event" value={eventId} />}
         <input type="hidden" name="values" value={JSON.stringify(values)} />
         <input type="hidden" name="attach" value={attach ? "yes" : "no"} />
+        <input type="hidden" name="design" value={designId} />
         <label className="field">
           <span>Letter</span>
           <select value={letter.key} onChange={(e) => switchLetter(e.target.value)}>
@@ -86,29 +99,39 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </ul>
         </fieldset>
 
-        {blanks.some((b) => !isStandard(b.label)) && (
+        {shownBlanks.some((b) => !isStandard(b.label)) && (
           <fieldset className="field">
             <legend className="field-head">Fill in for this send <small>The same for everyone in it. Your last answers are filled in for you.</small></legend>
-            {blanks.filter((b) => !isStandard(b.label)).map((b) => blankInput(b))}
+            {shownBlanks.filter((b) => !isStandard(b.label)).map((b) => blankInput(b))}
           </fieldset>
         )}
-        {blanks.some((b) => isStandard(b.label)) && (
+        {shownBlanks.some((b) => isStandard(b.label)) && (
           <details className="field letter-standard">
-            <summary className="field-head">Standard details ({blanks.filter((b) => isStandard(b.label)).length}) <small>Filled in by themselves. Open to change them for this send only{detailsHref && <>, or <a href={detailsHref}>edit them for good</a></>}.</small></summary>
-            {blanks.filter((b) => isStandard(b.label)).map((b) => blankInput(b))}
+            <summary className="field-head">Standard details ({shownBlanks.filter((b) => isStandard(b.label)).length}) <small>Filled in by themselves. Open to change them for this send only{detailsHref && <>, or <a href={detailsHref}>edit them for good</a></>}.</small></summary>
+            {shownBlanks.filter((b) => isStandard(b.label)).map((b) => blankInput(b))}
           </details>
         )}
 
+        {designs.length > 0 && (
+          <label className="field">
+            <span>Email design <small>A designed email from Brand email designs, or HOR&apos;s standard email</small></span>
+            <select value={designId} onChange={(e) => setDesignId(e.target.value)}>
+              <option value="">HOR standard email</option>
+              {designs.some((d) => d.forEvent) && <optgroup label="For this event">{designs.filter((d) => d.forEvent).map((d) => <option key={d.id} value={d.id}>{kindLabel(d.kind)}: {d.name}</option>)}</optgroup>}
+              <optgroup label="Library">{designs.filter((d) => !d.forEvent).map((d) => <option key={d.id} value={d.id}>{kindLabel(d.kind)}: {d.name}</option>)}</optgroup>
+            </select>
+          </label>
+        )}
         <label className="check attach-choice">
           <input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} />
-          <span><strong>Attach the letter as a PDF</strong><br /><span className="small muted">{attach ? "A short cover email goes out with the letter attached." : "No attachment: the whole letter is written in the email, with the HOR logo on top and the name, SEC number and website at the bottom. The cover note isn't used."}</span></span>
+          <span><strong>Attach the letter as a PDF</strong><br /><span className="small muted">{design ? (attach ? "The design goes out with the letter attached as a PDF." : "The design is the whole email; the letter isn't sent.") : attach ? "A short cover email goes out with the letter attached." : "No attachment: the whole letter is written in the email, with the HOR logo on top and the name, SEC number and website at the bottom. The cover note isn't used."}</span></span>
         </label>
 
         <div className="actions">
           <ConfirmButton
             disabled={!ready || count === 0 || count > max || missing.length > 0}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
-            items={[attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the letter written in the email, addressed to them by name (no PDF attached)", "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
+            items={[design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the letter written in the email, addressed to them by name (no PDF attached)", "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
           >
             Send to {count}
@@ -129,7 +152,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
             <div><dt>To</dt><dd>{who?.name}{who?.email ? ` <${who.email}>` : " (no email on record)"}</dd></div>
             {who?.cc?.length > 0 && <div><dt>Cc</dt><dd>{who.cc.join(", ")}</dd></div>}
-            <div><dt>Subject</dt><dd><strong>{prepared.subject}</strong></dd></div>
+            <div><dt>Subject</dt><dd><strong>{email.subject || prepared.subject}</strong></dd></div>
           </dl>
           <SignatureStatus check={signatureCheck} editHref={editHref} />
           {attach ? <p className="mail-attachment" title="The letter, filled in for this recipient">

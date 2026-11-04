@@ -90,3 +90,17 @@ test("fill-ins are escaped in the email and plain in the text; blanks are found"
   assert.deepEqual(blanksOf(...designTexts(doc, "Hi [Salutation]")).map((b) => b.label).sort(), ["Booth Size", "Event Link"]);
   for (const [kind] of KINDS) assert.equal(cleanDoc(STARTERS[kind].doc).error, undefined, kind);
 });
+
+test("which fill-ins a send needs: letter only, letter + design (PDF on), design only (PDF off)", async () => {
+  const { sendBlanks, escapeFills } = await import("./emailDesign.mjs");
+  const letter = { subject: "[Event Name]", cover: "Dear [Salutation]", body: "Booth [Booth Fee]" };
+  const design = { subject: "Join [Event Name]", doc: cleanDoc({ body: { blocks: [{ type: "text", html: "Bring [Giveaway Count] items" }] } }).doc };
+  const labels = (b) => b.map((x) => x.label).sort();
+  assert.deepEqual(labels(sendBlanks(letter, null, true)), ["Booth Fee", "Event Name"]);
+  assert.deepEqual(labels(sendBlanks(letter, design, true)), ["Booth Fee", "Event Name", "Giveaway Count"]);
+  assert.deepEqual(labels(sendBlanks(letter, design, false)), ["Event Name", "Giveaway Count"]);
+  const esc = escapeFills({ name: "A&B", contact: "<x>", salutation: "", values: { "Event Name": "Paws & Poses" } });
+  assert.equal(esc.name, "A&amp;B");
+  assert.equal(esc.contact, "&lt;x&gt;");
+  assert.equal(esc.values["Event Name"], "Paws &amp; Poses");
+});
