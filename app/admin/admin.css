@@ -903,3 +903,43 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
   .tracker-page .tracker-table { flex: 1; min-height: 0; overflow: auto; }
 }
 #tracker-rows > tr[hidden], .tracker-pick > li[hidden] { display: none !important; }
+
+/* Brand email designs (block editor): structure | settings | preview. */
+.design-editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
+@media (max-width: 1280px) { .design-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .design-preview { grid-column: 1 / -1; } }
+@media (max-width: 860px) { .design-editor { grid-template-columns: 1fr; } }
+.design-zone { border: 1px solid var(--a-line); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
+.design-zone.is-selected, .design-block.is-selected > .design-block-pick { outline: 2px solid var(--a-gold, #a8843a); outline-offset: 1px; }
+.design-zone-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.design-blocks { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.design-block { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.design-block-pick { text-align: left; background: var(--a-sand); border: 1px solid transparent; border-radius: 10px; padding: 8px 10px; min-height: 40px; font: inherit; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.design-zone-head .design-block-pick { background: none; padding: 4px 0; }
+.design-block-tools { display: inline-flex; gap: 2px; }
+.design-cols { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding-left: 12px; }
+.design-col { border-left: 2px solid var(--a-line); padding-left: 8px; }
+.design-add { display: flex; flex-wrap: wrap; gap: 6px; }
+.design-add button { border: 1px dashed var(--a-line); background: white; border-radius: 999px; padding: 4px 10px; font: inherit; cursor: pointer; min-height: 32px; }
+.design-settings { display: grid; gap: 12px; position: sticky; top: 16px; }
+.design-preview { display: grid; gap: 10px; position: sticky; top: 16px; justify-items: center; }
+.design-frame { height: min(78vh, 900px); border: 1px solid var(--a-line); border-radius: 14px; background: #f5f1e6; max-width: 100%; }
+.design-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 0; border-bottom: 1px solid var(--a-line); }
+.design-row-actions { display: inline-flex; gap: 6px; margin-left: auto; }
+.seg { display: inline-flex; border: 1px solid var(--a-line); border-radius: 999px; overflow: hidden; }
+.seg button { border: 0; border-right: 1px solid var(--a-line); background: white; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; min-height: 32px; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--a-ink); color: white; }
+.color-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.color-row input[type="color"] { width: 40px; height: 36px; padding: 2px; border-radius: 8px; }
+.color-row input[type="text"] { flex: 1 1 140px; min-width: 0; }
+.box-field { border: 0; padding: 0; margin: 0; }
+.box-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.box-row input { min-width: 0; }
+.style-fields { display: grid; gap: 10px; }
+.rt { display: grid; gap: 6px; }
+.rt-bar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.rt-tool { min-width: 34px; min-height: 34px; border: 1px solid var(--a-line); background: white; border-radius: 8px; font: inherit; cursor: pointer; }
+.rt-color input { width: 34px; height: 34px; padding: 2px; border-radius: 8px; }
+.rt-area { min-height: 140px; max-height: 360px; overflow: auto; border: 1px solid var(--a-field, #cfc8b6); border-radius: 12px; padding: 12px 14px; background: white; line-height: 1.6; }
+.rt-area:focus { outline: 3px solid var(--a-gold, #a8843a); outline-offset: 1px; }
+.rt-area p { margin: 0 0 10px; }

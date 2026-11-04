@@ -21,6 +21,10 @@ export default async function EmailsPage({ searchParams }) {
     <>
       <PageHead title="Email templates" lead="Put HOR's emails in its own words. Use {{first_name}} and the other variables to greet each person by name. The logo band, sign-off and footer stay the same on every email." />
       <Flash params={params} />
+      <a className="card supporter-card" href={`${base}/emails/designs`} style={{ marginBottom: 16 }}>
+        <strong>Brand email designs →</strong>
+        <span className="small">Designed emails for brand outreach: invites with or without the PDF letter, follow-ups and thank-yous, with HOR&apos;s shared header and footer.</span>
+      </a>
 
       <h2 style={{ margin: "8px 0 12px" }}>Sent automatically</h2>
       <ul className="supporter-cards">
