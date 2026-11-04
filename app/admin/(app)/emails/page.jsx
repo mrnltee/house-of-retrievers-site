@@ -1,13 +1,15 @@
+import FrameEditor from "./FrameEditor";
+import { can } from "../../../lib/admin/roles.mjs";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { CUSTOM_KINDS, EDITABLE_TEMPLATES } from "../../../lib/emailTemplates.mjs";
-import { listCustomTemplates } from "../../../lib/emailSettings";
+import { listCustomTemplates, loadEmailFrame } from "../../../lib/emailSettings";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 
 /** The emails HOR can reword, and the ones HOR has written itself. */
 export default async function EmailsPage({ searchParams }) {
   const params = await searchParams;
-  const { allowed } = await pageAdmin("emails:view");
+  const { admin, allowed } = await pageAdmin("emails:view");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   let saved = [];
@@ -19,8 +21,9 @@ export default async function EmailsPage({ searchParams }) {
   const custom = await listCustomTemplates();
   return (
     <>
-      <PageHead title="Email templates" lead="Put HOR's emails in its own words. Use {{first_name}} and the other variables to greet each person by name. The logo band, sign-off and footer stay the same on every email." />
+      <PageHead title="Email templates" lead="Put HOR's emails in its own words. Use {{first_name}} and the other variables to greet each person by name. The logo band stays the same on every email; the sign-off and footer are set below." />
       <Flash params={params} />
+      <FrameEditor saved={await loadEmailFrame({ fresh: true })} canEdit={can(admin, "emails:edit")} />
       <a className="card supporter-card" href={`${base}/emails/designs`} style={{ marginBottom: 16 }}>
         <strong>Brand email designs →</strong>
         <span className="small">Designed emails for brand outreach: invites with or without the PDF letter, follow-ups and thank-yous, with HOR&apos;s shared header and footer.</span>

@@ -1,3 +1,4 @@
+import { loadEmailFrame } from "../../../../lib/emailSettings";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { emailReady } from "../../../../lib/email";
@@ -97,7 +98,7 @@ export default async function SendLetterPage({ searchParams }) {
       {recipients.length === 0 ? (
         <p className="card muted">No recipients picked. In the <a href={`${base}/guests`}>Guest list</a>, <a href={`${base}/beneficiaries`}>Beneficiaries</a> or <a href={`${base}/supporters?view=list`}>Brands & Partners</a>, tick people and press Send, or open someone in People and choose “Send a letter”.</p>
       ) : (
-        <LetterSend
+        <LetterSend frame={await loadEmailFrame()}
           letters={letters.map((l) => ({ key: l.key, name: l.name }))}
           letter={letter}
           blanks={blanks}

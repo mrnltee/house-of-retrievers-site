@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import FormatBar, { boldKey } from "./FormatBar";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate, prepareLetter } from "../../../../lib/letters.mjs";
-import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
@@ -16,7 +16,7 @@ const SAMPLE = "Pawsome Pet Shop";
 const TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
 
 /** Edits one letter with a live preview. "Preview PDF" posts the unsaved wording to the PDF route. */
-export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "", eventFills = null, eventTitle = "" }) {
+export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "", eventFills = null, eventTitle = "", frame = null }) {
   const [fields, setFields] = useState({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const savedSig = cleanSignature(letter.signature);
   // Attach a PDF letter, or send the email only (owner, 2026-11-04): off hides the letter, its signature and the PDF preview.
@@ -51,8 +51,8 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values }), [fields.body, values]);
   const email = useMemo(() => {
     const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { ...TO, values });
-    return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename, attached: attachPdf });
-  }, [fields, letter.name, values, attachPdf]);
+    return applyEmailFrame(letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename, attached: attachPdf }), frame);
+  }, [fields, letter.name, values, attachPdf, frame]);
   // Puts [Label] where the cursor is in the letter (or at the end).
   const insertBlank = (label) => {
     const el = bodyRef.current;

@@ -1,3 +1,5 @@
+import { applyEmailFrame } from "./emailTemplates.mjs";
+import { loadEmailFrame } from "./emailSettings";
 /**
  * Sends one email through Resend. Needs RESEND_API_KEY and EMAIL_FROM
  * (falls back to ADMIN_ALERT_FROM); EMAIL_REPLY_TO is where replies go.
@@ -15,6 +17,8 @@ export function emailReady() {
  * [{ filename, content: Buffer }] (a letter's PDF). `cc`: more addresses copied in (a guest's representative).
  */
 export async function sendEmail({ to, cc = [], subject, html, text, idempotencyKey, attachments }) {
+  // HOR's saved sign-off and footer (Email templates), in place of the standard ones.
+  ({ html, text } = applyEmailFrame({ html, text }, await loadEmailFrame()));
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM;
   if (!key || !from || !to) return { skipped: true };

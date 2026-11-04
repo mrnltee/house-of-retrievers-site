@@ -4,7 +4,8 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { sendEmail } from "../lib/email";
-import { CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, unknownVariables } from "../lib/emailTemplates.mjs";
+import { forgetEmailFrame } from "../lib/emailSettings";
+import { cleanEmailFrame, CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, unknownVariables } from "../lib/emailTemplates.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -134,5 +135,35 @@ export async function sendTestEmail(data) {
     if (!sent.ok) await backWith(t.back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The test didn't go through. Try again in a moment.");
     await logActivity(admin.email, "email.test", t.title, { template: t.key || t.id || t.kind });
     await backWith(t.back, "ok", `Test sent to ${admin.email}, with sample details (${SAMPLE_PERSON.name}).`);
+  });
+}
+
+/** The sign-off and footer every email ends with (owner, 2026-11-04). */
+export async function saveEmailFrame(data) {
+  return guarded("/emails", async () => {
+    const admin = await actionAdmin("emails:edit");
+    const { frame, error } = cleanEmailFrame({ signoff: form(data, "signoff"), footer: form(data, "footer") });
+    if (error) await backWith("/emails", "error", error);
+    for (const key of ["signoff", "footer"]) {
+      await sql(
+        `INSERT INTO email_settings (key, value, updated_by) VALUES ($1, $2, $3)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+        [key, frame[key], admin.email],
+      );
+    }
+    forgetEmailFrame();
+    await logActivity(admin.email, "email.frame", "Sign-off and footer", {});
+    await backWith("/emails", "ok", "Sign-off and footer saved. Every email from now on ends with them.");
+  });
+}
+
+/** Back to HOR's standard sign-off and footer. */
+export async function resetEmailFrame() {
+  return guarded("/emails", async () => {
+    const admin = await actionAdmin("emails:edit");
+    await sql("DELETE FROM email_settings WHERE key IN ('signoff', 'footer')");
+    forgetEmailFrame();
+    await logActivity(admin.email, "email.frameReset", "Sign-off and footer", {});
+    await backWith("/emails", "ok", "Back to HOR's standard sign-off and footer.");
   });
 }

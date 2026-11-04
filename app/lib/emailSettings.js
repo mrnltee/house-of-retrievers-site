@@ -41,3 +41,23 @@ export async function listCustomTemplates(kind) {
     return [];
   }
 }
+
+let frameCache = null;
+
+/** The saved sign-off and footer ({ signoff, footer }), or null for HOR's standard ones. Cached a minute; never throws. */
+export async function loadEmailFrame({ fresh = false } = {}) {
+  if (!hasDatabase()) return null;
+  if (!fresh && frameCache && Date.now() - frameCache.at < 60000) return frameCache.frame;
+  try {
+    const rows = await sql("SELECT key, value FROM email_settings WHERE key IN ('signoff', 'footer')");
+    const frame = rows.length ? Object.fromEntries(rows.map((r) => [r.key, r.value])) : null;
+    frameCache = { at: Date.now(), frame };
+    return frame;
+  } catch {
+    return null;
+  }
+}
+
+export function forgetEmailFrame() {
+  frameCache = null;
+}

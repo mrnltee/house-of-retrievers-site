@@ -47,16 +47,16 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
 function frame({ preheader, greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true, showHeading = true }) {
   const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${text}</p>`;
   const sign = signoff
-    ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${signoff.join("<br>")}</p>`
+    ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}"><!--hor-signoff-->${signoff.join("<br>")}<!--/hor-signoff--></p>`
     : "";
   // The centered layout closes with the small logo badge and the org's full name.
   const foot = centered
     ? `<tr><td class="em-foot" align="center" style="padding:24px 28px 28px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960;text-align:center">
       <img src="${BADGE}" width="174" height="85" alt="${ORG}" style="display:block;margin:0 auto 12px;border:0">
-      THORSI · ${ORG}<br>Reply to this email to reach the team.${footnote ? `<br><br>${footnote}` : ""}
+      <!--hor-foot-->THORSI · ${ORG}<br>Reply to this email to reach the team.<!--/hor-foot-->${footnote ? `<br><br>${footnote}` : ""}
     </td></tr>`
     : `<tr><td class="em-foot" style="padding:18px 28px 26px;border-top:1px solid #ede7d8;font:13px/1.55 Helvetica,Arial,sans-serif;color:#6b6960">
-      ${footnote ? `${footnote}<br><br>` : ""}${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.
+      ${footnote ? `${footnote}<br><br>` : ""}<!--hor-foot-->${ORG} · <a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">houseofretrieversph.org</a><br>Reply to this email to reach the team.<!--/hor-foot-->
     </td></tr>`;
   // A centered picture after the message (the check-in QR), with a caption under it.
   const picture = image
@@ -127,6 +127,58 @@ const SIGNOFF = [
   "<em>Paws for a Purpose</em>",
   `<a class="em-link" href="${HOME_URL}" style="color:#7A5C1F">www.houseofretrieversph.org</a>`,
 ];
+
+// ---------- Editable sign-off and footer (owner, 2026-11-04) ----------
+// Every email is built with HOR's standard sign-off and footer (marked in the HTML);
+// sendEmail swaps in the saved ones (Email templates → Sign-off and footer), and the
+// admin previews do the same, so what you see is what goes out.
+
+export const DEFAULT_EMAIL_FRAME = {
+  signoff: `With love and purpose,\n**${ORG}**\n*Paws for a Purpose*\n[www.houseofretrieversph.org](${HOME_URL})`,
+  footer: `${ORG} · [houseofretrieversph.org](${HOME_URL})\nReply to this email to reach the team.`,
+};
+export const EMAIL_FRAME_LIMITS = { signoff: 600, footer: 600 };
+const FRAME_LINK = /\[([^\]\n]+)\]\(([^)\s]+)\)/g;
+
+/** Typed sign-off and footer → { frame } or { error }. **bold**, *italic*, [text](https://… or mailto:…), one line per line. */
+export function cleanEmailFrame(input = {}) {
+  const frame = {};
+  for (const [key, label] of [["signoff", "sign-off"], ["footer", "footer"]]) {
+    const text = String(input[key] ?? "").replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (text.length > EMAIL_FRAME_LIMITS[key]) return { error: `The ${label} is too long (${EMAIL_FRAME_LIMITS[key]} characters at most).` };
+    for (const [, , href] of text.matchAll(FRAME_LINK)) if (!/^(https?:\/\/|mailto:)/i.test(href)) return { error: `Links in the ${label} must start with https:// or mailto:.` };
+    frame[key] = text;
+  }
+  return { frame };
+}
+
+const frameHtml = (text) => esc(text)
+  .replace(FRAME_LINK, (_, label, href) => `<a class="em-link" href="${href}" style="color:#7A5C1F">${label}</a>`)
+  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+  .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+  .replace(/\n/g, "<br>");
+const frameText = (text) => String(text).replace(FRAME_LINK, (_, label, href) => (label === href ? href : `${label} (${href})`)).replace(/\*\*(.+?)\*\*/g, "$1").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1$2");
+const STANDARD_TEXT = {
+  signoff: SIGNOFF.map((line) => line.replace(/<[^>]+>/g, "")).join("\n"),
+  footers: [`THORSI · ${ORG}\nReply to this email to reach the team.`, `${ORG} · ${HOME_URL}\nReply to this email to reach the team.`],
+};
+
+/** An email ({ subject, html, text }) with the saved sign-off and footer in place of HOR's standard ones. */
+export function applyEmailFrame(mail, frame) {
+  if (!mail || !frame) return mail;
+  const same = (key) => (frame[key] ?? DEFAULT_EMAIL_FRAME[key]) === DEFAULT_EMAIL_FRAME[key];
+  if (same("signoff") && same("footer")) return mail;
+  let { html = "", text = "" } = mail;
+  if (!same("signoff")) {
+    html = html.replace(/<!--hor-signoff-->[\s\S]*?<!--\/hor-signoff-->/g, `<!--hor-signoff-->${frameHtml(frame.signoff)}<!--/hor-signoff-->`);
+    text = text.split(STANDARD_TEXT.signoff).join(frameText(frame.signoff));
+  }
+  if (!same("footer")) {
+    html = html.replace(/<!--hor-foot-->[\s\S]*?<!--\/hor-foot-->/g, `<!--hor-foot-->${frameHtml(frame.footer)}<!--/hor-foot-->`);
+    for (const standard of STANDARD_TEXT.footers) text = text.split(standard).join(frameText(frame.footer));
+  }
+  return { ...mail, html, text };
+}
 
 /**
  * Emails HOR can reword in the admin (Email templates). Each has a subject,

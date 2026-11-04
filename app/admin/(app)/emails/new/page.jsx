@@ -1,3 +1,4 @@
+import { loadEmailFrame } from "../../../../lib/emailSettings";
 import { notFound } from "next/navigation";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { CUSTOM_KINDS, TEMPLATE_VARIABLES } from "../../../../lib/emailTemplates.mjs";
@@ -18,7 +19,7 @@ export default async function NewEmailTemplatePage({ searchParams }) {
       <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
       <PageHead title={`New ${k.title.toLowerCase()} template`} lead={k.when} />
       <Flash params={query} />
-      <TemplateEditor
+      <TemplateEditor frame={await loadEmailFrame()}
         kind={kind}
         initial={k.defaults}
         defaults={k.defaults}

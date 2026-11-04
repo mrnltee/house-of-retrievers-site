@@ -3,7 +3,7 @@
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
-import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
@@ -15,7 +15,7 @@ import LetterView from "../LetterView";
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back, eventId = "", designs = [], house = null }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back, eventId = "", designs = [], house = null, frame = null }) {
   const isStandard = (label) => standard.includes(label);
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
@@ -42,10 +42,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
       return renderDesign(filled.doc, { house, subject: filled.subject });
     }
-    return attach
-      ? letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename })
-      : letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, attached: false });
-  }, [prepared, attach, design, house, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
+    return applyEmailFrame(letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, attached: attach }), frame);
+  }, [prepared, attach, design, house, who, date, values, frame]); // eslint-disable-line react-hooks/exhaustive-deps
   const missing = missingBlanks(shownBlanks, values);
   const count = picked.size;
 

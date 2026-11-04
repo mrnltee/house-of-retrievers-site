@@ -1,3 +1,4 @@
+import { loadEmailFrame } from "../../../../lib/emailSettings";
 import { notFound } from "next/navigation";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { listLetters, loadLetter, savedAnswers } from "../../../../lib/letterStore";
@@ -38,7 +39,7 @@ export default async function LetterPage({ params, searchParams }) {
         </nav>
       </PageHead>
       <Flash params={query} />
-      <LetterEditor letter={letter} original={original} pdfAction={`${base}/letters/pdf`} standard={standard} detailsHref={`${base}/letters/details`} eventFills={fills} eventTitle={event?.title || ""} />
+      <LetterEditor frame={await loadEmailFrame()} letter={letter} original={original} pdfAction={`${base}/letters/pdf`} standard={standard} detailsHref={`${base}/letters/details`} eventFills={fills} eventTitle={event?.title || ""} />
     </>
   );
 }

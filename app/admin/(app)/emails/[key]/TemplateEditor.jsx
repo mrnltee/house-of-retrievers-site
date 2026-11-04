@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
 import { resetEmailTemplate, saveEmailTemplate, sendTestEmail } from "../../../emailActions";
 import ConfirmButton from "../../ConfirmButton";
 
@@ -13,7 +13,7 @@ const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage(
  * where the cursor was in the last field used. The preview fills variables
  * with a sample person.
  */
-export default function TemplateEditor({ templateKey, customId, kind, name: initialName = "", initial, defaults, custom, variables }) {
+export default function TemplateEditor({ templateKey, customId, kind, name: initialName = "", initial, defaults, custom, variables, frame = null }) {
   const ref = templateKey || `custom:${kind}`;
   const own = !templateKey;
   const event = ref === "rsvp-confirmed" || ref === "custom:event";
@@ -21,7 +21,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
   const [fields, setFields] = useState({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
   const [width, setWidth] = useState("phone");
   const last = useRef({ name: "message", el: null });
-  const mail = useMemo(() => renderTemplate(ref, fields, SAMPLE_PERSON, event ? PASS : {}), [ref, event, fields]);
+  const mail = useMemo(() => applyEmailFrame(renderTemplate(ref, fields, SAMPLE_PERSON, event ? PASS : {}), frame), [ref, event, fields, frame]);
   const changed = name !== initialName || JSON.stringify(fields) !== JSON.stringify({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
 
   const set = (name) => (e) => {
