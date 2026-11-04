@@ -4,7 +4,7 @@ import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
 import { letterBodyEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
-import { escapeFills, fillDesign, kindLabel, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
+import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
@@ -117,8 +117,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <span>Email design <small>A designed email from Brand email designs, or HOR&apos;s standard email</small></span>
             <select value={designId} onChange={(e) => setDesignId(e.target.value)}>
               <option value="">HOR standard email</option>
-              {designs.some((d) => d.forEvent) && <optgroup label="For this event">{designs.filter((d) => d.forEvent).map((d) => <option key={d.id} value={d.id}>{kindLabel(d.kind)}: {d.name}</option>)}</optgroup>}
-              <optgroup label="Library">{designs.filter((d) => !d.forEvent).map((d) => <option key={d.id} value={d.id}>{kindLabel(d.kind)}: {d.name}</option>)}</optgroup>
+              {designs.some((d) => d.forEvent) && <optgroup label="For this event">{designs.filter((d) => d.forEvent).map((d) => <option key={d.id} value={d.id}>{designLabel(d)}</option>)}</optgroup>}
+              <optgroup label="Library">{designs.filter((d) => !d.forEvent).map((d) => <option key={d.id} value={d.id}>{designLabel(d)}</option>)}</optgroup>
             </select>
           </label>
         )}

@@ -18,6 +18,8 @@ export const KINDS = [
   ["thanks-no", "Thank you anyway", "For a brand that said no this time.", false],
 ];
 export const kindLabel = (key) => (key === "house" ? "HOR header & footer" : KINDS.find(([k]) => k === key)?.[1] || key);
+/** "Kind: name", or just the name when it already says the kind. */
+export const designLabel = (d) => (d.name === kindLabel(d.kind) ? d.name : `${kindLabel(d.kind)}: ${d.name}`);
 
 export const ZONES = ["header", "body", "footer"];
 export const BLOCK_TYPES = ["text", "image", "columns", "button", "divider", "space"];
@@ -86,9 +88,11 @@ function attrs(text) {
   return out;
 }
 
+const styleRules = (style) => Object.fromEntries(String(style || "").split(";").map((r) => r.split(":")).filter((r) => r.length >= 2).map(([k, ...v]) => [k.trim().toLowerCase(), v.join(":").trim().toLowerCase()]));
+
 function spanStyle(a, tag) {
   const parts = [];
-  const rules = Object.fromEntries(String(a.style || "").split(";").map((r) => r.split(":")).filter((r) => r.length >= 2).map(([k, ...v]) => [k.trim().toLowerCase(), v.join(":").trim().toLowerCase()]));
+  const rules = styleRules(a.style);
   const color = toHex(rules.color || (tag === "font" ? a.color : ""));
   if (color) parts.push(`color:${color}`);
   const size = rules["font-size"];
@@ -108,6 +112,7 @@ function spanStyle(a, tag) {
 export function cleanHtml(html) {
   const out = [];
   const open = [];
+  const closeOf = (entry) => { for (const t of entry.split("|")[1].split(" ").filter(Boolean)) out.push(`</${t}>`); };
   let skip = 0;
   for (const m of String(html || "").matchAll(/<!--[\s\S]*?-->|<\/?([a-zA-Z][a-zA-Z0-9-]*)([^>]*)>|[^<]+|</g)) {
     const [token, rawTag, rest = ""] = m;
@@ -122,7 +127,7 @@ export function cleanHtml(html) {
     if (closing) {
       const at = open.map((t) => t.split("|")[0]).lastIndexOf(tag);
       if (at < 0) continue;
-      while (open.length > at) { const t = open.pop(); const mapped = t.split("|")[1]; if (mapped) out.push(`</${mapped}>`); }
+      while (open.length > at) closeOf(open.pop());
       continue;
     }
     if (name === "br") { out.push("<br>"); continue; }
@@ -132,16 +137,29 @@ export function cleanHtml(html) {
       if (href) out.push(`<a href="${escHtml(href)}" target="_blank">`);
       continue;
     }
+    const a = attrs(rest);
+    const css = styleRules(a.style);
     if (name === "span") {
-      const style = spanStyle(attrs(rest), tag);
-      open.push(`${tag}|${style ? "span" : ""}`);
+      // Bold, italic and underline written as styles (Chrome, Google Docs) become tags.
+      const wraps = [];
+      if (/^(bold|bolder|[6-9]00)$/.test(css["font-weight"] || "")) wraps.push("strong");
+      if (css["font-style"] === "italic") wraps.push("em");
+      if (/underline/.test(css["text-decoration"] || css["text-decoration-line"] || "")) wraps.push("u");
+      const style = spanStyle(a, tag);
+      for (const w of wraps) out.push(`<${w}>`);
       if (style) out.push(`<span style="${style}">`);
+      open.push(`${tag}|${[...(style ? ["span"] : []), ...wraps.reverse()].join(" ")}`);
+      continue;
+    }
+    // A <b> or <i> that says "not bold" / "not italic" (Google Docs wraps whole pastes in one).
+    if ((name === "strong" && /^(normal|lighter|[1-4]00)$/.test(css["font-weight"] || "")) || (name === "em" && css["font-style"] === "normal")) {
+      open.push(`${tag}|`);
       continue;
     }
     open.push(`${tag}|${name}`);
     out.push(`<${name}>`);
   }
-  while (open.length) { const mapped = open.pop().split("|")[1]; if (mapped) out.push(`</${mapped}>`); }
+  while (open.length) closeOf(open.pop());
   return out.join("").replace(/<(strong|em|u|span[^>]*|a[^>]*)><\/(strong|em|u|span|a)>/g, "").slice(0, DESIGN_LIMITS.html);
 }
 
@@ -310,7 +328,7 @@ export function renderDesign(doc, { house = HOUSE_DEFAULT, subject = "", prehead
   const footer = doc.ownFooter ? doc.footer : shared.footer;
   const zones = [header, doc.body, footer];
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(subject)}</title>
-<style>@media (max-width:600px){.ed-col{display:block!important;width:100%!important;padding:0 0 12px!important}}</style></head>
+<style>@media (max-width:480px){.ed-col{display:block!important;width:100%!important;padding:0 0 12px!important}}</style></head>
 <body style="margin:0;padding:0;background:#f5f1e6">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${escHtml(preheader || subject)}</span>
 ${T(`<tr><td align="center" style="padding:24px 12px">${T(zones.map(zoneHtml).join(""), ' style="max-width:560px;background:#ffffff;border-radius:18px;overflow:hidden"')}</td></tr>`, ' style="background:#f5f1e6"')}

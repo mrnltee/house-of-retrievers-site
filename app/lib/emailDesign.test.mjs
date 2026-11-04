@@ -104,3 +104,10 @@ test("which fill-ins a send needs: letter only, letter + design (PDF on), design
   assert.equal(esc.contact, "&lt;x&gt;");
   assert.equal(esc.values["Event Name"], "Paws &amp; Poses");
 });
+
+test("bold, italic and underline written as styles (Chrome, Google Docs) are kept as tags", () => {
+  assert.equal(cleanHtml('<span style="font-weight: bold;">B</span>'), "<strong>B</strong>");
+  assert.equal(cleanHtml('<span style="font-weight:700;font-style:italic;color:#a78440">X</span>'), '<strong><em><span style="color:#a78440">X</span></em></strong>');
+  assert.equal(cleanHtml('<span style="text-decoration: underline;">U</span>'), "<u>U</u>");
+  assert.equal(cleanHtml('<b style="font-weight:normal;" id="docs-internal-guid-1"><span style="font-weight:400">plain</span> <span style="font-weight:700">bold</span></b>'), "plain <strong>bold</strong>");
+});

@@ -8,7 +8,7 @@ import { listLetters } from "../../../../../lib/letterStore";
 import { createEventLetter, deleteLetter } from "../../../../letterActions";
 import WordImport from "../../../letters/WordImport";
 import { listDesigns } from "../../../../../lib/emailDesignStore";
-import { kindLabel } from "../../../../../lib/emailDesign.mjs";
+import { designLabel, kindLabel } from "../../../../../lib/emailDesign.mjs";
 import { createDesign, deleteDesign } from "../../../../emailDesignActions";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../../ui";
 import ConfirmButton from "../../../ConfirmButton";
@@ -98,7 +98,7 @@ export default async function EventLettersPage({ params, searchParams }) {
             <label className="field" style={{ flex: "1 1 260px" }}><span>Make a copy for this event</span>
               <select name="from" required defaultValue="">
                 <option value="" disabled>Pick a library design…</option>
-                {libraryDesigns.map((d) => <option key={d.id} value={d.id}>{kindLabel(d.kind)}: {d.name}</option>)}
+                {libraryDesigns.map((d) => <option key={d.id} value={d.id}>{designLabel(d)}</option>)}
               </select>
             </label>
             <ConfirmButton className="btn ghost" title="Make a copy of this design for the event?" items={["It opens in the editor", "The library design stays as it is", "Nothing is sent"]} yes="Yes, make a copy">Make a copy</ConfirmButton>

@@ -20,7 +20,8 @@ export default function RichText({ html, onChange, disabled = false }) {
   const changed = () => onChange(box.current?.innerHTML || "");
   const run = (command, value = null) => {
     box.current?.focus();
-    document.execCommand("styleWithCSS", false, true);
+    // Colour and size as styles; bold, italic, underline and lists as plain tags.
+    document.execCommand("styleWithCSS", false, command === "foreColor" || command === "fontSize");
     document.execCommand(command, false, value);
     changed();
   };
