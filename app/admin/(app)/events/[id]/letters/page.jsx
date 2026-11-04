@@ -7,6 +7,9 @@ import { eventFills } from "../../../../../lib/letterEventStore";
 import { listLetters } from "../../../../../lib/letterStore";
 import { createEventLetter, deleteLetter } from "../../../../letterActions";
 import WordImport from "../../../letters/WordImport";
+import { listDesigns } from "../../../../../lib/emailDesignStore";
+import { kindLabel } from "../../../../../lib/emailDesign.mjs";
+import { createDesign, deleteDesign } from "../../../../emailDesignActions";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../../ui";
 import ConfirmButton from "../../../ConfirmButton";
 
@@ -25,7 +28,9 @@ export default async function EventLettersPage({ params, searchParams }) {
   if (!event) notFound();
   const base = await adminBase();
   const canEdit = can(admin, "letters:edit");
-  const [all, fills] = await Promise.all([listLetters(), eventFills(event.id)]);
+  const [all, fills, designs] = await Promise.all([listLetters(), eventFills(event.id), listDesigns({ eventId: event.id })]);
+  const ownDesigns = designs.filter((d) => d.event_id === event.id);
+  const libraryDesigns = designs.filter((d) => !d.event_id);
   const mine = all.filter((l) => l.eventId === event.id);
   const general = all.filter((l) => !l.eventId);
   const nameOf = (key) => all.find((l) => l.key === key)?.name || key;
@@ -67,6 +72,38 @@ export default async function EventLettersPage({ params, searchParams }) {
             </table>
           </div>
         ) : <p className="small muted" style={{ marginTop: 8 }}>No letters for this event yet. Make one below; the Brand tracker sends it.</p>}
+      </section>
+
+      <section className="card">
+        <h2>Email designs for this event</h2>
+        <p className="small muted" style={{ margin: "4px 0 10px" }}>Designed emails (invites, follow-ups, thank-yous) to pick on the send page. This event's copies change only here; the library stays as it is. <a href={`${base}/emails/designs`}>Open the library</a>.</p>
+        {ownDesigns.length ? (
+          <ul className="plain-list design-list">
+            {ownDesigns.map((d) => (
+              <li key={d.id}>
+                <a href={`${base}/emails/designs/${d.id}`}><strong>{d.name}</strong></a>
+                <span className="small muted"> · {kindLabel(d.kind)} · {formatWhen(d.updated_at)}</span>
+                {canEdit && (
+                  <span className="design-row-actions">
+                    <form action={deleteDesign}><input type="hidden" name="id" value={d.id} /><ConfirmButton className="btn ghost small" tone="danger" title={`Delete “${d.name}”?`} items={["Only this event's copy goes; the library is unchanged", "Emails already sent are unchanged"]} note="This can't be undone." yes="Yes, delete">Delete</ConfirmButton></form>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : <p className="small muted">No copies for this event yet; the send page offers the library designs.</p>}
+        {canEdit && (libraryDesigns.length ? (
+          <form action={createDesign} className="actions" style={{ marginTop: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <input type="hidden" name="event" value={event.id} />
+            <label className="field" style={{ flex: "1 1 260px" }}><span>Make a copy for this event</span>
+              <select name="from" required defaultValue="">
+                <option value="" disabled>Pick a library design…</option>
+                {libraryDesigns.map((d) => <option key={d.id} value={d.id}>{kindLabel(d.kind)}: {d.name}</option>)}
+              </select>
+            </label>
+            <ConfirmButton className="btn ghost" title="Make a copy of this design for the event?" items={["It opens in the editor", "The library design stays as it is", "Nothing is sent"]} yes="Yes, make a copy">Make a copy</ConfirmButton>
+          </form>
+        ) : <p className="small muted">The library is empty. <a href={`${base}/emails/designs`}>Make a design there</a> first.</p>)}
       </section>
 
       {canEdit && (
