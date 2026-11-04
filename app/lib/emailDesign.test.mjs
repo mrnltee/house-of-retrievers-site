@@ -38,3 +38,55 @@ test("cleanDoc checks blocks and clamps numbers", () => {
   assert.match(cleanDoc({ body: { blocks: [{ type: "button", label: "Go", href: "javascript:x" }] } }).error, /link/i);
   assert.equal(KINDS.length, 5);
 });
+
+test("render: zone background, margin as outer padding, columns, absolute images", async () => {
+  const { renderDesign } = await import("./emailDesign.mjs");
+  const { HOME_URL } = await import("./siteSeo.mjs");
+  const doc = cleanDoc({
+    ownHeader: true, ownFooter: true,
+    header: { blocks: [] }, footer: { blocks: [] },
+    body: { style: { background: "#F5F1E6" }, blocks: [
+      { type: "text", html: "<p>Hello</p>", style: { margin: [0, 0, 12, 0], padding: [8, 16, 8, 16] } },
+      { type: "columns", count: 2, cols: [{ blocks: [{ type: "text", html: "A" }] }, { blocks: [{ type: "text", html: "B" }] }] },
+      { type: "image", src: "/api/event-image/0b1d5c3e-1111-4222-8333-444455556666", width: 50, alt: "Banner" },
+      { type: "button", label: "Event page", href: "[Event Link]" },
+    ] },
+  }).doc;
+  const { html, text } = renderDesign(doc, { subject: "Hi" });
+  assert.match(html, /background:#f5f1e6/);
+  assert.match(html, /padding:0px 0px 12px 0px/);
+  assert.match(html, /padding:8px 16px 8px 16px/);
+  assert.equal((html.match(/class="ed-col"/g) || []).length, 2);
+  assert.ok(html.includes(`src="${HOME_URL}/api/event-image/0b1d5c3e-1111-4222-8333-444455556666"`));
+  assert.ok(!html.includes("Event page"), "a button whose link isn't filled in is left out");
+  assert.match(text, /Hello/);
+  assert.match(text, /\[Banner\]/);
+});
+
+test("house header and footer are used unless the design has its own", async () => {
+  const { renderDesign, HOUSE_DEFAULT } = await import("./emailDesign.mjs");
+  const { LEGAL } = await import("./legal.mjs");
+  const doc = cleanDoc({ footer: { blocks: [{ type: "text", html: "Own footer" }] }, body: { blocks: [{ type: "text", html: "Body" }] } }).doc;
+  const shared = renderDesign(doc, { house: HOUSE_DEFAULT, subject: "x" }).html;
+  assert.ok(shared.includes(`SEC Registration: ${LEGAL.sec}`));
+  assert.ok(!shared.includes("Own footer"));
+  const own = renderDesign({ ...doc, ownFooter: true }, { subject: "x" }).html;
+  assert.ok(own.includes("Own footer"));
+  assert.ok(renderDesign(doc, { house: null, subject: "x" }).html.includes(LEGAL.sec), "no house row yet → HOR default");
+});
+
+test("fill-ins are escaped in the email and plain in the text; blanks are found", async () => {
+  const { fillDesign, renderDesign, designTexts, STARTERS } = await import("./emailDesign.mjs");
+  const { blanksOf } = await import("./letters.mjs");
+  const doc = cleanDoc({ ownHeader: true, ownFooter: true, body: { blocks: [{ type: "text", html: "Dear [Salutation], about [Booth Size]" }, { type: "button", label: "Open", href: "[Event Link]" }] } }).doc;
+  const values = { Salutation: "<b>Tom & Co</b>", "Booth Size": "3x3", "Event Link": "https://events.houseofretrieversph.org/x" };
+  const fill = (t, { html }) => t.replace(/\[([^\]]+)\]/g, (_, k) => (html ? values[k].replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]) : values[k]));
+  const filled = fillDesign(doc, "Hi [Salutation]", fill);
+  assert.equal(filled.subject, "Hi <b>Tom & Co</b>");
+  const out = renderDesign(filled.doc, { subject: filled.subject });
+  assert.ok(out.html.includes("Dear &lt;b&gt;Tom &amp; Co&lt;/b&gt;,"));
+  assert.ok(out.text.includes("Dear <b>Tom & Co</b>,"));
+  assert.ok(out.html.includes('href="https://events.houseofretrieversph.org/x"'));
+  assert.deepEqual(blanksOf(...designTexts(doc, "Hi [Salutation]")).map((b) => b.label).sort(), ["Booth Size", "Event Link"]);
+  for (const [kind] of KINDS) assert.equal(cleanDoc(STARTERS[kind].doc).error, undefined, kind);
+});
