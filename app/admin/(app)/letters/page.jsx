@@ -4,6 +4,7 @@ import { LETTER_GROUPS, letterFor } from "../../../lib/contacts.mjs";
 import { blanksOf } from "../../../lib/letters.mjs";
 import { groupLetters, listLetters, savedAnswers } from "../../../lib/letterStore";
 import { createLetter, deleteLetter, saveGroupLetters } from "../../letterActions";
+import WordImport from "./WordImport";
 import ConfirmButton from "../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 
@@ -75,7 +76,8 @@ export default async function LettersPage({ searchParams }) {
       {canEdit && (
         <form action={createLetter} className="card form" style={{ marginTop: 16 }}>
           <h2 style={{ margin: 0 }}>New letter</h2>
-          <p className="small muted" style={{ margin: 0 }}>Starts with the usual address block, greeting and signature. To start from an existing letter, use its Duplicate button instead.</p>
+          <p className="small muted" style={{ margin: 0 }}>Starts with the usual address block, greeting and signature, or with the text of a Word file. To start from an existing letter, use its Duplicate button instead.</p>
+          <WordImport />
           <div className="actions" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
             <label className="field" style={{ flex: "1 1 260px" }}><span>Name <small>Only admins see this, e.g. Thank-you letter (sponsors)</small></span><input type="text" name="name" maxLength={80} required /></label>
             <ConfirmButton className="btn dark" title="Make a new letter?" items={["It opens in the editor, ready to write", "Nothing is sent"]} yes="Yes, make it">+ New letter</ConfirmButton>

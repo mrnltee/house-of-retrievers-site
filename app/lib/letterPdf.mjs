@@ -100,12 +100,24 @@ function field(doc, label, x, y, w, h, options = {}) {
 
 /** Writes runs at the current position (or x, y), wrapping in `width`. */
 function writeRuns(doc, runs, { x, y, width, align = "left", size = SIZE, color = INK, gap = 2 } = {}) {
-  const parts = runs.length ? runs : [{ text: " ", bold: false }];
-  parts.forEach((run, i) => {
-    doc.font(font(run.bold)).fontSize(size).fillColor(color);
-    const opts = { width, align, lineGap: gap, continued: i < parts.length - 1 };
-    if (i === 0 && x != null) doc.text(pdfSafe(run.text), x, y, opts);
-    else doc.text(pdfSafe(run.text), opts);
+  // One line at a time: pdfkit drops or indents a line break inside a chain of continued
+  // runs ("Warm regards,\n**HOR**" came out on one line), so each line starts at the left.
+  const lines = [[]];
+  for (const run of runs.length ? runs : [{ text: " ", bold: false }]) {
+    String(run.text).split("\n").forEach((text, i) => {
+      if (i) lines.push([]);
+      if (text) lines[lines.length - 1].push({ ...run, text });
+    });
+  }
+  const startX = x ?? doc.x;
+  lines.forEach((line, li) => {
+    const parts = line.length ? line : [{ text: " ", bold: false }];
+    parts.forEach((run, i) => {
+      doc.font(font(run.bold)).fontSize(size).fillColor(color);
+      const opts = { width, align, lineGap: gap, continued: i < parts.length - 1 };
+      if (i === 0) doc.text(pdfSafe(run.text), startX, li === 0 && y != null ? y : doc.y, opts);
+      else doc.text(pdfSafe(run.text), opts);
+    });
   });
 }
 

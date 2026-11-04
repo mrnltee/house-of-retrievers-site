@@ -6,6 +6,7 @@ import { EVENT_FILLS } from "../../../../../lib/letterEvent.mjs";
 import { eventFills } from "../../../../../lib/letterEventStore";
 import { listLetters } from "../../../../../lib/letterStore";
 import { createEventLetter, deleteLetter } from "../../../../letterActions";
+import WordImport from "../../../letters/WordImport";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../../ui";
 import ConfirmButton from "../../../ConfirmButton";
 
@@ -74,7 +75,7 @@ export default async function EventLettersPage({ params, searchParams }) {
           <form action={createEventLetter} className="form" style={{ marginTop: 10 }}>
             <input type="hidden" name="event" value={event.id} />
             <div className="row-2">
-              <label className="field"><span>Start from <small>A copy is made for this event; the original in Letters stays as it is</small></span>
+              <label className="field"><span>Start from <small>A copy is made for this event; the original in Letters stays as it is. A Word file below is used instead, if you pick one.</small></span>
                 <select name="from" defaultValue={general.find((l) => l.key.startsWith("sponsor"))?.key || ""}>
                   <option value="">Blank letter</option>
                   {general.map((l) => <option key={l.key} value={l.key}>{l.name}</option>)}
@@ -82,6 +83,7 @@ export default async function EventLettersPage({ params, searchParams }) {
               </label>
               <label className="field"><span>Name <small>Optional, e.g. Sponsor invite</small></span><input type="text" name="name" maxLength={80} placeholder={`… — ${event.title}`} /></label>
             </div>
+            <WordImport />
             <div className="actions"><ConfirmButton className="btn dark" title="Make this letter for the event?" items={["It opens in the letter editor.", "Nothing is sent."]}>Make the letter</ConfirmButton></div>
           </form>
         </section>

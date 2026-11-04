@@ -176,7 +176,15 @@ export async function sendLetters(data) {
 
 const slug = (text) => String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "letter";
 
-/** Letters: a new letter of HOR's own, blank or copied from another letter ("from"). */
+/** A new letter's content from a Word file (read in the browser by WordImport): its text as the body, its "Subject:" line or name as the subject. */
+function fromWord(data, blank, name) {
+  const body = form(data, "body").replace(/\r\n?/g, "\n").trim().slice(0, LETTER_LIMITS.body);
+  if (!body) return null;
+  const subject = (form(data, "subject").trim() || name).slice(0, LETTER_LIMITS.subject);
+  return { ...blank, subject, body };
+}
+
+/** Letters: a new letter of HOR's own: blank, from a Word file, or copied from another letter ("from"). */
 export async function createLetter(data) {
   return guarded("/letters", async () => {
     const admin = await actionAdmin("letters:edit");
@@ -191,13 +199,13 @@ export async function createLetter(data) {
       cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers’ Society, Inc.\n\nOur letter is attached.",
       body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: Subject line**\n\nDear [Salutation]:\n\nWrite the letter here.\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
     };
-    const l = source || blank;
+    const l = source || fromWord(data, blank, name) || blank;
     await sql(
       `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $7, $6, now(), $6, now())`,
       [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null],
     );
-    await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null });
-    await backWith(`/letters/${key}`, "ok", source ? `Copied “${source.name}”. Edit the copy, then save.` : "New letter made. Write it, then save.");
+    await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null, ...(l !== blank && !source ? { word: true } : {}) });
+    await backWith(`/letters/${key}`, "ok", source ? `Copied “${source.name}”. Edit the copy, then save.` : l !== blank ? "Letter made from your Word file. Check it, add any [fill-ins], then save." : "New letter made. Write it, then save.");
   });
 }
 
@@ -209,7 +217,9 @@ export async function createEventLetter(data) {
     const admin = await actionAdmin("letters:edit");
     const [event] = isUuid(eventId) ? await sql("SELECT id, title FROM events WHERE id = $1", [eventId]) : [];
     if (!event) await backWith("/events", "error", "That event wasn't found.");
-    const from = form(data, "from");
+    // A Word file, when one was picked, wins over "Start from".
+    const word = form(data, "body").trim() ? true : false;
+    const from = word ? "" : form(data, "from");
     const source = from ? await loadLetter(from) : null;
     if (from && !source) await backWith(back, "error", "The letter to start from wasn't found.");
     const name = (form(data, "name").trim() || (source ? `${source.name} — ${event.title}` : `Letter — ${event.title}`)).slice(0, LETTER_LIMITS.name);
@@ -219,14 +229,14 @@ export async function createEventLetter(data) {
       cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers’ Society, Inc.\n\nOur letter about [Event Name] on [Event Date] is attached.",
       body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: [Event Name]**\n\nDear [Salutation]:\n\nWrite the letter here. [Event Name] is on [Event Date], [Event Time], at [Event Location].\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
     };
-    const l = source || blank;
+    const l = source || fromWord(data, blank, name) || blank;
     await sql(
       `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at, created_by, created_at, event_id, based_on)
        VALUES ($1, $2, $3, $4, $5, $7, $6, now(), $6, now(), $8, $9)`,
       [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null, event.id, source?.key || null],
     );
     await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null, eventId: event.id });
-    await backWith(`/letters/${key}`, "ok", source ? `Made “${name}” from “${source.name}” for this event. Edit it, then save.` : "New event letter made. Write it, then save.");
+    await backWith(`/letters/${key}`, "ok", source ? `Made “${name}” from “${source.name}” for this event. Edit it, then save.` : l !== blank ? "Event letter made from your Word file. Check it, add any [fill-ins], then save." : "New event letter made. Write it, then save.");
   });
 }
 
