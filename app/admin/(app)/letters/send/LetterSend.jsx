@@ -3,7 +3,7 @@
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
-import { letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { letterBodyEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
@@ -27,7 +27,11 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const body = signed && !hasSignatureMark(letter.body) ? placeSignatureMark(letter.body) : letter.body;
   const filled = useMemo(() => fillLetter(body, to), [body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
   const prepared = useMemo(() => prepareLetter(letter, { ...to, signed }), [letter, who, date, values, signed]); // eslint-disable-line react-hooks/exhaustive-deps
-  const email = useMemo(() => letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename }), [prepared]);
+  // Attach the PDF (a short cover email), or send the letter itself as the email (owner, 2026-11-04).
+  const [attach, setAttach] = useState(true);
+  const email = useMemo(() => (attach
+    ? letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename })
+    : letterBodyEmail({ subject: prepared.subject, blocks: prepared.blocks })), [prepared, attach]);
   const missing = missingBlanks(blanks, values);
   const count = picked.size;
 
@@ -60,6 +64,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         <input type="hidden" name="back" value={back} />
         {eventId && <input type="hidden" name="event" value={eventId} />}
         <input type="hidden" name="values" value={JSON.stringify(values)} />
+        <input type="hidden" name="attach" value={attach ? "yes" : "no"} />
         <label className="field">
           <span>Letter</span>
           <select value={letter.key} onChange={(e) => switchLetter(e.target.value)}>
@@ -94,11 +99,16 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </details>
         )}
 
+        <label className="check attach-choice">
+          <input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} />
+          <span><strong>Attach the letter as a PDF</strong><br /><span className="small muted">{attach ? "A short cover email goes out with the letter attached." : "No attachment: the whole letter is written in the email, with the HOR logo on top and the name, SEC number and website at the bottom. The cover note isn't used."}</span></span>
+        </label>
+
         <div className="actions">
           <ConfirmButton
             disabled={!ready || count === 0 || count > max || missing.length > 0}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
-            items={["Each gets an email with the letter as a PDF, addressed to them by name", "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
+            items={[attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the letter written in the email, addressed to them by name (no PDF attached)", "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
           >
             Send to {count}
@@ -122,9 +132,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <div><dt>Subject</dt><dd><strong>{prepared.subject}</strong></dd></div>
           </dl>
           <SignatureStatus check={signatureCheck} editHref={editHref} />
-          <p className="mail-attachment" title="The letter, filled in for this recipient">
+          {attach ? <p className="mail-attachment" title="The letter, filled in for this recipient">
             <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
-          </p>
+          </p> : <p className="small muted">No attachment: the letter is the email.</p>}
         </div>
         <LetterView initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
       </section>
