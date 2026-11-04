@@ -19,10 +19,13 @@ const TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipuna
 export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "", eventFills = null, eventTitle = "" }) {
   const [fields, setFields] = useState({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const savedSig = cleanSignature(letter.signature);
+  // Attach a PDF letter, or send the email only (owner, 2026-11-04): off hides the letter, its signature and the PDF preview.
+  const savedAttach = letter.attachPdf !== false;
+  const [attachPdf, setAttachPdf] = useState(savedAttach);
   // Signature settings; `upload` is a newly picked image (a data URL) until saved.
   const [sig, setSig] = useState({ ...savedSig, upload: "" });
   const sigChanged = sig.upload !== "" || ["on", "x", "dy", "width"].some((k) => sig[k] !== savedSig[k]) || sig.image !== savedSig.image;
-  const changed = sigChanged || JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
+  const changed = sigChanged || attachPdf !== savedAttach || JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const sigView = { on: sig.on, src: sig.upload || sig.image, x: sig.x, dy: sig.dy, width: sig.width };
   const moveSig = ({ x, dy }) => setSig((s) => ({ ...s, x: Math.min(SIGNATURE_LIMITS.x[1], Math.max(0, Math.round(x * 1000) / 1000)), dy: Math.min(SIGNATURE_LIMITS.dy[1], Math.max(SIGNATURE_LIMITS.dy[0], Math.round(dy))) }));
   // "Put it above the signatory's name": before the line naming who signs, else the sign-off.
@@ -36,9 +39,10 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [changed]);
-  const blanks = useMemo(() => blanksOf(fields.subject, fields.cover, fields.body), [fields]);
+  const texts = attachPdf ? [fields.subject, fields.cover, fields.body] : [fields.subject, fields.cover];
+  const blanks = useMemo(() => blanksOf(...texts), [fields, attachPdf]); // eslint-disable-line react-hooks/exhaustive-deps
   // The automatic blanks this letter uses, e.g. [Company Name].
-  const autos = useMemo(() => Object.keys(AUTO_BLANKS).filter((label) => [fields.subject, fields.cover, fields.body].some((t) => t.includes(`[${label}]`) || t.includes(`[${label}?]`))), [fields]);
+  const autos = useMemo(() => Object.keys(AUTO_BLANKS).filter((label) => texts.some((t) => t.includes(`[${label}]`) || t.includes(`[${label}?]`))), [fields, attachPdf]); // eslint-disable-line react-hooks/exhaustive-deps
   // An event's letter: its [Event …] blanks show that event's real details, and aren't asked when sending.
   const values = useMemo(() => ({ ...standard, ...(eventFills || {}) }), [standard, eventFills]);
   const fromEvent = eventFills ? blanks.filter((b) => eventFills[b.label] !== undefined) : [];
@@ -47,8 +51,8 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values }), [fields.body, values]);
   const email = useMemo(() => {
     const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { ...TO, values });
-    return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename });
-  }, [fields, letter.name, values]);
+    return letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename, attached: attachPdf });
+  }, [fields, letter.name, values, attachPdf]);
   // Puts [Label] where the cursor is in the letter (or at the end).
   const insertBlank = (label) => {
     const el = bodyRef.current;
@@ -76,13 +80,20 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
           <span>Email subject <small>What recipients see in their inbox. Don&apos;t add “Email Subject” or similar.</small></span>
           <input type="text" name="subject" maxLength={LETTER_LIMITS.subject} required value={fields.subject} onChange={set("subject")} />
         </label>
-        <h2 className="letter-step"><span>2</span> Covering email</h2>
+        <label className="check attach-choice">
+          <input type="checkbox" checked={attachPdf} onChange={(e) => setAttachPdf(e.target.checked)} />
+          <span><strong>Attach a PDF letter</strong><br /><span className="small muted">{attachPdf ? "The email goes out with the letter below as a PDF, on HOR's letterhead." : "Email only: no letter and no PDF. The email below is the whole message."}</span></span>
+        </label>
+        <input type="hidden" name="attachPdf" value={attachPdf ? "yes" : "no"} />
+        <h2 className="letter-step"><span>2</span> {attachPdf ? "Covering email" : "Email"}</h2>
         <div className="field">
-          <label htmlFor="letter-cover" className="field-head">Email text <small>The short message the PDF is attached to. Start with “Dear [Salutation],”, keep it to a few lines; the details go in the letter.</small></label>
+          <label htmlFor="letter-cover" className="field-head">Email text <small>{attachPdf ? "The short message the PDF is attached to. Start with “Dear [Salutation],”, keep it to a few lines; the details go in the letter." : "The whole message. Start with “Dear [Salutation],”. **Bold**, [links](https://…) and [fill-ins] work here."}</small></label>
           <FormatBar target={coverRef} keys={["greeting", "|", "link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting">
             <textarea id="letter-cover" ref={coverRef} name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
           </FormatBar>
         </div>
+        {attachPdf && (
+          <>
         <h2 className="letter-step"><span>3</span> The letter (PDF attachment)</h2>
         <div className="field">
           <label htmlFor="letter-body" className="field-head">Letter text <small>Becomes the PDF, with HOR&apos;s letterhead. Select text, then use a button to format it.</small></label>
@@ -94,7 +105,9 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
           <summary>How to write a letter</summary>
           <ul>{LETTER_HELP.map((line) => <li key={line}>{line}</li>)}</ul>
         </details>
-        <h2 className="letter-step"><span>4</span> Blanks in this letter</h2>
+          </>
+        )}
+        <h2 className="letter-step"><span>{attachPdf ? 4 : 3}</span> Blanks in this {attachPdf ? "letter" : "email"}</h2>
         <p className="small muted" style={{ margin: 0 }}>Words in [square brackets] are filled in for each recipient. A ? (like [Address?]) makes it optional: its line is left out when there&apos;s nothing to put.</p>
         <div className="template-vars letter-blanks">
           {eventFills && (
@@ -123,6 +136,8 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
             <ul>{asked.map((b) => <li key={b.label}><span className="tag-badge">[{b.label}{b.optional ? "?" : ""}]</span> <span className="small muted">{b.optional ? "optional" : "required"}{blankSample(b.label, letter.key) ? <> · e.g. <em>{blankSample(b.label, letter.key).replace(/^e\.g\. /, "")}</em></> : null}</span></li>)}</ul>
           ) : <p className="small muted">Nothing. This letter sends without typing anything.</p>}
         </div>
+        {attachPdf && (
+          <>
         <h2 className="letter-step"><span>5</span> Signature <small className="muted">optional</small></h2>
         {sigChanged && <p className="small sig-status is-warn" role="status" style={{ margin: 0 }}>● Signature changes aren&apos;t saved yet. Press Save below; letters are sent with the saved version.</p>}
         <div className="signature-controls">
@@ -143,6 +158,8 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
             <SliderField label="Size" hint="Width of the signature" unit="pt" min={SIGNATURE_LIMITS.width[0]} max={SIGNATURE_LIMITS.width[1]} step={1} value={sig.width} onChange={(v) => setSig((s) => ({ ...s, width: v }))} />
           </div>
         </div>
+          </>
+        )}
         <div className="actions">
           <ConfirmButton disabled={!changed} title={`Save “${fields.name || "this letter"}”?`} items={["Your wording replaces the current one", "Letters sent from now on use it; letters already sent are unchanged"]} yes="Yes, save letter">Save</ConfirmButton>
           {letter.custom && letter.starter && (
@@ -150,7 +167,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
               Back to the original
             </ConfirmButton>
           )}
-          {original && changed && <button type="button" className="linkish" onClick={() => { setFields({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body }); setSig({ ...savedSig, upload: "" }); }}>Undo my edits</button>}
+          {original && changed && <button type="button" className="linkish" onClick={() => { setFields({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body }); setSig({ ...savedSig, upload: "" }); setAttachPdf(savedAttach); }}>Undo my edits</button>}
         </div>
       </form>
 
@@ -160,16 +177,16 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
             <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {SAMPLE}</p>
             <p className="template-subject"><strong>{fillLetter(fields.subject, { ...TO, values })}</strong></p>
           </div>
-          <form method="post" action={pdfAction} target="_blank">
+          {attachPdf && <form method="post" action={pdfAction} target="_blank">
             <input type="hidden" name="letter" value={letter.key} />
             <input type="hidden" name="sample" value="1" />
             <input type="hidden" name="subject" value={fields.subject} />
             <input type="hidden" name="cover" value={fields.cover} />
             <input type="hidden" name="body" value={fields.body} />
             <button type="submit" className="btn ghost" data-confirm="not-needed-read-only">Preview PDF</button>
-          </form>
+          </form>}
         </div>
-        <LetterView text={preview} email={email} signature={sigView} onMoveSignature={sig.on ? moveSig : undefined} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body, signature: JSON.stringify({ on: sig.on, image: sig.image, x: sig.x, dy: sig.dy, width: sig.width }), signatureUpload: sig.upload }} />
+        <LetterView emailOnly={!attachPdf} text={preview} email={email} signature={sigView} onMoveSignature={sig.on ? moveSig : undefined} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body, signature: JSON.stringify({ on: sig.on, image: sig.image, x: sig.x, dy: sig.dy, width: sig.width }), signatureUpload: sig.upload }} />
       </section>
     </div>
   );

@@ -424,7 +424,8 @@ export const STARTERS = {
  */
 export function sendBlanks(letter, design, attach) {
   const letterTexts = [letter.subject, letter.cover, letter.body];
-  if (!design) return blanksOf(...letterTexts);
+  // Without the PDF the letter text isn't sent: only the subject and the email are filled in.
+  if (!design) return attach ? blanksOf(...letterTexts) : blanksOf(letter.subject, letter.cover);
   const own = designTexts(design.doc, design.subject);
   return attach ? blanksOf(...letterTexts, ...own) : blanksOf(...own);
 }

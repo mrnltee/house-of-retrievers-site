@@ -7,7 +7,7 @@ import { emailReady, sendEmail } from "../lib/email";
 import { logSend } from "../lib/letterSendsStore";
 import { EVENT_BLANKS, eventLetterKey } from "../lib/letterEvent.mjs";
 import { eventFills } from "../lib/letterEventStore";
-import { letterBodyEmail, letterCoverEmail } from "../lib/emailTemplates.mjs";
+import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { escapeFills, fillDesign, renderDesign, sendBlanks } from "../lib/emailDesign.mjs";
 import { loadDesign, loadHouse } from "../lib/emailDesignStore";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, fillLetter, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
@@ -45,23 +45,29 @@ export async function saveLetter(data) {
   const back = looksLikeKey(key) ? `/letters/${key}` : "/letters";
   return guarded(back, async () => {
     const admin = await actionAdmin("letters:edit");
-    if (!looksLikeKey(key) || !(await loadLetter(key))) await backWith("/letters", "error", "That letter doesn't exist.");
-    const f = { name: form(data, "name").trim(), subject: form(data, "subject").replace(/\s+/g, " ").trim(), cover: form(data, "cover").replace(/\r\n?/g, "\n").trim(), body: form(data, "body").replace(/\r\n?/g, "\n").trim() };
+    const before = await loadLetter(key);
+    if (!looksLikeKey(key) || !before) await backWith("/letters", "error", "That letter doesn't exist.");
+    // Email only (no PDF): the letter text and signature aren't shown, so the saved ones are kept as they are.
+    const attachPdf = form(data, "attachPdf") !== "no";
+    const f = { name: form(data, "name").trim(), subject: form(data, "subject").replace(/\s+/g, " ").trim(), cover: form(data, "cover").replace(/\r\n?/g, "\n").trim(), body: attachPdf ? form(data, "body").replace(/\r\n?/g, "\n").trim() : before.body };
     for (const [field, max] of Object.entries({ name: LETTER_LIMITS.name, subject: LETTER_LIMITS.subject, cover: LETTER_LIMITS.cover, body: LETTER_LIMITS.body })) {
-      if (!f[field]) await backWith(back, "error", `The ${field === "body" ? "letter" : field} can't be empty.`);
+      if (!f[field]) await backWith(back, "error", `The ${field === "body" ? "letter" : field === "cover" ? "email text" : field} can't be empty.`);
       if (f[field].length > max) await backWith(back, "error", `The ${field === "body" ? "letter" : field} is too long (${max.toLocaleString("en-PH")} characters at most).`);
     }
     // Signature: switched on or off, where it sits, and its image (PNG or JPEG for the PDF).
-    const image = await pictureFrom(data, "signature", admin.email, { types: /^image\/(?:png|jpeg)$/ });
-    if (image.error) await backWith(back, "error", image.error);
-    const signature = cleanSignature({ on: form(data, "signatureOn"), image: image.url, x: form(data, "signatureX"), dy: form(data, "signatureDy"), width: form(data, "signatureWidth") });
-    if (signature.on && !signature.image) await backWith(back, "error", "Add a signature image, or switch the signature off.");
+    let signature = before.signature;
+    if (attachPdf) {
+      const image = await pictureFrom(data, "signature", admin.email, { types: /^image\/(?:png|jpeg)$/ });
+      if (image.error) await backWith(back, "error", image.error);
+      signature = cleanSignature({ on: form(data, "signatureOn"), image: image.url, x: form(data, "signatureX"), dy: form(data, "signatureDy"), width: form(data, "signatureWidth") });
+      if (signature.on && !signature.image) await backWith(back, "error", "Add a signature image, or switch the signature off.");
+    }
     await sql(
-      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at) VALUES ($1, $2, $3, $4, $5, $7, $6, now())
-       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, cover = EXCLUDED.cover, body = EXCLUDED.body, signature = EXCLUDED.signature, updated_by = EXCLUDED.updated_by, updated_at = now()`,
-      [key, f.name, f.subject, f.cover, f.body, admin.email, JSON.stringify(signature)],
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, attach_pdf, updated_by, updated_at) VALUES ($1, $2, $3, $4, $5, $7, $8, $6, now())
+       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, cover = EXCLUDED.cover, body = EXCLUDED.body, signature = EXCLUDED.signature, attach_pdf = EXCLUDED.attach_pdf, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+      [key, f.name, f.subject, f.cover, f.body, admin.email, signature ? JSON.stringify(signature) : null, attachPdf],
     );
-    await logActivity(admin.email, "letter.save", f.name, { letter: key });
+    await logActivity(admin.email, "letter.save", f.name, { letter: key, ...(attachPdf ? {} : { pdf: "none" }) });
     await backWith(back, "ok", "Saved. Letters sent from now on use this wording.");
   });
 }
@@ -109,7 +115,8 @@ export async function sendLetters(data) {
     if (!emailReady()) await backWith(back, "error", "Email isn't set up yet (Resend key missing).");
     const letter = await loadLetter(form(data, "letter"));
     if (!letter) await backWith(back, "error", "Pick a letter.");
-    const attach = form(data, "attach") !== "no";
+    // A letter set to email only never attaches a PDF; a PDF letter can skip it for one send.
+    const attach = letter.attachPdf && form(data, "attach") !== "no";
     // A brand email design (Email templates → Brand email designs), when one was picked.
     const design = isUuid(form(data, "design")) ? await loadDesign(form(data, "design")) : null;
     if (form(data, "design") && (!design || design.kind === "house")) await backWith(back, "error", "That email design wasn't found. Pick another.");
@@ -154,9 +161,12 @@ export async function sendLetters(data) {
         const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
         mail = renderDesign(filled.doc, { house, subject: filled.subject });
         if (attach) mail.attachments = [{ filename: prepared.filename, content: await letterPdf(prepared.blocks, { title: prepared.subject, signature }) }];
-      } else mail = attach
-        ? { ...letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename }), attachments: [{ filename: prepared.filename, content: await letterPdf(prepared.blocks, { title: prepared.subject, signature }) }] }
-        : letterBodyEmail({ subject: prepared.subject, blocks: prepared.blocks });
+      } else if (attach) {
+        mail = { ...letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename }), attachments: [{ filename: prepared.filename, content: await letterPdf(prepared.blocks, { title: prepared.subject, signature }) }] };
+      } else {
+        // Email only (the letter has no PDF, or it was switched off for this send): the cover email is the message.
+        mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, attached: false });
+      }
       const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
       await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email, eventId: event?.id || null, designId: design?.id || null });
       if (!result.ok) { failed.push(r.name); continue; }

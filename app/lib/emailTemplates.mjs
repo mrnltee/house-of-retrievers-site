@@ -10,7 +10,6 @@ import { HOME_URL } from "./siteSeo.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
 import { formatWhen } from "./share.mjs";
 import { paymentNotice } from "./eventPayments.mjs";
-import { LEGAL } from "./legal.mjs";
 
 const ORG = "The House of Retrievers’ Society, Inc.";
 /**
@@ -46,8 +45,7 @@ export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || 
  * of CSS; widths and colours match the site (ink #0D0D0D, ivory #F5F1E6, gold #A78440).
  */
 function frame({ preheader, greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true, showHeading = true }) {
-  // A letter's table goes in as it is; everything else is a paragraph.
-  const p = (text) => String(text).startsWith("<table") ? text : `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${text}</p>`;
+  const p = (text) => `<p class="em-p" style="margin:0 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${text}</p>`;
   const sign = signoff
     ? `<p class="em-p" style="margin:24px 0 16px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#2b2a27;text-align:${centered ? "center" : "left"}">${signoff.join("<br>")}</p>`
     : "";
@@ -95,7 +93,7 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
 
 /** The plain-text twin every email needs (some apps show only this; spam filters check for it). */
 function plain({ greeting, heading, paragraphs, image, button, after = [], signoff = SIGNOFF, footnote, centered = true, showHeading = true }) {
-  const strip = (html) => String(html).replace(/<\/t[dh]>/g, " | ").replace(/<\/tr>/g, "\n").replace(/<a class="em-text-link" href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2 ($1)").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const strip = (html) => String(html).replace(/<a class="em-text-link" href="([^"]+)"[^>]*>(.*?)<\/a>/g, "$2 ($1)").replace(/<br\s*\/?>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   const ending = centered
     ? [`THORSI · ${ORG}`, "Reply to this email to reach the team.", "", footnote ? strip(footnote) : ""]
     : [footnote ? strip(footnote) : "", `${ORG} · ${HOME_URL}`, "Reply to this email to reach the team."];
@@ -400,13 +398,13 @@ export function welcomeMember({ name, memberNo, furbaby = "", organization = "",
  * a heading under "Dear …," read oddly; owner, 2026-10-31). The filled-in cover text (a first "Dear …," paragraph
  * becomes the greeting), and a note that the letter is attached as a PDF.
  */
-export function letterCoverEmail({ subject, cover, filename }) {
+export function letterCoverEmail({ subject, cover, filename, attached = true }) {
   const text = String(cover || "").replace(/\r\n?/g, "\n").trim();
   const [first = "", ...rest] = text.split(/\n{2,}/);
   const greeting = /^dear\b/i.test(first) ? first.trim() : "";
   return build({
     subject,
-    preheader: "Our letter is attached.",
+    preheader: attached ? "Our letter is attached." : messagePreview(greeting ? rest.join(" ") : text),
     greeting: greeting || undefined,
     heading: subject,
     showHeading: false,
@@ -414,51 +412,12 @@ export function letterCoverEmail({ subject, cover, filename }) {
     paragraphs: messageParagraphs(greeting ? rest.join("\n\n") : text, {}),
     // Opening the PDF with "Open with Google Docs" rebuilds it and loses the layout and
     // the fill-in fields (owner, 2026-10-28), so point to a PDF viewer.
-    footnote: `Our letter is attached as a PDF (${filename}). To fill in its form, open it in a PDF viewer such as Adobe Acrobat Reader (free), Preview on a Mac, or Microsoft Edge, rather than Google Docs, which changes the layout. Reply to this email to talk to the team.`,
+    // An email-only letter (no PDF, owner 2026-11-04) has no attachment note.
+    footnote: attached ? `Our letter is attached as a PDF (${filename}). To fill in its form, open it in a PDF viewer such as Adobe Acrobat Reader (free), Preview on a Mac, or Microsoft Edge, rather than Google Docs, which changes the layout. Reply to this email to talk to the team.` : undefined,
   });
 }
 
-const runsHtml = (runs = []) => runs.map((r) => (r.bold ? `<strong>${esc(r.text)}</strong>` : esc(r.text))).join("").replace(/\n/g, "<br>");
-const cellStyle = "border:1px solid #c9b48a;padding:6px 8px;vertical-align:top;text-align:left;font:14px/1.45 Helvetica,Arial,sans-serif;color:#2b2a27";
-
-/** A letter's blocks (from prepareLetter) as email paragraphs: headings bold, centred lines centred, tables as tables. */
-export function letterBlocksHtml(blocks = []) {
-  const out = [];
-  for (const b of blocks) {
-    if (b.type === "page" || b.type === "signature") continue;
-    if (b.type === "h1") out.push(`<strong style="font-size:20px">${runsHtml(b.runs)}</strong>`);
-    else if (b.type === "h2") out.push(`<strong>${runsHtml(b.runs)}</strong>`);
-    else if (b.type === "center") out.push(`<span style="display:block;text-align:center">${runsHtml(b.runs)}</span>`);
-    else if (b.type === "bullet") out.push(`• ${runsHtml(b.runs)}`);
-    else if (b.type === "table") {
-      const rows = (b.rows || []).map((row) => `<tr>${row.cells.map((cell) => {
-        const tick = !row.header && cell.map((r) => r.text).join("").trim() === "[  ]";
-        const tag = row.header ? "th" : "td";
-        return `<${tag} style="${cellStyle}${row.header ? ";background:#f3ebdd;font-weight:700" : ""}">${tick ? "☐" : runsHtml(cell)}</${tag}>`;
-      }).join("")}</tr>`).join("");
-      out.push(`<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 16px">${rows}</table>`);
-    } else out.push(runsHtml(b.runs));
-  }
-  return out;
-}
-
-/**
- * A letter sent as the email itself, with no PDF (owner, 2026-11-04): the HOR logo band
- * on top, the letter (it has its own greeting and sign-off), and a footer with the
- * society's name, SEC registration and website, as on the PDF.
- */
-export function letterBodyEmail({ subject, blocks }) {
-  return build({
-    subject,
-    preheader: subject,
-    heading: subject,
-    showHeading: false,
-    centered: false,
-    signoff: false,
-    paragraphs: letterBlocksHtml(blocks),
-    footnote: `<strong>${esc(LEGAL.org.toUpperCase().replace(" INC.", ", INC."))}</strong><br>SEC Registration: ${esc(LEGAL.sec)}`,
-  });
-}
+const messagePreview = (text) => String(text || "").replace(/\[([^\]]+)\]\(https:\/\/[^)]+\)/g, "$1").replace(/\*\*/g, "").replace(/\s+/g, " ").trim().slice(0, 110);
 
 /** An Acceptance template sent to anyone in People. */
 export function acceptanceEmail({ person, custom }) {

@@ -17,7 +17,7 @@ import { hasSignatureMark, placeSignatureMark } from "./letterSignature.mjs";
 
 export { LETTER_STARTERS };
 
-export const LETTER_LIMITS = { name: 80, subject: 150, cover: 2000, body: 40000, value: 600 };
+export const LETTER_LIMITS = { name: 80, subject: 150, cover: 8000, body: 40000, value: 600 };
 
 /** Most recipients per send: keeps one send inside the server's time limit and Resend's pace. */
 export const MAX_LETTER_RECIPIENTS = 25;
@@ -218,7 +218,7 @@ export function letterWithOverride(key, saved) {
   const starter = LETTER_STARTERS.find((l) => l.key === key);
   if (!starter && !saved) return null;
   const pick = (field) => (saved && typeof saved[field] === "string" && saved[field] ? saved[field] : starter?.[field] || "");
-  return { key, name: pick("name"), subject: pick("subject"), cover: pick("cover"), body: pick("body"), signature: saved?.signature || null, custom: Boolean(saved), starter: Boolean(starter) };
+  return { key, name: pick("name"), subject: pick("subject"), cover: pick("cover"), body: pick("body"), signature: saved?.signature || null, attachPdf: saved ? saved.attach_pdf !== false : true, custom: Boolean(saved), starter: Boolean(starter) };
 }
 
 /** Everything one recipient gets: email subject and cover text, and the letter's blocks. */

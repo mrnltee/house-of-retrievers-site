@@ -221,23 +221,15 @@ test("a brand's greeting choice: contact person, brand team, or own wording", ()
   assert.equal(dear({ name: "Apple", contact_name: "Tim Cook" }), "Dear Tim Cook,", "no choice saved: automatic");
 });
 
-test("a letter sent without a PDF: the letter is the email, with the SEC footer and no 'attached' note", async () => {
-  const { letterBodyEmail } = await import("./emailTemplates.mjs");
-  const { LEGAL } = await import("./legal.mjs");
-  const blocks = [
-    { type: "p", runs: [{ text: "Dear ", bold: false }, { text: "Bark & Co", bold: true }, { text: " team:", bold: false }] },
-    { type: "page" },
-    { type: "signature" },
-    { type: "table", rows: [{ header: true, cells: [[{ text: "Item" }], [{ text: "Pick" }]] }, { header: false, cells: [[{ text: "Booth" }], [{ text: "[  ]" }]] }] },
-  ];
-  const mail = letterBodyEmail({ subject: "An invitation", blocks });
-  assert.equal(mail.subject, "An invitation");
-  assert.match(mail.html, /<strong>Bark &amp; Co<\/strong>/);
-  assert.match(mail.html, /<table role="presentation"[^>]*border-collapse/);
-  assert.match(mail.html, /☐/);
-  assert.ok(mail.html.includes(`SEC Registration: ${LEGAL.sec}`));
-  assert.ok(!/attached/i.test(mail.html));
-  assert.ok(!/With love and purpose/.test(mail.html));
-  assert.match(mail.text, /Item \| Pick \|/);
-  assert.ok(mail.text.includes(`SEC Registration: ${LEGAL.sec}`));
+test("an email-only letter (no PDF): the cover email is the whole message, with no attachment note", async () => {
+  const { letterCoverEmail } = await import("./emailTemplates.mjs");
+  const cover = "Dear Bark & Co team,\n\nWe would love you to join **PAWS & POSES**.\n\nSee our [Partnership Portfolio](https://canva.link/hor).";
+  const withPdf = letterCoverEmail({ subject: "Invite", cover, filename: "HOR letter.pdf" });
+  const only = letterCoverEmail({ subject: "Invite", cover, filename: "HOR letter.pdf", attached: false });
+  assert.match(withPdf.html, /attached as a PDF/);
+  assert.ok(!/attached/i.test(only.html) && !/attached/i.test(only.text));
+  assert.match(only.html, /<strong[^>]*>PAWS &amp; POSES<\/strong>/);
+  assert.equal((only.html.match(/Reply to this email/g) || []).length, 1);
+  assert.match(only.html, /Partnership Portfolio/);
+  assert.match(only.text, /Reply to this email/);
 });

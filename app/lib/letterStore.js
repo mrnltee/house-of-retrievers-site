@@ -2,7 +2,7 @@ import { hasDatabase, sql } from "./db";
 import { LETTER_STARTERS, letterWithOverride } from "./letters.mjs";
 import { paymentLetterFills } from "./admin/payments.mjs";
 
-const COLUMNS = "key, name, subject, cover, body, signature, updated_by, updated_at, created_at, event_id, based_on";
+const COLUMNS = "key, name, subject, cover, body, signature, attach_pdf, updated_by, updated_at, created_at, event_id, based_on";
 const withMeta = (letter, row) => ({ ...letter, updatedBy: row?.updated_by || null, updatedAt: row?.updated_at || null, eventId: row?.event_id || null, basedOn: row?.based_on || null });
 
 /** Saved rows (HOR's wording over a starter, or HOR's own letters), not removed. Never throws. */

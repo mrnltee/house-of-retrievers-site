@@ -97,6 +97,7 @@ test("which fill-ins a send needs: letter only, letter + design (PDF on), design
   const design = { subject: "Join [Event Name]", doc: cleanDoc({ body: { blocks: [{ type: "text", html: "Bring [Giveaway Count] items" }] } }).doc };
   const labels = (b) => b.map((x) => x.label).sort();
   assert.deepEqual(labels(sendBlanks(letter, null, true)), ["Booth Fee", "Event Name"]);
+  assert.deepEqual(labels(sendBlanks(letter, null, false)), ["Event Name"], "email only: the letter text isn't sent, so its fill-ins aren't asked");
   assert.deepEqual(labels(sendBlanks(letter, design, true)), ["Booth Fee", "Event Name", "Giveaway Count"]);
   assert.deepEqual(labels(sendBlanks(letter, design, false)), ["Event Name", "Giveaway Count"]);
   const esc = escapeFills({ name: "A&B", contact: "<x>", salutation: "", values: { "Event Name": "Paws & Poses" } });
