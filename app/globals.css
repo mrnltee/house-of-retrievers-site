@@ -1639,3 +1639,12 @@ html.lenis, html.lenis body { height: auto; }
 
 /* Round logo frames take the colour around the logo's edge (LogoTint), so a logo on a coloured square blends in. */
 .has-logo-bg { background: var(--logo-bg) !important; }
+
+/* "Photos by" on past events: credit chips that open the photographer's card. */
+.photo-credits { margin-top: -4px; }
+.photo-credit { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; border-radius: 999px; }
+.photo-credit:hover, .photo-credit:focus-visible { background: rgba(167, 132, 64, .12); }
+.photo-credit:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.photo-credits .event-supporter-logo img { object-fit: cover; }
+.photographer-photo { width: 116px; height: 116px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; justify-self: center; background: var(--paper); border: 1px solid var(--line); font: 400 40px "DM Serif Display", serif; }
+.photographer-photo img { width: 100%; height: 100%; object-fit: cover; }

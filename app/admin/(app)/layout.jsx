@@ -17,7 +17,7 @@ const page = (key) => {
 };
 const GROUPS = [
   ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters", "beneficiaries"].map(page)],
-  ["Publish", [["Gallery", null], ["Forms", null], page("media"), ["Content", null]]],
+  ["Publish", [["Gallery", null], ["Forms", null], page("media"), page("photographers"), ["Content", null]]],
   ["Money", [page("payments"), ["Donations & spending", null]]],
   ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
   ["Team", [["Team chat", "/chat", "*"]]],

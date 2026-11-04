@@ -44,6 +44,8 @@ const PERMISSIONS = {
   // View-only rights for pages whose only right used to be "edit".
   "checkin:view": ["owner", "events", "checkin"],
   "media:view": ["owner", "content"],
+  "photographers:view": ["owner", "events", "content"],
+  "photographers:edit": ["owner", "events", "content"],
   "emails:view": ["owner", "events"],
   "letters:view": ["owner", "events"],
   "journey:view": ["owner", "content"],
@@ -69,6 +71,7 @@ export const PAGES = [
   // Opened from each event (its own guest list, owner 2026-11-01), not the sidebar; kept here for access settings.
   { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["guests:view"], edit: ["guests:edit"], fromEvents: true },
   { key: "media", label: "Media hub", group: "Publish", path: "/media", view: ["media:view"], edit: ["media:edit"] },
+  { key: "photographers", label: "Photographers", group: "Publish", path: "/photographers", view: ["photographers:view"], edit: ["photographers:edit"] },
   { key: "payments", label: "Payment settings", group: "Money", path: "/payments", view: ["payments:view"], edit: ["payments:request"] },
   { key: "emails", label: "Email templates", group: "Settings", path: "/emails", view: ["emails:view"], edit: ["emails:edit"] },
   { key: "letters", label: "Letters", group: "Settings", path: "/letters", view: ["letters:view"], edit: ["letters:edit"] },

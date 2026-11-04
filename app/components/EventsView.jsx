@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import PhotoCredits from "./PhotoCredits";
 import Icon from "./Icon";
 import { socialLinks } from "../lib/socials.mjs";
 import LogoMoments from "./LogoMoments";
@@ -599,6 +600,7 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
               )}
             </section>
           )}
+          {past && <PhotoCredits photographers={event.photographers} />}
           {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
           {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
             <iframe

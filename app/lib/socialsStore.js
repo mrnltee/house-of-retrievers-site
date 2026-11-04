@@ -1,7 +1,7 @@
 import { sql } from "./db";
 import { cleanSocials } from "./socials.mjs";
 
-const TABLES = new Set(["supporters", "beneficiaries"]);
+const TABLES = new Set(["supporters", "beneficiaries", "photographers"]);
 
 /** The four social fields from a submitted form → { values } or { error }. */
 export function socialsFrom(data) {

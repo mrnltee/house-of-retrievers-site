@@ -14,6 +14,7 @@ export const HOW = {
   beneficiaries: { what: "The animal shelters and rescue groups HOR supports, and what they need.", view: "Read each beneficiary's details.", edit: "Add or edit beneficiaries and send them letters." },
   guests: { what: "Everyone HOR sends letters to, grouped by the letter each category gets.", view: "See the guest list and who got which letter.", edit: "Add or edit guests and send each group its letter." },
   media: { what: "Photos and files used on the website.", view: "Browse what's there.", edit: "Upload, replace or remove photos." },
+  photographers: { what: "Who takes HOR's event photos, credited under “Photos by” on past events.", view: "See each photographer and the events they covered.", edit: "Add or edit a photographer, then tick them on an event's page." },
   payments: { what: "Where supporters send money (GCash, Maya, bank).", view: "See the current payment details.", edit: "Ask for a change. A different Owner must approve it before it goes live." },
   emails: { what: "The emails the website sends (confirmations, reminders).", view: "Read each template.", edit: "Edit the wording and send yourself a test first." },
   letters: { what: "Invitation and sponsorship letters, sent as PDFs.", view: "Read letters and preview the PDF.", edit: "Edit a letter, fill it in for someone and send it. Check the “Actual PDF” preview before sending." },

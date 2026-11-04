@@ -1,4 +1,5 @@
 import { TICKET_COUNTS_COLUMN } from "./ticketCounts.mjs";
+import { photographersForEvent } from "./photographersStore";
 import { events as contentEvents } from "../content/events";
 import { hasDatabase, sql } from "./db";
 import { toPublicEvent } from "./admin/events.mjs";
@@ -62,6 +63,9 @@ export async function loadEvent(slug) {
     // Partners and sponsors with a public record get their logo and a link.
     const links = await supporterLinks([...(event.partners || []), ...(event.sponsors || [])]);
     if (Object.keys(links).length) event.supporterLinks = links;
+    // "Photos by": the photographers credited on it (shown once the event has passed).
+    const photographers = await photographersForEvent(row.id).catch(() => []);
+    if (photographers.length) event.photographers = photographers;
     // Where your support goes: the beneficiaries this charity event picked.
     if (row.is_charity) {
       const beneficiaries = await beneficiariesForEvent(row.id);

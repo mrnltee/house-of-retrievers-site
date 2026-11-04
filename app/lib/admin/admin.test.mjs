@@ -277,3 +277,10 @@ test("chat messages are trimmed and limited", async () => {
   assert.ok(cleanMessage("   ").error);
   assert.ok(cleanMessage("x".repeat(CHAT_MAX + 1)).error);
 });
+
+test("every admin page has guided-tour text (a missing one breaks the whole admin)", async () => {
+  const { HOW } = await import("./guide.mjs");
+  const { PAGES } = await import("./roles.mjs");
+  const missing = PAGES.filter((p) => !p.fromEvents && !HOW[p.key]?.what).map((p) => p.key);
+  assert.deepEqual(missing, []);
+});

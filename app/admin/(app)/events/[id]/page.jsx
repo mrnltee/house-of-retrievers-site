@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
+import { Avatar } from "../../ImageField";
+import { listPhotographers, eventPhotographerIds } from "../../../../lib/photographersStore";
+import { setEventPhotographers } from "../../../photographerActions";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { Flash, NotAllowed, PageHead, isoDate } from "../../ui";
 import EventForm from "../EventForm";
@@ -38,6 +41,7 @@ export default async function EditEventPage({ params, searchParams }) {
       {event.status === "published" && <ShareCard event={event} />}
       <EventForm event={event} autoDescribe={Boolean(process.env.GEMINI_API_KEY)} />
       <AlbumCard event={event} />
+      <PhotosByCard event={event} base={base} canEdit={can(admin, "events:edit")} />
       <DeleteEventCard event={event} registrations={registrations} />
     </>
   );
@@ -93,6 +97,30 @@ function DeleteEventCard({ event, registrations }) {
               tone="danger"
             >Delete event</ConfirmButton>
           </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+/** "Photos by" (owner, 2026-11-04): tick the photographers who covered the event; past events credit them on the website. */
+async function PhotosByCard({ event, base, canEdit }) {
+  const [all, chosen] = await Promise.all([listPhotographers(), eventPhotographerIds(event.id)]);
+  return (
+    <section className="card">
+      <h2>Photos by</h2>
+      <p className="small muted" style={{ margin: "4px 0 10px" }}>Credited under “With thanks to” on the event page once the event has passed. Only photographers switched to “Show on the website” appear there. <a href={`${base}/photographers`}>Manage photographers</a>.</p>
+      {all.length === 0 ? (
+        <p className="small">No photographers yet. <a href={`${base}/photographers/new`}>Add one</a>, then tick them here.</p>
+      ) : (
+        <form action={setEventPhotographers} className="form" style={{ gap: 10 }}>
+          <input type="hidden" name="event" value={event.id} />
+          <ul className="tracker-pick">
+            {all.map((p) => (
+              <li key={p.id}><label className="check"><input type="checkbox" name="photographer" value={p.id} defaultChecked={chosen.includes(p.id)} disabled={!canEdit} /> <Avatar photo={p.photo} name={p.name} /> <span>{p.name}{!p.show_on_site && <span className="small muted"> · hidden on the website</span>}</span></label></li>
+            ))}
+          </ul>
+          {canEdit && <div className="actions"><ConfirmButton className="btn dark" title="Save who took the photos?" items={["The ticked photographers are credited on this event", "They show on the website once the event has passed"]} yes="Yes, save">Save photographers</ConfirmButton></div>}
         </form>
       )}
     </section>
