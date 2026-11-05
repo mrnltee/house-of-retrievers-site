@@ -264,6 +264,19 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .album-grid input { font-size: 13px; }
 .album-photo-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .album-photo-actions .small.muted { margin-right: auto; }
+.album-select-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; min-height: 40px; margin: 4px 0 10px; padding: 6px 10px; border-radius: 10px; }
+.album-select-bar.has-selection { position: sticky; top: 8px; z-index: 2; background: var(--a-ivory); box-shadow: 0 0 0 1px var(--a-line), 0 8px 20px -14px rgba(13,13,13,.5); }
+.album-check-all { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
+.album-select-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.album-grid li { position: relative; }
+.album-pick { position: absolute; top: 6px; left: 6px; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,.92); box-shadow: 0 1px 4px rgba(13,13,13,.25); cursor: pointer; }
+.album-pick input { width: 18px; height: 18px; margin: 0; accent-color: var(--a-gold-ink); cursor: pointer; }
+.album-grid.is-selecting img { cursor: pointer; }
+.album-grid li.is-selected img { outline: 3px solid var(--a-gold-ink); outline-offset: 2px; }
+@media (hover: hover) {
+  .album-grid:not(.is-selecting) .album-pick { opacity: 0; transition: opacity .15s; }
+  .album-grid li:hover .album-pick, .album-pick:focus-within { opacity: 1; }
+}
 
 /* Confirm before an event change goes live (ConfirmSave.jsx). */
 .confirm-dialog { width: min(460px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: 20px; background: #fff; color: var(--a-ink); box-shadow: 0 30px 80px -30px rgba(13,13,13,.5); }
@@ -945,3 +958,4 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .design-block-tools .rt-tool { min-width: 30px; min-height: 30px; padding: 0; }
 .design-settings .row-2 { grid-template-columns: 1fr; }
 .design-settings .color-row input[type="text"] { flex: 1 1 120px; }
+.supporter-list-wrap th:first-child input, .supporter-list-wrap td:first-child input[type="checkbox"] { width: 20px; height: 20px; }

@@ -1,3 +1,5 @@
+import BatchBar from "./BatchBar";
+import SelectAllBrands from "./SelectAllBrands";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
@@ -98,13 +100,15 @@ export default async function SupportersPage({ searchParams }) {
       ) : view === "list" ? (
         <>
         <p className="small muted" style={{ margin: "0 0 8px" }}>Letters to brands are sent from each event: open the event, then <strong>Brands &amp; partnerships</strong>.</p>
+        {canEdit && <BatchBar back={href().replace(base, "")} />}
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr><th>Organization</th><th>ID</th><th>Usually</th><th>Joined</th><th>Website</th></tr></thead>
+            <thead><tr>{canEdit && <th><SelectAllBrands /></th>}<th>Organization</th><th>ID</th><th>Usually</th><th>Joined</th><th>Website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
                 return (
                   <tr key={row.id}>
+                    {canEdit && <td><input type="checkbox" form="brand-batch" name="id" value={row.id} data-name={row.name} aria-label={`Select ${row.name}`} /></td>}
                     <td className="strong"><span className="supporter-list-name"><span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span><a href={`${base}/supporters/${row.id}`}>{row.name}</a></span></td>
                     <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
                     <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}</span></td>

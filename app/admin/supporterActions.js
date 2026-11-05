@@ -168,3 +168,21 @@ export async function deleteSupporter(data) {
     await backWith("/supporters", "ok", `Deleted ${gone.name}.`);
   });
 }
+
+/** Brands & Partners: delete the ticked records at once (owner, 2026-11-05). Brands on an event's Brand tracker are kept and named. */
+export async function deleteSupporters(data) {
+  const back = typeof data.get("back") === "string" && data.get("back").startsWith("/supporters") ? data.get("back") : "/supporters";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("supporters:edit");
+    const ids = [...new Set(data.getAll("id").filter(isUuid))];
+    if (!ids.length) await backWith(back, "error", "Tick at least one brand.");
+    const onTrackers = await sql("SELECT DISTINCT s.id, s.name FROM supporters s JOIN event_brands eb ON eb.supporter_id = s.id WHERE s.id = ANY($1::uuid[])", [ids]);
+    const keep = new Set(onTrackers.map((r) => r.id));
+    const gone = await sql("DELETE FROM supporters WHERE id = ANY($1::uuid[]) RETURNING id, name", [ids.filter((id) => !keep.has(id))]);
+    for (const g of gone) await logActivity(admin.email, "supporter.delete", g.name, { supporterId: g.id, batch: true });
+    const kept = onTrackers.map((r) => r.name);
+    const parts = [gone.length ? `Deleted ${gone.length} record${gone.length === 1 ? "" : "s"}.` : "Nothing was deleted."];
+    if (kept.length) parts.push(`Kept ${kept.length} on event Brand trackers (take them off the event first): ${kept.slice(0, 5).join(", ")}${kept.length > 5 ? ` and ${kept.length - 5} more` : ""}.`);
+    await backWith(back, gone.length ? "ok" : "error", parts.join(" "));
+  });
+}
