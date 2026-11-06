@@ -244,3 +244,48 @@ export function letterValues(blanks = [], { forced = {}, typed = {}, known = {},
   const pick = (...vals) => vals.map((v) => String(v ?? "").trim()).find(Boolean) || "";
   return Object.fromEntries(blanks.map((b) => [b.label, pick(forced[b.label], typed[b.label], known[b.label], sample ? b.suggestion || `[${b.label}]` : "").slice(0, LETTER_LIMITS.value)]));
 }
+
+/**
+ * Wording edited on the send page for one send (owner, 2026-11-06): for one brand
+ * (byRef) or for all brands in the send (all). The saved letter is unchanged.
+ */
+export function wordingFor(letter, edits, ref) {
+  const e = edits?.byRef?.[ref] || edits?.all || null;
+  return e ? { ...letter, subject: e.subject, cover: e.cover, body: e.body ?? letter.body, edited: true } : letter;
+}
+
+/** The send page's edits (JSON) → { edits: { all, byRef } } or { error }; only refs in this send are kept. */
+export function cleanEdits(json, refs = []) {
+  if (!String(json || "").trim()) return { edits: { all: null, byRef: {} } };
+  let raw;
+  try { raw = JSON.parse(json); } catch { return { error: "The edited wording didn't come through. Reload and try again." }; }
+  const one = (w) => {
+    if (!w || typeof w !== "object") return { wording: null };
+    const subject = String(w.subject ?? "").replace(/\s+/g, " ").trim();
+    const cover = String(w.cover ?? "").replace(/\r\n?/g, "\n").trim();
+    const body = w.body == null ? undefined : String(w.body).replace(/\r\n?/g, "\n").trim();
+    if (!subject) return { error: "An edited subject can't be empty." };
+    if (subject.length > LETTER_LIMITS.subject) return { error: "An edited subject is too long." };
+    if (!cover) return { error: "An edited email text can't be empty." };
+    if (cover.length > LETTER_LIMITS.cover) return { error: `An edited email text is too long (${LETTER_LIMITS.cover.toLocaleString("en-PH")} characters at most).` };
+    if (body !== undefined && (!body || body.length > LETTER_LIMITS.body)) return { error: "An edited letter text is empty or too long." };
+    return { wording: { subject, cover, ...(body !== undefined ? { body } : {}) } };
+  };
+  const all = one(raw.all);
+  if (all.error) return all;
+  const byRef = {};
+  for (const [ref, w] of Object.entries(raw.byRef || {})) {
+    if (!refs.includes(ref)) continue;
+    const r = one(w);
+    if (r.error) return r;
+    if (r.wording) byRef[ref] = r.wording;
+  }
+  return { edits: { all: all.wording, byRef } };
+}
+
+/** Several blank lists → one, first appearance wins. */
+export function unionBlanks(lists) {
+  const seen = new Map();
+  for (const list of lists) for (const b of list) if (!seen.has(b.label)) seen.set(b.label, b);
+  return [...seen.values()];
+}

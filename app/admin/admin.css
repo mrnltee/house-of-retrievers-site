@@ -959,3 +959,5 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .design-settings .row-2 { grid-template-columns: 1fr; }
 .design-settings .color-row input[type="text"] { flex: 1 1 120px; }
 .supporter-list-wrap th:first-child input, .supporter-list-wrap td:first-child input[type="checkbox"] { width: 20px; height: 20px; }
+.edit-wording-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.edit-wording-dialog { width: min(760px, calc(100vw - 32px)); }

@@ -10,7 +10,7 @@ import { eventFills } from "../lib/letterEventStore";
 import { letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { escapeFills, fillDesign, renderDesign, sendBlanks } from "../lib/emailDesign.mjs";
 import { loadDesign, loadHouse } from "../lib/emailDesignStore";
-import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, fillLetter, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
+import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, cleanEdits, fillLetter, unionBlanks, wordingFor, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
 import { letterPdf } from "../lib/letterPdf.mjs";
 import { listLetters, loadLetter, savedAnswers, signatureForPdf } from "../lib/letterStore";
 
@@ -120,7 +120,12 @@ export async function sendLetters(data) {
     // A brand email design (Email templates → Brand email designs), when one was picked.
     const design = isUuid(form(data, "design")) ? await loadDesign(form(data, "design")) : null;
     if (form(data, "design") && (!design || design.kind === "house")) await backWith(back, "error", "That email design wasn't found. Pick another.");
-    const blanks = sendBlanks(letter, design, attach);
+    // Wording edited for this send (one brand, or all): every version's fill-ins are asked.
+    const sendRefs = [...new Set(data.getAll("to").filter((v) => typeof v === "string"))];
+    const { edits, error: editError } = cleanEdits(form(data, "edits"), sendRefs);
+    if (editError) await backWith(back, "error", editError);
+    const versions = [letter, ...(edits.all ? [wordingFor(letter, { all: edits.all }, "")] : []), ...Object.keys(edits.byRef).map((ref) => wordingFor(letter, edits, ref))];
+    const blanks = unionBlanks(versions.map((v) => sendBlanks(v, design, attach)));
     let typed = {};
     try { typed = JSON.parse(form(data, "values") || "{}"); } catch { typed = {}; }
     const values = Object.fromEntries(blanks.map((b) => [b.label, String(typed[b.label] ?? "").trim().slice(0, LETTER_LIMITS.value)]));
@@ -151,7 +156,8 @@ export async function sendLetters(data) {
     const failed = [];
     for (const r of recipients) {
       if (!looksLikeEmail(r.email)) { skipped.push(r.name); continue; }
-      const prepared = prepareLetter(letter, { ...r, date, values, signed: Boolean(signature) });
+      const own = wordingFor(letter, edits, r.ref);
+      const prepared = prepareLetter(own, { ...r, date, values, signed: Boolean(signature) });
       // A design: its email, filled in for this recipient (PDF attached when on). Else, with the
       // PDF: a short cover email with the letter attached; without: the letter is the email.
       let mail;
@@ -171,7 +177,7 @@ export async function sendLetters(data) {
       await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email, eventId: event?.id || null, designId: design?.id || null });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
-      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(r.cc?.length ? { cc: r.cc } : {}) });
+      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(own.edited ? { edited: true } : {}), ...(r.cc?.length ? { cc: r.cc } : {}) });
       if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       if (r.type === "beneficiary") await sql("UPDATE beneficiaries SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second

@@ -2,7 +2,8 @@
 
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fillLetter, letterDate, missingBlanks, prepareLetter } from "../../../../lib/letters.mjs";
+import { fillLetter, letterDate, missingBlanks, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
+import EditWording from "./EditWording";
 import { applyEmailFrame, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
@@ -24,18 +25,33 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
   const [previewRef, setPreviewRef] = useState(recipients.find((r) => r.email)?.ref || recipients[0]?.ref);
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
+  // Wording edited for this send: { all, byRef } (EditWording); the saved letter is unchanged.
+  const [edits, setEdits] = useState({ all: null, byRef: {} });
+  const active = wordingFor(letter, edits, who?.ref);
   const date = letterDate();
   const to = { name: who?.name || "", contact: who?.contact || "", address: who?.address || "", salutation: who?.salutation || "", date, values };
   // Same as the PDF: a signature that is on, with an image, gets a place even if the letter has no {signature} line.
   const signed = Boolean(letter.signature?.on && letter.signature?.image);
-  const body = signed && !hasSignatureMark(letter.body) ? placeSignatureMark(letter.body) : letter.body;
+  const body = signed && !hasSignatureMark(active.body) ? placeSignatureMark(active.body) : active.body;
   const filled = useMemo(() => fillLetter(body, to), [body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
-  const prepared = useMemo(() => prepareLetter(letter, { ...to, signed }), [letter, who, date, values, signed]); // eslint-disable-line react-hooks/exhaustive-deps
+  const prepared = useMemo(() => prepareLetter(active, { ...to, signed }), [letter, edits, who, date, values, signed]); // eslint-disable-line react-hooks/exhaustive-deps
   // Attach the PDF (a short cover email), or send the letter itself as the email (owner, 2026-11-04).
   // A letter set to email only never has a PDF; a PDF letter can skip it for this send.
   const pdfLetter = letter.attachPdf !== false;
   const [attach, setAttach] = useState(pdfLetter);
-  const shownBlanks = useMemo(() => sendBlanks(letter, design, attach), [letter, design, attach]);
+  // Fill-ins for every version being sent (edited wording can add some).
+  const shownBlanks = useMemo(() => unionBlanks([letter, ...[...picked].map((ref) => wordingFor(letter, edits, ref))].map((v) => sendBlanks(v, design, attach))), [letter, edits, picked, design, attach]);
+  function applyEdit(scope, wording) {
+    setEdits((e) => (scope === "all" ? { all: wording, byRef: {} } : { ...e, byRef: { ...e.byRef, [who.ref]: wording } }));
+  }
+  function resetEdit(scope) {
+    setEdits((e) => {
+      if (scope === "all") return { ...e, all: null };
+      const byRef = { ...e.byRef };
+      delete byRef[who.ref];
+      return { ...e, byRef };
+    });
+  }
   const email = useMemo(() => {
     if (design) {
       const escaped = escapeFills(to);
@@ -78,6 +94,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         <input type="hidden" name="values" value={JSON.stringify(values)} />
         <input type="hidden" name="attach" value={attach ? "yes" : "no"} />
         <input type="hidden" name="design" value={designId} />
+        <input type="hidden" name="edits" value={edits.all || Object.keys(edits.byRef).length ? JSON.stringify(edits) : ""} />
         <label className="field">
           <span>Letter</span>
           <select value={letter.key} onChange={(e) => switchLetter(e.target.value)}>
@@ -146,7 +163,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       </form>
 
       <section className="card template-preview">
-        <RecipientTabs recipients={recipients} current={previewRef} picked={picked} onPick={setPreviewRef} />
+        <RecipientTabs recipients={recipients} current={previewRef} picked={picked} onPick={setPreviewRef} edited={(ref) => Boolean(edits.byRef[ref] || edits.all)} />
+        {who && <EditWording key={`${who.ref}-${JSON.stringify(edits)}`} wording={{ subject: active.subject, cover: active.cover, body: active.body }} showBody={attach && !design} name={who.name} count={picked.size} mine={Boolean(edits.byRef[who.ref])} forAll={Boolean(edits.all)} onApply={applyEdit} onReset={resetEdit} />}
         <div className="mail-head" aria-label="The email as it arrives">
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
@@ -159,7 +177,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
           </p> : <p className="small muted">No attachment: email only.</p>}
         </div>
-        <LetterView emailOnly={!attach} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values) }} />
+        <LetterView emailOnly={!attach} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values), ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
       </section>
     </div>
   );
@@ -170,7 +188,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
  * ← → / Home / End, or the ‹ › buttons. Scrolls sideways when there are many.
  * Unticked people stay as tabs, struck through, so they can be checked too.
  */
-function RecipientTabs({ recipients, current, picked, onPick }) {
+function RecipientTabs({ recipients, current, picked, onPick, edited = () => false }) {
   const strip = useRef(null);
   const at = Math.max(0, recipients.findIndex((r) => r.ref === current));
   const go = (i) => onPick(recipients[(i + recipients.length) % recipients.length].ref);
@@ -212,7 +230,7 @@ function RecipientTabs({ recipients, current, picked, onPick }) {
               onClick={() => onPick(r.ref)}
               data-confirm="not-needed-read-only"
             >
-              {r.name}{!r.email ? " ⚠" : ""}
+              {r.name}{!r.email ? " ⚠" : ""}{edited(r.ref) ? " ✎" : ""}
             </button>
           );
         })}

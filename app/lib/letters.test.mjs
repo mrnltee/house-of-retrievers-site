@@ -233,3 +233,18 @@ test("an email-only letter (no PDF): the cover email is the whole message, with 
   assert.match(only.html, /Partnership Portfolio/);
   assert.match(only.text, /Reply to this email/);
 });
+
+test("wording edits for one send: one brand, all brands, checks", async () => {
+  const { wordingFor, cleanEdits } = await import("./letters.mjs");
+  const letter = { key: "x", subject: "Hi [Event Name]", cover: "Dear [Salutation],", body: "Letter" };
+  const refs = ["supporter:a", "supporter:b"];
+  const { edits } = cleanEdits(JSON.stringify({ all: { subject: "All brands", cover: "Dear all,", body: "Letter v2" }, byRef: { "supporter:a": { subject: "Just A", cover: "Dear A,", body: "For A only" }, "supporter:zzz": { subject: "x", cover: "x", body: "x" } } }), refs);
+  assert.equal(wordingFor(letter, edits, "supporter:a").body, "For A only");
+  assert.equal(wordingFor(letter, edits, "supporter:b").subject, "All brands");
+  assert.equal(wordingFor(letter, null, "supporter:b"), letter);
+  assert.ok(!("supporter:zzz" in edits.byRef), "edits for someone not in the send are dropped");
+  assert.match(cleanEdits(JSON.stringify({ all: { subject: "", cover: "a", body: "b" } }), refs).error, /subject/i);
+  assert.match(cleanEdits(JSON.stringify({ all: { subject: "a", cover: "x".repeat(9000), body: "b" } }), refs).error, /email/i);
+  assert.deepEqual(cleanEdits("", refs).edits, { all: null, byRef: {} });
+  assert.match(cleanEdits("{oops", refs).error, /come through/);
+});
