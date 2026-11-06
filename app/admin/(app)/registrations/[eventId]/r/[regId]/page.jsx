@@ -152,7 +152,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
             ))}
           </section>
 
-          {(reg.vaccination_record_required || vaccinationRows.length > 0 || (canEdit && !reg.deleted_at && reg.furbaby_count > 0)) && (
+          {(vaccinationRows.length > 0 || (reg.furbaby_count > 0 && (reg.vaccination_record_required || (canEdit && !reg.deleted_at)))) && (
             <section className="card vaccination-card" aria-label="Vaccination records">
               <h2>{vaccinationSlots.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
               {canEdit && vaccinationSlots.some((i) => !vaccinationRows.some((v) => v.furbaby_index === i)) && (
