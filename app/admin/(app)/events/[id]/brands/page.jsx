@@ -72,6 +72,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
       <p className="small"><a href={`${base}/events/${event.id}`}>← {event.title}</a></p>
       <PageHead title="Brand tracker" lead={`${event.date ? formatDay(event.date) : "Date to be set"} · who you invited, their reply and what they're giving.`}>
         <a className="btn ghost" href={`${base}/supporters`}>Brand directory</a>
+        {can(admin, "letters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/letters`}>Letters</a>}
         {canEdit && (
           <InviteDialog>
             {notInvited.length === 0 ? (

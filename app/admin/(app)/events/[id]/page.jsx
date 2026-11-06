@@ -15,6 +15,7 @@ import ShareMenu from "../../../../components/ShareMenu";
 import { toPublicEvent } from "../../../../lib/admin/events.mjs";
 import { eventUrl, shareCaption } from "../../../../lib/share.mjs";
 import ConfirmButton from "../../ConfirmButton";
+import { participantsLabel, showsGuestList } from "../../../../lib/eventTypes.mjs";
 
 export default async function EditEventPage({ params, searchParams }) {
   const { id } = await params;
@@ -31,10 +32,9 @@ export default async function EditEventPage({ params, searchParams }) {
     <>
       <PageHead title={event.title} lead={`Status: ${event.status}`}>
         {can(admin, "supporters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/brands`}>Brands &amp; partnerships</a>}
-        {can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/guests`}>Guest list</a>}
+        {showsGuestList(event.event_type) && can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/guests`}>Guest list</a>}
         {can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/donors`}>Donors</a>}
-        {can(admin, "letters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/letters`}>Letters</a>}
-        {event.registration === "required" && <a className="btn ghost" href={`${base}/registrations/${event.id}`}>RSVPs</a>}
+        {event.registration === "required" && <a className="btn ghost" href={`${base}/registrations/${event.id}`}>{participantsLabel(event.event_type)}</a>}
         {event.status === "published" && <a className="btn ghost" href={eventUrl(event.slug)} target="_blank" rel="noreferrer">View event page</a>}
       </PageHead>
       <Flash params={query} />

@@ -3,6 +3,7 @@ import { sql } from "../../../lib/db";
 import { CAPACITY_USED_AGGREGATE_SQL } from "../../../lib/eventCapacity.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
+import { eventTypeLabel, isSocialType, participantsLabel } from "../../../lib/eventTypes.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, manilaToday } from "../ui";
 
 const TABS = [["upcoming", "Upcoming"], ["drafts", "Drafts"], ["past", "Past"]];
@@ -20,7 +21,7 @@ export default async function EventsPage({ searchParams }) {
     past: "e.date < $1 AND e.status <> 'draft'",
   }[tab];
   const rows = await sql(
-    `SELECT e.id, e.title, e.date, e.status, e.registration, e.capacity, e.cost, e.rsvp_opens_at,
+    `SELECT e.id, e.title, e.date, e.status, e.event_type, e.registration, e.capacity, e.cost, e.rsvp_opens_at,
        count(r.*) FILTER (WHERE r.status='confirmed' AND r.deleted_at IS NULL)::int AS confirmed,
        ${CAPACITY_USED_AGGREGATE_SQL} AS capacity_used
      FROM events e LEFT JOIN registrations r ON r.event_id = e.id
@@ -48,7 +49,7 @@ export default async function EventsPage({ searchParams }) {
             {rows.map((event) => (
               <tr key={event.id}>
                 <td>{formatDay(event.date)}</td>
-                <td className="strong"><a href={`${base}/events/${event.id}`}>{event.title}</a></td>
+                <td className="strong"><a href={`${base}/events/${event.id}`}>{event.title}</a>{isSocialType(event.event_type) && <><br /><span className="small muted">{eventTypeLabel(event.event_type)}</span></>}</td>
                 <td>
                   {event.registration === "required" ? `Required${event.cost ? ` · ${event.cost}` : ""}` : "None needed"}
                   {event.registration === "required" && event.rsvp_opens_at && opensLater(new Date(event.rsvp_opens_at).toISOString()) && <><br /><span className="small muted">Opens {formatOpens(new Date(event.rsvp_opens_at).toISOString())}</span></>}
@@ -57,7 +58,7 @@ export default async function EventsPage({ searchParams }) {
                 <td><span className={`chip ${event.status === "published" ? "good" : event.status === "cancelled" ? "alert" : ""}`}>{event.status[0].toUpperCase() + event.status.slice(1)}</span></td>
                 <td className="actions">
                   {canEdit && <a className="linkish" href={`${base}/events/${event.id}`}>Edit</a>}
-                  {event.registration === "required" && can(admin, "registrations:view") && <a className="linkish" href={`${base}/registrations/${event.id}`}>RSVPs</a>}
+                  {event.registration === "required" && can(admin, "registrations:view") && <a className="linkish" href={`${base}/registrations/${event.id}`}>{participantsLabel(event.event_type)}</a>}
                 </td>
               </tr>
             ))}

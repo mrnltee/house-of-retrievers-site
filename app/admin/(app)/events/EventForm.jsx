@@ -12,7 +12,7 @@ import { adminBase } from "../../../lib/admin/guard";
 import { kindLabel, statusLabel as beneficiaryStatusLabel } from "../../../lib/beneficiaries.mjs";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
-import { CharityField, CheckinSettings, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
+import { CharityField, EventTypeField, CheckinSettings, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
 /** Names to suggest: confirmed-or-not Partners and Sponsors from People (organization first). */
@@ -52,10 +52,11 @@ export default async function EventForm({ event, autoDescribe = false }) {
     : [];
 
   return (
-    <form action={saveEvent} className="form event-form">
+    <form action={saveEvent} className="form event-form" data-event-type={event?.event_type || "standard"}>
       {event && <input type="hidden" name="id" value={event.id} />}
       <section className="card">
         <h2>The basics</h2>
+        <EventTypeField value={event?.event_type || "standard"} isNew={!event} />
         <label className="field"><span>Title</span><input type="text" name="title" required maxLength={120} defaultValue={v("title")} placeholder="e.g. Retriever Romp" /></label>
         <WhenFields date={event ? isoDate(event.date) : ""} allDay={event?.all_day} startTime={event?.start_time} endTime={event?.end_time} />
         <VenueField venue={event?.venue} city={event?.city} address={event?.venue_address} lat={event?.venue_lat} lng={event?.venue_lng} mapUrl={event?.map_url} />

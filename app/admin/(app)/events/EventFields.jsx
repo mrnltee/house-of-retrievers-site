@@ -8,6 +8,7 @@ import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, t
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 import { MAX_PAYMENT_HOLD_MINUTES, PAYMENT_HOLD_OPTIONS, holdLabel, holdParts, isPresetHold } from "../../../lib/registrationHolds.mjs";
 import { DEFAULT_WELCOME_MESSAGE } from "../../../lib/welcomePhoto.mjs";
+import { EVENT_TYPES, MONTHLY_AHEAD_DEFAULT, MONTHLY_AHEAD_MAX, isMonthlyType, isSocialType } from "../../../lib/eventTypes.mjs";
 
 /**
  * Date and times. "All day" hides the times (and saves none), for events
@@ -99,6 +100,48 @@ export function SupportersField({ name, label, hint, initial, suggestions = [] }
 }
 
 /**
+ * What kind of event this is (7 Nov 2026). A playdate is a social activity, not
+ * fundraising: the charity block is hidden (CSS, keyed on the form's
+ * data-event-type), there is no guest list, and sign-ups are called Participants.
+ * A monthly playdate falls on the last Sunday of its month and, on a new event,
+ * can set up the next months as drafts.
+ */
+export function EventTypeField({ value = "standard", isNew = false }) {
+  const [type, setType] = useState(value);
+  const pick = (next, el) => {
+    setType(next);
+    const form = el.closest("form");
+    if (form) form.dataset.eventType = next;
+  };
+  return (
+    <fieldset className="field event-type" style={{ border: 0, padding: 0, margin: 0 }}>
+      <legend>Event type</legend>
+      <div className="event-type-options">
+        {EVENT_TYPES.map((t) => (
+          <label key={t.key} className={`event-type-option${type === t.key ? " is-on" : ""}`}>
+            <input type="radio" name="eventType" value={t.key} checked={type === t.key} onChange={(e) => pick(t.key, e.target)} />
+            <span><strong>{t.label}</strong><small>{t.hint}</small></span>
+          </label>
+        ))}
+      </div>
+      {isMonthlyType(type) && (
+        <div className="event-type-repeat">
+          <p className="small muted" style={{ margin: 0 }}>The date is always the last Sunday of the month you pick.</p>
+          {isNew && (
+            <label className="field" style={{ maxWidth: 320 }}>
+              <span>Also set up the next months <small>As drafts, each its own event with its own participants. Publish each when it's ready.</small></span>
+              <select name="repeatMonths" defaultValue={MONTHLY_AHEAD_DEFAULT}>
+                {Array.from({ length: MONTHLY_AHEAD_MAX }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} month{n === 1 ? "" : "s"}</option>)}
+              </select>
+            </label>
+          )}
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
+/**
  * "This is a charity event" reveals the beneficiaries: tick them from the
  * Beneficiaries list (shown on the event page as "Where your support goes"),
  * and the "For" line, filled in from the picks when left blank.
@@ -106,7 +149,7 @@ export function SupportersField({ name, label, hint, initial, suggestions = [] }
 export function CharityField({ isCharity, supports, options = [], picked = [], beneficiariesHref = "" }) {
   const [on, setOn] = useState(Boolean(isCharity));
   return (
-    <div className="form" style={{ gap: 10 }}>
+    <div className="form charity-block" style={{ gap: 10 }}>
       <label className="check">
         <input type="checkbox" name="isCharity" checked={on} onChange={(e) => setOn(e.target.checked)} /> This is a charity event
       </label>
