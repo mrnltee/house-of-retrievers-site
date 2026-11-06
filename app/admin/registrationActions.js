@@ -19,7 +19,7 @@ import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
 import { readCheckInTime } from "../lib/manualCheckIn.mjs";
 import { cleanBreeds } from "../lib/breeds.mjs";
-import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS } from "../lib/vaccinationRecords.mjs";
+import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS, freeVaccinationPages } from "../lib/vaccinationRecords.mjs";
 import { applyPromo, normalizeCode, promoSnapshot } from "../lib/promoCodes.mjs";
 import { checkPromo } from "../lib/promoStore";
 
@@ -644,27 +644,37 @@ export async function addVaccinationCard(data) {
     const index = Number(form(data, "index"));
     const furbabies = Math.min(MAX_VACCINATION_PHOTOS, Number(reg.furbaby_count) || 0);
     if (!Number.isInteger(index) || index < 0 || index >= furbabies) await backWith(back, "error", "That furbaby isn't on this registration.");
-    // "page" replaces that photo; without it the photo goes in the first free slot.
+    // "page" replaces that one photo; without it every photo sent (cardData can repeat) goes in the next free slots.
+    const sent = data.getAll("cardData").filter((v) => typeof v === "string" && v);
+    if (!sent.length) await backWith(back, "error", "Add a photo of the vaccination card first.");
     const asked = form(data, "page");
-    let page = asked === "" || asked == null ? null : Number(asked);
-    if (page !== null && (!Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY)) await backWith(back, "error", "That photo slot doesn't exist.");
-    if (page === null) {
-      const used = new Set((await sql("SELECT page_no FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2", [reg.id, index])).map((r) => r.page_no));
-      page = Array.from({ length: MAX_IMAGES_PER_FURBABY }, (_, i) => i).find((i) => !used.has(i));
-      if (page === undefined) await backWith(back, "error", `That furbaby already has ${MAX_IMAGES_PER_FURBABY} vaccination photos. Remove one first, or replace it.`);
+    let pages;
+    if (asked === "" || asked == null) {
+      const used = (await sql("SELECT page_no FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2", [reg.id, index])).map((r) => r.page_no);
+      pages = freeVaccinationPages(used, sent.length);
+      if (!pages) await backWith(back, "error", `A furbaby can have ${MAX_IMAGES_PER_FURBABY} vaccination photos and this one has ${used.length}. Remove one first, add fewer, or replace a photo.`);
+    } else {
+      const page = Number(asked);
+      if (!Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY || sent.length !== 1) await backWith(back, "error", "That photo slot doesn't exist.");
+      pages = [page];
     }
-    const image = readProofImage(form(data, "cardData"), { label: "vaccination card photo" });
-    if (image.error) await backWith(back, "error", image.error);
-    const bytes = Buffer.from(image.value.base64, "base64");
-    await sql(
-      `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (registration_id, furbaby_index, page_no) DO UPDATE SET mime = EXCLUDED.mime, data = EXCLUDED.data, bytes = EXCLUDED.bytes, uploaded_by = EXCLUDED.uploaded_by, uploaded_at = now()`,
-      [reg.id, index, page, image.value.mime, bytes, bytes.length, admin.email],
-    );
-    await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: page + 1, action: "add" });
+    // Check every photo before saving any, so a bad one doesn't leave half of them behind.
+    const images = sent.map((dataUrl) => readProofImage(dataUrl, { label: "vaccination card photo" }));
+    const bad = images.find((image) => image.error);
+    if (bad) await backWith(back, "error", bad.error);
+    for (const [n, image] of images.entries()) {
+      const bytes = Buffer.from(image.value.base64, "base64");
+      await sql(
+        `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (registration_id, furbaby_index, page_no) DO UPDATE SET mime = EXCLUDED.mime, data = EXCLUDED.data, bytes = EXCLUDED.bytes, uploaded_by = EXCLUDED.uploaded_by, uploaded_at = now()`,
+        [reg.id, index, pages[n], image.value.mime, bytes, bytes.length, admin.email],
+      );
+      await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: pages[n] + 1, action: "add" });
+    }
     revalidatePath("/registrations", "layout");
-    await backWith(back, "ok", `Vaccination photo saved for ${reg.name}'s furbaby ${furbabies > 1 ? index + 1 : ""}`.trim() + ".");
+    const dog = furbabies > 1 ? ` for ${reg.name}'s furbaby ${index + 1}` : ` for ${reg.name}`;
+    await backWith(back, "ok", images.length > 1 ? `${images.length} vaccination photos saved${dog}.` : `Vaccination photo saved${dog}.`);
   });
 }
 

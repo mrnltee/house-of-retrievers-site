@@ -180,7 +180,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                     ) : (
                       <p className="small muted"><span className="chip warn">No card yet</span></p>
                     )}
-                    {canEdit && !reg.deleted_at && shots.length < MAX_IMAGES_PER_FURBABY && <VaccinationCardField registrationId={reg.id} index={i} label={dogLabel(i)} hasCard={false} adding={shots.length > 0} />}
+                    {canEdit && !reg.deleted_at && shots.length < MAX_IMAGES_PER_FURBABY && <VaccinationCardField registrationId={reg.id} index={i} label={dogLabel(i)} hasCard={false} adding={shots.length > 0} remaining={MAX_IMAGES_PER_FURBABY - shots.length} />}
                   </figure>
                 );
               })}</div> : <p className="muted">No vaccination record was uploaded.</p>}

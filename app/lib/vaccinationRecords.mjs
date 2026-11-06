@@ -39,3 +39,14 @@ export function missingVaccinationCards(uploads, furbabies) {
   const have = new Set((uploads || []).map((u) => u.index));
   return Array.from({ length: Math.min(MAX_VACCINATION_PHOTOS, Math.max(0, Number(furbabies) || 0)) }, (_, i) => i).filter((i) => !have.has(i));
 }
+
+/**
+ * The first `count` unused photo slots (page numbers) for a furbaby, given the
+ * pages already on file, or null when they don't all fit. Lets an admin add
+ * several photos in one save.
+ */
+export function freeVaccinationPages(used, count) {
+  const taken = new Set(used);
+  const free = Array.from({ length: MAX_IMAGES_PER_FURBABY }, (_, i) => i).filter((i) => !taken.has(i));
+  return count >= 1 && count <= free.length ? free.slice(0, count) : null;
+}

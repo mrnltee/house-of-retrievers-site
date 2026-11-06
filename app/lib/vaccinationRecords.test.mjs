@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { MAX_IMAGES_PER_FURBABY, MAX_IMAGES_PER_RSVP, MAX_VACCINATION_PHOTOS, missingVaccinationCards, vaccinationBudget, vaccinationUploads } from "./vaccinationRecords.mjs";
+import { freeVaccinationPages, MAX_IMAGES_PER_FURBABY, MAX_IMAGES_PER_RSVP, MAX_VACCINATION_PHOTOS, missingVaccinationCards, vaccinationBudget, vaccinationUploads } from "./vaccinationRecords.mjs";
 
 test("vaccinationUploads: one optional photo per furbaby, by position; the old single field is furbaby 1", () => {
   assert.deepEqual(vaccinationUploads({ vaccinationRecords: ["data:a", null, "data:c"] }, 2), [{ index: 0, page: 0, dataUrl: "data:a" }]);
@@ -30,4 +30,13 @@ test("missingVaccinationCards: when required, every furbaby needs its own card",
   assert.deepEqual(missingVaccinationCards([{ index: 0 }, { index: 0 }, { index: 1 }], 2), []);
   assert.deepEqual(missingVaccinationCards([], 0), []);
   assert.deepEqual(missingVaccinationCards([{ index: 0 }], 1), []);
+});
+
+test("freeVaccinationPages: several photos fill the free slots in order, or refuse when they don't fit", () => {
+  assert.deepEqual(freeVaccinationPages([], 3), [0, 1, 2]);
+  assert.deepEqual(freeVaccinationPages([0, 2], 2), [1, 3]);
+  assert.deepEqual(freeVaccinationPages([0, 1, 2, 3], 1), [4]);
+  assert.equal(freeVaccinationPages([0, 1, 2, 3], 2), null);
+  assert.equal(freeVaccinationPages([], 0), null);
+  assert.equal(freeVaccinationPages([], MAX_IMAGES_PER_FURBABY + 1), null);
 });
