@@ -559,6 +559,8 @@ a.stat:hover, a.stat:focus-visible { border-color: var(--a-ink); }
 .vaccination-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .vaccination-grid figure { margin: 0; display: grid; gap: 6px; align-content: start; }
 .vaccination-grid p { margin: 0; }
+.vaccination-pages { display: grid; gap: 14px; }
+.vaccination-page { display: grid; gap: 6px; }
 .vaccination-shot { display: block; border-radius: 12px; overflow: hidden; border: 1px solid var(--a-line); background: #f2f2f2; }
 .vaccination-shot img { display: block; width: 100%; height: 260px; object-fit: contain; }
 .receipt-shot { display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--a-line); background: #f2f2f2; }

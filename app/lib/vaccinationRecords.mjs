@@ -3,7 +3,11 @@
  * keyed by registration + furbaby_index since migration 045). Private: admins only.
  */
 
-export const MAX_VACCINATION_PHOTOS = 10;
+export const MAX_VACCINATION_PHOTOS = 10; // furbabies with a record
+/** Photos per furbaby (e.g. several pages of a vaccination booklet). */
+export const MAX_IMAGES_PER_FURBABY = 5;
+/** Photos in one RSVP, all furbabies together, so the request stays under the size limit. */
+export const MAX_IMAGES_PER_RSVP = 20;
 // The whole RSVP must stay under Vercel's 4.5 MB request limit; base64 adds about a third.
 const TOTAL_BYTES = 2_800_000;
 
@@ -12,13 +16,22 @@ export function vaccinationBudget(count) {
   return Math.min(700_000, Math.floor(TOTAL_BYTES / Math.max(1, count)));
 }
 
-/** The RSVP body → [{ index, dataUrl }] for the furbabies that have a photo. `vaccinationRecord` (one photo) is the older form. */
+/**
+ * The RSVP body → [{ index, page, dataUrl }] for the furbabies that have photos.
+ * `vaccinationRecords[i]` is one data URL (older form) or an array of up to
+ * MAX_IMAGES_PER_FURBABY; `vaccinationRecord` (one photo) is the oldest form.
+ */
 export function vaccinationUploads(body, furbabies) {
   const list = Array.isArray(body?.vaccinationRecords) ? body.vaccinationRecords : body?.vaccinationRecord ? [body.vaccinationRecord] : [];
-  return list
-    .slice(0, Math.min(MAX_VACCINATION_PHOTOS, Math.max(0, Number(furbabies) || 0)))
-    .map((dataUrl, index) => ({ index, dataUrl }))
-    .filter((item) => typeof item.dataUrl === "string" && item.dataUrl);
+  const out = [];
+  list.slice(0, Math.min(MAX_VACCINATION_PHOTOS, Math.max(0, Number(furbabies) || 0))).forEach((entry, index) => {
+    const photos = Array.isArray(entry) ? entry : [entry];
+    photos
+      .filter((dataUrl) => typeof dataUrl === "string" && dataUrl)
+      .slice(0, MAX_IMAGES_PER_FURBABY)
+      .forEach((dataUrl, page) => out.push({ index, page, dataUrl }));
+  });
+  return out.slice(0, MAX_IMAGES_PER_RSVP);
 }
 
 /** Furbaby positions (0-based) without a card, when the event requires one for each furbaby. */

@@ -19,7 +19,7 @@ import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
 import { readCheckInTime } from "../lib/manualCheckIn.mjs";
 import { cleanBreeds } from "../lib/breeds.mjs";
-import { MAX_VACCINATION_PHOTOS } from "../lib/vaccinationRecords.mjs";
+import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS } from "../lib/vaccinationRecords.mjs";
 import { applyPromo, normalizeCode, promoSnapshot } from "../lib/promoCodes.mjs";
 import { checkPromo } from "../lib/promoStore";
 
@@ -628,10 +628,11 @@ export async function undoCheckIn(data) {
 }
 
 /**
- * Adds or replaces one furbaby's vaccination card by hand: for a registrant who
- * sent it outside the form (chat, email) after the event began asking for it.
- * Private to admins like the form uploads; works whether or not the event asks
- * for cards, and for any registration status.
+ * Adds, replaces or removes one photo (page) of a furbaby's vaccination card by
+ * hand: for a registrant who sent it outside the form (chat, email) after the
+ * event began asking for it. A furbaby can have up to MAX_IMAGES_PER_FURBABY
+ * photos. Private to admins like the form uploads; works whether or not the
+ * event asks for cards, and for any registration status.
  */
 export async function addVaccinationCard(data) {
   const id = form(data, "id");
@@ -643,18 +644,27 @@ export async function addVaccinationCard(data) {
     const index = Number(form(data, "index"));
     const furbabies = Math.min(MAX_VACCINATION_PHOTOS, Number(reg.furbaby_count) || 0);
     if (!Number.isInteger(index) || index < 0 || index >= furbabies) await backWith(back, "error", "That furbaby isn't on this registration.");
+    // "page" replaces that photo; without it the photo goes in the first free slot.
+    const asked = form(data, "page");
+    let page = asked === "" || asked == null ? null : Number(asked);
+    if (page !== null && (!Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY)) await backWith(back, "error", "That photo slot doesn't exist.");
+    if (page === null) {
+      const used = new Set((await sql("SELECT page_no FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2", [reg.id, index])).map((r) => r.page_no));
+      page = Array.from({ length: MAX_IMAGES_PER_FURBABY }, (_, i) => i).find((i) => !used.has(i));
+      if (page === undefined) await backWith(back, "error", `That furbaby already has ${MAX_IMAGES_PER_FURBABY} vaccination photos. Remove one first, or replace it.`);
+    }
     const image = readProofImage(form(data, "cardData"), { label: "vaccination card photo" });
     if (image.error) await backWith(back, "error", image.error);
     const bytes = Buffer.from(image.value.base64, "base64");
     await sql(
-      `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, mime, data, bytes, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (registration_id, furbaby_index) DO UPDATE SET mime = EXCLUDED.mime, data = EXCLUDED.data, bytes = EXCLUDED.bytes, uploaded_by = EXCLUDED.uploaded_by, uploaded_at = now()`,
-      [reg.id, index, image.value.mime, bytes, bytes.length, admin.email],
+      `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (registration_id, furbaby_index, page_no) DO UPDATE SET mime = EXCLUDED.mime, data = EXCLUDED.data, bytes = EXCLUDED.bytes, uploaded_by = EXCLUDED.uploaded_by, uploaded_at = now()`,
+      [reg.id, index, page, image.value.mime, bytes, bytes.length, admin.email],
     );
-    await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, action: "add" });
+    await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: page + 1, action: "add" });
     revalidatePath("/registrations", "layout");
-    await backWith(back, "ok", `Vaccination card saved for ${reg.name}'s furbaby ${furbabies > 1 ? index + 1 : ""}`.trim() + ".");
+    await backWith(back, "ok", `Vaccination photo saved for ${reg.name}'s furbaby ${furbabies > 1 ? index + 1 : ""}`.trim() + ".");
   });
 }
 
@@ -666,9 +676,11 @@ export async function removeVaccinationCard(data) {
     if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
     const index = Number(form(data, "index"));
     if (!Number.isInteger(index) || index < 0 || index >= MAX_VACCINATION_PHOTOS) await backWith(pagePath(reg), "error", "That furbaby isn't on this registration.");
-    await sql("DELETE FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2", [reg.id, index]);
-    await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, action: "remove" });
+    const page = Number(form(data, "page") || 0);
+    if (!Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY) await backWith(pagePath(reg), "error", "That photo slot doesn't exist.");
+    await sql("DELETE FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2 AND page_no = $3", [reg.id, index, page]);
+    await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: page + 1, action: "remove" });
     revalidatePath("/registrations", "layout");
-    await backWith(pagePath(reg), "ok", "Vaccination card removed.");
+    await backWith(pagePath(reg), "ok", "Vaccination photo removed.");
   });
 }

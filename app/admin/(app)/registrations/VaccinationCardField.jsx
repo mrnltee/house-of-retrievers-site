@@ -10,10 +10,12 @@ const EDGE = 1600;
 const QUALITY = 0.82;
 
 /**
- * Adds, replaces or removes one furbaby's vaccination card by hand, for a
- * registrant who sent it outside the RSVP form.
+ * Adds, replaces or removes one photo of a furbaby's vaccination card by hand,
+ * for a registrant who sent it outside the RSVP form. `page` is the photo's
+ * position when replacing or removing one that exists; without it the photo is
+ * added in the next free slot (`adding`: the furbaby already has some).
  */
-export default function VaccinationCardField({ registrationId, index, label, hasCard }) {
+export default function VaccinationCardField({ registrationId, index, page, label, hasCard, adding = false }) {
   const [preview, setPreview] = useState("");
   const [note, setNote] = useState("");
   const input = useRef(null);
@@ -48,31 +50,33 @@ export default function VaccinationCardField({ registrationId, index, label, has
           <img src={preview} alt={`New vaccination card for ${label}`} style={{ maxWidth: "100%", borderRadius: 8 }} />
           <input type="hidden" name="id" value={registrationId} />
           <input type="hidden" name="index" value={index} />
+          {page !== undefined && <input type="hidden" name="page" value={page} />}
           <input type="hidden" name="cardData" value={preview} />
           <div className="actions">
             <ConfirmButton
               className="btn gold small"
-              title={`${hasCard ? "Replace" : "Save"} the vaccination card for ${label}?`}
-              items={[hasCard ? "The card on file is replaced with this photo" : "This photo is saved as their vaccination card", "It stays private to admins and is never emailed", "Your name is kept as the person who added it"]}
-              yes="Yes, save card"
-            >Save card</ConfirmButton>
+              title={`${hasCard ? "Replace this photo of" : "Save a new photo of"} the vaccination card for ${label}?`}
+              items={[hasCard ? "The photo on file is replaced with this one" : "This photo is added to their vaccination card", "It stays private to admins and is never emailed", "Your name is kept as the person who added it"]}
+              yes="Yes, save photo"
+            >Save photo</ConfirmButton>
             <button type="button" className="linkish" onClick={cancel}>Cancel</button>
           </div>
         </form>
       ) : (
         <div className="actions">
           <label className="btn ghost small file-btn">
-            {hasCard ? "Replace card" : "Add card"}
+            {hasCard ? "Replace" : adding ? "Add another photo" : "Add card"}
             <input ref={input} type="file" accept="image/*" onChange={pick} hidden />
           </label>
           {hasCard && (
             <form action={removeVaccinationCard}>
               <input type="hidden" name="id" value={registrationId} />
               <input type="hidden" name="index" value={index} />
+              <input type="hidden" name="page" value={page ?? 0} />
               <ConfirmButton
                 className="linkish"
-                title={`Remove the vaccination card for ${label}?`}
-                items={["The photo is deleted from the registration", "You can add a new one at any time"]}
+                title={`Remove this vaccination photo for ${label}?`}
+                items={["This photo is deleted from the registration (their other photos stay)", "You can add a new one at any time"]}
                 yes="Yes, remove it"
               >Remove</ConfirmButton>
             </form>
