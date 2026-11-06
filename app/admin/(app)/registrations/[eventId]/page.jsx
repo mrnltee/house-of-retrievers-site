@@ -181,7 +181,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                     <td>
                       {(() => {
                         const dogs = Math.min(10, r.furbaby_count ?? 0);
-                        if (!dogs) return <span className="muted">—</span>;
+                        if (!dogs) return <span className="muted">N/A</span>;
                         const missing = missingVaccinationCards(cardsOf.get(r.id) || [], dogs).length;
                         return missing ? <span className="chip warn">{missing === dogs ? "No card" : `${dogs - missing}/${dogs} cards`}</span> : <span className="chip good">{dogs > 1 ? `${dogs}/${dogs} cards` : "Card on file"}</span>;
                       })()}
