@@ -91,14 +91,23 @@ export async function currentSlugFor(oldSlug) {
   }
 }
 
-/** An event's approved album photos, sized for the grid and for full screen. */
+/**
+ * An event's approved album photos, sized for the grid and for full screen.
+ * For a repeating event (same series_id) this is every published date's photos,
+ * newest date first, each tagged with its date and slug so the album can group
+ * them by month and link to that date. A one-off event gets only its own.
+ */
 export async function loadEventPhotos(slug) {
   const config = cloudinaryConfig();
   if (!config || !hasDatabase() || !/^[a-z0-9-]{1,120}$/.test(String(slug || ""))) return [];
   try {
     const rows = await sql(
-      `SELECT p.public_id, p.alt, p.width, p.height FROM event_photos p JOIN events e ON e.id = p.event_id
-        WHERE e.slug = $1 AND p.status = 'approved' ORDER BY p.position, p.created_at`,
+      `SELECT p.public_id, p.alt, p.width, p.height, e.date, e.slug, e.id = me.id AS own
+         FROM events me
+         JOIN events e ON e.id = me.id OR (me.series_id IS NOT NULL AND e.series_id = me.series_id AND e.status = 'published')
+         JOIN event_photos p ON p.event_id = e.id
+        WHERE me.slug = $1 AND p.status = 'approved'
+        ORDER BY e.date DESC, p.position, p.created_at`,
       [slug],
     );
     return rows.map((row) => ({
@@ -107,6 +116,9 @@ export async function loadEventPhotos(slug) {
       alt: row.alt || "",
       width: row.width,
       height: row.height,
+      date: row.date,
+      slug: row.slug,
+      own: Boolean(row.own),
     }));
   } catch {
     return [];

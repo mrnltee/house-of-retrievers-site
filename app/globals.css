@@ -1087,6 +1087,12 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .event-album { display: grid; gap: 14px; margin-top: 12px; }
 .event-album h2 { display: flex; align-items: baseline; gap: 10px; margin: 0; font: 400 clamp(28px, 4vw, 36px)/1.1 "DM Serif Display", serif; letter-spacing: -.02em; }
 .event-album h2 span { color: var(--muted-on-light); font: 600 14px "DM Sans", sans-serif; letter-spacing: .08em; }
+.event-album-month { display: grid; gap: 10px; }
+.event-album-month + .event-album-month { margin-top: 10px; }
+.event-album-month h3 { margin: 0; font: 600 13px "DM Sans", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-on-light); }
+.event-album-date { display: grid; gap: 8px; }
+.event-album-day { margin: 0; font: 500 15px "DM Sans", sans-serif; }
+.event-album-day a { color: inherit; text-decoration-color: var(--gold); text-underline-offset: 3px; }
 .event-album-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
 .event-album-grid button { display: block; width: 100%; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: #e7e0cf; cursor: zoom-in; }
 .event-album-grid img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; transition: transform .4s ease; }
