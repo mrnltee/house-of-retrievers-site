@@ -9,6 +9,7 @@ import { deleteRegistration, manualCheckIn, remindExpiredHolds, restoreRegistrat
 import { manualCheckInWarnings } from "../../../../lib/manualCheckIn.mjs";
 import { manilaParts } from "../../../../lib/rsvpOpens.mjs";
 import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
+import { missingVaccinationCards } from "../../../../lib/vaccinationRecords.mjs";
 import { DEFAULT_REMINDER_HOLD_MINUTES, REMINDER_HOLD_OPTIONS, isActiveRegistrationHold, isExpiredHold } from "../../../../lib/registrationHolds.mjs";
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
@@ -16,8 +17,8 @@ import FurbabyList from "../FurbabyList";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 
-const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
-const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
+const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
+const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
 
 /**
@@ -42,6 +43,11 @@ export default async function EventRegistrations({ params, searchParams }) {
   const current = all.filter((r) => !r.deleted_at);
   const deleted = all.filter((r) => r.deleted_at);
   const welcome = await welcomePhotosFor(current);
+  // Furbaby positions that already have a card, so "No vaccination card" lists confirmed guests with a dog still missing one.
+  const cardRows = current.length ? await sql("SELECT registration_id, furbaby_index FROM registration_vaccination_records WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
+  const cardsOf = new Map();
+  for (const row of cardRows) cardsOf.set(row.registration_id, [...(cardsOf.get(row.registration_id) || []), { index: row.furbaby_index }]);
+  const lacksCard = (r) => r.status === "confirmed" && missingVaccinationCards(cardsOf.get(r.id) || [], r.furbaby_count).length > 0;
   const nowParts = manilaParts(new Date().toISOString());
   const live = current.filter((r) => r.status !== "cancelled");
   const confirmed = current.filter((r) => r.status === "confirmed");
@@ -56,7 +62,8 @@ export default async function EventRegistrations({ params, searchParams }) {
   const holding = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }));
   const total = (rows, key, none) => rows.reduce((sum, r) => sum + (r[key] ?? none), 0);
   const heads = { humans: total(holding, "human_count", 1), furbabies: total(holding, "furbaby_count", 0), paidHumans: total(paid, "human_count", 1), paidFurbabies: total(paid, "furbaby_count", 0) };
-  const FILTERS = paidEvent ? PAY_FILTERS : BASE_FILTERS;
+  // The vaccination tab only appears for events that ask for cards (or already have some).
+  const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || event.vaccination_record_required || cardRows.length > 0);
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
     filter === "deleted" ? Boolean(r.deleted_at)
@@ -64,6 +71,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       : filter === "all" ? r.status !== "cancelled"
       : filter === "checked" ? r.checked_in_at
       : filter === "notchecked" ? r.status === "confirmed" && !r.checked_in_at
+      : filter === "novax" ? lacksCard(r)
         : filter === "check" ? r.status === "confirmed" && r.fee_status === "review"
           : filter === "pending" ? r.status === "confirmed" && (r.fee_status === "waiting" || r.fee_status === "rejected")
             : filter === "expired" ? isExpiredHold(r)
@@ -78,7 +86,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const canEdit = can(admin, "registrations:edit");
   const canFees = can(admin, "registrations:fees");
   const counts = {
-    all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, notchecked: confirmed.length - checked.length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
+    all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, notchecked: confirmed.length - checked.length, novax: current.filter(lacksCard).length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
     check: toCheck.length, pending: pending.length, paid: paid.length, expired: current.filter((r) => isExpiredHold(r)).length,
   };
   const waitPosition = new Map(waitlist.map((r, i) => [r.id, i + 1]));

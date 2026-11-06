@@ -13,6 +13,7 @@ import BreedIcons from "../../../BreedIcons";
 import BreedFields from "../../../BreedFields";
 import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
+import VaccinationCardField from "../../../VaccinationCardField";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../../../lib/registrationPricing.mjs";
 import { applyPromo, promoLabel } from "../../../../../../lib/promoCodes.mjs";
@@ -49,7 +50,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
     reg.fee_reference
       ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
-    sql("SELECT furbaby_index, uploaded_at, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index", [regId]),
+    sql("SELECT furbaby_index, uploaded_at, uploaded_by, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index", [regId]),
     reg.deleted_at ? null : welcomePhotoFor(regId, eventId),
   ]);
   const proof = proofs[0];
@@ -57,6 +58,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const dogLabel = (i) => [dogNames[i] || (reg.furbaby_count > 1 ? `Furbaby ${i + 1}` : "Furbaby"), breedLabel(reg.furbaby_breeds?.[i] || "")].filter(Boolean).join(" · ");
   const canFees = can(admin, "registrations:fees");
   const canEdit = can(admin, "registrations:edit");
+  // One slot per furbaby on the registration, plus any older card beyond that count (the count may have been edited down).
+  const vaccinationSlots = [...new Set([...Array.from({ length: Math.min(10, reg.furbaby_count || 0) }, (_, i) => i), ...vaccinationRows.map((v) => v.furbaby_index)])].sort((x, y) => x - y);
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
   const owing = reg.fee_required && reg.status === "confirmed" && UNPAID.includes(reg.fee_status);
   const due = reg.amount_due ?? reg.ticket_amount;
@@ -149,16 +152,27 @@ export default async function RegistrationDetail({ params, searchParams }) {
             ))}
           </section>
 
-          {(reg.vaccination_record_required || vaccinationRows.length > 0) && (
+          {(reg.vaccination_record_required || vaccinationRows.length > 0 || (canEdit && !reg.deleted_at && reg.furbaby_count > 0)) && (
             <section className="card vaccination-card" aria-label="Vaccination records">
-              <h2>{vaccinationRows.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
-              {vaccinationRows.length ? <div className="vaccination-grid">{vaccinationRows.map((v) => {
-                const src = `${base}/registrations/vaccination/${reg.id}?i=${v.furbaby_index}`;
+              <h2>{vaccinationSlots.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
+              {canEdit && vaccinationSlots.some((i) => !vaccinationRows.some((v) => v.furbaby_index === i)) && (
+                <p className="small muted" style={{ margin: 0 }}>Missing a card they've sent you another way? Add it here. It stays private to admins.</p>
+              )}
+              {vaccinationSlots.length ? <div className="vaccination-grid">{vaccinationSlots.map((i) => {
+                const v = vaccinationRows.find((row) => row.furbaby_index === i);
+                const src = `${base}/registrations/vaccination/${reg.id}?i=${i}`;
                 return (
-                  <figure key={v.furbaby_index}>
-                    <figcaption className="strong">{dogLabel(v.furbaby_index)}</figcaption>
-                    <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot" data-lightbox={`Vaccination card · ${dogLabel(v.furbaby_index)}`}><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} loading="lazy" /></a>
-                    <p className="small muted">Uploaded {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer" data-lightbox={`Vaccination card · ${dogLabel(v.furbaby_index)}`}>Open full size</a></p>
+                  <figure key={i}>
+                    <figcaption className="strong">{dogLabel(i)}</figcaption>
+                    {v ? (
+                      <>
+                        <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot" data-lightbox={`Vaccination card · ${dogLabel(i)}`}><img src={src} alt={`Vaccination record for ${dogLabel(i)}`} loading="lazy" /></a>
+                        <p className="small muted">{v.uploaded_by ? `Added by ${v.uploaded_by}` : "Uploaded"} {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer" data-lightbox={`Vaccination card · ${dogLabel(i)}`}>Open full size</a></p>
+                      </>
+                    ) : (
+                      <p className="small muted"><span className="chip warn">No card yet</span></p>
+                    )}
+                    {canEdit && !reg.deleted_at && <VaccinationCardField registrationId={reg.id} index={i} label={dogLabel(i)} hasCard={Boolean(v)} />}
                   </figure>
                 );
               })}</div> : <p className="muted">No vaccination record was uploaded.</p>}
