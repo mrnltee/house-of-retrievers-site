@@ -961,3 +961,15 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .supporter-list-wrap th:first-child input, .supporter-list-wrap td:first-child input[type="checkbox"] { width: 20px; height: 20px; }
 .edit-wording-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .edit-wording-dialog { width: min(760px, calc(100vw - 32px)); }
+
+/* WYSIWYG email wording (RichTextField): looks like the email's body text. */
+.rich-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.rich-bar button { font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--a-line); background: white; min-height: 32px; }
+.rich-bar button:hover { background: var(--a-ivory); }
+.rich-box { padding: 12px 14px; border: 1px solid var(--a-field); border-radius: 8px; background: var(--a-ivory); color: var(--a-ink); font-size: 16px; line-height: 1.55; outline-offset: 2px; overflow-wrap: anywhere; }
+.rich-box:focus-visible { outline: 2px solid var(--a-ink); }
+.rich-box:empty::before { content: "Start typing…"; color: var(--a-muted); }
+.rich-box p { margin: 0 0 1em; }
+.rich-box p:last-child, .rich-box ul:last-child { margin-bottom: 0; }
+.rich-box ul { margin: 0 0 1em; padding-left: 1.4em; }
+.rich-box a { color: #7a5c1f; text-decoration: underline; }

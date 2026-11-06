@@ -39,11 +39,12 @@ async function readFields(data, back) {
     heading: form(data, "heading").replace(/\s+/g, " ").trim(),
     message: form(data, "message").replace(/\r\n?/g, "\n").trim(),
   };
+  if (data.has("details")) fields.details = form(data, "details").replace(/\r\n?/g, "\n").trim();
   if (!fields.subject) await backWith(back, "error", "Add a subject first.");
   if (!fields.heading) await backWith(back, "error", "Add a heading first.");
   if (!fields.message) await backWith(back, "error", "Write the message first.");
   for (const [name, limit] of Object.entries(TEMPLATE_LIMITS)) {
-    if (fields[name].length > limit) await backWith(back, "error", `The ${name} is too long (up to ${limit} characters).`);
+    if ((fields[name] ?? "").length > limit) await backWith(back, "error", `The ${name} is too long (up to ${limit} characters).`);
   }
   const unknown = unknownVariables("event-reminder", fields);
   if (unknown.length) await backWith(back, "error", `These aren't available here: ${unknown.map((v) => `{{${v}}}`).join(", ")}.`);

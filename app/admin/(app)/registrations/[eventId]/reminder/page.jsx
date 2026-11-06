@@ -40,7 +40,7 @@ export default async function EventReminderPage({ params, searchParams }) {
   const only = typeof query?.to === "string" && recipients.some((r) => r.id === query.to && r.eligible) ? query.to : "";
   const t = EDITABLE_TEMPLATES["event-reminder"];
   const saved = await loadTemplate("event-reminder");
-  const mine = (await listCustomTemplates("reminder")).map((m) => ({ id: m.id, name: m.name, subject: m.subject, greeting: m.greeting, heading: m.heading, message: m.message }));
+  const mine = (await listCustomTemplates("reminder")).map((m) => ({ id: m.id, name: m.name, subject: m.subject, greeting: m.greeting, heading: m.heading, message: m.message, details: m.details }));
   return (
     <>
       <p className="small"><a href={`${base}/registrations/${event.id}`}>← {event.title} registrations</a></p>

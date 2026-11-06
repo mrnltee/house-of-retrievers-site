@@ -346,7 +346,10 @@ export function templateDef(ref) {
   return EDITABLE_TEMPLATES[ref] || null;
 }
 
-export const TEMPLATE_LIMITS = { subject: 150, greeting: 120, heading: 150, message: 4000 };
+export const TEMPLATE_LIMITS = { subject: 150, greeting: 120, heading: 150, message: 4000, details: 600 };
+
+/** The event box in event emails until HOR rewords it (Email templates → "Event details"). */
+export const EVENT_DETAILS_DEFAULT = "**{{event_title}}**\n{{event_date}}\n{{event_venue}}";
 
 const VAR_RE = /\{\{\s*([a-z_]+)\s*\}\}/g;
 
@@ -420,7 +423,9 @@ export function renderTemplate(ref, custom, person, extras = {}) {
   const t = templateDef(ref);
   const fields = { ...t.defaults, ...Object.fromEntries(Object.entries(custom || {}).filter(([, v]) => typeof v === "string")) };
   const vars = variablesFor(person);
-  const eventBox = t.event && person?.event ? [`<strong>${esc(vars.event_title)}</strong><br>${esc(vars.event_date)}<br>${esc(vars.event_venue)}`] : [];
+  // NULL/unset = the standard box; saved empty = no box.
+  const detailsText = typeof custom?.details === "string" ? custom.details : EVENT_DETAILS_DEFAULT;
+  const eventBox = t.event && person?.event ? messageParagraphs(detailsText, vars).map((html) => html.replace(/ style="white-space:nowrap"/g, "")) : [];
   return build({
     subject: fillPlain(fields.subject, vars).replace(/\s+/g, " ").trim() || fillPlain(t.defaults.subject, vars),
     preheader: t.event ? `${vars.event_date} · ${vars.event_venue}` : t.preheader,

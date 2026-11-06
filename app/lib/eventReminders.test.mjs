@@ -46,3 +46,18 @@ test("HOR can write its own reminder templates", async () => {
   assert.equal(templateDef("custom:reminder"), CUSTOM_KINDS.reminder);
   assert.deepEqual(unknownVariables("custom:reminder", { message: "Hi {{first_name}}, see you at {{event_title}} {{nope}}" }), ["nope"]);
 });
+
+test("the event box in event emails is editable wording", async () => {
+  const { renderTemplate, SAMPLE_PERSON, EVENT_DETAILS_DEFAULT } = await import("./emailTemplates.mjs");
+  const std = renderTemplate("event-reminder", null, SAMPLE_PERSON).html;
+  assert.match(std, /Bedazzle Barkdate/);
+  assert.match(std, /Wiltlover Café, Pasay/);
+  // explicit default text gives the same box as none saved
+  assert.equal(renderTemplate("event-reminder", { details: EVENT_DETAILS_DEFAULT }, SAMPLE_PERSON).html, std);
+  // reworded
+  const custom = renderTemplate("event-reminder", { details: "**Meet at the gate**\n{{event_date}}" }, SAMPLE_PERSON).html;
+  assert.match(custom, /Meet at the gate/);
+  assert.doesNotMatch(custom, /<br>Wiltlover/);
+  // saved empty = no box at all
+  assert.doesNotMatch(renderTemplate("event-reminder", { details: "" }, SAMPLE_PERSON).html, /<strong>Bedazzle Barkdate<\/strong>/);
+});

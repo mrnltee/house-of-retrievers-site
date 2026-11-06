@@ -29,7 +29,7 @@ export function readReminderIds(values) {
 
 /** A short stable fingerprint of the wording, so the same text sent twice the same day isn't emailed twice. */
 export function wordingKey(fields) {
-  const text = [fields.subject, fields.greeting, fields.heading, fields.message].join("\u0001");
+  const text = [fields.subject, fields.greeting, fields.heading, fields.message, fields.details ?? ""].join("\u0001");
   let h = 5381;
   for (let i = 0; i < text.length; i += 1) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
   return h.toString(36);

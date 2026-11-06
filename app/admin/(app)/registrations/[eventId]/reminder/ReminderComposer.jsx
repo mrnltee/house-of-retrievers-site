@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { applyEmailFrame, eventReminder, TEMPLATE_LIMITS } from "../../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, EVENT_DETAILS_DEFAULT, eventReminder, TEMPLATE_LIMITS } from "../../../../../lib/emailTemplates.mjs";
 import { sendEventReminders, sendEventReminderTest } from "../../../../reminderActions";
 import ConfirmButton from "../../../ConfirmButton";
+import RichTextField from "../../../emails/RichTextField";
 
 const when = (iso) => new Date(iso).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
 
@@ -12,7 +13,9 @@ const when = (iso) => new Date(iso).toLocaleString("en-PH", { month: "short", da
  * send only), tick who gets it, preview it as the first person ticked, then send.
  */
 export default function ReminderComposer({ eventId, event, recipients, preselected, initial, defaults, usingSaved, mine = [], newHref, variables, frame = null, max, testTo, templateHref }) {
-  const [fields, setFields] = useState({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
+  const startFields = (src) => ({ subject: src.subject || "", greeting: src.greeting || "", heading: src.heading || "", message: src.message || "", details: typeof src.details === "string" ? src.details : EVENT_DETAILS_DEFAULT });
+  const [fields, setFields] = useState(() => startFields(initial));
+  const richRefs = { message: useRef(null), details: useRef(null) };
   const eligible = recipients.filter((r) => r.eligible);
   const [ticked, setTicked] = useState(() => new Set(preselected ? [preselected] : eligible.map((r) => r.id)));
   const [width, setWidth] = useState("phone");
@@ -23,7 +26,7 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
     () => applyEmailFrame(eventReminder({ name: first?.name || "Juan dela Cruz", event, passUrl: "#", code: "7KQ2MPX4RT", custom: fields }), frame),
     [first, event, fields, frame],
   );
-  const changed = JSON.stringify(fields) !== JSON.stringify({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
+  const changed = JSON.stringify(fields) !== JSON.stringify(startFields(initial));
   const again = recipients.filter((r) => ticked.has(r.id) && r.lastReminded);
   const count = ticked.size;
 
@@ -33,6 +36,7 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
 
   function insert(token) {
     const { name, el } = last.current;
+    if (richRefs[name]?.current) { richRefs[name].current.insert(token); return; }
     const value = fields[name] || "";
     const start = el?.selectionStart ?? value.length;
     const end = el?.selectionEnd ?? value.length;
@@ -65,7 +69,7 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
             <span className="field-head">Start from</span>
             <select defaultValue="" onChange={(e) => {
               const m = mine.find((x) => x.id === e.target.value);
-              setFields(m ? { subject: m.subject || "", greeting: m.greeting || "", heading: m.heading || "", message: m.message || "" } : { ...initial });
+              setFields(startFields(m || initial));
             }}>
               <option value="">{usingSaved ? "Standard wording (HOR's saved)" : "Standard wording"}</option>
               {mine.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -75,7 +79,10 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
           {field("subject", "Subject", "The line people see in their inbox")}
           {field("greeting", "Greeting", "Optional, above the heading, e.g. Hi {{first_name}},")}
           {field("heading", "Heading", "The big serif line")}
-          {field("message", "Message / guidelines", "A blank line starts a new paragraph. **like this** makes text bold.", 12)}
+          <RichTextField ref={richRefs.details} name="details" label="Event details" hint="The box under the heading. Remove the text to leave it out."
+            value={fields.details} onChange={(v) => setFields((f) => ({ ...f, details: v }))} onFocus={() => { last.current = { name: "details", el: null }; }} minHeight={90} />
+          <RichTextField ref={richRefs.message} name="message" label="Message / guidelines" hint="Type it as it will look. Select words to make them bold or a link."
+            value={fields.message} onChange={(v) => setFields((f) => ({ ...f, message: v }))} onFocus={() => { last.current = { name: "message", el: null }; }} minHeight={260} />
           <div className="template-vars">
             <span className="field-head">Variables <small>Click to insert where your cursor is</small></span>
             <ul>
@@ -84,9 +91,9 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
               ))}
             </ul>
           </div>
-          <p className="small muted" style={{ margin: 0 }}>The event's name, date and venue, their check-in QR and the “Open my pass” button are added automatically.</p>
-          {changed && <button type="button" className="linkish" onClick={() => setFields({ ...initial })}>Undo my changes</button>}
-          {!changed && <button type="button" className="linkish" onClick={() => setFields({ ...defaults })}>Start from HOR's original wording</button>}
+          <p className="small muted" style={{ margin: 0 }}>Their check-in QR and the “Open my pass” button are added automatically.</p>
+          {changed && <button type="button" className="linkish" onClick={() => setFields(startFields(initial))}>Undo my changes</button>}
+          {!changed && <button type="button" className="linkish" onClick={() => setFields(startFields(defaults))}>Start from HOR's original wording</button>}
         </section>
 
         <section className="card form">
