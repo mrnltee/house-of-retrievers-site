@@ -9,7 +9,6 @@ import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../li
 import { MAX_PAYMENT_HOLD_MINUTES, PAYMENT_HOLD_OPTIONS, holdLabel, holdParts, isPresetHold } from "../../../lib/registrationHolds.mjs";
 import { DEFAULT_WELCOME_MESSAGE } from "../../../lib/welcomePhoto.mjs";
 import { MONTHS, NTH_OPTIONS, REPEAT_COUNT_DEFAULT, REPEAT_COUNT_MAX, WEEKDAYS, describeRule, occurrences } from "../../../lib/eventRecurrence.mjs";
-import { isActivityCategory } from "../../../lib/eventCategories.mjs";
 
 /**
  * Date and times. "All day" hides the times (and saves none), for events
@@ -83,21 +82,13 @@ export function WhenFields({ date, allDay, startTime, endTime, isNew = false, re
   );
 }
 
-/**
- * Category. Socials, Workshops and Wellness are activities, not fundraising,
- * so a new one doesn't show the charity block (CSS keyed on the form's
- * data-activity; an event already marked charity keeps it showing).
- */
+/** Category. Socials, Workshops and Wellness are activities: no guest list, and sign-ups are called Participants. */
 export function CategoryField({ value = "", categories }) {
   return (
     <label className="field"><span>Category</span>
       <select
         name="category"
         defaultValue={value}
-        onChange={(e) => {
-          const f = e.target.closest("form");
-          if (f) f.dataset.activity = isActivityCategory(e.target.value) ? "1" : "0";
-        }}
       >
         <option value="">Choose…</option>
         {categories.map((c) => <option key={c} value={c}>{c}</option>)}

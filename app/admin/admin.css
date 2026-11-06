@@ -979,8 +979,6 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .rich-box ul { margin: 0 0 1em; padding-left: 1.4em; }
 .rich-box a { color: #7a5c1f; text-decoration: underline; }
 
-/* Category (7 Nov 2026): a new Socials / Workshops / Wellness event is an activity, so the charity block is hidden. */
-.event-form[data-activity="1"]:not([data-charity="1"]) .charity-block { display: none; }
 /* Repeats: "Every [last] [Sunday] of [the month]" in place of the date. */
 .when-checks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
 .repeat-rule { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--a-line); border-radius: 12px; background: #fff; }

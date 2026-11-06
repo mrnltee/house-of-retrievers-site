@@ -1,5 +1,4 @@
 import { cancelEvent, publishEvent, saveEvent, unpublishEvent } from "../../actions";
-import { isActivityCategory } from "../../../lib/eventCategories.mjs";
 import { CATEGORIES, PURPOSES, SUMMARY_MAX, eventTiers, validateEvent } from "../../../lib/admin/events.mjs";
 import { isoDate } from "../ui";
 import ConfirmSave from "./ConfirmSave";
@@ -53,7 +52,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
     : [];
 
   return (
-    <form action={saveEvent} className="form event-form" data-activity={isActivityCategory(event?.category) ? "1" : "0"} data-charity={event?.is_charity ? "1" : "0"}>
+    <form action={saveEvent} className="form event-form">
       {event && <input type="hidden" name="id" value={event.id} />}
       <section className="card">
         <h2>The basics</h2>
