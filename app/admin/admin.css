@@ -979,13 +979,11 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .rich-box ul { margin: 0 0 1em; padding-left: 1.4em; }
 .rich-box a { color: #7a5c1f; text-decoration: underline; }
 
-/* Event type (7 Nov 2026): playdates are social, so the charity block is hidden. */
-.event-form[data-event-type="playdate"] .charity-block,
-.event-form[data-event-type="monthly_playdate"] .charity-block { display: none; }
-.event-type-options { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 6px; }
-.event-type-option { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--a-line, #d8d2c4); border-radius: 12px; cursor: pointer; background: #fff; }
-.event-type-option.is-on { border-color: var(--a-ink); box-shadow: 0 0 0 1px var(--a-ink); }
-.event-type-option input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--a-ink); flex: none; }
-.event-type-option strong { display: block; font-size: 14px; }
-.event-type-option small { display: block; margin-top: 2px; color: var(--a-muted); font-size: 12.5px; line-height: 1.4; font-weight: 400; }
-.event-type-repeat { display: grid; gap: 10px; margin-top: 10px; }
+/* Category (7 Nov 2026): a new Socials / Workshops / Wellness event is an activity, so the charity block is hidden. */
+.event-form[data-activity="1"]:not([data-charity="1"]) .charity-block { display: none; }
+/* Repeats: "Every [last] [Sunday] of [the month]" in place of the date. */
+.when-checks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.repeat-rule { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--a-line); border-radius: 12px; background: #fff; }
+.repeat-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 600; }
+.repeat-line select { width: auto; min-width: 9ch; }
+.repeat-count { max-width: 460px; }

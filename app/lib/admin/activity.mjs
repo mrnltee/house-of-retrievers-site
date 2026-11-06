@@ -5,7 +5,7 @@ export const ACTION_LABELS = {
   "event.unpublish": "Moved an event back to draft",
   "event.cancel": "Cancelled an event",
   "event.address": "Changed an event's web address",
-  "event.series": "Set up the next months of a monthly playdate",
+  "event.series": "Set up a repeating event",
   "event.delete": "Deleted an event",
   "photo.remove": "Removed an album photo",
   "registration.fee": "Updated a fee",

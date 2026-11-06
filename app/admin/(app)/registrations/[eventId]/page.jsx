@@ -15,7 +15,7 @@ import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
 import FurbabyList from "../FurbabyList";
 import ConfirmButton from "../../ConfirmButton";
-import { isSocialType } from "../../../../lib/eventTypes.mjs";
+import { isActivityCategory } from "../../../../lib/eventCategories.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -98,7 +98,7 @@ export default async function EventRegistrations({ params, searchParams }) {
 
   return (
     <>
-      <PageHead title={event.title} lead={`${isSocialType(event.event_type) ? "Participants" : "Registrations"} · ${formatDay(event.date)}${paidEvent ? " · paid event · payments checked by hand" : ""}`}>
+      <PageHead title={event.title} lead={`${isActivityCategory(event.category) ? "Participants" : "Registrations"} · ${formatDay(event.date)}${paidEvent ? " · paid event · payments checked by hand" : ""}`}>
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}

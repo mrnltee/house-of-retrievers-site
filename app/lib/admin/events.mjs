@@ -11,9 +11,8 @@ import { eventEndsAt } from "../eventTime.mjs";
 import { cleanAttendeeLimit, cleanFurbabyPricing, cleanPricingBasis, ticketLimitUnitLabel } from "../registrationPricing.mjs";
 import { cleanCapacityBasis } from "../eventCapacity.mjs";
 import { cleanPaymentHoldMinutes } from "../registrationHolds.mjs";
-import { cleanEventType, isMonthlyType, isSocialType, snapToLastSunday } from "../eventTypes.mjs";
 
-export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
+export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Wellness", "Fundraisers"];
 
 export const PURPOSES = ["Purpose to Give Back", "Purpose to Care", "Purpose to Connect", "Purpose to Learn", "Purpose to Celebrate"];
 
@@ -249,7 +248,6 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
   const value = {
     title: clean(input?.title, 120),
     category: clean(input?.category, 40),
-    eventType: cleanEventType(input?.eventType),
     date: clean(input?.date, 10),
     allDay: input?.allDay === true || input?.allDay === "on" || input?.allDay === "true",
     startTime: clean(input?.startTime, 5) || null,
@@ -299,11 +297,6 @@ export function validateEvent(input, { publish = false, today = manilaDate() } =
 
   // An all-day event has no times.
   if (value.allDay) value.startTime = value.endTime = null;
-
-  // Playdates are social, not fundraising: no charity switch, no beneficiary.
-  if (isSocialType(value.eventType)) value.isCharity = false;
-  // A monthly playdate is always on the last Sunday of its month.
-  if (isMonthlyType(value.eventType)) value.date = snapToLastSunday(value.date) || value.date;
 
   // The beneficiary belongs to charity events only, and a placeholder isn't one.
   if (!value.isCharity || isPlaceholder(value.supports)) value.supports = null;
@@ -461,7 +454,6 @@ export function toPublicEvent(row, confirmed = 0) {
     rsvpFormConfig: cleanRsvpFormConfig(row.rsvp_form_config),
     feeRequired: row.fee_required,
     isCharity: Boolean(row.is_charity),
-    eventType: cleanEventType(row.event_type),
     onsitePayment: Boolean(row.onsite_payment),
     pricingBasis: cleanPricingBasis(row.pricing_basis),
     capacityBasis: cleanCapacityBasis(row.capacity_basis),

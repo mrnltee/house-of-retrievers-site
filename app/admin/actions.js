@@ -12,8 +12,8 @@ import { logActivity } from "../lib/admin/log";
 import { alertAdmins } from "../lib/admin/notify";
 import { canApprovePaymentChange, cleanPages, cleanRoles, parseEmailList, signedInRecently } from "../lib/admin/roles.mjs";
 import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin/payments.mjs";
-import { cleanSlug, slugify, validateEvent } from "../lib/admin/events.mjs";
-import { cleanMonthsAhead, isMonthlyType, nextLastSundays } from "../lib/eventTypes.mjs";
+import { cleanSlug, manilaDate, slugify, validateEvent } from "../lib/admin/events.mjs";
+import { cleanRepeatCount, cleanRule, describeRule, occurrences } from "../lib/eventRecurrence.mjs";
 import { destroyPhoto } from "../lib/cloudinary.mjs";
 import { checkInOutcome, normalizeCode } from "../lib/admin/registrations.mjs";
 import { MEMBERSHIP_KEYS, PEOPLE_STATUSES, hasMembership, memberNumber, membershipLabel } from "../lib/admin/people.mjs";
@@ -140,6 +140,17 @@ export async function saveEvent(data) {
       if (!String(input.supports || "").trim() && picks.length) input.supports = supportsLine(picks.map((id) => listed.find((b) => b.id === id).name));
     }
 
+    // A new repeating event: the dates come from the rule ("Every last Sunday of the month"),
+    // from today in Manila. The first is this event; the rest become drafts after it is saved.
+    let repeat = null;
+    if (!isUuid(id) && data.get("repeats") === "on") {
+      const rule = cleanRule({ nth: form(data, "repeatNth"), weekday: form(data, "repeatWeekday"), month: form(data, "repeatMonth") });
+      const dates = rule ? occurrences(rule, manilaDate(), cleanRepeatCount(form(data, "repeatCount"))) : [];
+      if (!dates.length) await backWith(back, "error", "Pick which day the event repeats on.");
+      repeat = { rule, dates };
+      input.date = dates[0];
+    }
+
     // Validate as a draft first, so a failed Publish still saves what was typed.
     const { value, error, missing } = validateEvent(input);
     if (error) await backWith(back, "error", error);
@@ -224,17 +235,16 @@ export async function saveEvent(data) {
       "UPDATE events SET is_charity=$1, purpose=$2, hashtags=$3, venue_lat=$4, venue_lng=$5, map_url=$6 WHERE id=$7",
       [value.isCharity, value.purpose, value.hashtags, value.venueLat, value.venueLng, value.mapUrl, eventId],
     );
-    // Event type (migration 095). Sent only by editors that have the field, so an older open tab can't reset it.
-    if (data.has("eventType")) await sql("UPDATE events SET event_type=$1 WHERE id=$2", [value.eventType, eventId]);
-    // A new monthly playdate also sets up the next months, as drafts, each its own event (own RSVPs, check-in, pass).
+    // Repeating: the rule goes on this event, then the other dates are copied from it as drafts.
     let seriesNote = "";
-    if (!isUuid(id) && isMonthlyType(value.eventType) && data.has("eventType")) {
-      const dates = nextLastSundays(value.date, cleanMonthsAhead(form(data, "repeatMonths")));
-      if (dates.length) {
-        await makeMonthlySeries(eventId, value.title, dates);
-        seriesNote = ` The next ${dates.length} last Sundays are set up as drafts: ${dates.map(formatShortDay).join(", ")}.`;
-        await logActivity(admin.email, "event.series", value.title, { eventId, dates });
-      }
+    if (repeat) {
+      await sql("UPDATE events SET recurrence=$1 WHERE id=$2", [JSON.stringify(repeat.rule), eventId]);
+      const later = repeat.dates.slice(1);
+      await makeSeries(eventId, value.title, later);
+      seriesNote = later.length
+        ? ` ${describeRule(repeat.rule)}: the next ${later.length === 1 ? "date is" : `${later.length} dates are`} set up as drafts (${later.map(formatShortDay).join(", ")}).`
+        : "";
+      await logActivity(admin.email, "event.series", value.title, { eventId, rule: repeat.rule, dates: repeat.dates });
     }
     // The event's beneficiaries: the ticked ones, in order; none when it isn't a charity event.
     if (picker || !value.isCharity) {
@@ -312,11 +322,12 @@ export async function saveEvent(data) {
 const formatShortDay = (date) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 /**
- * Copies an event to each of the given dates as a draft, all sharing one series_id with the original.
+ * Copies an event to each of the given dates as a draft, all sharing one series_id with the original
+ * (the original gets the series_id even when there are no other dates yet).
  * Everything but the date, address, status and RSVP opening time is carried over (columns are read from
  * the table, so later migrations are included). The opening time is a fixed moment, so it isn't copied.
  */
-async function makeMonthlySeries(eventId, title, dates) {
+async function makeSeries(eventId, title, dates) {
   const skip = ["id", "slug", "date", "status", "created_at", "updated_at", "series_id", "rsvp_opens_at"];
   const columns = (await sql("SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'events'"))
     .map((r) => r.column_name)

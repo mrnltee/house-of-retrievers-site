@@ -1,4 +1,5 @@
 import { cancelEvent, publishEvent, saveEvent, unpublishEvent } from "../../actions";
+import { isActivityCategory } from "../../../lib/eventCategories.mjs";
 import { CATEGORIES, PURPOSES, SUMMARY_MAX, eventTiers, validateEvent } from "../../../lib/admin/events.mjs";
 import { isoDate } from "../ui";
 import ConfirmSave from "./ConfirmSave";
@@ -12,7 +13,7 @@ import { adminBase } from "../../../lib/admin/guard";
 import { kindLabel, statusLabel as beneficiaryStatusLabel } from "../../../lib/beneficiaries.mjs";
 import { listCustomTemplates } from "../../../lib/emailSettings";
 import { TICKET_COUNTS_SQL, countsFromRows } from "../../../lib/ticketCounts.mjs";
-import { CharityField, EventTypeField, CheckinSettings, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
+import { CategoryField, CharityField, CheckinSettings, HashtagField, MoreOptions, PriceField, RsvpFormSettings, SignupFields, SupportersField, VenueField, WhenFields } from "./EventFields";
 
 /** Shared by "Create event" and "Edit event". `event` is a DB row or null. */
 /** Names to suggest: confirmed-or-not Partners and Sponsors from People (organization first). */
@@ -52,13 +53,12 @@ export default async function EventForm({ event, autoDescribe = false }) {
     : [];
 
   return (
-    <form action={saveEvent} className="form event-form" data-event-type={event?.event_type || "standard"}>
+    <form action={saveEvent} className="form event-form" data-activity={isActivityCategory(event?.category) ? "1" : "0"} data-charity={event?.is_charity ? "1" : "0"}>
       {event && <input type="hidden" name="id" value={event.id} />}
       <section className="card">
         <h2>The basics</h2>
-        <EventTypeField value={event?.event_type || "standard"} isNew={!event} />
         <label className="field"><span>Title</span><input type="text" name="title" required maxLength={120} defaultValue={v("title")} placeholder="e.g. Retriever Romp" /></label>
-        <WhenFields date={event ? isoDate(event.date) : ""} allDay={event?.all_day} startTime={event?.start_time} endTime={event?.end_time} />
+        <WhenFields date={event ? isoDate(event.date) : ""} allDay={event?.all_day} startTime={event?.start_time} endTime={event?.end_time} isNew={!event} recurrence={event?.recurrence || null} />
         <VenueField venue={event?.venue} city={event?.city} address={event?.venue_address} lat={event?.venue_lat} lng={event?.venue_lng} mapUrl={event?.map_url} />
       </section>
 
@@ -74,12 +74,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           <textarea name="summary" maxLength={SUMMARY_MAX} rows={7} defaultValue={v("summary")} />
         </label>
         <div className="row-2">
-          <label className="field"><span>Category</span>
-            <select name="category" defaultValue={v("category")}>
-              <option value="">Choose…</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </label>
+          <CategoryField value={v("category")} categories={CATEGORIES} />
           <label className="field"><span>Purpose <small>Optional</small></span>
             <select name="purpose" defaultValue={v("purpose")}>
               <option value="">Choose…</option>
