@@ -11,7 +11,7 @@ const when = (iso) => new Date(iso).toLocaleString("en-PH", { month: "short", da
  * Edit the reminder wording (starts from the saved email, changes apply to this
  * send only), tick who gets it, preview it as the first person ticked, then send.
  */
-export default function ReminderComposer({ eventId, event, recipients, preselected, initial, defaults, usingSaved, variables, frame = null, max, testTo, templateHref }) {
+export default function ReminderComposer({ eventId, event, recipients, preselected, initial, defaults, usingSaved, mine = [], newHref, variables, frame = null, max, testTo, templateHref }) {
   const [fields, setFields] = useState({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
   const eligible = recipients.filter((r) => r.eligible);
   const [ticked, setTicked] = useState(() => new Set(preselected ? [preselected] : eligible.map((r) => r.id)));
@@ -61,6 +61,17 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
             {usingSaved ? "Starts from HOR's saved wording. " : "Starts from HOR's original wording. "}
             Changes here apply to this send only. <a href={templateHref}>Edit the standard wording</a> to change it for every event.
           </p>
+          <label className="field">
+            <span className="field-head">Start from</span>
+            <select defaultValue="" onChange={(e) => {
+              const m = mine.find((x) => x.id === e.target.value);
+              setFields(m ? { subject: m.subject || "", greeting: m.greeting || "", heading: m.heading || "", message: m.message || "" } : { ...initial });
+            }}>
+              <option value="">{usingSaved ? "Standard wording (HOR's saved)" : "Standard wording"}</option>
+              {mine.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+            <small>Your own reminder templates. <a href={newHref}>Write a new one</a></small>
+          </label>
           {field("subject", "Subject", "The line people see in their inbox")}
           {field("greeting", "Greeting", "Optional, above the heading, e.g. Hi {{first_name}},")}
           {field("heading", "Heading", "The big serif line")}

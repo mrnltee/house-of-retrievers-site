@@ -46,7 +46,7 @@ export default async function EmailsPage({ searchParams }) {
       </ul>
 
       <h2 style={{ margin: "36px 0 6px" }}>Your templates</h2>
-      <p className="small muted">Write as many as you need. <strong>Acceptance</strong> templates are sent from a person's profile (or picked when making a member Active). <strong>Event confirmation</strong> templates are picked per event and go to everyone who RSVPs.</p>
+      <p className="small muted">Write as many as you need. <strong>Acceptance</strong> templates are sent from a person's profile (or picked when making a member Active). <strong>Event confirmation</strong> templates are picked per event and go to everyone who RSVPs. <strong>Event reminder</strong> templates are picked when you email an event's participants a reminder or guidelines.</p>
       <div className="actions" style={{ margin: "12px 0 16px" }}>
         {Object.entries(CUSTOM_KINDS).map(([kind, k]) => (
           <a key={kind} className="btn ghost" href={`${base}/emails/new?kind=${kind}`}>+ New {k.title.toLowerCase()} template</a>

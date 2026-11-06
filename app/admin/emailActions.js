@@ -98,7 +98,7 @@ export async function saveEmailTemplate(data) {
         [name, t.kind, f.subject, f.greeting, f.heading, f.message, admin.email],
       );
       await logActivity(admin.email, "email.custom.new", name, { templateId: row.id, kind: t.kind });
-      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : "Template added. Send it from a person's profile.");
+      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : t.kind === "reminder" ? "Template added. Pick it under “Email participants” on an event's registrations page." : "Template added. Send it from a person's profile.");
     }
   });
 }
@@ -129,7 +129,7 @@ export async function sendTestEmail(data) {
     const admin = await actionAdmin("emails:edit");
     const t = await target(data);
     const f = await readFields(data, t);
-    const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event" || t.ref === "event-reminder";
+    const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event" || t.ref === "custom:reminder" || t.ref === "event-reminder";
     const mail = renderTemplate(t.ref, f, SAMPLE_PERSON, event ? { button: { label: "Open my pass", href: "https://events.houseofretrieversph.org/" }, image: passQrImage("7KQ2MPX4RT") } : {});
     const sent = await sendEmail({ to: admin.email, ...mail, subject: `[Test] ${mail.subject}`, idempotencyKey: `test/${t.key || t.id || t.kind}/${Date.now()}` });
     if (!sent.ok) await backWith(t.back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The test didn't go through. Try again in a moment.");

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { TEMPLATE_VARIABLES, EDITABLE_TEMPLATES } from "../../../../../lib/emailTemplates.mjs";
-import { loadEmailFrame, loadTemplate } from "../../../../../lib/emailSettings";
+import { listCustomTemplates, loadEmailFrame, loadTemplate } from "../../../../../lib/emailSettings";
 import { MAX_REMINDERS_PER_SEND, REMINDER_TEST_TO, reminderEligibility } from "../../../../../lib/eventReminders.mjs";
 import { Flash, NotAllowed, PageHead } from "../../../ui";
 import ReminderComposer from "./ReminderComposer";
@@ -40,6 +40,7 @@ export default async function EventReminderPage({ params, searchParams }) {
   const only = typeof query?.to === "string" && recipients.some((r) => r.id === query.to && r.eligible) ? query.to : "";
   const t = EDITABLE_TEMPLATES["event-reminder"];
   const saved = await loadTemplate("event-reminder");
+  const mine = (await listCustomTemplates("reminder")).map((m) => ({ id: m.id, name: m.name, subject: m.subject, greeting: m.greeting, heading: m.heading, message: m.message }));
   return (
     <>
       <p className="small"><a href={`${base}/registrations/${event.id}`}>← {event.title} registrations</a></p>
@@ -53,6 +54,8 @@ export default async function EventReminderPage({ params, searchParams }) {
         initial={saved || t.defaults}
         defaults={t.defaults}
         usingSaved={Boolean(saved)}
+        mine={mine}
+        newHref={`${base}/emails/new?kind=reminder`}
         variables={t.variables.map((name) => [name, TEMPLATE_VARIABLES[name]])}
         frame={await loadEmailFrame()}
         max={MAX_REMINDERS_PER_SEND}

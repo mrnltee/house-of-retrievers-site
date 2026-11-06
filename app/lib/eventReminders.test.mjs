@@ -39,3 +39,10 @@ test("the reminder template only uses variables it offers, and renders the pass"
   assert.match(ack.html, /Review and acknowledge/);
   assert.doesNotMatch(ack.html, /7KQ2MPX4RT/);
 });
+
+test("HOR can write its own reminder templates", async () => {
+  const { CUSTOM_KINDS, templateDef, unknownVariables } = await import("./emailTemplates.mjs");
+  assert.equal(CUSTOM_KINDS.reminder.event, true);
+  assert.equal(templateDef("custom:reminder"), CUSTOM_KINDS.reminder);
+  assert.deepEqual(unknownVariables("custom:reminder", { message: "Hi {{first_name}}, see you at {{event_title}} {{nope}}" }), ["nope"]);
+});

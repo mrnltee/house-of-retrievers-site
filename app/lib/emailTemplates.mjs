@@ -331,9 +331,16 @@ export const CUSTOM_KINDS = {
     defaults: EVENT_DEFAULTS,
     event: true,
   },
+  reminder: {
+    title: "Event reminder",
+    when: "Pick it when you use “Email participants” on an event's registrations page (or send one person a reminder). Write one per event or occasion, e.g. the guidelines for a park meet-up. The event's details, the check-in QR and the pass button are added automatically.",
+    variables: EVENT_VARIABLES,
+    defaults: REMINDER_DEFAULTS,
+    event: true,
+  },
 };
 
-/** A built-in key, or "custom:acceptance" / "custom:event". */
+/** A built-in key, or "custom:acceptance" / "custom:event" / "custom:reminder". */
 export function templateDef(ref) {
   if (String(ref).startsWith("custom:")) return CUSTOM_KINDS[String(ref).slice(7)] || null;
   return EDITABLE_TEMPLATES[ref] || null;
