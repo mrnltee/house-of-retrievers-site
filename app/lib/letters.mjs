@@ -56,8 +56,8 @@ export function recipientName({ supporter, person } = {}) {
   return "";
 }
 
-/** "Apple" → "Apple team" (a name already ending in "team" is left as it is). */
-export const teamOf = (name) => (/\bteam$/i.test(String(name).trim()) ? String(name).trim() : `${String(name).trim()} team`);
+/** "Apple" → "Apple Team" (owner, 2026-11-06: capital T; a name already ending in "team" is left as it is). */
+export const teamOf = (name) => (/\bteam$/i.test(String(name).trim()) ? String(name).trim() : `${String(name).trim()} Team`);
 
 /** How letters greet a brand (owner, 2026-11-02), stored on supporters.greeting. */
 export const GREETINGS = [

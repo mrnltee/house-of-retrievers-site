@@ -110,7 +110,7 @@ export async function uploadDesignImage(dataUrl) {
   return error ? { error } : { src: url };
 }
 
-const SAMPLE = { "Company Name": "Sample Brand", Salutation: "Sample Brand team", "Their Contact Person": "Sam Sample", "Event Name": "Your event", "Event Date": "Saturday, December 5, 2026", "Event Time": "1:00 – 2:00 PM", "Event Location": "Venue, City", "Event Link": "https://events.houseofretrieversph.org/", "Event Beneficiaries": "our beneficiaries", "Signatory Name": "HOR team", "Signatory Position": "House of Retrievers" };
+const SAMPLE = { "Company Name": "Sample Brand", Salutation: "Sample Brand Team", "Their Contact Person": "Sam Sample", "Event Name": "Your event", "Event Date": "Saturday, December 5, 2026", "Event Time": "1:00 – 2:00 PM", "Event Location": "Venue, City", "Event Link": "https://events.houseofretrieversph.org/", "Event Beneficiaries": "our beneficiaries", "Signatory Name": "HOR team", "Signatory Position": "House of Retrievers" };
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 /** "Send a test to me": the saved design, with sample fill-ins, to the signed-in admin only. */

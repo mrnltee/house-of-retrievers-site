@@ -157,7 +157,7 @@ test("address block fills from the record; empty optional lines drop", async () 
   const full = recipientFields({ supporter: { name: "Modeler Collection", contact_name: "Jessie Mae Gabriel", address: "1 Main St.\nQuezon City", salutation: "Ms. Jessie" } });
   assert.equal(fillLetter(head, full), "Jessie Mae Gabriel\nModeler Collection\n1 Main St.\nQuezon City\n\nDear Ms. Jessie:");
   const bare = recipientFields({ supporter: { name: "Pawsome" } });
-  assert.equal(fillLetter(head, bare), "Pawsome\n\nDear Pawsome team:");
+  assert.equal(fillLetter(head, bare), "Pawsome\n\nDear Pawsome Team:");
   const guest = recipientFields({ contact: { name: "Jessie Mae Gabriel", organization: "Modeler Collection" } });
   assert.equal(fillLetter(head, guest), "Jessie Mae Gabriel\nModeler Collection\n\nDear Jessie Mae Gabriel:");
   const celeb = recipientFields({ contact: { name: "Anne Curtis", salutation: "Ms. Anne" } });
@@ -200,12 +200,12 @@ test("the open donation letter has no addressee, so it can go out in any DM", ()
 
 test("a brand or organization with no contact person is greeted as its team", () => {
   const filled = (to) => fillLetter("Dear [Salutation],", to);
-  assert.equal(filled(recipientFields({ supporter: { name: "Apple" } })), "Dear Apple team,");
+  assert.equal(filled(recipientFields({ supporter: { name: "Apple" } })), "Dear Apple Team,");
   assert.equal(filled(recipientFields({ supporter: { name: "Apple", contact_name: "Tim Cook" } })), "Dear Tim Cook,");
   assert.equal(filled(recipientFields({ supporter: { name: "Apple", salutation: "Mr. Cook" } })), "Dear Mr. Cook,");
   assert.equal(filled(recipientFields({ supporter: { name: "GRWM Team" } })), "Dear GRWM Team,");
-  assert.equal(filled(recipientFields({ beneficiary: { name: "Pawssion Project" } })), "Dear Pawssion Project team,");
-  assert.equal(filled(recipientFields({ contact: { category: "sponsor", name: "Aquaflask" } })), "Dear Aquaflask team,");
+  assert.equal(filled(recipientFields({ beneficiary: { name: "Pawssion Project" } })), "Dear Pawssion Project Team,");
+  assert.equal(filled(recipientFields({ contact: { category: "sponsor", name: "Aquaflask" } })), "Dear Aquaflask Team,");
   assert.equal(filled(recipientFields({ contact: { category: "sponsor", name: "Jessie", organization: "Aquaflask" } })), "Dear Jessie,");
   assert.equal(filled(recipientFields({ contact: { category: "donor", name: "Jessie Gabriel" } })), "Dear Jessie Gabriel,");
 });
@@ -215,9 +215,9 @@ test("a brand's greeting choice: contact person, brand team, or own wording", ()
   const apple = { name: "Apple", contact_name: "Tim Cook", salutation: "Mr. Cook" };
   assert.equal(dear({ ...apple, greeting: "auto" }), "Dear Mr. Cook,");
   assert.equal(dear({ ...apple, greeting: "contact" }), "Dear Tim Cook,");
-  assert.equal(dear({ ...apple, greeting: "team" }), "Dear Apple team,");
+  assert.equal(dear({ ...apple, greeting: "team" }), "Dear Apple Team,");
   assert.equal(dear({ ...apple, greeting: "custom" }), "Dear Mr. Cook,");
-  assert.equal(dear({ name: "Apple", greeting: "contact" }), "Dear Apple team,", "no contact person yet: the team");
+  assert.equal(dear({ name: "Apple", greeting: "contact" }), "Dear Apple Team,", "no contact person yet: the team");
   assert.equal(dear({ name: "Apple", contact_name: "Tim Cook" }), "Dear Tim Cook,", "no choice saved: automatic");
 });
 
