@@ -63,6 +63,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   const total = (rows, key, none) => rows.reduce((sum, r) => sum + (r[key] ?? none), 0);
   const heads = { humans: total(holding, "human_count", 1), furbabies: total(holding, "furbaby_count", 0), paidHumans: total(paid, "human_count", 1), paidFurbabies: total(paid, "furbaby_count", 0) };
   // The vaccination tab only appears for events that ask for cards (or already have some).
+  const showVax = Boolean(event.vaccination_record_required) || cardRows.length > 0;
   const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || event.vaccination_record_required || cardRows.length > 0);
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
@@ -147,10 +148,10 @@ export default async function EventRegistrations({ params, searchParams }) {
       <div className="table-wrap">
         <table className="registrations-table">
           <thead>
-            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th>{tableQuestions.map((q) => <th key={q.id} title={q.label}>{q.label.length > 28 ? `${q.label.slice(0, 27)}…` : q.label}</th>)}<th>Notes</th><th>Acknowledged</th><th>Checked in</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
+            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th>{tableQuestions.map((q) => <th key={q.id} title={q.label}>{q.label.length > 28 ? `${q.label.slice(0, 27)}…` : q.label}</th>)}<th>Notes</th>{showVax && <th>Vaccination</th>}<th>Acknowledged</th><th>Checked in</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
           <tbody>
-            {shown.length === 0 && <tr><td colSpan={(paidEvent ? 10 : 8) + tableQuestions.length} className="empty">Nobody here yet.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={(paidEvent ? 10 : 8) + tableQuestions.length + (showVax ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
             {shown.map((r) => {
               const fee = FEE_STATUS[r.fee_status] || FEE_STATUS.not_due;
               const twins = sameRef(r);
@@ -176,6 +177,16 @@ export default async function EventRegistrations({ params, searchParams }) {
                   <td className="small">
                     {!r.photo_consent && <span className="chip">No photos</span>} {r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}
                   </td>
+                  {showVax && (
+                    <td>
+                      {(() => {
+                        const dogs = Math.min(10, r.furbaby_count ?? 0);
+                        if (!dogs) return <span className="muted">—</span>;
+                        const missing = missingVaccinationCards(cardsOf.get(r.id) || [], dogs).length;
+                        return missing ? <span className="chip warn">{missing === dogs ? "No card" : `${dogs - missing}/${dogs} cards`}</span> : <span className="chip good">{dogs > 1 ? `${dogs}/${dogs} cards` : "Card on file"}</span>;
+                      })()}
+                    </td>
+                  )}
                   <td>
                     {!acknowledgementEnabled ? <span className="small muted">Not required</span>
                       : r.consent_completed_at ? <span className="chip good" title={new Date(r.consent_completed_at).toLocaleString("en-PH")}>Yes</span>
