@@ -225,6 +225,13 @@ const EVENT_DEFAULTS = {
   message: "Show this QR at the door (a screenshot works too). The team scans it to check you in.",
 };
 
+const REMINDER_DEFAULTS = {
+  subject: "Reminder: {{event_title}}",
+  greeting: "",
+  heading: "See you soon, {{first_name}}.",
+  message: "A friendly reminder that **{{event_title}}** is coming up. We can't wait to see you there.\n\nA few things to remember:\n\u2022 Show your QR pass below at the door (a screenshot works too).\n\u2022 Please arrive a little early so check-in is quick.",
+};
+
 export const EDITABLE_TEMPLATES = {
   "member-registered": {
     title: "New member registration",
@@ -290,6 +297,13 @@ export const EDITABLE_TEMPLATES = {
     when: "The pass: sent when someone gets a spot on a free event, or when their payment is approved on a paid one, for events that don't pick one of your Event templates. The event's details, the check-in QR, the payment line and the “Open my pass” button are added automatically.",
     variables: EVENT_VARIABLES,
     defaults: EVENT_DEFAULTS,
+    event: true,
+  },
+  "event-reminder": {
+    title: "Event reminder & guidelines",
+    when: "Sent by an admin from an event's Registrations page (\u201cEmail participants\u201d), one by one or to everyone who has a pass. Edit the wording here, or tweak it for one event right before sending. The event's details, the check-in QR and the pass button are added automatically.",
+    variables: EVENT_VARIABLES,
+    defaults: REMINDER_DEFAULTS,
     event: true,
   },
 };
@@ -513,6 +527,21 @@ export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLin
     paragraphs: [eventBox(event), "The event is full right now. If a spot opens, we'll email you, and your pass below will show it."],
     button: { label: "Open my waitlist pass", href: passUrl },
     after,
+    footnote: RSVP_FOOTNOTE,
+  });
+}
+
+/**
+ * Event reminder / guidelines: HOR's saved (or per-send edited) wording, the
+ * event box, the check-in QR and the pass button, like the pass email. With an
+ * acknowledgement to complete first, the button goes there and the QR waits.
+ */
+export function eventReminder({ name, event, passUrl, code = "", consentRequired = false, custom = null }) {
+  return renderTemplate("event-reminder", custom, { name, event }, {
+    paragraphs: consentRequired ? ["Please review and acknowledge the event guidelines before viewing your QR pass."] : [],
+    image: code && !consentRequired ? passQrImage(code) : undefined,
+    button: { label: consentRequired ? "Review and acknowledge" : "Open my pass", href: passUrl },
+    after: ["Can't make it after all? Reply to this email so someone else can have the spot."],
     footnote: RSVP_FOOTNOTE,
   });
 }

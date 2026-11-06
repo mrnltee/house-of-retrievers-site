@@ -136,6 +136,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.refund_amount && <div><dt>Refunded</dt><dd>{peso(reg.refund_amount)} · {payMethodLabel(reg.refund_method)} · Ref <span className="mono">{reg.refund_reference}</span><br /><span className="small muted">{reg.refunded_by} · {formatWhen(reg.refunded_at)}</span></dd></div>}
               {reg.fee_checked_by && <div><dt>{reg.fee_status === "paid" ? "Approved by" : "Last checked by"}</dt><dd>{reg.fee_checked_by} · {formatWhen(reg.fee_checked_at)}</dd></div>}
               {reg.pass_sent_at && <div><dt>QR pass emailed</dt><dd>{formatWhen(reg.pass_sent_at)}</dd></div>}
+              {reg.reminder_sent_at && <div><dt>Reminder emailed</dt><dd>{formatWhen(reg.reminder_sent_at)}{reg.reminder_count > 1 ? ` · ${reg.reminder_count}×` : ""}</dd></div>}
               {reg.furbaby_name && <div><dt>Furbaby</dt><dd>{reg.furbaby_name}</dd></div>}
               {reg.furbaby_breeds?.some(Boolean) && <div><dt>{reg.furbaby_breeds.filter(Boolean).length > 1 ? "Breeds" : "Breed"}</dt><dd><BreedIcons breeds={reg.furbaby_breeds} size={24} withNames /></dd></div>}
               {cleanCustomQuestions(reg.rsvp_form_config?.questions).map((q) => <div key={q.id}><dt>{q.label}</dt><dd>{answerText(reg.custom_answers?.[q.id]) || "Not asked"}</dd></div>)}
@@ -386,6 +387,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               <p className="small muted">{reg.pass_sent_at ? `Last emailed ${formatWhen(reg.pass_sent_at)}.` : "Not emailed yet."} Their pass link: <a href={`${EVENTS_URL}/r/${reg.check_in_code}`} target="_blank" rel="noreferrer">open</a></p>
               <div className="actions">
                 <ConfirmButton className="btn ghost" title="Email the QR pass again?" items={[`Their pass is emailed to ${reg.email}`]} yes="Yes, send it">Resend QR pass</ConfirmButton>
+                <a className="btn ghost" href={`${base}/registrations/${eventId}/reminder?to=${reg.id}`}>Send event reminder</a>
               </div>
             </form>
           )}

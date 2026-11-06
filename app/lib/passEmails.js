@@ -1,7 +1,8 @@
 import { sql } from "./db";
 import { sendEmail } from "./email";
 import { loadCustomTemplate, loadTemplate } from "./emailSettings";
-import { receiptRejected, rsvpConfirmed, spotHeld } from "./emailTemplates.mjs";
+import { eventReminder, receiptRejected, rsvpConfirmed, spotHeld } from "./emailTemplates.mjs";
+import { reminderEligibility, wordingKey } from "./eventReminders.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
 import { payMethodLabel, paymentNotice, ticketLine } from "./eventPayments.mjs";
 import { formatOpens } from "./rsvpOpens.mjs";
@@ -14,8 +15,8 @@ import { formatOpens } from "./rsvpOpens.mjs";
 
 async function load(registrationId) {
   const [row] = await sql(
-    `SELECT r.id, r.name, r.email, r.status, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at, r.hold_reminders,
-            e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment, e.rsvp_form_config
+    `SELECT r.id, r.name, r.email, r.status, r.fee_status, r.reminder_sent_at, r.reminder_count, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at, r.hold_reminders,
+            e.fee_required, e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment, e.rsvp_form_config
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
   );
@@ -100,4 +101,29 @@ export async function sendReceiptRejected(registrationId) {
   if (!row) return { ok: false };
   const mail = receiptRejected({ name: row.name, event: eventOf(row), passUrl: passUrl(row), reason: row.fee_note || "We couldn't match this receipt." });
   return safeSend({ to: row.email, ...mail, idempotencyKey: `rejected/${row.check_in_code}/${Date.now()}` });
+}
+
+/**
+ * The event reminder / guidelines email with the wording the admin settled on
+ * (`fields`: subject, greeting, heading, message). Needs a confirmed spot; on a
+ * paid event a confirmed payment, since it carries the pass. Records when it
+ * went. The same wording to the same person within a day is sent once (the key
+ * hashes the wording), so a double click can't email twice.
+ */
+export async function sendReminder(registrationId, fields) {
+  const row = await load(registrationId);
+  const eligible = row ? reminderEligibility(row, { feeRequired: row.fee_required }) : { ok: false, reason: "Not found" };
+  if (!eligible.ok) return { ok: false, error: eligible.reason };
+  const needsAcknowledgement = Boolean(row.rsvp_form_config?.consentEnabled);
+  const mail = eventReminder({
+    name: row.name,
+    event: eventOf(row),
+    passUrl: needsAcknowledgement ? consentUrl(row) : passUrl(row),
+    code: row.check_in_code,
+    consentRequired: needsAcknowledgement,
+    custom: fields,
+  });
+  const sent = await safeSend({ to: row.email, ...mail, idempotencyKey: `reminder/${row.check_in_code}/${wordingKey(fields)}` });
+  if (sent.ok) await sql("UPDATE registrations SET reminder_sent_at = now(), reminder_count = reminder_count + 1 WHERE id = $1", [registrationId]).catch(() => null);
+  return sent;
 }

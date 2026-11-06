@@ -16,7 +16,7 @@ const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage(
 export default function TemplateEditor({ templateKey, customId, kind, name: initialName = "", initial, defaults, custom, variables, frame = null }) {
   const ref = templateKey || `custom:${kind}`;
   const own = !templateKey;
-  const event = ref === "rsvp-confirmed" || ref === "custom:event";
+  const event = ref === "rsvp-confirmed" || ref === "custom:event" || ref === "event-reminder";
   const [name, setName] = useState(initialName);
   const [fields, setFields] = useState({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
   const [width, setWidth] = useState("phone");
