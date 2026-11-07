@@ -15,6 +15,8 @@ import { INCOMING_TRANSFORMATION, cloudinaryConfig, destroyPhoto, eventFolder, p
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const MAX_PER_EVENT = 300;
+// Keep in step with EventAlbum.jsx: this many stay well inside the function's time limit.
+const REMOVE_AT_ONCE = 100;
 
 async function allowed() {
   try {
@@ -107,30 +109,35 @@ export async function removeEventPhoto(photoId) {
   );
   if (!row) return { ok: true };
   await sql("DELETE FROM event_photos WHERE id=$1", [photoId]);
+  await logActivity(admin.email, "photo.remove", row.title, { publicId: row.public_id });
   const gone = await destroyPhoto(row.public_id);
   if (!gone) console.warn("Cloudinary photo not removed; delete it in the Media Library", row.public_id);
-  await logActivity(admin.email, "photo.remove", row.title, { publicId: row.public_id });
   revalidatePath("/events", "layout");
-  return { ok: true };
+  return { ok: true, left: gone ? 0 : 1 };
 }
 
 /**
  * Takes several photos out of one event's album at once (the album's
  * "Remove selected"). Only photos in that event are touched; storage
- * removals run a few at a time, and the activity log gets one entry.
+ * removals run a few at a time, and the activity log gets one entry, written
+ * before storage so a slow Cloudinary can't lose it. `left` counts files
+ * storage kept, for the admin to clear in the Media Library.
  */
 export async function removeEventPhotos(eventId, photoIds) {
   const { admin, error } = await allowed();
   if (error) return { error };
   if (!isUuid(eventId)) return { error: "That event no longer exists." };
-  const ids = [...new Set((Array.isArray(photoIds) ? photoIds : []).filter(isUuid))].slice(0, MAX_PER_EVENT);
-  if (!ids.length) return { removed: [] };
+  const ids = [...new Set((Array.isArray(photoIds) ? photoIds : []).filter(isUuid))].slice(0, REMOVE_AT_ONCE);
+  if (!ids.length) return { removed: [], left: 0 };
   const rows = await sql(
     `DELETE FROM event_photos p USING events e
        WHERE e.id = p.event_id AND p.event_id=$1 AND p.id = ANY($2::uuid[])
        RETURNING p.id, p.public_id, e.title`,
     [eventId, ids],
   );
+  if (rows.length) {
+    await logActivity(admin.email, "photo.remove.many", rows[0].title, { count: rows.length, publicIds: rows.map((row) => row.public_id) });
+  }
   const left = [];
   for (let i = 0; i < rows.length; i += 5) {
     const results = await Promise.all(rows.slice(i, i + 5).map((row) => destroyPhoto(row.public_id)));
@@ -138,11 +145,10 @@ export async function removeEventPhotos(eventId, photoIds) {
   }
   if (left.length) console.warn("Cloudinary photos not removed; delete them in the Media Library", left);
   if (rows.length) {
-    await logActivity(admin.email, "photo.remove.many", rows[0].title, { count: rows.length, publicIds: rows.map((row) => row.public_id) });
     revalidatePath("/events", "layout");
     // A journey stop may have borrowed one of these photos.
     revalidatePath("/");
   }
   // Photos already gone count as removed, so the list matches the database.
-  return { removed: ids };
+  return { removed: ids, left: left.length };
 }

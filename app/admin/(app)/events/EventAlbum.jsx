@@ -5,6 +5,10 @@ import { mb, shrinkPhoto } from "../../../lib/shrinkPhoto";
 import { addEventPhoto, describeEventPhoto, removeEventPhoto, removeEventPhotos, signEventPhotoUpload } from "../../eventPhotos";
 
 const AT_ONCE = 2;
+// Keep in step with eventPhotos.js.
+const REMOVE_AT_ONCE = 100;
+const photoCount = (n) => `${n} ${n === 1 ? "photo" : "photos"}`;
+const storageNote = (n) => (n ? ` ${n === 1 ? "1 file" : `${n} files`} couldn't be cleared from storage; delete ${n === 1 ? "it" : "them"} in Cloudinary's Media Library.` : "");
 
 /**
  * The album for a past event: pick many photos at once; each is shrunk, sent
@@ -50,9 +54,10 @@ export default function EventAlbum({ eventId, initialPhotos }) {
   const clearSelection = () => { setSelected(new Set()); setConfirmingMany(false); };
   const clearOnEscape = (e) => { if (e.key === "Escape" && selected.size) clearSelection(); };
   const allSelected = photos.length > 0 && selected.size === photos.length;
+  const batch = Math.min(selected.size, REMOVE_AT_ONCE);
 
   async function removeSelected() {
-    const ids = [...selected];
+    const ids = [...selected].slice(0, REMOVE_AT_ONCE);
     setRemoving(true);
     setNotice("");
     const result = await removeEventPhotos(eventId, ids).catch(() => ({ error: "Couldn't remove the photos. Try again." }));
@@ -61,8 +66,8 @@ export default function EventAlbum({ eventId, initialPhotos }) {
     if (result.error) return setNotice(result.error);
     const gone = new Set(result.removed);
     setPhotos((current) => current.filter((p) => !gone.has(p.id)));
-    setSelected(new Set());
-    setNotice(`Removed ${gone.size} ${gone.size === 1 ? "photo" : "photos"}.`);
+    const rest = selected.size - gone.size;
+    setNotice(`Removed ${photoCount(gone.size)}.${storageNote(result.left)}${rest > 0 ? ` ${photoCount(rest)} still selected.` : ""}`);
   }
 
   const update = (key, patch) => setQueue((items) => items.map((item) => (item.key === key ? { ...item, ...patch } : item)));
@@ -123,7 +128,10 @@ export default function EventAlbum({ eventId, initialPhotos }) {
     setConfirming(null);
     const result = await removeEventPhoto(photo.id);
     if (result.error) setNotice(result.error);
-    else setPhotos((current) => current.filter((p) => p.id !== photo.id));
+    else {
+      setPhotos((current) => current.filter((p) => p.id !== photo.id));
+      if (result.left) setNotice(`Removed the photo.${storageNote(result.left)}`);
+    }
   }
 
   const stored = photos.reduce((sum, p) => sum + (p.bytes || 0), 0);
@@ -183,7 +191,7 @@ export default function EventAlbum({ eventId, initialPhotos }) {
             <div className="album-select-actions">
               {confirmingMany ? (
                 <>
-                  <span className="small">Remove {selected.size} {selected.size === 1 ? "photo" : "photos"} for good?</span>
+                  <span className="small">Remove {photoCount(batch)} for good?{selected.size > batch ? ` (${REMOVE_AT_ONCE} at a time)` : ""}</span>
                   <button type="button" className="btn danger small" onClick={removeSelected} disabled={removing}>
                     {removing ? "Removing…" : "Yes, remove"}
                   </button>
@@ -193,7 +201,7 @@ export default function EventAlbum({ eventId, initialPhotos }) {
                 <>
                   <button type="button" className="btn ghost small" onClick={clearSelection}>Clear</button>
                   <button type="button" className="btn danger small" onClick={() => setConfirmingMany(true)}>
-                    Remove {selected.size} {selected.size === 1 ? "photo" : "photos"}
+                    Remove {photoCount(batch)}
                   </button>
                 </>
               )}
