@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mb, shrinkPhoto } from "../../../lib/shrinkPhoto";
-import { addEventPhoto, describeEventPhoto, removeEventPhoto, signEventPhotoUpload } from "../../eventPhotos";
+import { addEventPhoto, describeEventPhoto, removeEventPhoto, removeEventPhotos, signEventPhotoUpload } from "../../eventPhotos";
 
 const AT_ONCE = 2;
 
@@ -16,7 +16,54 @@ export default function EventAlbum({ eventId, initialPhotos }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(null);
   const [notice, setNotice] = useState("");
+  const [selected, setSelected] = useState(() => new Set());
+  const [confirmingMany, setConfirmingMany] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const lastPicked = useRef(null);
   const input = useRef(null);
+
+  // Drop ids for photos that are no longer in the album.
+  useEffect(() => {
+    setSelected((current) => {
+      const ids = new Set(photos.map((p) => p.id));
+      const kept = [...current].filter((id) => ids.has(id));
+      return kept.length === current.size ? current : new Set(kept);
+    });
+  }, [photos]);
+
+  // Shift-click selects the run between the last photo picked and this one.
+  function toggle(photoId, shiftKey) {
+    setConfirmingMany(false);
+    const anchor = lastPicked.current;
+    setSelected((current) => {
+      const next = new Set(current);
+      const turnOn = !current.has(photoId);
+      const from = photos.findIndex((p) => p.id === anchor);
+      const to = photos.findIndex((p) => p.id === photoId);
+      const run = shiftKey && from !== -1 ? photos.slice(Math.min(from, to), Math.max(from, to) + 1) : [photos[to]];
+      for (const p of run) turnOn ? next.add(p.id) : next.delete(p.id);
+      return next;
+    });
+    lastPicked.current = photoId;
+  }
+
+  const clearSelection = () => { setSelected(new Set()); setConfirmingMany(false); };
+  const clearOnEscape = (e) => { if (e.key === "Escape" && selected.size) clearSelection(); };
+  const allSelected = photos.length > 0 && selected.size === photos.length;
+
+  async function removeSelected() {
+    const ids = [...selected];
+    setRemoving(true);
+    setNotice("");
+    const result = await removeEventPhotos(eventId, ids).catch(() => ({ error: "Couldn't remove the photos. Try again." }));
+    setRemoving(false);
+    setConfirmingMany(false);
+    if (result.error) return setNotice(result.error);
+    const gone = new Set(result.removed);
+    setPhotos((current) => current.filter((p) => !gone.has(p.id)));
+    setSelected(new Set());
+    setNotice(`Removed ${gone.size} ${gone.size === 1 ? "photo" : "photos"}.`);
+  }
 
   const update = (key, patch) => setQueue((items) => items.map((item) => (item.key === key ? { ...item, ...patch } : item)));
 
@@ -121,10 +168,54 @@ export default function EventAlbum({ eventId, initialPhotos }) {
       )}
 
       {photos.length > 0 && (
-        <ul className="album-grid">
-          {photos.map((photo) => (
-            <li key={photo.id}>
-              <img src={photo.thumb} alt={photo.alt || ""} width={photo.width} height={photo.height} loading="lazy" />
+        <div className={`album-select-bar${selected.size ? " has-selection" : ""}`} onKeyDown={clearOnEscape}>
+          <label className="album-check-all small">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => { if (el) el.indeterminate = selected.size > 0 && !allSelected; }}
+              onChange={() => (allSelected ? clearSelection() : setSelected(new Set(photos.map((p) => p.id))))}
+              disabled={removing}
+            />
+            {selected.size ? `${selected.size} selected` : "Select all"}
+          </label>
+          {selected.size > 0 && (
+            <div className="album-select-actions">
+              {confirmingMany ? (
+                <>
+                  <span className="small">Remove {selected.size} {selected.size === 1 ? "photo" : "photos"} for good?</span>
+                  <button type="button" className="btn danger small" onClick={removeSelected} disabled={removing}>
+                    {removing ? "Removing…" : "Yes, remove"}
+                  </button>
+                  <button type="button" className="btn ghost small" onClick={() => setConfirmingMany(false)} disabled={removing}>Keep</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="btn ghost small" onClick={clearSelection}>Clear</button>
+                  <button type="button" className="btn danger small" onClick={() => setConfirmingMany(true)}>
+                    Remove {selected.size} {selected.size === 1 ? "photo" : "photos"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {photos.length > 0 && (
+        <ul className={`album-grid${selected.size ? " is-selecting" : ""}`} onKeyDown={clearOnEscape}>
+          {photos.map((photo, index) => (
+            <li key={photo.id} className={selected.has(photo.id) ? "is-selected" : undefined}>
+              <label className="album-pick">
+                <input
+                  type="checkbox"
+                  checked={selected.has(photo.id)}
+                  onChange={(e) => toggle(photo.id, e.nativeEvent.shiftKey)}
+                  disabled={removing}
+                  aria-label={`Select photo ${index + 1}${photo.alt ? `: ${photo.alt}` : ""}`}
+                />
+              </label>
+              <img onClick={(e) => { if (selected.size || e.shiftKey) toggle(photo.id, e.shiftKey); }} src={photo.thumb} alt={photo.alt || ""} width={photo.width} height={photo.height} loading="lazy" />
               <input
                 type="text"
                 aria-label="Describe this photo"

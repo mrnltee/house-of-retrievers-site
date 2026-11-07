@@ -113,3 +113,36 @@ export async function removeEventPhoto(photoId) {
   revalidatePath("/events", "layout");
   return { ok: true };
 }
+
+/**
+ * Takes several photos out of one event's album at once (the album's
+ * "Remove selected"). Only photos in that event are touched; storage
+ * removals run a few at a time, and the activity log gets one entry.
+ */
+export async function removeEventPhotos(eventId, photoIds) {
+  const { admin, error } = await allowed();
+  if (error) return { error };
+  if (!isUuid(eventId)) return { error: "That event no longer exists." };
+  const ids = [...new Set((Array.isArray(photoIds) ? photoIds : []).filter(isUuid))].slice(0, MAX_PER_EVENT);
+  if (!ids.length) return { removed: [] };
+  const rows = await sql(
+    `DELETE FROM event_photos p USING events e
+       WHERE e.id = p.event_id AND p.event_id=$1 AND p.id = ANY($2::uuid[])
+       RETURNING p.id, p.public_id, e.title`,
+    [eventId, ids],
+  );
+  const left = [];
+  for (let i = 0; i < rows.length; i += 5) {
+    const results = await Promise.all(rows.slice(i, i + 5).map((row) => destroyPhoto(row.public_id)));
+    results.forEach((gone, j) => { if (!gone) left.push(rows[i + j].public_id); });
+  }
+  if (left.length) console.warn("Cloudinary photos not removed; delete them in the Media Library", left);
+  if (rows.length) {
+    await logActivity(admin.email, "photo.remove.many", rows[0].title, { count: rows.length, publicIds: rows.map((row) => row.public_id) });
+    revalidatePath("/events", "layout");
+    // A journey stop may have borrowed one of these photos.
+    revalidatePath("/");
+  }
+  // Photos already gone count as removed, so the list matches the database.
+  return { removed: ids };
+}
