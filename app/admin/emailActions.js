@@ -5,7 +5,7 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { sendEmail } from "../lib/email";
 import { forgetEmailFrame } from "../lib/emailSettings";
-import { cleanEmailFrame, CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, unknownVariables } from "../lib/emailTemplates.mjs";
+import { cleanEmailFrame, CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, templateDef, unknownVariables } from "../lib/emailTemplates.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -49,9 +49,11 @@ async function readFields(data, t) {
     heading: form(data, "heading").replace(/\s+/g, " ").trim(),
     message: form(data, "message").replace(/\r\n?/g, "\n").trim(),
   };
+  // The event box only exists on event emails; an older open tab that didn't send it leaves the saved one alone.
+  if (templateDef(t.ref)?.event && data.has("details")) fields.details = form(data, "details").replace(/\r\n?/g, "\n").trim();
   if (!fields.subject || !fields.heading || !fields.message) await backWith(back, "error", "Subject, heading and message can't be empty.");
   for (const [name, max] of Object.entries(TEMPLATE_LIMITS)) {
-    if (fields[name].length > max) await backWith(back, "error", `The ${name} is too long (up to ${max} characters).`);
+    if ((fields[name] ?? "").length > max) await backWith(back, "error", `The ${name} is too long (up to ${max} characters).`);
   }
   const unknown = unknownVariables(t.ref, fields);
   if (unknown.length) {
@@ -75,9 +77,9 @@ export async function saveEmailTemplate(data) {
     const f = await readFields(data, t);
     if (t.key) {
       await sql(
-        `INSERT INTO email_templates (key, subject, greeting, heading, message, updated_by) VALUES ($1,$2,$3,$4,$5,$6)
-         ON CONFLICT (key) DO UPDATE SET subject=$2, greeting=$3, heading=$4, message=$5, updated_by=$6, updated_at=now()`,
-        [t.key, f.subject, f.greeting, f.heading, f.message, admin.email],
+        `INSERT INTO email_templates (key, subject, greeting, heading, message, details, updated_by) VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (key) DO UPDATE SET subject=$2, greeting=$3, heading=$4, message=$5, details=COALESCE($6, email_templates.details), updated_by=$7, updated_at=now()`,
+        [t.key, f.subject, f.greeting, f.heading, f.message, f.details ?? null, admin.email],
       );
       await logActivity(admin.email, "email.template", t.title, { template: t.key });
       await backWith(t.back, "ok", "Saved. The next email of this kind uses your wording.");
@@ -86,19 +88,19 @@ export async function saveEmailTemplate(data) {
     {
       if (t.id) {
         await sql(
-          "UPDATE custom_email_templates SET name=$2, subject=$3, greeting=$4, heading=$5, message=$6, updated_by=$7, updated_at=now() WHERE id=$1",
-          [t.id, name, f.subject, f.greeting, f.heading, f.message, admin.email],
+          "UPDATE custom_email_templates SET name=$2, subject=$3, greeting=$4, heading=$5, message=$6, details=COALESCE($8, details), updated_by=$7, updated_at=now() WHERE id=$1",
+          [t.id, name, f.subject, f.greeting, f.heading, f.message, admin.email, f.details ?? null],
         );
         await logActivity(admin.email, "email.custom", name, { templateId: t.id, kind: t.kind });
         await backWith(t.back, "ok", "Saved.");
       }
       const [row] = await sql(
-        `INSERT INTO custom_email_templates (name, kind, subject, greeting, heading, message, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$7) RETURNING id`,
-        [name, t.kind, f.subject, f.greeting, f.heading, f.message, admin.email],
+        `INSERT INTO custom_email_templates (name, kind, subject, greeting, heading, message, details, created_by, updated_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8) RETURNING id`,
+        [name, t.kind, f.subject, f.greeting, f.heading, f.message, f.details ?? null, admin.email],
       );
       await logActivity(admin.email, "email.custom.new", name, { templateId: row.id, kind: t.kind });
-      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : "Template added. Send it from a person's profile.");
+      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : t.kind === "reminder" ? "Template added. Pick it under “Email participants” on an event's registrations page." : "Template added. Send it from a person's profile.");
     }
   });
 }
@@ -129,7 +131,7 @@ export async function sendTestEmail(data) {
     const admin = await actionAdmin("emails:edit");
     const t = await target(data);
     const f = await readFields(data, t);
-    const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event";
+    const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event" || t.ref === "custom:reminder" || t.ref === "event-reminder";
     const mail = renderTemplate(t.ref, f, SAMPLE_PERSON, event ? { button: { label: "Open my pass", href: "https://events.houseofretrieversph.org/" }, image: passQrImage("7KQ2MPX4RT") } : {});
     const sent = await sendEmail({ to: admin.email, ...mail, subject: `[Test] ${mail.subject}`, idempotencyKey: `test/${t.key || t.id || t.kind}/${Date.now()}` });
     if (!sent.ok) await backWith(t.back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The test didn't go through. Try again in a moment.");

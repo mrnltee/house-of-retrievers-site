@@ -12,7 +12,7 @@ import { cleanAttendeeLimit, cleanFurbabyPricing, cleanPricingBasis, ticketLimit
 import { cleanCapacityBasis } from "../eventCapacity.mjs";
 import { cleanPaymentHoldMinutes } from "../registrationHolds.mjs";
 
-export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Fundraisers"];
+export const CATEGORIES = ["Community outreach", "Socials & runs", "Workshops", "Wellness", "Fundraisers"];
 
 export const PURPOSES = ["Purpose to Give Back", "Purpose to Care", "Purpose to Connect", "Purpose to Learn", "Purpose to Celebrate"];
 

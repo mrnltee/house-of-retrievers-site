@@ -19,6 +19,7 @@ import { savePersonPhoto } from "../lib/personPhotos";
 import { saveRegistrationPhoto, welcomePhotoFor } from "../lib/welcomePhotos";
 import { readCheckInTime } from "../lib/manualCheckIn.mjs";
 import { cleanBreeds } from "../lib/breeds.mjs";
+import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS, freeVaccinationPages } from "../lib/vaccinationRecords.mjs";
 import { applyPromo, normalizeCode, promoSnapshot } from "../lib/promoCodes.mjs";
 import { checkPromo } from "../lib/promoStore";
 
@@ -623,5 +624,73 @@ export async function undoCheckIn(data) {
     await sql("UPDATE registrations SET checked_in_at = NULL, checked_in_by = NULL, checked_in_source = NULL WHERE id = $1", [reg.id]);
     await logActivity(admin.email, "registration.uncheckin", reg.title, { registrationId: reg.id, was: reg.checked_in_at });
     await backWith(back, "ok", `${reg.name}'s check-in was undone.`);
+  });
+}
+
+/**
+ * Adds, replaces or removes one photo (page) of a furbaby's vaccination card by
+ * hand: for a registrant who sent it outside the form (chat, email) after the
+ * event began asking for it. A furbaby can have up to MAX_IMAGES_PER_FURBABY
+ * photos. Private to admins like the form uploads; works whether or not the
+ * event asks for cards, and for any registration status.
+ */
+export async function addVaccinationCard(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const back = pagePath(reg);
+    const index = Number(form(data, "index"));
+    const furbabies = Math.min(MAX_VACCINATION_PHOTOS, Number(reg.furbaby_count) || 0);
+    if (!Number.isInteger(index) || index < 0 || index >= furbabies) await backWith(back, "error", "That furbaby isn't on this registration.");
+    // "page" replaces that one photo; without it every photo sent (cardData can repeat) goes in the next free slots.
+    const sent = data.getAll("cardData").filter((v) => typeof v === "string" && v);
+    if (!sent.length) await backWith(back, "error", "Add a photo of the vaccination card first.");
+    const asked = form(data, "page");
+    let pages;
+    if (asked === "" || asked == null) {
+      const used = (await sql("SELECT page_no FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2", [reg.id, index])).map((r) => r.page_no);
+      pages = freeVaccinationPages(used, sent.length);
+      if (!pages) await backWith(back, "error", `A furbaby can have ${MAX_IMAGES_PER_FURBABY} vaccination photos and this one has ${used.length}. Remove one first, add fewer, or replace a photo.`);
+    } else {
+      const page = Number(asked);
+      if (!Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY || sent.length !== 1) await backWith(back, "error", "That photo slot doesn't exist.");
+      pages = [page];
+    }
+    // Check every photo before saving any, so a bad one doesn't leave half of them behind.
+    const images = sent.map((dataUrl) => readProofImage(dataUrl, { label: "vaccination card photo" }));
+    const bad = images.find((image) => image.error);
+    if (bad) await backWith(back, "error", bad.error);
+    for (const [n, image] of images.entries()) {
+      const bytes = Buffer.from(image.value.base64, "base64");
+      await sql(
+        `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (registration_id, furbaby_index, page_no) DO UPDATE SET mime = EXCLUDED.mime, data = EXCLUDED.data, bytes = EXCLUDED.bytes, uploaded_by = EXCLUDED.uploaded_by, uploaded_at = now()`,
+        [reg.id, index, pages[n], image.value.mime, bytes, bytes.length, admin.email],
+      );
+      await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: pages[n] + 1, action: "add" });
+    }
+    revalidatePath("/registrations", "layout");
+    const dog = furbabies > 1 ? ` for ${reg.name}'s furbaby ${index + 1}` : ` for ${reg.name}`;
+    await backWith(back, "ok", images.length > 1 ? `${images.length} vaccination photos saved${dog}.` : `Vaccination photo saved${dog}.`);
+  });
+}
+
+export async function removeVaccinationCard(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const index = Number(form(data, "index"));
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_VACCINATION_PHOTOS) await backWith(pagePath(reg), "error", "That furbaby isn't on this registration.");
+    const page = Number(form(data, "page") || 0);
+    if (!Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY) await backWith(pagePath(reg), "error", "That photo slot doesn't exist.");
+    await sql("DELETE FROM registration_vaccination_records WHERE registration_id = $1 AND furbaby_index = $2 AND page_no = $3", [reg.id, index, page]);
+    await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: page + 1, action: "remove" });
+    revalidatePath("/registrations", "layout");
+    await backWith(pagePath(reg), "ok", "Vaccination photo removed.");
   });
 }

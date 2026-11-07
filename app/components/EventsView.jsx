@@ -257,11 +257,30 @@ function mapEmbed(lat, lng) {
   return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
 }
 
+const monthLabel = (date) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-PH", { month: "long", year: "numeric", timeZone: "UTC" });
+const dayLabel = (date) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+
+/** Photos grouped by month, then by date within it (a month can hold more than one date). Keeps each photo's index in the full list. */
+function albumMonths(photos) {
+  const months = [];
+  photos.forEach((p, i) => {
+    const key = p.date ? p.date.slice(0, 7) : "";
+    let month = months[months.length - 1];
+    if (!month || month.key !== key) months.push((month = { key, label: p.date ? monthLabel(p.date) : "", dates: [] }));
+    let day = month.dates[month.dates.length - 1];
+    if (!day || day.date !== p.date) month.dates.push((day = { date: p.date, slug: p.slug, own: p.own, items: [] }));
+    day.items.push({ p, i });
+  });
+  return months;
+}
+
 /**
  * A past event's album: a grid, and a full-screen viewer with arrow keys,
- * swipe and Esc. Built on <dialog>, so focus stays inside while it's open.
+ * swipe and Esc. For a repeating event the photos of every date are grouped
+ * by month (newest first), each date linking to its own page; the viewer
+ * steps through all of them.
  */
-function EventAlbum({ photos, title }) {
+function EventAlbum({ photos, title, base = "" }) {
   const dialog = useRef(null);
   const [index, setIndex] = useState(0);
   const touch = useRef(null);
@@ -271,18 +290,39 @@ function EventAlbum({ photos, title }) {
   };
   const step = (d) => setIndex((i) => (i + d + photos.length) % photos.length);
   const photo = photos[index];
+  const months = albumMonths(photos);
+  const grouped = photos.some((p) => !p.own);
+  const grid = (items) => (
+    <ul className="event-album-grid">
+      {items.map(({ p, i }) => (
+        <li key={p.thumb}>
+          <button type="button" onClick={() => open(i)} aria-label={`Open photo ${i + 1} of ${photos.length}${p.alt ? `: ${p.alt}` : ""}`}>
+            <img src={p.thumb} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <section className="event-album" aria-labelledby="album-title">
       <h2 id="album-title">Photos <span>{photos.length}</span></h2>
-      <ul className="event-album-grid">
-        {photos.map((p, i) => (
-          <li key={p.thumb}>
-            <button type="button" onClick={() => open(i)} aria-label={`Open photo ${i + 1} of ${photos.length}${p.alt ? `: ${p.alt}` : ""}`}>
-              <img src={p.thumb} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" />
-            </button>
-          </li>
-        ))}
-      </ul>
+      {grouped ? (
+        months.map((m) => (
+          <div key={m.key} className="event-album-month">
+            <h3>{m.label}</h3>
+            {m.dates.map((d) => (
+              <div key={d.date} className="event-album-date">
+                {(m.dates.length > 1 || !d.own) && (
+                  <p className="event-album-day">
+                    {d.own ? `${dayLabel(d.date)} · this date` : <a href={`${base}/${d.slug}`}>{dayLabel(d.date)}</a>}
+                  </p>
+                )}
+                {grid(d.items)}
+              </div>
+            ))}
+          </div>
+        ))
+      ) : grid(photos.map((p, i) => ({ p, i })))}
       <dialog
         ref={dialog}
         className="event-lightbox"
@@ -299,7 +339,7 @@ function EventAlbum({ photos, title }) {
         }}
       >
         {photo && <img src={photo.full} alt={photo.alt} />}
-        <p className="event-lightbox-count" aria-live="polite">{index + 1} / {photos.length}</p>
+        <p className="event-lightbox-count" aria-live="polite">{grouped && photo?.date ? `${dayLabel(photo.date)} · ` : ""}{index + 1} / {photos.length}</p>
         {photos.length > 1 && (
           <>
             <button type="button" className="event-lightbox-prev" onClick={() => step(-1)} aria-label="Previous photo">‹</button>
@@ -601,7 +641,7 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
             </section>
           )}
           {past && <PhotoCredits photographers={event.photographers} />}
-          {past && photos.length > 0 && <EventAlbum photos={photos} title={event.title} />}
+          {photos.length > 0 && <EventAlbum photos={photos} title={event.title} base={base} />}
           {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
             <iframe
               className="event-map"

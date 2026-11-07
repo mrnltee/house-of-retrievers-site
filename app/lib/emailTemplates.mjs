@@ -225,6 +225,13 @@ const EVENT_DEFAULTS = {
   message: "Show this QR at the door (a screenshot works too). The team scans it to check you in.",
 };
 
+const REMINDER_DEFAULTS = {
+  subject: "Reminder: {{event_title}}",
+  greeting: "",
+  heading: "See you soon, {{first_name}}.",
+  message: "A friendly reminder that **{{event_title}}** is coming up. We can't wait to see you there.\n\nA few things to remember:\n\u2022 Show your QR pass below at the door (a screenshot works too).\n\u2022 Please arrive a little early so check-in is quick.",
+};
+
 export const EDITABLE_TEMPLATES = {
   "member-registered": {
     title: "New member registration",
@@ -292,6 +299,13 @@ export const EDITABLE_TEMPLATES = {
     defaults: EVENT_DEFAULTS,
     event: true,
   },
+  "event-reminder": {
+    title: "Event reminder & guidelines",
+    when: "Sent by an admin from an event's Registrations page (\u201cEmail participants\u201d), one by one or to everyone who has a pass. Edit the wording here, or tweak it for one event right before sending. The event's details, the check-in QR and the pass button are added automatically.",
+    variables: EVENT_VARIABLES,
+    defaults: REMINDER_DEFAULTS,
+    event: true,
+  },
 };
 
 /** Kinds of template HOR can add on the Email templates page. */
@@ -317,15 +331,25 @@ export const CUSTOM_KINDS = {
     defaults: EVENT_DEFAULTS,
     event: true,
   },
+  reminder: {
+    title: "Event reminder",
+    when: "Pick it when you use “Email participants” on an event's registrations page (or send one person a reminder). Write one per event or occasion, e.g. the guidelines for a park meet-up. The event's details, the check-in QR and the pass button are added automatically.",
+    variables: EVENT_VARIABLES,
+    defaults: REMINDER_DEFAULTS,
+    event: true,
+  },
 };
 
-/** A built-in key, or "custom:acceptance" / "custom:event". */
+/** A built-in key, or "custom:acceptance" / "custom:event" / "custom:reminder". */
 export function templateDef(ref) {
   if (String(ref).startsWith("custom:")) return CUSTOM_KINDS[String(ref).slice(7)] || null;
   return EDITABLE_TEMPLATES[ref] || null;
 }
 
-export const TEMPLATE_LIMITS = { subject: 150, greeting: 120, heading: 150, message: 4000 };
+export const TEMPLATE_LIMITS = { subject: 150, greeting: 120, heading: 150, message: 4000, details: 600 };
+
+/** The event box in event emails until HOR rewords it (Email templates → "Event details"). */
+export const EVENT_DETAILS_DEFAULT = "**{{event_title}}**\n{{event_date}}\n{{event_venue}}";
 
 const VAR_RE = /\{\{\s*([a-z_]+)\s*\}\}/g;
 
@@ -399,7 +423,9 @@ export function renderTemplate(ref, custom, person, extras = {}) {
   const t = templateDef(ref);
   const fields = { ...t.defaults, ...Object.fromEntries(Object.entries(custom || {}).filter(([, v]) => typeof v === "string")) };
   const vars = variablesFor(person);
-  const eventBox = t.event && person?.event ? [`<strong>${esc(vars.event_title)}</strong><br>${esc(vars.event_date)}<br>${esc(vars.event_venue)}`] : [];
+  // NULL/unset = the standard box; saved empty = no box.
+  const detailsText = typeof custom?.details === "string" ? custom.details : EVENT_DETAILS_DEFAULT;
+  const eventBox = t.event && person?.event ? messageParagraphs(detailsText, vars).map((html) => html.replace(/ style="white-space:nowrap"/g, "")) : [];
   return build({
     subject: fillPlain(fields.subject, vars).replace(/\s+/g, " ").trim() || fillPlain(t.defaults.subject, vars),
     preheader: t.event ? `${vars.event_date} · ${vars.event_venue}` : t.preheader,
@@ -513,6 +539,21 @@ export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLin
     paragraphs: [eventBox(event), "The event is full right now. If a spot opens, we'll email you, and your pass below will show it."],
     button: { label: "Open my waitlist pass", href: passUrl },
     after,
+    footnote: RSVP_FOOTNOTE,
+  });
+}
+
+/**
+ * Event reminder / guidelines: HOR's saved (or per-send edited) wording, the
+ * event box, the check-in QR and the pass button, like the pass email. With an
+ * acknowledgement to complete first, the button goes there and the QR waits.
+ */
+export function eventReminder({ name, event, passUrl, code = "", consentRequired = false, custom = null }) {
+  return renderTemplate("event-reminder", custom, { name, event }, {
+    paragraphs: consentRequired ? ["Please review and acknowledge the event guidelines before viewing your QR pass."] : [],
+    image: code && !consentRequired ? passQrImage(code) : undefined,
+    button: { label: consentRequired ? "Review and acknowledge" : "Open my pass", href: passUrl },
+    after: ["Can't make it after all? Reply to this email so someone else can have the spot."],
     footnote: RSVP_FOOTNOTE,
   });
 }

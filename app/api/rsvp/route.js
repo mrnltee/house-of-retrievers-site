@@ -117,7 +117,7 @@ export async function POST(request) {
         for (const upload of vaccinationUploads(body, attendees.furbabies)) {
           const image = readProofImage(upload.dataUrl, { label: "vaccination record photo" });
           if (image.error) return { error: image.error, status: 422 };
-          vaccinations.push({ index: upload.index, ...image.value });
+          vaccinations.push({ index: upload.index, page: upload.page, ...image.value });
         }
         // "Require a vaccination card for each furbaby" (rsvp_form_config.vaccinationRequired).
         const missing = event.rsvp_form_config?.vaccinationRequired ? missingVaccinationCards(vaccinations, attendees.furbabies) : [];
@@ -143,8 +143,8 @@ export async function POST(request) {
       for (const record of vaccinations) {
         const bytes = Buffer.from(record.base64, "base64");
         await tx.sql(
-          "INSERT INTO registration_vaccination_records (registration_id, furbaby_index, mime, data, bytes) VALUES ($1, $2, $3, $4, $5)",
-          [row.id, record.index, record.mime, bytes, bytes.length],
+          "INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes) VALUES ($1, $2, $3, $4, $5, $6)",
+          [row.id, record.index, record.page, record.mime, bytes, bytes.length],
         );
       }
       return { id: row.id, promoDiscount: discount || null, status, code, feeStatus, holdExpiresAt: holdExpiry?.toISOString() || null, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };

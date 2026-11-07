@@ -71,7 +71,8 @@ export default async function EventPage({ params }) {
     notFound();
   }
   const past = hasEnded(event);
-  const photos = past ? await loadEventPhotos(slug) : [];
+  // A past event shows its album; a repeating one (even an upcoming date) shows its earlier dates' photos too.
+  const photos = (await loadEventPhotos(slug)).filter((p) => past || !p.own);
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(event)).replace(/</g, "\\u003c") }} />

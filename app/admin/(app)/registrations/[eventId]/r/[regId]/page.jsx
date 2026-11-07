@@ -13,6 +13,8 @@ import BreedIcons from "../../../BreedIcons";
 import BreedFields from "../../../BreedFields";
 import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
+import VaccinationCardField from "../../../VaccinationCardField";
+import { MAX_IMAGES_PER_FURBABY } from "../../../../../../lib/vaccinationRecords.mjs";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../../../lib/registrationPricing.mjs";
 import { applyPromo, promoLabel } from "../../../../../../lib/promoCodes.mjs";
@@ -49,7 +51,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
     reg.fee_reference
       ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
-    sql("SELECT furbaby_index, uploaded_at, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index", [regId]),
+    sql("SELECT furbaby_index, page_no, uploaded_at, uploaded_by, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index, page_no", [regId]),
     reg.deleted_at ? null : welcomePhotoFor(regId, eventId),
   ]);
   const proof = proofs[0];
@@ -57,6 +59,8 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const dogLabel = (i) => [dogNames[i] || (reg.furbaby_count > 1 ? `Furbaby ${i + 1}` : "Furbaby"), breedLabel(reg.furbaby_breeds?.[i] || "")].filter(Boolean).join(" · ");
   const canFees = can(admin, "registrations:fees");
   const canEdit = can(admin, "registrations:edit");
+  // One slot per furbaby on the registration, plus any older card beyond that count (the count may have been edited down).
+  const vaccinationSlots = [...new Set([...Array.from({ length: Math.min(10, reg.furbaby_count || 0) }, (_, i) => i), ...vaccinationRows.map((v) => v.furbaby_index)])].sort((x, y) => x - y);
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
   const owing = reg.fee_required && reg.status === "confirmed" && UNPAID.includes(reg.fee_status);
   const due = reg.amount_due ?? reg.ticket_amount;
@@ -133,6 +137,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.refund_amount && <div><dt>Refunded</dt><dd>{peso(reg.refund_amount)} · {payMethodLabel(reg.refund_method)} · Ref <span className="mono">{reg.refund_reference}</span><br /><span className="small muted">{reg.refunded_by} · {formatWhen(reg.refunded_at)}</span></dd></div>}
               {reg.fee_checked_by && <div><dt>{reg.fee_status === "paid" ? "Approved by" : "Last checked by"}</dt><dd>{reg.fee_checked_by} · {formatWhen(reg.fee_checked_at)}</dd></div>}
               {reg.pass_sent_at && <div><dt>QR pass emailed</dt><dd>{formatWhen(reg.pass_sent_at)}</dd></div>}
+              {reg.reminder_sent_at && <div><dt>Reminder emailed</dt><dd>{formatWhen(reg.reminder_sent_at)}{reg.reminder_count > 1 ? ` · ${reg.reminder_count}×` : ""}</dd></div>}
               {reg.furbaby_name && <div><dt>Furbaby</dt><dd>{reg.furbaby_name}</dd></div>}
               {reg.furbaby_breeds?.some(Boolean) && <div><dt>{reg.furbaby_breeds.filter(Boolean).length > 1 ? "Breeds" : "Breed"}</dt><dd><BreedIcons breeds={reg.furbaby_breeds} size={24} withNames /></dd></div>}
               {cleanCustomQuestions(reg.rsvp_form_config?.questions).map((q) => <div key={q.id}><dt>{q.label}</dt><dd>{answerText(reg.custom_answers?.[q.id]) || "Not asked"}</dd></div>)}
@@ -149,16 +154,33 @@ export default async function RegistrationDetail({ params, searchParams }) {
             ))}
           </section>
 
-          {(reg.vaccination_record_required || vaccinationRows.length > 0) && (
+          {(vaccinationRows.length > 0 || (reg.furbaby_count > 0 && (reg.vaccination_record_required || (canEdit && !reg.deleted_at)))) && (
             <section className="card vaccination-card" aria-label="Vaccination records">
-              <h2>{vaccinationRows.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
-              {vaccinationRows.length ? <div className="vaccination-grid">{vaccinationRows.map((v) => {
-                const src = `${base}/registrations/vaccination/${reg.id}?i=${v.furbaby_index}`;
+              <h2>{vaccinationSlots.length > 1 ? "Vaccination records" : "Vaccination record"}</h2>
+              {canEdit && vaccinationSlots.some((i) => !vaccinationRows.some((v) => v.furbaby_index === i)) && (
+                <p className="small muted" style={{ margin: 0 }}>Missing a card they've sent you another way? Add it here. It stays private to admins.</p>
+              )}
+              {vaccinationSlots.length ? <div className="vaccination-grid">{vaccinationSlots.map((i) => {
+                const shots = vaccinationRows.filter((row) => row.furbaby_index === i);
                 return (
-                  <figure key={v.furbaby_index}>
-                    <figcaption className="strong">{dogLabel(v.furbaby_index)}</figcaption>
-                    <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot" data-lightbox={`Vaccination card · ${dogLabel(v.furbaby_index)}`}><img src={src} alt={`Vaccination record for ${dogLabel(v.furbaby_index)}`} loading="lazy" /></a>
-                    <p className="small muted">Uploaded {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer" data-lightbox={`Vaccination card · ${dogLabel(v.furbaby_index)}`}>Open full size</a></p>
+                  <figure key={i} className="vaccination-dog">
+                    <figcaption className="strong">{dogLabel(i)}{shots.length > 1 ? ` · ${shots.length} photos` : ""}</figcaption>
+                    {shots.length ? (
+                      <div className="vaccination-pages">{shots.map((v) => {
+                        const src = `${base}/registrations/vaccination/${reg.id}?i=${i}&p=${v.page_no}`;
+                        const caption = `Vaccination card · ${dogLabel(i)}${shots.length > 1 ? ` · photo ${v.page_no + 1}` : ""}`;
+                        return (
+                          <div key={v.page_no} className="vaccination-page">
+                            <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot" data-lightbox={caption}><img src={src} alt={`Vaccination record for ${dogLabel(i)}${shots.length > 1 ? `, photo ${v.page_no + 1}` : ""}`} loading="lazy" /></a>
+                            <p className="small muted">{v.uploaded_by ? `Added by ${v.uploaded_by}` : "Uploaded"} {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer" data-lightbox={caption}>Open full size</a></p>
+                            {canEdit && !reg.deleted_at && <VaccinationCardField registrationId={reg.id} index={i} page={v.page_no} label={dogLabel(i)} hasCard />}
+                          </div>
+                        );
+                      })}</div>
+                    ) : (
+                      <p className="small muted"><span className="chip warn">No card yet</span></p>
+                    )}
+                    {canEdit && !reg.deleted_at && shots.length < MAX_IMAGES_PER_FURBABY && <VaccinationCardField registrationId={reg.id} index={i} label={dogLabel(i)} hasCard={false} adding={shots.length > 0} remaining={MAX_IMAGES_PER_FURBABY - shots.length} />}
                   </figure>
                 );
               })}</div> : <p className="muted">No vaccination record was uploaded.</p>}
@@ -372,6 +394,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               <p className="small muted">{reg.pass_sent_at ? `Last emailed ${formatWhen(reg.pass_sent_at)}.` : "Not emailed yet."} Their pass link: <a href={`${EVENTS_URL}/r/${reg.check_in_code}`} target="_blank" rel="noreferrer">open</a></p>
               <div className="actions">
                 <ConfirmButton className="btn ghost" title="Email the QR pass again?" items={[`Their pass is emailed to ${reg.email}`]} yes="Yes, send it">Resend QR pass</ConfirmButton>
+                <a className="btn ghost" href={`${base}/registrations/${eventId}/reminder?to=${reg.id}`}>Send event reminder</a>
               </div>
             </form>
           )}

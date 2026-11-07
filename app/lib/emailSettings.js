@@ -8,7 +8,7 @@ import { hasDatabase, sql } from "./db";
 export async function loadTemplate(key) {
   if (!hasDatabase()) return null;
   try {
-    const [row] = await sql("SELECT subject, greeting, heading, message FROM email_templates WHERE key = $1", [key]);
+    const [row] = await sql("SELECT subject, greeting, heading, message, details FROM email_templates WHERE key = $1", [key]);
     return row || null;
   } catch {
     return null;
@@ -20,7 +20,7 @@ export async function loadCustomTemplate(id, kind) {
   if (!hasDatabase() || !/^[0-9a-f-]{36}$/i.test(String(id || ""))) return null;
   try {
     const [row] = await sql(
-      "SELECT id, name, kind, subject, greeting, heading, message FROM custom_email_templates WHERE id = $1 AND ($2::text IS NULL OR kind = $2)",
+      "SELECT id, name, kind, subject, greeting, heading, message, details FROM custom_email_templates WHERE id = $1 AND ($2::text IS NULL OR kind = $2)",
       [id, kind || null],
     );
     return row || null;
@@ -34,7 +34,7 @@ export async function listCustomTemplates(kind) {
   if (!hasDatabase()) return [];
   try {
     return await sql(
-      "SELECT id, name, kind, subject, greeting, heading, message, updated_by, updated_at FROM custom_email_templates WHERE ($1::text IS NULL OR kind = $1) ORDER BY lower(name)",
+      "SELECT id, name, kind, subject, greeting, heading, message, details, updated_by, updated_at FROM custom_email_templates WHERE ($1::text IS NULL OR kind = $1) ORDER BY lower(name)",
       [kind || null],
     );
   } catch {

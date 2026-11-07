@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { applyEmailFrame, passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, EVENT_DETAILS_DEFAULT, passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
 import { resetEmailTemplate, saveEmailTemplate, sendTestEmail } from "../../../emailActions";
 import ConfirmButton from "../../ConfirmButton";
+import RichTextField from "../RichTextField";
 
 const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage("7KQ2MPX4RT") };
 
@@ -16,13 +17,15 @@ const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage(
 export default function TemplateEditor({ templateKey, customId, kind, name: initialName = "", initial, defaults, custom, variables, frame = null }) {
   const ref = templateKey || `custom:${kind}`;
   const own = !templateKey;
-  const event = ref === "rsvp-confirmed" || ref === "custom:event";
+  const event = ref === "rsvp-confirmed" || ref === "custom:event" || ref === "custom:reminder" || ref === "event-reminder";
   const [name, setName] = useState(initialName);
-  const [fields, setFields] = useState({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
+  const startFields = (src) => ({ subject: src.subject || "", greeting: src.greeting || "", heading: src.heading || "", message: src.message || "", ...(event ? { details: typeof src.details === "string" ? src.details : EVENT_DETAILS_DEFAULT } : {}) });
+  const [fields, setFields] = useState(() => startFields(initial));
+  const richRefs = { message: useRef(null), details: useRef(null) };
   const [width, setWidth] = useState("phone");
   const last = useRef({ name: "message", el: null });
   const mail = useMemo(() => applyEmailFrame(renderTemplate(ref, fields, SAMPLE_PERSON, event ? PASS : {}), frame), [ref, event, fields, frame]);
-  const changed = name !== initialName || JSON.stringify(fields) !== JSON.stringify({ subject: initial.subject || "", greeting: initial.greeting || "", heading: initial.heading || "", message: initial.message || "" });
+  const changed = name !== initialName || JSON.stringify(fields) !== JSON.stringify(startFields(initial));
 
   const set = (name) => (e) => {
     last.current = { name, el: e.target };
@@ -32,6 +35,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
 
   function insert(token) {
     const { name, el } = last.current;
+    if (richRefs[name]?.current) { richRefs[name].current.insert(token); return; }
     const value = fields[name] || "";
     const start = el?.selectionStart ?? value.length;
     const end = el?.selectionEnd ?? value.length;
@@ -70,7 +74,12 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
         {field("subject", "Subject", "The line people see in their inbox")}
         {field("greeting", "Greeting", "Optional, above the heading, e.g. Hi {{first_name}},")}
         {field("heading", "Heading", "The big serif line")}
-        {field("message", "Message", "A blank line starts a new paragraph. **like this** makes text bold.", 14)}
+        {event && (
+          <RichTextField ref={richRefs.details} name="details" label="Event details" hint="The box under the heading. Remove the text to leave it out."
+            value={fields.details} onChange={(v) => setFields((f) => ({ ...f, details: v }))} onFocus={() => { last.current = { name: "details", el: null }; }} minHeight={90} />
+        )}
+        <RichTextField ref={richRefs.message} name="message" label="Message" hint="Type it as it will look. Select words to make them bold or a link."
+          value={fields.message} onChange={(v) => setFields((f) => ({ ...f, message: v }))} onFocus={() => { last.current = { name: "message", el: null }; }} minHeight={220} />
         <div className="template-vars">
           <span className="field-head">Variables <small>Click to insert where your cursor is</small></span>
           <ul>
@@ -94,7 +103,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
             yes="Yes, send the test"
             tone="ghost"
           >Send a test to me</ConfirmButton>
-          {!own && <button type="button" className="linkish" onClick={() => setFields({ ...defaults })}>Start from HOR's original wording</button>}
+          {!own && <button type="button" className="linkish" onClick={() => setFields(startFields(defaults))}>Start from HOR's original wording</button>}
           {!own && custom && (
             <ConfirmButton
               className="linkish danger-text"
@@ -116,7 +125,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
             >Delete this template</ConfirmButton>
           )}
         </div>
-        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The event's name, date and venue, the check-in QR, the payment line (paid events) and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
+        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The check-in QR, the payment line (paid events) and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
       </form>
 
       <section className="card template-preview">

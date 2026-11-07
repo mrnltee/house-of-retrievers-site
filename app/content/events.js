@@ -8,7 +8,7 @@
  * @typedef {Object} HorEvent
  * @property {string} slug       URL-safe id, unique, e.g. "weekend-social-run-2026-10".
  * @property {string} title
- * @property {"Community outreach" | "Socials & runs" | "Workshops" | "Fundraisers"} category
+ * @property {"Community outreach" | "Socials & runs" | "Workshops" | "Wellness" | "Fundraisers"} category
  * @property {string} date       ISO date in Manila time, "YYYY-MM-DD".
  * @property {string} [startTime] 24-hour, "07:00".
  * @property {string} [endTime]   24-hour, "10:00".

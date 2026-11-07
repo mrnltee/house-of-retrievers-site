@@ -8,17 +8,30 @@ import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, t
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 import { MAX_PAYMENT_HOLD_MINUTES, PAYMENT_HOLD_OPTIONS, holdLabel, holdParts, isPresetHold } from "../../../lib/registrationHolds.mjs";
 import { DEFAULT_WELCOME_MESSAGE } from "../../../lib/welcomePhoto.mjs";
+import { MONTHS, NTH_OPTIONS, REPEAT_COUNT_DEFAULT, REPEAT_COUNT_MAX, WEEKDAYS, describeRule, occurrences } from "../../../lib/eventRecurrence.mjs";
 
 /**
  * Date and times. "All day" hides the times (and saves none), for events
  * like a vaccination drive or a weekend bazaar that run through the day.
+ *
+ * "Repeats" (new events only, 7 Nov 2026) swaps the date picker for
+ * "Every [last] [Sunday] of [the month]". The dates are counted from today in
+ * Manila; each becomes its own event (the first is this one, the rest drafts).
+ * An event that is already part of a series shows its rule and a normal date,
+ * and changing that date changes only that event.
  */
-export function WhenFields({ date, allDay, startTime, endTime }) {
+export function WhenFields({ date, allDay, startTime, endTime, isNew = false, recurrence = null }) {
   const [whole, setWhole] = useState(Boolean(allDay));
+  const [repeats, setRepeats] = useState(false);
+  const [rule, setRule] = useState({ nth: -1, weekday: 0, month: 0 });
+  const [count, setCount] = useState(REPEAT_COUNT_DEFAULT);
+  const set = (key) => (e) => setRule({ ...rule, [key]: Number(e.target.value) });
+  const dates = repeats ? occurrences(rule, manilaDate(), count) : [];
+  const day = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   return (
     <div className="form" style={{ gap: 10 }}>
-      <div className="row-3">
-        <label className="field"><span>Date</span><input type="date" name="date" required defaultValue={date} /></label>
+      <div className={repeats ? "row-2" : "row-3"}>
+        {!repeats && <label className="field"><span>Date</span><input type="date" name="date" required defaultValue={date} /></label>}
         {!whole && (
           <>
             <label className="field"><span>Starts</span><input type="time" name="startTime" defaultValue={startTime || ""} /></label>
@@ -26,11 +39,61 @@ export function WhenFields({ date, allDay, startTime, endTime }) {
           </>
         )}
       </div>
-      <label className="check">
-        <input type="checkbox" name="allDay" checked={whole} onChange={(e) => setWhole(e.target.checked)} /> All-day event <span className="small muted">No start or end time; shown as "All day"</span>
-      </label>
+      {repeats && (
+        <div className="repeat-rule">
+          <div className="repeat-line" role="group" aria-label="Repeats on">
+            <span>Every</span>
+            <select name="repeatNth" aria-label="Which week" value={rule.nth} onChange={set("nth")}>
+              {NTH_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <select name="repeatWeekday" aria-label="Day of the week" value={rule.weekday} onChange={set("weekday")}>
+              {WEEKDAYS.map((w, i) => <option key={w} value={i}>{w}</option>)}
+            </select>
+            <span>of</span>
+            <select name="repeatMonth" aria-label="Month" value={rule.month} onChange={set("month")}>
+              <option value={0}>the month</option>
+              {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+            </select>
+          </div>
+          <label className="field repeat-count">
+            <span>Set up <small>Each date becomes its own event, with its own RSVPs. The first is this event; the others are saved as drafts to publish when ready.</small></span>
+            <select name="repeatCount" value={count} onChange={(e) => setCount(Number(e.target.value))}>
+              {Array.from({ length: REPEAT_COUNT_MAX }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} date{n === 1 ? "" : "s"}</option>)}
+            </select>
+          </label>
+          {dates.length > 0 && <p className="small muted" style={{ margin: 0 }} aria-live="polite">{describeRule(rule)}: {dates.map(day).join(" · ")}</p>}
+        </div>
+      )}
+      <div className="when-checks">
+        <label className="check">
+          <input type="checkbox" name="allDay" checked={whole} onChange={(e) => setWhole(e.target.checked)} /> All-day event <span className="small muted">No start or end time; shown as "All day"</span>
+        </label>
+        {isNew && (
+          <label className="check">
+            <input type="checkbox" name="repeats" checked={repeats} onChange={(e) => setRepeats(e.target.checked)} /> Repeats <span className="small muted">e.g. every last Sunday of the month</span>
+          </label>
+        )}
+      </div>
+      {!isNew && recurrence && (
+        <p className="small muted" style={{ margin: 0 }}>Part of a repeating event: {describeRule(recurrence)}. Changing this date changes only this event.</p>
+      )}
       <input type="hidden" name="allDaySent" value="1" />
     </div>
+  );
+}
+
+/** Category. Socials, Workshops and Wellness are activities: no guest list, and sign-ups are called Participants. */
+export function CategoryField({ value = "", categories }) {
+  return (
+    <label className="field"><span>Category</span>
+      <select
+        name="category"
+        defaultValue={value}
+      >
+        <option value="">Choose…</option>
+        {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+      </select>
+    </label>
   );
 }
 
@@ -106,7 +169,7 @@ export function SupportersField({ name, label, hint, initial, suggestions = [] }
 export function CharityField({ isCharity, supports, options = [], picked = [], beneficiariesHref = "" }) {
   const [on, setOn] = useState(Boolean(isCharity));
   return (
-    <div className="form" style={{ gap: 10 }}>
+    <div className="form charity-block" style={{ gap: 10 }}>
       <label className="check">
         <input type="checkbox" name="isCharity" checked={on} onChange={(e) => setOn(e.target.checked)} /> This is a charity event
       </label>
