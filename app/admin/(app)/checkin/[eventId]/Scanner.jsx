@@ -2,7 +2,7 @@
 
 import jsQR from "jsqr";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { checkInByCode, checkedInList } from "../../../actions";
+import { checkInByCode, checkInByName, checkedInList } from "../../../actions";
 import { WELCOME_COUNTDOWN_SECONDS } from "../../../../lib/manualCheckIn.mjs";
 import { welcomeMessageLine } from "../../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../../ConfirmButton";
@@ -17,6 +17,10 @@ const MESSAGES = {
   unknown: ["Code not found. Check it and try again.", "alert"],
   forbidden: ["Your role can't check people in", "alert"],
 };
+
+// The camera turns itself off after this long with no scan and no tap, to save
+// the door phone's battery; "Turn on camera" brings it back for the next guest.
+const CAMERA_IDLE_MS = 150_000;
 
 const FEE_TEXT = { paid: "paid", waiting: "no proof uploaded yet", review: "receipt waiting to be checked", rejected: "new receipt asked", not_due: "no fee" };
 
@@ -75,6 +79,9 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
   const [waiting, setWaiting] = useState(null);
   const [view, setView] = useState("in");
   const [search, setSearch] = useState("");
+  const [confirmingId, setConfirmingId] = useState(null);
+  const searchBox = useRef(null);
+  const resultCard = useRef(null);
   const closeSuccess = useCallback(() => setSuccessOpen(false), []);
 
   // Who's in: on open, after each good scan here, and every 30 s so door phones agree.
@@ -143,30 +150,53 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
     } catch { /* Sound is optional feedback; the visible result is authoritative. */ }
   }
 
-  const submit = useCallback(async (code) => {
-    if (!code || busy.current) return;
+  // One path for a scan, a typed code and a name from the list. `fromList`
+  // brings a refusal into view, since the list sits below the result card.
+  const record = useCallback(async (call, fromList = false) => {
+    if (busy.current) return;
     busy.current = true;
     try {
-      const response = await checkInByCode(eventId, code);
+      const response = await call();
       setResult(response);
       if (response.outcome === "ok") {
         setChecked((n) => n + 1);
         loadList();
-      setSuccessOpen(true);
+        setSuccessOpen(true);
         playSuccessSound();
-      } else playFailureSound();
+      } else {
+        playFailureSound();
+        if (fromList) {
+          const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          requestAnimationFrame(() => resultCard.current?.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" }));
+        }
+      }
       if (navigator.vibrate) navigator.vibrate(response.outcome === "ok" ? 80 : [60, 60, 60]);
     } finally {
       // A short pause so one QR held in view isn't read twice.
       setTimeout(() => { busy.current = false; }, 1500);
     }
-  }, [eventId, loadList]);
+  }, [loadList]);
+  const submit = useCallback((code) => { if (code) record(() => checkInByCode(eventId, code)); }, [eventId, record]);
+
+  function findByName() {
+    setView("waiting");
+    searchBox.current?.focus();
+    searchBox.current?.scrollIntoView({ block: "center" });
+  }
 
   useEffect(() => {
     if (camera !== "on") return undefined;
     let stream;
     let frame;
     let stopped = false;
+    let idleTimer;
+    const stillHere = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => setCamera("idle"), CAMERA_IDLE_MS);
+    };
+    stillHere();
+    window.addEventListener("pointerdown", stillHere);
+    window.addEventListener("keydown", stillHere);
     (async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
@@ -176,6 +206,8 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
         const tick = () => {
           if (stopped) return;
           const v = video.current;
+          // The video leaves the page a moment before this effect is cleaned up.
+          if (!v) return;
           if (v.readyState >= 2) {
             const c = canvas.current;
             c.width = v.videoWidth;
@@ -188,6 +220,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             const now = Date.now();
             if (code && (code !== lastCode.current.code || now - lastCode.current.at > 6000)) {
               lastCode.current = { code, at: now };
+              stillHere();
               submit(code);
             }
           }
@@ -200,6 +233,9 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
     })();
     return () => {
       stopped = true;
+      window.clearTimeout(idleTimer);
+      window.removeEventListener("pointerdown", stillHere);
+      window.removeEventListener("keydown", stillHere);
       cancelAnimationFrame(frame);
       stream?.getTracks().forEach((track) => track.stop());
     };
@@ -226,15 +262,15 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             </>
           ) : (
             <div className="form" style={{ justifyItems: "center" }}>
-              <p>{camera === "denied" ? "The camera is blocked. Allow it in the browser, or type the code below." : "Point the camera at the QR on their confirmation."}</p>
-              <button type="button" className="btn gold" onClick={() => setCamera("on")}>Start camera</button>
+              <p role={camera === "idle" ? "status" : undefined}>{camera === "denied" ? "The camera is blocked. Allow it in the browser, or type the code below." : camera === "idle" ? "The camera turned off after a few quiet minutes, to save battery. Turn it on when the next guest is ready." : "Point the camera at the QR on their confirmation."}</p>
+              <button type="button" className="btn gold" onClick={() => setCamera("on")}>{camera === "idle" ? "Turn on camera" : "Start camera"}</button>
             </div>
           )}
           <canvas ref={canvas} hidden />
         </div>
 
         {result && (
-          <section className="card" role="status" aria-live="assertive">
+          <section className="card" role="status" aria-live="assertive" ref={resultCard}>
             <div className="actions" style={{ justifyContent: "space-between" }}>
               <strong style={{ fontSize: 18 }}>{result.person?.name || "—"}</strong>
               <span className={`chip ${tone}`}>{label}</span>
@@ -242,8 +278,8 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             {result.person && (
               <>
                 <p className="muted">{result.person.furbaby ? `With ${result.person.furbaby}` : "No furbaby listed"}{result.person.ticket ? ` · ${result.person.ticket}` : ""}{result.person.feeStatus ? ` · fee: ${FEE_TEXT[result.person.feeStatus] || result.person.feeStatus}` : ""}</p>
-                {result.outcome === "unpaid" && <p className="small">Not checked in. Only someone with fee access can approve a payment: check it on the Registrations page, then scan again.</p>}
-                {result.outcome === "consent-required" && <p className="small">Not checked in yet. Ask them to open their private RSVP page, complete the event acknowledgement, then scan their QR again.</p>}
+                {result.outcome === "unpaid" && <p className="small">Not checked in. Only someone with fee access can approve a payment: check it on the Registrations page, then scan or check them in again.</p>}
+                {result.outcome === "consent-required" && <p className="small">Not checked in yet. Ask them to open their private RSVP page, complete the event acknowledgement, then scan their QR or check them in again.</p>}
                 <div className="actions">
                   {result.person.under18 && <span className="chip warn">Under 18 · guardian: {result.person.guardian}</span>}
                   <span className={`chip ${result.person.photoConsent ? "" : "alert"}`}>{result.person.photoConsent ? "Photos OK" : "No photos"}</span>
@@ -267,6 +303,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             tone="ghost"
           >Check in</ConfirmButton>
         </form>
+        <p className="small">No QR with them? <button type="button" className="btn ghost small" onClick={findByName}>Find them by name</button></p>
         <p className="small muted">Someone who said no to photos shows a “No photos” flag here. Let the photographers know.</p>
 
         <section className="card checkin-list" aria-label="Guests">
@@ -274,7 +311,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             <button type="button" aria-pressed={view === "in"} aria-current={view === "in" ? "page" : undefined} onClick={() => setView("in")}>Checked in{list ? ` · ${list.length}` : ""}</button>
             <button type="button" aria-pressed={view === "waiting"} aria-current={view === "waiting" ? "page" : undefined} onClick={() => setView("waiting")}>Not checked in{waiting ? ` · ${waiting.length}` : ""}</button>
           </nav>
-          <label className="field"><span className="visually-hidden">Search guests</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or furbaby" /></label>
+          <label className="field"><span className="visually-hidden">Search guests</span><input ref={searchBox} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or furbaby" /></label>
           {(view === "in" ? list : waiting) === null ? <p className="small muted">Loading…</p> : (() => {
             const all = view === "in" ? list : waiting;
             const q = search.trim().toLowerCase();
@@ -288,6 +325,14 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                       ? <img className="person-avatar" src={`${base}/checkin/photo/${eventId}/${row.id}?v=${encodeURIComponent(row.photo.version)}`} alt="" width={36} height={36} style={{ width: 36, height: 36 }} loading="lazy" />
                       : <span className="person-avatar is-empty" style={{ width: 36, height: 36, fontSize: 13 }} aria-hidden="true">{row.initials}</span>}
                     <span><strong>{row.name}</strong>{row.furbaby && <span className="small muted"> · {row.furbaby}</span>}{row.manual && <><br /><span className="small muted">Added by hand</span></>}</span>
+                    {view === "waiting" && (confirmingId === row.id ? (
+                      <span className="checkin-list-act is-confirming">
+                        <button type="button" className="btn gold small" onClick={() => { setConfirmingId(null); record(() => checkInByName(eventId, row.id), true); }}>Yes, check in</button>
+                        <button type="button" className="btn ghost small" onClick={() => setConfirmingId(null)}>Cancel</button>
+                      </span>
+                    ) : (
+                      <button type="button" className="btn ghost small checkin-list-act" aria-label={`Check in ${row.name}`} onClick={() => setConfirmingId(row.id)}>Check in</button>
+                    ))}
                     {row.at && <span className="small checkin-list-time">{new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at))}</span>}
                   </li>
                 ))}

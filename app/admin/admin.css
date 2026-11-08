@@ -305,6 +305,12 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 .checkin-list ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .checkin-list li { display: flex; align-items: center; gap: 12px; }
 .checkin-list li .checkin-list-time { margin-left: auto; white-space: nowrap; }
+.checkin-list li { flex-wrap: wrap; }
+.checkin-list li .person-avatar { flex-shrink: 0; }
+.checkin-list li > span:not([class]) { flex: 1 1 0; min-width: 0; }
+.checkin-list li .checkin-list-act { display: flex; justify-content: flex-end; gap: 6px; flex-shrink: 0; }
+/* The confirm takes its own line, so a long name keeps its width. */
+.checkin-list li .checkin-list-act.is-confirming { flex-basis: 100%; }
 .welcome-avatar { flex: none; object-fit: cover; }
 @media (prefers-reduced-motion: no-preference) { .checkin-success-card { animation: checkin-success-in .24s ease-out; } }
 @keyframes checkin-success-in { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }

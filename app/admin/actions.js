@@ -402,29 +402,51 @@ export async function changeRegistration(data) {
 }
 
 /** Called from the check-in screen. Returns a result instead of redirecting. */
+/**
+ * The door's check-in, shared by a scanned or typed code and a name picked
+ * from "Not checked in": the same rules either way (`checkInOutcome`), so a
+ * guest with payment or the acknowledgement missing is flagged, not let in.
+ * `column` is one of two fixed names, never user input.
+ */
+async function checkInAtDoor(admin, eventId, column, value, source) {
+  const rows = await sql(
+    `SELECT r.id, r.event_id, r.name, r.email, r.furbaby_name, r.status, r.checked_in_at, r.consent_completed_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required, (e.rsvp_form_config->>'consentRequiredBeforeCheckin')::boolean AS consent_required_before_checkin
+     FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.${column} = $1 AND r.deleted_at IS NULL`,
+    [value],
+  );
+  const reg = rows[0];
+  const outcome = checkInOutcome(reg, eventId);
+  const person = reg && reg.event_id === eventId
+    ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, consentCompleted: Boolean(reg.consent_completed_at), ticket: reg.fee_required ? ticketLine(reg.ticket_label, reg.amount_due ?? reg.ticket_amount) : "" }
+    : null;
+  if (outcome === "ok") {
+    await sql("UPDATE registrations SET checked_in_at = now(), checked_in_by = $2, checked_in_source = $3 WHERE id = $1 AND checked_in_at IS NULL", [reg.id, admin.email, source]);
+    await logActivity(admin.email, "registration.checkin", null, { registrationId: reg.id, ...(source === "manual" ? { from: "door name search" } : {}) });
+    // The welcome card's photo; a lookup failure must never block the check-in.
+    const welcome = await welcomePhotoFor(reg.id, eventId).catch(() => null);
+    Object.assign(person, { id: reg.id, initials: initialsFor(reg.name), photo: welcome ? { source: welcome.source, version: welcome.version } : { source: "initials", version: "initials-none" } });
+  }
+  return { outcome, person };
+}
+
 export async function checkInByCode(eventId, rawCode) {
   try {
     const admin = await actionAdmin("checkin");
     const code = normalizeCode(rawCode);
     if (!isUuid(eventId) || !code) return { outcome: "unknown" };
-    const rows = await sql(
-      `SELECT r.id, r.event_id, r.name, r.email, r.furbaby_name, r.status, r.checked_in_at, r.consent_completed_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required, (e.rsvp_form_config->>'consentRequiredBeforeCheckin')::boolean AS consent_required_before_checkin
-       FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
-      [code],
-    );
-    const reg = rows[0];
-    const outcome = checkInOutcome(reg, eventId);
-    const person = reg && reg.event_id === eventId
-      ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, consentCompleted: Boolean(reg.consent_completed_at), ticket: reg.fee_required ? ticketLine(reg.ticket_label, reg.amount_due ?? reg.ticket_amount) : "" }
-      : null;
-    if (outcome === "ok") {
-      await sql("UPDATE registrations SET checked_in_at = now(), checked_in_by = $2, checked_in_source = 'scan' WHERE id = $1 AND checked_in_at IS NULL", [reg.id, admin.email]);
-      await logActivity(admin.email, "registration.checkin", null, { registrationId: reg.id });
-      // The welcome card's photo; a lookup failure must never block the check-in.
-      const welcome = await welcomePhotoFor(reg.id, eventId).catch(() => null);
-      Object.assign(person, { id: reg.id, initials: initialsFor(reg.name), photo: welcome ? { source: welcome.source, version: welcome.version } : { source: "initials", version: "initials-none" } });
-    }
-    return { outcome, person };
+    return await checkInAtDoor(admin, eventId, "check_in_code", code, "scan");
+  } catch (error) {
+    if (error instanceof Forbidden) return { outcome: "forbidden", message: error.message };
+    throw error;
+  }
+}
+
+/** A guest without their QR, found by name in the door's "Not checked in" list. */
+export async function checkInByName(eventId, registrationId) {
+  try {
+    const admin = await actionAdmin("checkin");
+    if (!isUuid(eventId) || !isUuid(registrationId)) return { outcome: "unknown" };
+    return await checkInAtDoor(admin, eventId, "id", registrationId, "manual");
   } catch (error) {
     if (error instanceof Forbidden) return { outcome: "forbidden", message: error.message };
     throw error;
