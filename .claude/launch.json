@@ -48,6 +48,27 @@
         "3000"
       ],
       "port": 3000
+    },
+    {
+      "name": "hor-local-nodb",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DATABASE_URL=",
+        "DATABASE_URL_UNPOOLED=",
+        "RESEND_API_KEY=",
+        "GOOGLE_APPS_SCRIPT_URL=",
+        "JOIN_FORM_SECRET=",
+        "CLOUDINARY_API_SECRET=",
+        "GEMINI_API_KEY=",
+        "INSTAGRAM_ACCESS_TOKEN=",
+        "BLOB_READ_WRITE_TOKEN=",
+        "npx",
+        "next",
+        "dev",
+        "-p",
+        "3000"
+      ],
+      "port": 3000
     }
   ]
 }

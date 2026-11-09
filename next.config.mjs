@@ -1,3 +1,5 @@
+import { contentSecurityPolicy } from "./app/lib/contentSecurityPolicy.mjs";
+
 /** @type {import('next').NextConfig} */
 const securityHeaders = [
   // HTTPS only, for two years, on this domain and its subdomains (www, events).
@@ -9,6 +11,8 @@ const securityHeaders = [
   // The site uses none of these. File uploads still work: choosing a photo
   // from the camera goes through the file picker, not camera access.
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  // Report-only for now: browsers report what it would block, block nothing.
+  { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy({ dev: process.env.NODE_ENV === "development" }) },
 ];
 
 const nextConfig = {
