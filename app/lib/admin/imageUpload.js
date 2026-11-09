@@ -8,8 +8,10 @@ const OWN_IMAGE = /^\/api\/event-image\/[0-9a-f-]{36}$/;
  * A picture field from an ImageField form: a new upload (`<name>Data`, a data URL)
  * is stored in event_images like sponsor logos; `<name>Remove` clears it; else the
  * current address is kept. Returns { url } (null = none) or { error }.
+ * `private: true` for pictures only admins should see (signature, Guest list,
+ * admin profiles): /api/event-image then shows them to signed-in admins only.
  */
-export async function pictureFrom(data, name, adminEmail, { types = /^image\/(?:png|webp|jpeg)$/ } = {}) {
+export async function pictureFrom(data, name, adminEmail, { types = /^image\/(?:png|webp|jpeg)$/, private: isPrivate = false } = {}) {
   const get = (key) => (typeof data.get(key) === "string" ? data.get(key) : "");
   const upload = get(`${name}Data`);
   if (upload) {
@@ -17,7 +19,7 @@ export async function pictureFrom(data, name, adminEmail, { types = /^image\/(?:
     if (!match || !types.test(match[1])) return { error: "That picture didn't come through. Try a PNG or JPG." };
     const bytes = Buffer.from(match[2], "base64");
     if (bytes.length > MAX_IMAGE_BYTES) return { error: "That picture is too large. Try a smaller file." };
-    const [saved] = await sql("INSERT INTO event_images (mime, data, bytes, created_by) VALUES ($1, $2, $3, $4) RETURNING id", [match[1], bytes, bytes.length, adminEmail]);
+    const [saved] = await sql("INSERT INTO event_images (mime, data, bytes, created_by, private) VALUES ($1, $2, $3, $4, $5) RETURNING id", [match[1], bytes, bytes.length, adminEmail, isPrivate]);
     return { url: `/api/event-image/${saved.id}` };
   }
   if (get(`${name}Remove`)) return { url: null };

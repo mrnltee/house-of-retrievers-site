@@ -42,8 +42,8 @@ export async function saveContact(data) {
     const admin = await actionAdmin("guests:edit");
     const { contact: c, error } = cleanContact(fields(data));
     if (error) await backWith(back, "error", error);
-    const photo = await pictureFrom(data, "photo", admin.email);
-    const logo = await pictureFrom(data, "logo", admin.email);
+    const photo = await pictureFrom(data, "photo", admin.email, { private: true });
+    const logo = await pictureFrom(data, "logo", admin.email, { private: true });
     if (photo.error || logo.error) await backWith(back, "error", photo.error || logo.error);
     if (isUuid(id)) {
       await sql(

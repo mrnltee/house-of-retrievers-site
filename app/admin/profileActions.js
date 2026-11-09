@@ -18,7 +18,7 @@ export async function saveMyProfile(data) {
     const admin = await actionAdmin();
     const { profile: p, error } = cleanProfile({ name: form(data, "name"), firstName: form(data, "firstName"), furbabyName: form(data, "furbabyName"), showAs: form(data, "showAs") });
     if (error) await backWith("/profile", "error", error);
-    const photo = await pictureFrom(data, "photo", admin.email);
+    const photo = await pictureFrom(data, "photo", admin.email, { private: true });
     if (photo.error) await backWith("/profile", "error", photo.error);
     await sql("UPDATE admins SET name=$2, first_name=$3, furbaby_name=$4, show_as=$5, photo=$6 WHERE email=$1 AND active", [admin.email, p.name, p.firstName, p.furbabyName, p.showAs, photo.url]);
     await logActivity(admin.email, "admin.profile", admin.email, {});

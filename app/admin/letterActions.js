@@ -57,7 +57,7 @@ export async function saveLetter(data) {
     // Signature: switched on or off, where it sits, and its image (PNG or JPEG for the PDF).
     let signature = before.signature;
     if (attachPdf) {
-      const image = await pictureFrom(data, "signature", admin.email, { types: /^image\/(?:png|jpeg)$/ });
+      const image = await pictureFrom(data, "signature", admin.email, { types: /^image\/(?:png|jpeg)$/, private: true });
       if (image.error) await backWith(back, "error", image.error);
       signature = cleanSignature({ on: form(data, "signatureOn"), image: image.url, x: form(data, "signatureX"), dy: form(data, "signatureDy"), width: form(data, "signatureWidth") });
       if (signature.on && !signature.image) await backWith(back, "error", "Add a signature image, or switch the signature off.");
