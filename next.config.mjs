@@ -17,6 +17,8 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // Don't announce the framework in every response (security audit, 9 Nov 2026).
+  poweredByHeader: false,
   // pdfkit reads its font metrics from its own folder at runtime, so it isn't bundled.
   serverExternalPackages: ["pdfkit"],
   // Admin forms carry a resized event photo or a QR image (under ~2 MB).
