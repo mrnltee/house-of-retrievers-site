@@ -4,19 +4,14 @@ import { revalidatePath } from "next/cache";
 import { sql } from "../lib/db";
 import { actionAdmin, backWith } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
+import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
-const ALLOWED_TAGS = /<(?!\/?(?:strong|em|a|br)\b)[^>]*>/gi;
 const MAX_HTML = 12000;
 
+/** Only strong, em, br and safe links survive (app/lib/safeRichHtml.mjs). */
 function cleanHtml(value) {
-  return String(value || "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/ on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/javascript:/gi, "")
-    .replace(ALLOWED_TAGS, "")
-    .trim()
-    .slice(0, MAX_HTML);
+  return safeRichHtml(String(value || "").trim().slice(0, MAX_HTML));
 }
 
 function cleanText(value, max = 500) {

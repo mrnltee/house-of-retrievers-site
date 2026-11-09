@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { saveMediaHub } from "../../mediaActions";
 import ConfirmButton from "../ConfirmButton";
+import { safeRichHtml } from "../../../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, MEDIA_THUMBNAILS } from "../../../lib/mediaHub.mjs";
 
 const FIELDS = [
@@ -15,7 +16,7 @@ const FIELDS = [
 ];
 
 function Preview({ values }) {
-  const html = (value) => ({ __html: value.replace(/\n\n/g, "<br><br>") });
+  const html = (value) => ({ __html: safeRichHtml(value).replace(/\n\n/g, "<br><br>") });
   return (
     <div className="media-editor-preview" aria-label="Live media hub preview">
       <div className="media-preview-hero"><p>PRESS · PARTNERSHIPS · STORIES</p><h2 dangerouslySetInnerHTML={html(values.heroTitle)} /><div dangerouslySetInnerHTML={html(values.heroLead)} /></div>

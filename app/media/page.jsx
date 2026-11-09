@@ -1,6 +1,7 @@
 import MediaHeader from "./MediaHeader";
 import LogoMoments from "../components/LogoMoments";
 import { hasDatabase, sql } from "../lib/db";
+import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
 export const metadata = {
@@ -48,7 +49,7 @@ const FALLBACK_CONTENT = {
 };
 
 function rich(value) {
-  return { __html: String(value || "").replace(/\n\n/g, "<br><br>") };
+  return { __html: safeRichHtml(value).replace(/\n\n/g, "<br><br>") };
 }
 
 export default async function MediaPage() {
