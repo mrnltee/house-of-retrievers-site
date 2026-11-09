@@ -48,20 +48,32 @@ export function contentSecurityPolicy({ dev = false, reportUri = "/api/csp-repor
   return parts.join("; ");
 }
 
-/** A report, cut down to what's useful in the logs (no query strings: they may hold pass codes). */
+// Pass links carry the registrant's code in the path (/r/<code>, /events/r/<code>/…).
+const SECRET_PATHS = /\/r\/[^/]+/gi;
+
+/** Printable, single-line, and without the pass code, so a report can't forge log lines or leak a pass. */
+function safeLogText(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, "")
+    .replace(SECRET_PATHS, "/r/[code]")
+    .slice(0, 200);
+}
+
+/** A report, cut down to what's useful in the logs (no query strings or pass codes). */
 export function summarizeCspReport(body) {
   const report = body?.["csp-report"] || (Array.isArray(body) ? body[0]?.body : body?.body) || body || {};
   const strip = (value) => {
     const text = String(value || "").slice(0, 300);
     try {
       const url = new URL(text);
-      return `${url.origin}${url.pathname}`;
+      return safeLogText(`${url.origin}${url.pathname}`);
     } catch {
-      return text.split("?")[0];
+      return safeLogText(text.split(/[?#]/)[0]);
     }
   };
+  const directive = String(report["effective-directive"] || report.effectiveDirective || report["violated-directive"] || report.violatedDirective || "").split(" ")[0];
   return {
-    directive: String(report["effective-directive"] || report.effectiveDirective || report["violated-directive"] || report.violatedDirective || "").slice(0, 60),
+    directive: /^[a-z-]{1,40}$/.test(directive) ? directive : "",
     blocked: strip(report["blocked-uri"] || report.blockedURL),
     page: strip(report["document-uri"] || report.documentURL),
   };

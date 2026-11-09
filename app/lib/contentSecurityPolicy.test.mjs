@@ -29,8 +29,15 @@ test("eval only in development", () => {
 
 test("reports are trimmed and lose query strings", () => {
   const legacy = { "csp-report": { "effective-directive": "script-src-elem", "blocked-uri": "https://evil.test/x.js?k=1", "document-uri": "https://events.houseofretrieversph.org/r/ABCDEFGHJK?x=1" } };
-  assert.deepEqual(summarizeCspReport(legacy), { directive: "script-src-elem", blocked: "https://evil.test/x.js", page: "https://events.houseofretrieversph.org/r/ABCDEFGHJK" });
+  assert.deepEqual(summarizeCspReport(legacy), { directive: "script-src-elem", blocked: "https://evil.test/x.js", page: "https://events.houseofretrieversph.org/r/[code]" });
+  assert.equal(summarizeCspReport({ body: { documentURL: "https://x.test/events/r/ABCDEFGHJK/consent" } }).page, "https://x.test/events/r/[code]/consent");
   const modern = [{ type: "csp-violation", body: { effectiveDirective: "img-src", blockedURL: "https://x.test/a.png", documentURL: "https://www.houseofretrieversph.org/" } }];
   assert.deepEqual(summarizeCspReport(modern), { directive: "img-src", blocked: "https://x.test/a.png", page: "https://www.houseofretrieversph.org/" });
   assert.deepEqual(summarizeCspReport(null), { directive: "", blocked: "", page: "" });
+});
+
+test("a forged report can't add log lines", () => {
+  const forged = summarizeCspReport({ "csp-report": { "effective-directive": "img-src\n[csp-report] fake", "blocked-uri": "inline\r\nFAKE LINE", "document-uri": "x\u2028y" } });
+  assert.equal(forged.directive, "");
+  assert.doesNotMatch(`${forged.blocked}${forged.page}`, /[\r\n\u2028]/);
 });
