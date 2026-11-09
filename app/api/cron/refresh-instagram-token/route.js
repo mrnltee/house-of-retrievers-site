@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { daysSinceRefresh, refreshAccessToken, REFRESH_AFTER_DAYS } from "../../../lib/instagramToken";
+import { isCronAuthorized } from "../../../lib/cronAuth.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,16 +10,13 @@ const noStore = { "Cache-Control": "no-store" };
 /**
  * Monthly token rotation, scheduled in vercel.json.
  *
- * Vercel signs its own cron calls with CRON_SECRET; anything else is refused,
+ * Vercel signs its own cron calls with CRON_SECRET; anything else is refused
+ * (and everything is, when CRON_SECRET is missing),
  * so this cannot be triggered by a stranger who guesses the path. Pass
  * ?force=1 as an authorised caller to rotate ahead of schedule.
  */
 export async function GET(request) {
-  const secret = process.env.CRON_SECRET;
-  const authorized =
-    !secret || request.headers.get("authorization") === `Bearer ${secret}`;
-
-  if (!authorized) {
+  if (!isCronAuthorized(request.headers)) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401, headers: noStore });
   }
 
