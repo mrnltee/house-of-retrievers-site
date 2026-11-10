@@ -669,6 +669,8 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .letter-cover { white-space: pre-line; margin: 0; }
 .letter-recipients { display: grid; gap: 6px; max-height: 260px; overflow: auto; }
 .letter-recipients .check { display: flex; gap: 8px; align-items: flex-start; }
+.letter-copies { display: grid; gap: 10px; }
+.letter-copies p { margin: 0; }
 .supporter-letter-bar { margin: 0 0 10px; align-items: center; }
 
 /* Letters: Page view / Actual PDF switch */

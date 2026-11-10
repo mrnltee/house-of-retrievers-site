@@ -16,14 +16,14 @@ export default function SendStatus({ sends = [], letterName, before = "", usual 
       {latest.letter_key !== usual && <span className="small">{letterName(latest.letter_key)}</span>}
       <span className="small muted">Sent {formatWhen(latest.sent_at)}{changed ? ` · ${statusLabel(latest.status).toLowerCase()} ${formatWhen(latest.status_at)}` : ""}</span>
       {latest.detail && <span className="small send-detail">{latest.detail}</span>}
-      {sends.length > 1 || latest.cc?.length ? (
+      {sends.length > 1 || latest.cc?.length || latest.bcc?.length ? (
         <details className="send-log">
           <summary className="small">History ({sends.length})</summary>
           <ol>
             {sends.map((s, i) => (
               <li key={i} className="small">
                 <strong>{statusLabel(s.status)}</strong> · {letterName(s.letter_key)}<br />
-                <span className="muted">Sent {formatWhen(s.sent_at)} to {s.email_to}{s.cc?.length ? ` (cc ${s.cc.join(", ")})` : ""}{s.status !== "sent" ? ` · ${statusLabel(s.status).toLowerCase()} ${formatWhen(s.status_at)}` : ""}</span>
+                <span className="muted">Sent {formatWhen(s.sent_at)} to {s.email_to}{s.cc?.length ? ` (cc ${s.cc.join(", ")})` : ""}{s.bcc?.length ? ` (bcc ${s.bcc.join(", ")})` : ""}{s.status !== "sent" ? ` · ${statusLabel(s.status).toLowerCase()} ${formatWhen(s.status_at)}` : ""}</span>
                 {s.detail && <><br /><span className="send-detail">{s.detail}</span></>}
               </li>
             ))}

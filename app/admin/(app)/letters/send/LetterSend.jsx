@@ -9,6 +9,7 @@ import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
+import { MAX_COPIES, copiesFor, parseCopies } from "../../../../lib/letterCopies.mjs";
 import LetterView from "../LetterView";
 
 /**
@@ -21,10 +22,17 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
   const [designId, setDesignId] = useState("");
+  // Extra CC / BCC for this send, copied on every recipient's email.
+  const [copyCc, setCopyCc] = useState("");
+  const [copyBcc, setCopyBcc] = useState("");
+  const extraCc = parseCopies(copyCc, "CC");
+  const extraBcc = parseCopies(copyBcc, "BCC");
+  const copyError = extraCc.error || extraBcc.error || "";
   const design = designs.find((d) => d.id === designId) || null;
   const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
   const [previewRef, setPreviewRef] = useState(recipients.find((r) => r.email)?.ref || recipients[0]?.ref);
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
+  const whoCopies = copiesFor({ to: who?.email || "", cc: who?.cc || [] }, extraCc.emails, extraBcc.emails);
   // Wording edited for this send: { all, byRef } (EditWording); the saved letter is unchanged.
   const [edits, setEdits] = useState({ all: null, byRef: {} });
   const active = wordingFor(letter, edits, who?.ref);
@@ -116,6 +124,20 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </ul>
         </fieldset>
 
+        <fieldset className="field letter-copies">
+          <legend className="field-head">Copy others in <small>Optional. Added to every recipient&apos;s email in this send, up to {MAX_COPIES} each; separate addresses with commas.</small></legend>
+          <label className="field">
+            <span>CC <small>Everyone on the email can see these</small></span>
+            <input type="text" name="copyCc" value={copyCc} onChange={(e) => setCopyCc(e.target.value)} placeholder="name@example.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraCc.error)} />
+          </label>
+          <label className="field">
+            <span>BCC <small>Hidden from the recipient, e.g. HOR&apos;s own inbox for the record</small></span>
+            <input type="text" name="copyBcc" value={copyBcc} onChange={(e) => setCopyBcc(e.target.value)} placeholder="houseofretrieversph@gmail.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraBcc.error)} />
+          </label>
+          {copyError ? <p className="small error-text" role="alert">{copyError}</p>
+            : count > 1 && (extraCc.emails.length || extraBcc.emails.length) ? <p className="small muted">Each recipient gets their own email, so these addresses get {count} copies.</p> : null}
+        </fieldset>
+
         {shownBlanks.some((b) => !isStandard(b.label)) && (
           <fieldset className="field">
             <legend className="field-head">Fill in for this send <small>The same for everyone in it. Your last answers are filled in for you.</small></legend>
@@ -146,9 +168,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 
         <div className="actions">
           <ConfirmButton
-            disabled={!ready || count === 0 || count > max || missing.length > 0}
+            disabled={!ready || count === 0 || count > max || missing.length > 0 || Boolean(copyError)}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
-            items={[design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
+            items={[design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
           >
             Send to {count}
@@ -169,7 +191,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
             <div><dt>To</dt><dd>{who?.name}{who?.email ? ` <${who.email}>` : " (no email on record)"}</dd></div>
-            {who?.cc?.length > 0 && <div><dt>Cc</dt><dd>{who.cc.join(", ")}</dd></div>}
+            {whoCopies.cc.length > 0 && <div><dt>Cc</dt><dd>{whoCopies.cc.join(", ")}</dd></div>}
+            {whoCopies.bcc.length > 0 && <div><dt>Bcc</dt><dd>{whoCopies.bcc.join(", ")} <span className="small muted">(hidden from them)</span></dd></div>}
             <div><dt>Subject</dt><dd><strong>{email.subject || prepared.subject}</strong></dd></div>
           </dl>
           {attach && <SignatureStatus check={signatureCheck} editHref={editHref} />}

@@ -3,11 +3,11 @@ import { emailLastEvent } from "./email";
 import { settled, statusFromEvent } from "./letterSends.mjs";
 
 /** Logs one letter email: sent (with Resend's id) or failed (with why). Never stops a send. */
-export async function logSend({ ref, letterKey, to, cc = [], result, by, eventId = null, designId = null }) {
+export async function logSend({ ref, letterKey, to, cc = [], bcc = [], result, by, eventId = null, designId = null }) {
   try {
     await sql(
-      `INSERT INTO letter_sends (ref, letter_key, email_to, cc, provider_id, status, detail, sent_by, event_id, design_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [ref, letterKey, to, cc, result?.id || null, result?.ok ? "sent" : "failed", result?.ok ? null : result?.error || null, by, eventId, designId],
+      `INSERT INTO letter_sends (ref, letter_key, email_to, cc, bcc, provider_id, status, detail, sent_by, event_id, design_id) VALUES ($1, $2, $3, $4, $11, $5, $6, $7, $8, $9, $10)`,
+      [ref, letterKey, to, cc, result?.id || null, result?.ok ? "sent" : "failed", result?.ok ? null : result?.error || null, by, eventId, designId, bcc.length ? bcc : null],
     );
   } catch (error) {
     console.warn("letter send not logged", error?.message);
@@ -48,7 +48,7 @@ export async function sendsFor(refs, { eventId = null } = {}) {
   try {
     const rows = await sql(
       `SELECT * FROM (
-         SELECT ref, letter_key, email_to, cc, status, detail, sent_at, status_at,
+         SELECT ref, letter_key, email_to, cc, bcc, status, detail, sent_at, status_at,
                 row_number() OVER (PARTITION BY ref ORDER BY sent_at DESC) AS n
            FROM letter_sends WHERE ref = ANY($1) AND ($2::uuid IS NULL OR event_id = $2)) s
         WHERE n <= 10 ORDER BY sent_at DESC`,

@@ -14,9 +14,9 @@ export function emailReady() {
 /**
  * `idempotencyKey` ("<event>/<id>") stops a retry from sending twice: Resend
  * returns the first result for the same key within 24 hours. `attachments`:
- * [{ filename, content: Buffer }] (a letter's PDF). `cc`: more addresses copied in (a guest's representative).
+ * [{ filename, content: Buffer }] (a letter's PDF). `cc`: more addresses copied in (a guest's representative); `bcc`: blind copies.
  */
-export async function sendEmail({ to, cc = [], subject, html, text, idempotencyKey, attachments }) {
+export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, idempotencyKey, attachments }) {
   // HOR's saved sign-off and footer (Email templates), in place of the standard ones.
   ({ html, text } = applyEmailFrame({ html, text }, await loadEmailFrame()));
   const key = process.env.RESEND_API_KEY;
@@ -34,6 +34,7 @@ export async function sendEmail({ to, cc = [], subject, html, text, idempotencyK
         from,
         to: [to],
         ...(cc.length ? { cc } : {}),
+        ...(bcc.length ? { bcc } : {}),
         subject,
         html,
         text,

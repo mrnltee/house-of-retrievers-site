@@ -19,6 +19,7 @@ const fromPaymentsLabels = ["HOR Bank", "HOR Account Name", "HOR Account Number"
 import { pictureFrom } from "../lib/admin/imageUpload";
 import { cleanSignature } from "../lib/letterSignature.mjs";
 import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
+import { copiesFor, parseCopies } from "../lib/letterCopies.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -146,6 +147,10 @@ export async function sendLetters(data) {
     if (!refs.length) await backWith(back, "error", "Tick at least one recipient.");
     if (refs.length > MAX_LETTER_RECIPIENTS) await backWith(back, "error", `Send to ${MAX_LETTER_RECIPIENTS} at most at a time.`);
     const recipients = await loadRecipients(refs);
+    // Extra CC / BCC typed for this send: copied on every recipient's email.
+    const extraCc = parseCopies(form(data, "copyCc"), "CC");
+    const extraBcc = parseCopies(form(data, "copyBcc"), "BCC");
+    if (extraCc.error || extraBcc.error) await backWith(back, "error", extraCc.error || extraBcc.error);
 
     const house = design ? await loadHouse() : null;
     const date = letterDate();
@@ -173,11 +178,12 @@ export async function sendLetters(data) {
         // Email only (the letter has no PDF, or it was switched off for this send): the cover email is the message.
         mail = letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, attached: false });
       }
-      const result = await sendEmail({ to: r.email, cc: (r.cc || []).filter(looksLikeEmail), ...mail, idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
-      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, cc: (r.cc || []).filter(looksLikeEmail), result, by: admin.email, eventId: event?.id || null, designId: design?.id || null });
+      const copies = copiesFor({ to: r.email, cc: r.cc || [] }, extraCc.emails, extraBcc.emails);
+      const result = await sendEmail({ to: r.email, ...copies, ...mail, idempotencyKey: `letter/${letter.key}/${r.ref}/${batch}` });
+      await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, ...copies, result, by: admin.email, eventId: event?.id || null, designId: design?.id || null });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
-      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(own.edited ? { edited: true } : {}), ...(r.cc?.length ? { cc: r.cc } : {}) });
+      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(own.edited ? { edited: true } : {}), ...(copies.cc.length ? { cc: copies.cc } : {}), ...(copies.bcc.length ? { bcc: copies.bcc } : {}) });
       if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       if (r.type === "beneficiary") await sql("UPDATE beneficiaries SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second
