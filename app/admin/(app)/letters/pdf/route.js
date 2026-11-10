@@ -2,6 +2,7 @@ import { sql } from "../../../../lib/db";
 import { currentAdmin } from "../../../../lib/admin/auth";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { LETTER_LIMITS, blanksOf, letterValues, prepareLetter, recipientFields } from "../../../../lib/letters.mjs";
+import { readSendTo } from "../../../../lib/letterSendTo.mjs";
 import { letterPdf } from "../../../../lib/letterPdf.mjs";
 import { loadLetter, savedAnswers, signatureForPdf } from "../../../../lib/letterStore";
 import { eventFills } from "../../../../lib/letterEventStore";
@@ -52,6 +53,9 @@ export async function POST(request) {
     const [row] = await sql("SELECT name, organization, address, salutation FROM letter_contacts WHERE id = $1 AND deleted_at IS NULL", [id]);
     if (row) to = recipientFields({ contact: row });
   }
+  // Addressed to someone else for this send (the send page's "Send to someone else").
+  const other = readSendTo(field("sendTo"), [field("previewTo") || field("to")]).byRef[field("previewTo") || field("to")];
+  if (other?.contact) to = { ...to, contact: other.contact, salutation: other.contact };
   // The editor posts its unsaved signature settings (and a new image, if picked) to preview them.
   let posted = null;
   if (field("signature") && can(admin, "letters:edit")) { try { posted = JSON.parse(field("signature")); } catch { posted = null; } }

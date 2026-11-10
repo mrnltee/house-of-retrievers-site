@@ -7,6 +7,7 @@ import { MEMBERSHIP, PEOPLE_KINDS, PEOPLE_STATUSES, hasMembership, memberNumber,
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import PersonAvatar from "./PersonAvatar";
 import ConfirmButton from "../ConfirmButton";
+import { agesToday } from "../../../lib/furbabyAge.mjs";
 
 const KINDS = PEOPLE_KINDS;
 const STATUSES = PEOPLE_STATUSES;
@@ -121,7 +122,7 @@ export default async function PeoplePage({ searchParams }) {
                   <a href={`mailto:${p.email}`}>{p.email}</a>
                   {p.social_profile && <><br />{p.social_url ? <a href={p.social_url} target="_blank" rel="noreferrer">{p.social_profile}</a> : p.social_profile}</>}
                 </td>
-                <td>{members ? <FurbabyList names={p.furbaby_name} breeds={p.furbaby_breeds} rainbow={p.furbaby_rainbow} sexes={p.furbaby_sexes} /> : p.organization || "—"}</td>
+                <td>{members ? <FurbabyList names={p.furbaby_name} breeds={p.furbaby_breeds} rainbow={p.furbaby_rainbow} sexes={p.furbaby_sexes} ages={agesToday(p.furbaby_ages, p.furbaby_ages_on, { rainbow: p.furbaby_rainbow || [] })} /> : p.organization || "—"}</td>
                 {members && (
                   <td>
                     <span className={`chip membership-${p.membership}`}>{membershipLabel(p.membership) || "—"}</span>

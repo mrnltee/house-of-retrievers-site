@@ -31,6 +31,7 @@ import { welcomePhotoFor, welcomePhotosFor } from "../lib/welcomePhotos";
 import { parseSocialProfile } from "../lib/socialProfile";
 import { cleanBreeds } from "../lib/breeds.mjs";
 import { cleanSexes } from "../lib/furbabySex.mjs";
+import { cleanAges } from "../lib/furbabyAge.mjs";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -500,12 +501,15 @@ export async function updatePersonDetails(data) {
     const breeds = cleanBreeds(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabyBreed${i}`)), furbabyCount);
     const rainbow = cleanRainbow(Array.from({ length: furbabyCount }, (_, i) => data.get(`furbabyRainbow${i}`) === "on"), furbabyCount);
     const sexes = cleanSexes(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabySex${i}`)), furbabyCount);
+    const ages = cleanAges(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabyAge${i}`)), furbabyCount);
     await sql(
       `UPDATE people SET name=$2, social_profile=$3, social_url=$4, organization=$5, furbaby_name=$6,
          furbaby_breeds=CASE WHEN $8 THEN $7 ELSE furbaby_breeds END,
          furbaby_rainbow=CASE WHEN $10 THEN $9 ELSE furbaby_rainbow END,
-         furbaby_sexes=CASE WHEN $12 THEN $11 ELSE furbaby_sexes END, updated_at=now() WHERE id=$1`,
-      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent"), rainbow, data.has("rainbowSent"), sexes, data.has("sexesSent")],
+         furbaby_sexes=CASE WHEN $12 THEN $11 ELSE furbaby_sexes END,
+         furbaby_ages=CASE WHEN $14 THEN $13 ELSE furbaby_ages END,
+         furbaby_ages_on=CASE WHEN $14 THEN (CASE WHEN $13::text[] IS NULL THEN NULL ELSE (now() AT TIME ZONE 'Asia/Manila')::date END) ELSE furbaby_ages_on END, updated_at=now() WHERE id=$1`,
+      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent"), rainbow, data.has("rainbowSent"), sexes, data.has("sexesSent"), ages, data.has("agesSent")],
     );
     await logActivity(admin.email, "person.details", person.kind, { personId: id });
     await backWith(back, "ok", `Saved ${name}'s details.`);

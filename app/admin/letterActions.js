@@ -20,6 +20,7 @@ import { pictureFrom } from "../lib/admin/imageUpload";
 import { cleanSignature } from "../lib/letterSignature.mjs";
 import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
 import { copiesFor, parseCopies } from "../lib/letterCopies.mjs";
+import { readSendTo, withSendTo } from "../lib/letterSendTo.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -146,7 +147,10 @@ export async function sendLetters(data) {
     const refs = [...new Set(data.getAll("to").filter((v) => typeof v === "string"))];
     if (!refs.length) await backWith(back, "error", "Tick at least one recipient.");
     if (refs.length > MAX_LETTER_RECIPIENTS) await backWith(back, "error", `Send to ${MAX_LETTER_RECIPIENTS} at most at a time.`);
-    const recipients = await loadRecipients(refs);
+    // Another email (and name) for some recipients, for this send only; their records stay as they are.
+    const sendTo = readSendTo(form(data, "sendTo"), refs);
+    if (sendTo.error) await backWith(back, "error", sendTo.error);
+    const recipients = (await loadRecipients(refs)).map((r) => withSendTo(r, sendTo.byRef[r.ref]));
     // Extra CC / BCC typed for this send: copied on every recipient's email.
     const extraCc = parseCopies(form(data, "copyCc"), "CC");
     const extraBcc = parseCopies(form(data, "copyBcc"), "BCC");
@@ -183,7 +187,7 @@ export async function sendLetters(data) {
       await logSend({ ref: r.ref, letterKey: letter.key, to: r.email, ...copies, result, by: admin.email, eventId: event?.id || null, designId: design?.id || null });
       if (!result.ok) { failed.push(r.name); continue; }
       sent.push(r.name);
-      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(own.edited ? { edited: true } : {}), ...(copies.cc.length ? { cc: copies.cc } : {}), ...(copies.bcc.length ? { bcc: copies.bcc } : {}) });
+      await logActivity(admin.email, `${r.type}.letter`, r.name, { [`${r.type}Id`]: r.id, letter: letter.key, letterName: letter.name, to: r.email, ...(attach ? {} : { pdf: "none" }), ...(design ? { design: design.name } : {}), ...(own.edited ? { edited: true } : {}), ...(copies.cc.length ? { cc: copies.cc } : {}), ...(copies.bcc.length ? { bcc: copies.bcc } : {}), ...(r.onRecord !== undefined ? { insteadOf: r.onRecord || "no email on record", ...(sendTo.byRef[r.ref]?.contact ? { addressedTo: sendTo.byRef[r.ref].contact } : {}) } : {}) });
       if (r.type === "contact") await sql("UPDATE letter_contacts SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       if (r.type === "beneficiary") await sql("UPDATE beneficiaries SET last_letter = $2, last_sent_at = now() WHERE id = $1", [r.id, letter.key]);
       await pause(350); // Resend allows a few requests a second

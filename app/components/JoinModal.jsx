@@ -7,6 +7,7 @@ import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import BreedSelect from "./BreedSelect";
 import FurbabySexSelect from "./FurbabySexSelect";
+import FurbabyAgeInput from "./FurbabyAgeInput";
 import Stepper from "./Stepper";
 import { joinFurbabyNames, sheetFurbabyNames } from "../lib/attendeeNames.mjs";
 
@@ -25,6 +26,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   const [furbabyNames, setFurbabyNames] = useState([]);
   const [breeds, setBreeds] = useState([]);
   const [sexes, setSexes] = useState([]);
+  const [ages, setAges] = useState([]);
   // Furbabies who crossed the rainbow bridge are part of the pack too.
   const [rainbow, setRainbow] = useState([]);
   const dogs = Math.min(10, Math.max(1, Number(furbabyCount) || 1));
@@ -90,6 +92,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
           furbabyCount: withFurbabies ? dogs : 0,
           furbabyBreeds: withFurbabies ? breeds.slice(0, dogs) : [],
           furbabySexes: withFurbabies ? sexes.slice(0, dogs) : [],
+          furbabyAges: withFurbabies ? ages.slice(0, dogs) : [],
           furbabyRainbow: withFurbabies ? Array.from({ length: dogs }, (_, i) => rainbowAt(i)) : [],
           photo: asksAboutFurbaby && photo ? photo.dataUrl : "",
           photoName: asksAboutFurbaby && photo ? photo.name : "",
@@ -180,8 +183,9 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                 {Array.from({ length: dogs }, (_, i) => (
                   <div key={i} className="rsvp-furbaby-row">
                     <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : fieldCopy.furbabyLabel}<input type="text" maxLength={60} placeholder={fieldCopy.furbabyPlaceholder} value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
-                    <BreedSelect name={`furbabyBreed${i}`} label={dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} halo={rainbowAt(i)} />
-                    <FurbabySexSelect name={`furbabySex${i}`} label={dogs > 1 ? `Furbaby ${i + 1} gender (optional)` : "Gender (optional)"} value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
+                    <BreedSelect name={`furbabyBreed${i}`} label="Breed" value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} halo={rainbowAt(i)} />
+                    <FurbabySexSelect name={`furbabySex${i}`} label="Gender" value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
+                    <FurbabyAgeInput name={`furbabyAge${i}`} label="Age (years)" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
                     <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>This furbaby is now an angel 🌈</span></label>
                   </div>
                 ))}

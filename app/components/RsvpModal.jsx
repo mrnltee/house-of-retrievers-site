@@ -9,6 +9,7 @@ import { PUBLIC_MAX_FURBABIES, PUBLIC_MAX_HUMANS, calculateAmountDue, ticketLimi
 import PayStep from "./PayStep";
 import BreedSelect from "./BreedSelect";
 import FurbabySexSelect from "./FurbabySexSelect";
+import FurbabyAgeInput from "./FurbabyAgeInput";
 import Stepper from "./Stepper";
 import { joinFurbabyNames } from "../lib/attendeeNames.mjs";
 
@@ -40,6 +41,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const [state, setState] = useState({ sending: false, error: "", result: null });
   const [breeds, setBreeds] = useState([]);
   const [sexes, setSexes] = useState([]);
+  const [ages, setAges] = useState([]);
   // A promo code checked with /api/rsvp/promo: { code, kind, percent, label }. The RSVP checks it again.
   const [promoText, setPromoText] = useState("");
   const [promo, setPromo] = useState(null);
@@ -175,6 +177,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
           furbabyCount: form.get("furbabyCount"),
           furbabyBreeds: breeds.slice(0, Number(form.get("furbabyCount")) || 0),
           furbabySexes: sexes.slice(0, Number(form.get("furbabyCount")) || 0),
+          furbabyAges: ages.slice(0, Number(form.get("furbabyCount")) || 0),
           photoConsent: form.get("photoConsent"),
           under18: form.get("under18") === "yes",
           guardianName: form.get("guardianName"),
@@ -277,12 +280,13 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                   {Array.from({ length: dogs }, (_, i) => (
                     <div key={i} className="rsvp-furbaby-row">
                       <label>{askVaccination ? (dogs > 1 ? `Furbaby ${i + 1} name` : "Furbaby name") : dogs > 1 ? `Furbaby ${i + 1} name (optional)` : "Furbaby name (optional)"}<input maxLength={60} placeholder="e.g. Mochi" value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
-                      <BreedSelect name={`furbabyBreed${i}`} label={askVaccination ? "Breed" : dogs > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)"} value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
-                      <FurbabySexSelect name={`furbabySex${i}`} label={dogs > 1 ? `Furbaby ${i + 1} gender (optional)` : "Gender (optional)"} value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
+                      <BreedSelect name={`furbabyBreed${i}`} label="Breed" value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
+                      <FurbabySexSelect name={`furbabySex${i}`} label="Gender" value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
+                      <FurbabyAgeInput name={`furbabyAge${i}`} label="Age (years)" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
                       {askVaccination && <label className="rsvp-vaccination">Vaccination card (up to {MAX_IMAGES_PER_FURBABY} photos)<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" multiple required={Boolean(formConfig.vaccinationRequired)} onChange={(e) => { if (e.target.files.length > MAX_IMAGES_PER_FURBABY) { e.target.value = ""; setState((st) => ({ ...st, error: `Pick up to ${MAX_IMAGES_PER_FURBABY} photos for each furbaby's vaccination card.` })); } else setState((st) => (st.error?.startsWith("Pick up to") ? { ...st, error: "" } : st)); }} /></label>}
                     </div>
                   ))}
-                  {askVaccination && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>{formConfig.vaccinationRequired ? <>A clear photo of each furbaby&apos;s vaccination card is required (up to 5 photos each, if it has several pages). Name, breed and gender are optional. Only authorised HOR admins can view the cards.</> : <>Name, breed, gender and vaccination card are all optional. If you have it handy, add clear photos of each furbaby&apos;s card (up to 5 each); only authorised HOR admins can view them.</>}</p>}
+                  {askVaccination && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>{formConfig.vaccinationRequired ? <>A clear photo of each furbaby&apos;s vaccination card is required (up to 5 photos each, if it has several pages). Name, breed, gender and age are optional. Only authorised HOR admins can view the cards.</> : <>Name, breed, gender, age and vaccination card are all optional. If you have it handy, add clear photos of each furbaby&apos;s card (up to 5 each); only authorised HOR admins can view them.</>}</p>}
                 </div>}
               </>;
             })()}

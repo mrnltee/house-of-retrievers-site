@@ -667,9 +667,13 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .letter-blank { background: #fff1c2; color: inherit; padding: 0 2px; border-radius: 3px; }
 .letter-email { border: 1px solid var(--line, #e6dcc8); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: grid; gap: 6px; }
 .letter-cover { white-space: pre-line; margin: 0; }
-.letter-recipients { display: grid; gap: 6px; max-height: 260px; overflow: auto; }
+.letter-recipients { display: grid; gap: 6px; max-height: 360px; overflow: auto; }
 .letter-recipients .check { display: flex; gap: 8px; align-items: flex-start; }
 .letter-copies { display: grid; gap: 10px; }
+.send-to-toggle { margin: 2px 0 0 26px; }
+.send-to-other-fields { display: grid; gap: 8px; margin: 6px 0 4px 26px; padding: 10px 12px; border-left: 3px solid var(--a-gold, #a78440); background: rgba(167, 132, 64, .06); }
+.send-to-other-fields p { margin: 0; }
+.send-to-other { color: var(--a-ink); }
 .letter-copies p { margin: 0; }
 .supporter-letter-bar { margin: 0 0 10px; align-items: center; }
 

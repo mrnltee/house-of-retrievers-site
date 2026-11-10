@@ -10,6 +10,7 @@ import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSign
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
 import { MAX_COPIES, copiesFor, parseCopies } from "../../../../lib/letterCopies.mjs";
+import { SEND_TO_NAME_MAX, readSendTo, withSendTo } from "../../../../lib/letterSendTo.mjs";
 import LetterView from "../LetterView";
 
 /**
@@ -17,7 +18,7 @@ import LetterView from "../LetterView";
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients, max, ready, pdfAction, back, eventId = "", designs = [], house = null, frame = null }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, max, ready, pdfAction, back, eventId = "", designs = [], house = null, frame = null }) {
   const isStandard = (label) => standard.includes(label);
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
@@ -29,8 +30,21 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const extraBcc = parseCopies(copyBcc, "BCC");
   const copyError = extraCc.error || extraBcc.error || "";
   const design = designs.find((d) => d.id === designId) || null;
-  const [picked, setPicked] = useState(() => new Set(recipients.filter((r) => r.email).map((r) => r.ref)));
-  const [previewRef, setPreviewRef] = useState(recipients.find((r) => r.email)?.ref || recipients[0]?.ref);
+  // Another email (and name) for a recipient, for this send only: { ref: { email, contact } }.
+  const [sendTo, setSendTo] = useState({});
+  const [openOther, setOpenOther] = useState(() => new Set());
+  const sendToJson = JSON.stringify(Object.fromEntries(Object.entries(sendTo).filter(([, v]) => v.email?.trim())));
+  const sendToCheck = readSendTo(sendToJson, listed.map((r) => r.ref));
+  const recipients = useMemo(() => listed.map((r) => withSendTo(r, sendToCheck.byRef[r.ref])), [listed, sendToJson]); // eslint-disable-line react-hooks/exhaustive-deps
+  const otherCount = Object.keys(sendToCheck.byRef).length;
+  const setOther = (ref, key, value) => setSendTo((all) => ({ ...all, [ref]: { ...all[ref], [key]: value } }));
+  const toggleOther = (ref) => setOpenOther((s) => {
+    const next = new Set(s);
+    if (next.has(ref)) { next.delete(ref); setSendTo((all) => { const rest = { ...all }; delete rest[ref]; return rest; }); } else next.add(ref);
+    return next;
+  });
+  const [picked, setPicked] = useState(() => new Set(listed.filter((r) => r.email).map((r) => r.ref)));
+  const [previewRef, setPreviewRef] = useState(listed.find((r) => r.email)?.ref || listed[0]?.ref);
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
   const whoCopies = copiesFor({ to: who?.email || "", cc: who?.cc || [] }, extraCc.emails, extraBcc.emails);
   // Wording edited for this send: { all, byRef } (EditWording); the saved letter is unchanged.
@@ -102,6 +116,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         <input type="hidden" name="values" value={JSON.stringify(values)} />
         <input type="hidden" name="attach" value={attach ? "yes" : "no"} />
         <input type="hidden" name="design" value={designId} />
+        <input type="hidden" name="sendTo" value={sendToJson} />
         <input type="hidden" name="edits" value={edits.all || Object.keys(edits.byRef).length ? JSON.stringify(edits) : ""} />
         <label className="field">
           <span>Letter</span>
@@ -117,8 +132,22 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
               <li key={r.ref}>
                 <label className="check">
                   <input type="checkbox" name="to" value={r.ref} checked={picked.has(r.ref)} disabled={!r.email} onChange={() => toggle(r.ref)} />
-                  <span><strong>{r.name}</strong> <span className="small muted">· {r.note} · {r.email || "no email on record: add one to send"}{r.cc?.length ? ` (cc ${r.cc.join(", ")})` : ""}</span></span>
+                  <span><strong>{r.name}</strong> <span className="small muted">· {r.note} · {r.onRecord !== undefined ? <><strong className="send-to-other">{r.email}</strong> for this send{r.onRecord ? <> (instead of {r.onRecord})</> : null}</> : r.email || "no email on record: add one, or send to another email"}{r.cc?.length ? ` (cc ${r.cc.join(", ")})` : ""}</span></span>
                 </label>
+                <button type="button" className="linkish small send-to-toggle" aria-expanded={openOther.has(r.ref)} onClick={() => toggleOther(r.ref)}>{openOther.has(r.ref) ? "Use the email on record" : "Send to another email"}</button>
+                {openOther.has(r.ref) && (
+                  <div className="send-to-other-fields">
+                    <label className="field">
+                      <span>Email for this send</span>
+                      <input type="email" value={sendTo[r.ref]?.email || ""} onChange={(e) => setOther(r.ref, "email", e.target.value)} placeholder="name@brand.com" autoComplete="off" spellCheck={false} />
+                    </label>
+                    <label className="field">
+                      <span>Their name <small>optional: the letter is addressed to them</small></span>
+                      <input type="text" maxLength={SEND_TO_NAME_MAX} value={sendTo[r.ref]?.contact || ""} onChange={(e) => setOther(r.ref, "contact", e.target.value)} placeholder={r.contact || "e.g. Maria Cruz"} autoComplete="off" />
+                    </label>
+                    <p className="small muted">Only for this send. {r.name}&apos;s saved email and contact person stay as they are.</p>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -168,9 +197,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 
         <div className="actions">
           <ConfirmButton
-            disabled={!ready || count === 0 || count > max || missing.length > 0 || Boolean(copyError)}
+            disabled={!ready || count === 0 || count > max || missing.length > 0 || Boolean(copyError) || Boolean(sendToCheck.error)}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
-            items={[design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
+            items={[design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(otherCount ? [`${otherCount} go${otherCount === 1 ? "es" : ""} to another email for this send; ${otherCount === 1 ? "that record keeps" : "those records keep"} their saved email`] : []), ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
           >
             Send to {count}
@@ -182,6 +211,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         </div>
         {!ready && <p className="small muted">Sending switches on once the Resend key is in Vercel.</p>}
         {missing.length > 0 && <p className="small muted">Still to fill: {missing.join(", ")}.</p>}
+        {sendToCheck.error && <p className="small error-text" role="alert">{sendToCheck.error}</p>}
       </form>
 
       <section className="card template-preview">
@@ -190,7 +220,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         <div className="mail-head" aria-label="The email as it arrives">
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
-            <div><dt>To</dt><dd>{who?.name}{who?.email ? ` <${who.email}>` : " (no email on record)"}</dd></div>
+            <div><dt>To</dt><dd>{who?.onRecord !== undefined && who?.contact ? who.contact : who?.name}{who?.email ? ` <${who.email}>` : " (no email on record)"}{who?.onRecord !== undefined ? <span className="small muted"> · for this send only</span> : null}</dd></div>
             {whoCopies.cc.length > 0 && <div><dt>Cc</dt><dd>{whoCopies.cc.join(", ")}</dd></div>}
             {whoCopies.bcc.length > 0 && <div><dt>Bcc</dt><dd>{whoCopies.bcc.join(", ")} <span className="small muted">(hidden from them)</span></dd></div>}
             <div><dt>Subject</dt><dd><strong>{email.subject || prepared.subject}</strong></dd></div>
@@ -200,7 +230,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
           </p> : <p className="small muted">No attachment: email only.</p>}
         </div>
-        <LetterView emailOnly={!attach} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values), ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
+        <LetterView emailOnly={!attach} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values), sendTo: sendToJson, ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
       </section>
     </div>
   );
