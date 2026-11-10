@@ -479,12 +479,16 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .rsvp-people label small { display: inline; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted-on-light); }
 .rsvp-stepper-row input { -moz-appearance: textfield; appearance: textfield; }
 .rsvp-stepper-row input::-webkit-outer-spin-button, .rsvp-stepper-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.rsvp-furbaby-row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; }
-.with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr 1fr 1fr; }
+.rsvp-furbaby-row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr minmax(8.5rem, 0.7fr); align-items: end; }
+.with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr 1fr minmax(8.5rem, 0.7fr); }
+.with-vaccination .rsvp-vaccination { grid-column: 1 / -1; }
 .with-vaccination .breed-select-button span:not(.breed-select-icon):not(.breed-select-caret) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .rsvp-vaccination input[type="file"] { padding: 10px; font-size: 13px; text-transform: none; letter-spacing: 0; }
-@media (max-width: 760px) { .with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr 1fr; } .with-vaccination .rsvp-vaccination { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .rsvp-furbaby-row, .with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr 1fr; } .rsvp-furbaby-row .furbaby-sex-field, .with-vaccination .rsvp-vaccination { grid-column: 1 / -1; } }
 @media (max-width: 600px) { .rsvp-furbaby-row, .with-vaccination .rsvp-furbaby-row { grid-template-columns: 1fr; } .with-vaccination .rsvp-vaccination { grid-column: auto; } }
+.furbaby-sex-field { display: grid; gap: 6px; }
+.furbaby-sex-field select { width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: 0; background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%230d0d0d' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center; padding: 12px 38px 12px 14px; color: var(--ink); font: inherit; text-transform: none; letter-spacing: 0; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.furbaby-sex-field select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .breed-select { position: relative; display: grid; gap: 6px; }
 .breed-select-label { font-size: var(--text-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
 .breed-select-button { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }

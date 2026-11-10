@@ -11,6 +11,9 @@
   --a-on-dark-muted: #c9c3b3;
   --a-success: #2f5d3a;
   --a-alert: #7a2e1f;
+  /* Furbaby names by gender (owner, 10 Nov 2026): readable on ivory and white. */
+  --a-furbaby-male: #1d5fa8;
+  --a-furbaby-female: #b8326e;
   min-height: 100vh;
   background: var(--a-ivory);
   color: var(--a-ink);
@@ -638,6 +641,8 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .furbaby-icon img { display: block; width: 100%; height: 100%; }
 .furbaby-halo { position: absolute; left: 18%; right: 18%; top: -2%; height: 24%; z-index: 1; border: 2.5px solid #d4ab45; border-radius: 50%; box-shadow: 0 0 6px rgba(212, 171, 69, .6), inset 0 0 3px rgba(212, 171, 69, .45); pointer-events: none; }
 .furbaby-item.is-remembered { padding-top: 3px; }
+.furbaby-name.is-male { color: var(--a-furbaby-male); font-weight: 600; }
+.furbaby-name.is-female { color: var(--a-furbaby-female); font-weight: 600; }
 .furbaby-item.is-remembered .furbaby-icon img { opacity: .9; }
 @media (prefers-reduced-motion: no-preference) { .furbaby-halo { animation: halo-glow 4s ease-in-out infinite; } }
 @keyframes halo-glow { 0%, 100% { box-shadow: 0 0 4px rgba(201, 162, 74, .4); } 50% { box-shadow: 0 0 9px rgba(201, 162, 74, .7); } }

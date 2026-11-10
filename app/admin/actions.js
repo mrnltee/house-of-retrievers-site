@@ -30,6 +30,7 @@ import { initialsFor } from "../lib/welcomePhoto.mjs";
 import { welcomePhotoFor, welcomePhotosFor } from "../lib/welcomePhotos";
 import { parseSocialProfile } from "../lib/socialProfile";
 import { cleanBreeds } from "../lib/breeds.mjs";
+import { cleanSexes } from "../lib/furbabySex.mjs";
 
 
 /** Resized in the browser to ~200–400 KB; this is only a ceiling against tampering. */
@@ -498,11 +499,13 @@ export async function updatePersonDetails(data) {
     const furbabyCount = Math.min(10, Math.max(0, Number(form(data, "furbabyCount")) || 0)) || (furbabyName ? 1 : 0);
     const breeds = cleanBreeds(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabyBreed${i}`)), furbabyCount);
     const rainbow = cleanRainbow(Array.from({ length: furbabyCount }, (_, i) => data.get(`furbabyRainbow${i}`) === "on"), furbabyCount);
+    const sexes = cleanSexes(Array.from({ length: furbabyCount }, (_, i) => form(data, `furbabySex${i}`)), furbabyCount);
     await sql(
       `UPDATE people SET name=$2, social_profile=$3, social_url=$4, organization=$5, furbaby_name=$6,
          furbaby_breeds=CASE WHEN $8 THEN $7 ELSE furbaby_breeds END,
-         furbaby_rainbow=CASE WHEN $10 THEN $9 ELSE furbaby_rainbow END, updated_at=now() WHERE id=$1`,
-      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent"), rainbow, data.has("rainbowSent")],
+         furbaby_rainbow=CASE WHEN $10 THEN $9 ELSE furbaby_rainbow END,
+         furbaby_sexes=CASE WHEN $12 THEN $11 ELSE furbaby_sexes END, updated_at=now() WHERE id=$1`,
+      [id, name, profile?.display || null, profile?.url || null, organization, furbabyName, breeds, data.has("breedsSent"), rainbow, data.has("rainbowSent"), sexes, data.has("sexesSent")],
     );
     await logActivity(admin.email, "person.details", person.kind, { personId: id });
     await backWith(back, "ok", `Saved ${name}'s details.`);

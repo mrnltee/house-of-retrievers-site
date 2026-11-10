@@ -5,6 +5,7 @@ import { hasDatabase, sql } from "../../lib/db";
 import { logActivity } from "../../lib/admin/log";
 import { savePersonPhoto } from "../../lib/personPhotos";
 import { breedLabel, cleanBreeds } from "../../lib/breeds.mjs";
+import { cleanSexes } from "../../lib/furbabySex.mjs";
 import { sendEmail } from "../../lib/email";
 import { applicationReceived, receivedKey } from "../../lib/emailTemplates.mjs";
 import { loadTemplate } from "../../lib/emailSettings";
@@ -120,6 +121,7 @@ export async function POST(request) {
   const joinBreeds = cleanBreeds(Array.isArray(body?.furbabyBreeds) ? body.furbabyBreeds : body?.furbabyBreed, joinFurbabies);
   // Furbabies who crossed the rainbow bridge: saved per furbaby, and a 🌈 after their name on the Sheet.
   const joinRainbow = cleanRainbow(body?.furbabyRainbow, joinFurbabies);
+  const joinSexes = cleanSexes(body?.furbabySexes, joinFurbabies);
   const joinNames = clean(body?.furbabyName, LIMITS.furbabyName);
   const payload = {
     secret,
@@ -180,8 +182,8 @@ export async function POST(request) {
         // One record per person and kind: joining again updates it, keeps the
         // follow-up status and adds the new message under the old one.
         const [person] = await sql(
-          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership, furbaby_breeds, furbaby_rainbow)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END, $9, $10)
+          `INSERT INTO people (kind, name, email, social_profile, social_url, organization, furbaby_name, message, membership, furbaby_breeds, furbaby_rainbow, furbaby_sexes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $1 IN ('Member', 'Volunteer') THEN 'applicant' END, $9, $10, $11)
            ON CONFLICT (kind, lower(email)) DO UPDATE SET
              name = EXCLUDED.name,
              social_profile = COALESCE(EXCLUDED.social_profile, people.social_profile),
@@ -189,6 +191,8 @@ export async function POST(request) {
              organization = COALESCE(EXCLUDED.organization, people.organization),
              furbaby_name = COALESCE(EXCLUDED.furbaby_name, people.furbaby_name),
              furbaby_breeds = COALESCE(EXCLUDED.furbaby_breeds, people.furbaby_breeds),
+             -- Like breeds: a gender given now replaces the saved ones; none given keeps them.
+             furbaby_sexes = COALESCE(EXCLUDED.furbaby_sexes, people.furbaby_sexes),
              -- A new list of furbabies replaces the rainbow flags too (none ticked clears them).
              furbaby_rainbow = CASE WHEN EXCLUDED.furbaby_name IS NOT NULL OR EXCLUDED.furbaby_breeds IS NOT NULL THEN EXCLUDED.furbaby_rainbow ELSE people.furbaby_rainbow END,
              message = CASE WHEN EXCLUDED.message IS NULL THEN people.message
@@ -198,7 +202,7 @@ export async function POST(request) {
              last_joined_at = now(),
              updated_at = now()
            RETURNING id, joined_count`,
-          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, joinNames || null, s.message || null, joinBreeds, joinRainbow],
+          [s.joinType, s.name, s.email, s.socialProfile || null, s.socialUrl || null, s.organization || null, joinNames || null, s.message || null, joinBreeds, joinRainbow, joinSexes],
         );
         joined = person;
         await logActivity("Join form", person.joined_count > 1 ? "person.rejoin" : "person.join", s.name, { personId: person.id, kind: s.joinType });

@@ -11,6 +11,7 @@ import { welcomePhotoFor } from "../../../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../../../WelcomeAvatar";
 import BreedIcons from "../../../BreedIcons";
 import BreedFields from "../../../BreedFields";
+import FurbabyList from "../../../FurbabyList";
 import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import VaccinationCardField from "../../../VaccinationCardField";
@@ -138,7 +139,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.fee_checked_by && <div><dt>{reg.fee_status === "paid" ? "Approved by" : "Last checked by"}</dt><dd>{reg.fee_checked_by} · {formatWhen(reg.fee_checked_at)}</dd></div>}
               {reg.pass_sent_at && <div><dt>QR pass emailed</dt><dd>{formatWhen(reg.pass_sent_at)}</dd></div>}
               {reg.reminder_sent_at && <div><dt>Reminder emailed</dt><dd>{formatWhen(reg.reminder_sent_at)}{reg.reminder_count > 1 ? ` · ${reg.reminder_count}×` : ""}</dd></div>}
-              {reg.furbaby_name && <div><dt>Furbaby</dt><dd>{reg.furbaby_name}</dd></div>}
+              {reg.furbaby_name && <div><dt>Furbaby</dt><dd><FurbabyList names={reg.furbaby_name} sexes={reg.furbaby_sexes} /></dd></div>}
               {reg.furbaby_breeds?.some(Boolean) && <div><dt>{reg.furbaby_breeds.filter(Boolean).length > 1 ? "Breeds" : "Breed"}</dt><dd><BreedIcons breeds={reg.furbaby_breeds} size={24} withNames /></dd></div>}
               {cleanCustomQuestions(reg.rsvp_form_config?.questions).map((q) => <div key={q.id}><dt>{q.label}</dt><dd>{answerText(reg.custom_answers?.[q.id]) || "Not asked"}</dd></div>)}
               <div><dt>Photos</dt><dd>{reg.photo_consent ? "OK" : "No photos"}</dd></div>
@@ -218,7 +219,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                     <label className="field"><span>Furbabies attending</span><input name="furbabyCount" type="number" min="0" max="100" required defaultValue={reg.furbaby_count ?? 0} /></label>
                   </div>
                 </div>
-                <BreedFields initial={reg.furbaby_breeds || []} count={Math.min(4, Math.max(1, reg.furbaby_count ?? 1))} />
+                <BreedFields initial={reg.furbaby_breeds || []} sexes={reg.furbaby_sexes || []} count={Math.min(4, Math.max(1, reg.furbaby_count ?? 1))} />
                 <CustomAnswerFields config={reg.rsvp_form_config} answers={reg.custom_answers} />
                 {reg.fee_required && tiers.length > 0 && <label className="field"><span>Ticket</span>
                   <select name="ticket" defaultValue={selectedTier >= 0 ? String(selectedTier) : ""} required={tiers.length > 1}>
