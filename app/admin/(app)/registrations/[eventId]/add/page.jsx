@@ -9,6 +9,7 @@ import { calculateAmountDue } from "../../../../../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, capacityUnitLabel } from "../../../../../lib/eventCapacity.mjs";
 import { emailReady } from "../../../../../lib/email";
 import BreedFields from "../../BreedFields";
+import CompOptions from "../../CompOptions";
 import CustomAnswerFields from "../../CustomAnswerFields";
 import { addRegistration } from "../../../../registrationActions";
 import ConfirmButton from "../../../ConfirmButton";
@@ -57,14 +58,16 @@ export default async function AddRegistration({ params, searchParams }) {
           <CustomAnswerFields config={event.rsvp_form_config} />
         <div className="row-2">
           <label className="field"><span>Furbaby&apos;s name <small>Optional</small></span><input type="text" name="furbabyName" maxLength={120} /></label>
-          {tiers.length > 0 ? (
-            <label className="field"><span>Ticket</span>
-              <select name="ticket" required={tiers.length > 1} defaultValue={tiers.length === 1 ? "0" : ""}>
-                {tiers.length > 1 && <option value="">Choose…</option>}
+          <label className="field"><span>Ticket <small>Complimentary: no fee, not counted in capacity</small></span>
+            <select name="ticket" required={tiers.length > 1} defaultValue={tiers.length === 1 ? "0" : ""}>
+              {tiers.length > 1 && <option value="">Choose…</option>}
+              {tiers.length === 0 && <option value="">Regular sign-up</option>}
+              {tiers.length > 0 && <optgroup label="Tickets">
                 {tiers.map((t, i) => <option key={i} value={i}>{ticketLine(t.label, t.amount)}{t.limit ? ` · ${t.limit - (tierLeft(t, counts) ?? 0)}/${t.limit} taken` : ""}{tierWindow(t) ? ` · ${tierWindow(t)}` : ""}</option>)}
-              </select>
-            </label>
-          ) : <div />}
+              </optgroup>}
+              <CompOptions />
+            </select>
+          </label>
         </div>
         {event.fee_required && <label className="field"><span>Promo code <small>Optional · same dates and use limits as the RSVP form</small></span><input name="promoCode" maxLength={30} autoComplete="off" spellCheck={false} style={{ textTransform: "uppercase" }} /></label>}
         {event.fee_required && (
@@ -73,7 +76,7 @@ export default async function AddRegistration({ params, searchParams }) {
               <legend>Payment</legend>
               <label className="check"><input type="radio" name="payment" value="paid" defaultChecked /> <span><strong>Paid</strong> <span className="small muted">They already paid. Type the details below.</span></span></label>
               <label className="check"><input type="radio" name="payment" value="pending" /> <span><strong>Pending</strong> <span className="small muted">Hold the spot; they pay and upload like everyone else</span></span></label>
-              <label className="check"><input type="radio" name="payment" value="none" /> <span><strong>No fee</strong> <span className="small muted">Guest, volunteer or sponsor</span></span></label>
+              <label className="check"><input type="radio" name="payment" value="none" /> <span><strong>No fee</strong> <span className="small muted">Keeps the ticket above at no charge. For a guest, VIP or organizer, pick a complimentary ticket instead</span></span></label>
             </fieldset>
             <div className="row-2">
               <label className="field"><span>Paid with <small>If paid</small></span>
@@ -95,7 +98,7 @@ export default async function AddRegistration({ params, searchParams }) {
         <div className="actions">
           <ConfirmButton
             title={`Add them to ${event.title}?`}
-            echo={[{ name: "name", label: "Name" }, { name: "email", label: "Email" }, ...(tiers.length ? [{ name: "ticket", label: "Ticket" }] : []), ...(event.fee_required ? [{ name: "payment", label: "Payment" }, { name: "reference", label: "Reference" }] : [])]}
+            echo={[{ name: "name", label: "Name" }, { name: "email", label: "Email" }, { name: "ticket", label: "Ticket" }, ...(event.fee_required ? [{ name: "payment", label: "Payment" }, { name: "reference", label: "Reference" }] : [])]}
             items={[
               full ? `They're confirmed, which puts the event over capacity (${capacityUsed} of ${event.capacity})` : "They're confirmed and take a slot",
               "If the email box is ticked, they're emailed now",

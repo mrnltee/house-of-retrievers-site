@@ -15,7 +15,7 @@ import { TICKET_COUNTS_SQL, countsFromRows } from "./ticketCounts.mjs";
  * max_public_humans.
  */
 export async function expiredHoldFits(tx, reg) {
-  const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
+  const capacityRequest = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true, comp: Boolean(reg.comp_type) });
   if (capacityRequest.error) return false;
   const [{ used, humansUsed }] = await tx.sql(
     `SELECT ${CAPACITY_USED_SQL} AS used, ${PUBLIC_HUMANS_USED_SQL} AS "humansUsed" FROM registrations r JOIN events e ON e.id = r.event_id

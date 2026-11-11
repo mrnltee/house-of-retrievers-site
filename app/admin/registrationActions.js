@@ -1,5 +1,6 @@
 "use server";
 
+import { compFromTicket, compTicket } from "../lib/compTickets.mjs";
 import { adminCustomAnswers, cleanCustomQuestions } from "../lib/customQuestions.mjs";
 import { revalidatePath } from "next/cache";
 import { sql, transaction } from "../lib/db";
@@ -77,7 +78,7 @@ async function capacityCheckedUpdate(reg, run) {
         `SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.id<>$2 AND r.status='confirmed' AND r.deleted_at IS NULL AND ${ACTIVE_REGISTRATION_SQL}`,
         [reg.event_id, reg.id],
       );
-      const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
+      const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true, comp: Boolean(reg.comp_type) });
       if (request.error || Number(used || 0) + request.units > reg.capacity) return false;
     }
     await run(tx);
@@ -228,21 +229,23 @@ export async function addRegistration(data) {
       under18: data.get("under18") === "on", guardianName: form(data, "guardianName"),
     });
     if (error) await backWith(back, "error", error);
-    const ticket = chooseTicket(event.fee_required ? eventTiers(event) : [], form(data, "ticket"), { anyTier: true });
+    // A complimentary Guest, VIP or Organizer: no price, no payment, outside capacity.
+    const comp = compFromTicket(form(data, "ticket"));
+    const ticket = comp ? { value: compTicket(comp) } : chooseTicket(event.fee_required ? eventTiers(event) : [], form(data, "ticket"), { anyTier: true });
     if (ticket.error) await backWith(back, "error", ticket.error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
-    const capacityRequest = validateCapacityCounts(event.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true });
+    const capacityRequest = validateCapacityCounts(event.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true, comp: Boolean(comp) });
     if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const payment = ["paid", "pending", "none"].includes(form(data, "payment")) ? form(data, "payment") : "none";
-    const owes = owesPayment(event.fee_required, ticket.value);
-    const due = calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
+    const owes = !comp && owesPayment(event.fee_required, ticket.value);
+    const due = comp ? { amount: 0 } : calculateAmountDue({ basis: cleanPricingBasis(event.pricing_basis), tier: ticket.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event.included_furbabies_per_human, additionalFurbabyFee: event.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
     // An optional promo code, with the same period and use limits as the public RSVP.
     let promo = null;
     let discount = null;
     if (form(data, "promoCode").trim()) {
-      if (!owes) await backWith(back, "error", "Promo codes are for paid tickets.");
+      if (!owes) await backWith(back, "error", comp ? "A complimentary registration has nothing to discount. Clear the promo code." : "Promo codes are for paid tickets.");
       const checked = await checkPromo({ sql }, event.id, event.promo_codes, form(data, "promoCode"));
       if (checked.error) await backWith(back, "error", checked.error);
       promo = checked.promo;
@@ -274,12 +277,12 @@ export async function addRegistration(data) {
         }
         const [row] = await tx.sql(
           `INSERT INTO registrations (event_id, name, email, furbaby_name, photo_consent, under_18, guardian_name, status, fee_status, check_in_code,
-             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds, custom_answers, promo, promo_discount, furbaby_sexes, furbaby_ages)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) RETURNING id`,
+             ticket_label, ticket_amount, human_count, furbaby_count, amount_due, pay_method, fee_reference, pay_amount, fee_checked_by, fee_checked_at, added_by, duplicate_allowed, furbaby_breeds, custom_answers, promo, promo_discount, furbaby_sexes, furbaby_ages, comp_type)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'confirmed',$8,$9,$10,$11,$12,$13,$14,$15,NULLIF($16,''),$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) RETURNING id`,
           [event.id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName, feeStatus, newCheckInCode(),
             ticket.value.label, ticket.value.amount, attendees.humans, attendees.furbabies, due.amount, proofDetails.method, proofDetails.reference, proofDetails.amount,
             feeStatus === "paid" ? admin.email : null, feeStatus === "paid" ? new Date().toISOString() : null, admin.email,
-            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies), answersJson(event, data), promo ? JSON.stringify(promoSnapshot(promo)) : null, discount, formSexes(data, attendees.furbabies), formAges(data, attendees.furbabies)],
+            Boolean(duplicate && form(data, "allowDuplicate") === "yes"), formBreeds(data, attendees.furbabies), answersJson(event, data), promo ? JSON.stringify(promoSnapshot(promo)) : null, discount, formSexes(data, attendees.furbabies), formAges(data, attendees.furbabies), comp],
         );
         const receipt = form(data, "receipt");
         if (receipt) {
@@ -294,7 +297,7 @@ export async function addRegistration(data) {
       if (dbError?.userMessage) await backWith(back, "error", dbError.userMessage);
       throw dbError;
     }
-    await logActivity(admin.email, "registration.add", event.title, { registrationId: created.id, payment: feeStatus });
+    await logActivity(admin.email, "registration.add", event.title, { registrationId: created.id, payment: feeStatus, ...(comp ? { comp } : {}) });
     let note = `${value.name} is added.`;
     if (data.get("sendEmail") === "on") {
       const sent = feeStatus === "waiting" ? await sendSpotHeld(created.id) : await sendPass(created.id, { paid: feeStatus === "paid" });
@@ -322,17 +325,19 @@ export async function updateRegistration(data) {
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
     const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config, promo_codes FROM events WHERE id=$1", [reg.event_id]);
-    const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true });
+    // Complimentary: picked in the ticket field; a form without one keeps what's saved.
+    const comp = data.has("ticket") ? compFromTicket(form(data, "ticket")) : reg.comp_type || null;
+    const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true, comp: Boolean(comp) });
     if (capacityRequest.error) await backWith(back, "error", capacityRequest.error);
     const tiers = event?.fee_required ? eventTiers(event) : [];
     const currentIndex = tiers.findIndex((tier) => tier.label === reg.ticket_label && Number(tier.amount) === Number(reg.ticket_amount));
-    const chosen = chooseTicket(tiers, form(data, "ticket") || (currentIndex >= 0 ? currentIndex : undefined), { anyTier: true });
+    const chosen = comp ? { value: compTicket(comp) } : chooseTicket(tiers, form(data, "ticket") || (currentIndex >= 0 && !reg.comp_type ? currentIndex : undefined), { anyTier: true });
     if (chosen.error) await backWith(back, "error", chosen.error);
-    const due = calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event?.included_furbabies_per_human, additionalFurbabyFee: event?.additional_furbaby_fee });
+    const due = comp ? { amount: 0 } : calculateAmountDue({ basis: cleanPricingBasis(event?.pricing_basis), tier: chosen.value, humans: attendees.humans, furbabies: attendees.furbabies, includedFurbabiesPerHuman: event?.included_furbabies_per_human, additionalFurbabyFee: event?.additional_furbaby_fee });
     if (due.error) await backWith(back, "error", due.error);
     // Promo code: the one it has keeps applying; the form can change it (checked like the RSVP) or clear it.
-    let promo = reg.promo || null;
-    if (data.has("promoSent")) {
+    let promo = comp ? null : reg.promo || null;
+    if (!comp && data.has("promoSent")) {
       const typed = normalizeCode(form(data, "promoCode"));
       if (!typed) promo = null;
       else if (typed !== normalizeCode(reg.promo?.code)) {
@@ -361,9 +366,9 @@ export async function updateRegistration(data) {
       await tx.sql(
         `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
            ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
-           fee_status=$13, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END, custom_answers=CASE WHEN $18 THEN $17::jsonb ELSE custom_answers END, promo=$19, promo_discount=$20, furbaby_sexes=CASE WHEN $22 THEN $21 ELSE furbaby_sexes END, furbaby_ages=CASE WHEN $24 THEN $23 ELSE furbaby_ages END WHERE id=$1`,
+           fee_status=$13, comp_type=$25, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END, custom_answers=CASE WHEN $18 THEN $17::jsonb ELSE custom_answers END, promo=$19, promo_discount=$20, furbaby_sexes=CASE WHEN $22 THEN $21 ELSE furbaby_sexes END, furbaby_ages=CASE WHEN $24 THEN $23 ELSE furbaby_ages END WHERE id=$1`,
         [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
-          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent"), answersJson(event, data), data.has("customAnswersSent"), promo ? JSON.stringify(promo) : null, discount, formSexes(data, attendees.furbabies), data.has("sexesSent"), formAges(data, attendees.furbabies), data.has("agesSent")],
+          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent"), answersJson(event, data), data.has("customAnswersSent"), promo ? JSON.stringify(promo) : null, discount, formSexes(data, attendees.furbabies), data.has("sexesSent"), formAges(data, attendees.furbabies), data.has("agesSent"), comp],
       );
       return true;
     });
@@ -470,7 +475,7 @@ export async function restoreRegistration(data) {
       await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
       if (reg.deleted_previous_status === "confirmed" && reg.capacity != null) {
         const [{ used }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id=$1 AND r.status='confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [reg.event_id]);
-        const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true });
+        const request = validateCapacityCounts(reg.capacity_basis, reg.human_count, reg.furbaby_count, { allowNoFurbaby: true, comp: Boolean(reg.comp_type) });
         if (request.error || Number(used || 0) + request.units > reg.capacity) return false;
       }
       const [duplicate] = await tx.sql(

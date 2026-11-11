@@ -21,6 +21,7 @@ import { eventLetters } from "../../../../lib/letterStore";
 import { participantInvitation } from "../../../../lib/invitationCard.mjs";
 import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
+import { compLabel, compLine } from "../../../../lib/compTickets.mjs";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -72,12 +73,17 @@ export default async function EventRegistrations({ params, searchParams }) {
   const toCheck = confirmed.filter((r) => r.fee_status === "review");
   const pending = confirmed.filter((r) => r.fee_status === "waiting" || r.fee_status === "rejected");
   const paid = confirmed.filter((r) => r.fee_status === "paid");
-  const capacityUsed = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at })).reduce((sum, r) => sum + capacityUnits(event.capacity_basis, { humans: r.human_count, furbabies: r.furbaby_count }), 0);
+  const capacityUsed = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at })).reduce((sum, r) => sum + capacityUnits(event.capacity_basis, { humans: r.human_count, furbabies: r.furbaby_count, comp: Boolean(r.comp_type) }), 0);
   const capacityLabel = capacityUnitLabel(event.capacity_basis);
   // Who's coming (owner, 2026-11-04): hoomans and furbabies on spots that count (as Capacity used), and how many of those are paid.
   const holding = confirmed.filter((r) => isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }));
   const total = (rows, key, none) => rows.reduce((sum, r) => sum + (r[key] ?? none), 0);
   const heads = { humans: total(holding, "human_count", 1), furbabies: total(holding, "furbaby_count", 0), paidHumans: total(paid, "human_count", 1), paidFurbabies: total(paid, "furbaby_count", 0) };
+  // Complimentary guests (Guest, VIP, Organizer) are coming but don't pay and sit outside capacity.
+  const comps = holding.filter((r) => r.comp_type);
+  heads.compHumans = total(comps, "human_count", 1);
+  heads.compFurbabies = total(comps, "furbaby_count", 0);
+  const headLine = (all, paidN, compN) => [`${paidN} paid`, all - paidN - compN ? `${all - paidN - compN} holding a spot` : "", compN ? `${compN} complimentary` : ""].filter(Boolean).join(" · ");
   // The vaccination tab only appears for events that ask for cards (or already have some).
   const showVax = Boolean(event.vaccination_record_required) || cardRows.length > 0;
   const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || event.vaccination_record_required || cardRows.length > 0);
@@ -125,8 +131,8 @@ export default async function EventRegistrations({ params, searchParams }) {
       <Flash params={query} />
 
       <section className="grid-4" aria-label="Who's coming">
-        <div className="stat"><span className="label">Hoomans registered</span><span className="value">{heads.humans}</span><span className="small muted">{paidEvent ? `${heads.paidHumans} paid · ${heads.humans - heads.paidHumans} holding a spot` : "On confirmed spots"}</span></div>
-        <div className="stat"><span className="label">Furbabies registered</span><span className="value">{heads.furbabies}</span><span className="small muted">{paidEvent ? `${heads.paidFurbabies} paid · ${heads.furbabies - heads.paidFurbabies} holding a spot` : "On confirmed spots"}</span></div>
+        <div className="stat"><span className="label">Hoomans registered</span><span className="value">{heads.humans}</span><span className="small muted">{paidEvent ? headLine(heads.humans, heads.paidHumans, heads.compHumans) : heads.compHumans ? `On confirmed spots · ${heads.compHumans} complimentary` : "On confirmed spots"}</span></div>
+        <div className="stat"><span className="label">Furbabies registered</span><span className="value">{heads.furbabies}</span><span className="small muted">{paidEvent ? headLine(heads.furbabies, heads.paidFurbabies, heads.compFurbabies) : "On confirmed spots"}</span></div>
       </section>
       <section className="grid-4" aria-label="Counts">
         {paidEvent ? (
@@ -177,11 +183,11 @@ export default async function EventRegistrations({ params, searchParams }) {
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
                 <tr key={r.id}>
-                  <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span>{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                  <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span>{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
                   <td><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
                   {paidEvent && (
                     <>
-                      <td>{ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
+                      <td>{r.comp_type ? compLine(r.comp_type) : ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
                       <td>
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
                         {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}

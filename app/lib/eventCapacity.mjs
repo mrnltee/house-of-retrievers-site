@@ -16,7 +16,9 @@ export function cleanCapacityBasis(value) {
   return CAPACITY_KEYS.has(value) ? value : "registration";
 }
 
-export function capacityUnits(basis, { humans = 1, furbabies = 0 } = {}) {
+/** `comp`: a complimentary registration (Guest, VIP, Organizer) uses no capacity. */
+export function capacityUnits(basis, { humans = 1, furbabies = 0, comp = false } = {}) {
+  if (comp) return 0;
   switch (cleanCapacityBasis(basis)) {
     case "human": return Number(humans) || 0;
     case "furbaby": return Number(furbabies) || 0;
@@ -33,7 +35,8 @@ export function capacityUnitLabel(basis, plural = true) {
 
 /** A furbaby-capacity event cannot accept a registration with no furbaby. */
 /** `allowNoFurbaby`: a Hooman only ticket (or an existing registration being rechecked) uses no furbaby slot. */
-export function validateCapacityCounts(basis, humans, furbabies, { allowNoFurbaby = false } = {}) {
+export function validateCapacityCounts(basis, humans, furbabies, { allowNoFurbaby = false, comp = false } = {}) {
+  if (comp) return { units: 0 };
   if (cleanCapacityBasis(basis) === "furbaby" && Number(furbabies) < 1 && !allowNoFurbaby) {
     return { error: "This event counts furbaby slots. Add at least one furbaby to continue." };
   }
@@ -43,7 +46,8 @@ export function validateCapacityCounts(basis, humans, furbabies, { allowNoFurbab
 // These expressions use e for events and r for registrations. Keep this
 // fallback for the brief period before an older deployment has read migration
 // 033: the database column itself defaults to registration.
-export const CAPACITY_UNITS_SQL = `CASE WHEN coalesce(e.capacity_basis, 'registration') = 'human' THEN coalesce(r.human_count, 1)
+export const CAPACITY_UNITS_SQL = `CASE WHEN r.comp_type IS NOT NULL THEN 0
+  WHEN coalesce(e.capacity_basis, 'registration') = 'human' THEN coalesce(r.human_count, 1)
   WHEN coalesce(e.capacity_basis, 'registration') = 'furbaby' THEN coalesce(r.furbaby_count, 0)
   ELSE 1 END`;
 

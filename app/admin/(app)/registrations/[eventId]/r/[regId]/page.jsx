@@ -26,6 +26,8 @@ import ImageLightbox from "../../../ImageLightbox";
 import ReasonPicker from "../../../ReasonPicker";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../../../../ui";
 import { EVENTS_URL } from "../../../../../../lib/eventsHost.mjs";
+import { compLine, compValue } from "../../../../../../lib/compTickets.mjs";
+import CompOptions from "../../../CompOptions";
 
 const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
 
@@ -126,7 +128,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
             </div>
             <dl className="facts">
               <div><dt>Status</dt><dd>{reg.status === "confirmed" ? (reg.checked_in_at ? `Checked in ${formatWhen(reg.checked_in_at)}` : "Confirmed") : reg.status === "waitlist" ? "Waitlist" : "Cancelled"}</dd></div>
-              {reg.fee_required && <div><dt>Ticket</dt><dd>{ticketLine(reg.ticket_label, reg.ticket_amount) || "—"}</dd></div>}
+              {(reg.fee_required || reg.comp_type) && <div><dt>Ticket</dt><dd>{reg.comp_type ? compLine(reg.comp_type) : ticketLine(reg.ticket_label, reg.ticket_amount) || "—"}</dd></div>}
               {reg.fee_required && <div><dt>Amount due</dt><dd>{due != null ? peso(due) : "—"}</dd></div>}
               {reg.promo && <div><dt>Promo code</dt><dd>{reg.promo.code} · {promoLabel(reg.promo)}{reg.promo_discount ? ` · ${peso(reg.promo_discount)} off` : ""}</dd></div>}
               <div><dt>People</dt><dd>{reg.human_count ?? 1}</dd></div>
@@ -221,13 +223,16 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 </div>
                 <BreedFields initial={reg.furbaby_breeds || []} sexes={reg.furbaby_sexes || []} ages={reg.furbaby_ages || []} count={Math.min(4, Math.max(1, reg.furbaby_count ?? 1))} />
                 <CustomAnswerFields config={reg.rsvp_form_config} answers={reg.custom_answers} />
-                {reg.fee_required && tiers.length > 0 && <label className="field"><span>Ticket</span>
-                  <select name="ticket" defaultValue={selectedTier >= 0 ? String(selectedTier) : ""} required={tiers.length > 1}>
-                    {tiers.length > 1 && <option value="">Choose…</option>}
-                    {tiers.map((tier, index) => <option key={index} value={index}>{ticketLine(tier.label, tier.amount)}</option>)}
+                <label className="field"><span>Ticket <small>Complimentary: no fee, not counted in capacity</small></span>
+                  <select name="ticket" defaultValue={reg.comp_type ? compValue(reg.comp_type) : selectedTier >= 0 ? String(selectedTier) : ""} required={tiers.length > 1}>
+                    {(tiers.length !== 1 || reg.comp_type) && <option value="">{tiers.length ? "Choose…" : "Regular sign-up"}</option>}
+                    {tiers.length > 0 && <optgroup label="Tickets">
+                      {tiers.map((tier, index) => <option key={index} value={index}>{ticketLine(tier.label, tier.amount)}</option>)}
+                    </optgroup>}
+                    <CompOptions />
                   </select>
-                </label>}
-                {reg.fee_required && <label className="field"><span>Promo code <small>Optional · change or clear it and the amount due is worked out again</small></span>
+                </label>
+                {reg.fee_required && !reg.comp_type && <label className="field"><span>Promo code <small>Optional · change or clear it and the amount due is worked out again</small></span>
                   <input type="hidden" name="promoSent" value="1" />
                   <input name="promoCode" maxLength={30} autoComplete="off" spellCheck={false} style={{ textTransform: "uppercase" }} defaultValue={reg.promo?.code || ""} placeholder="None" />
                 </label>}
