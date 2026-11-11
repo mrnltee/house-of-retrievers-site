@@ -482,6 +482,44 @@ export async function checkedInList(eventId) {
   }
 }
 
+/**
+ * The check-in display screen's feed (owner, 2026-11-12): guests checked in to
+ * this event after `since` (an ISO time the server gave last time), oldest
+ * first, plus the counts. Names, furbabies, the complimentary label and the
+ * welcome photo version only: never emails, payments or codes. The photo is
+ * left off when the guest said no to photos, since the display is public.
+ */
+export async function checkinFeed(eventId, since) {
+  try {
+    await actionAdmin("checkin:view");
+    if (!isUuid(eventId)) return { arrivals: [], cursor: null };
+    const [{ now }] = await sql("SELECT now() AS now");
+    const after = since && !Number.isNaN(Date.parse(since)) ? new Date(since).toISOString() : null;
+    const rows = await sql(
+      `SELECT id, event_id, name, email, furbaby_name, status, deleted_at, welcome_photo, welcome_photo_id, checked_in_at, photo_consent, comp_type
+         FROM registrations
+        WHERE event_id = $1 AND deleted_at IS NULL AND status = 'confirmed' AND checked_in_at IS NOT NULL
+          AND ($2::timestamptz IS NULL OR checked_in_at > $2::timestamptz - interval '5 seconds')
+        ORDER BY checked_in_at DESC LIMIT 40`,
+      [eventId, after],
+    );
+    const photos = await welcomePhotosFor(rows).catch(() => new Map());
+    const arrivals = rows.map((r) => {
+      const photo = r.photo_consent ? photos.get(r.id) : null;
+      return { id: r.id, name: r.name, furbaby: r.furbaby_name || "", at: new Date(r.checked_in_at).toISOString(), initials: initialsFor(r.name), comp: compLabel(r.comp_type), photo: photo && photo.source !== "initials" ? { version: photo.version } : null };
+    });
+    const [counts] = await sql(
+      `SELECT count(*) FILTER (WHERE checked_in_at IS NOT NULL)::int AS checked, count(*)::int AS confirmed
+         FROM registrations WHERE event_id = $1 AND deleted_at IS NULL AND status = 'confirmed'`,
+      [eventId],
+    );
+    return { arrivals, cursor: new Date(now).toISOString(), checked: counts.checked, confirmed: counts.confirmed, first: !after };
+  } catch (error) {
+    if (error instanceof Forbidden) return { arrivals: [], cursor: null, forbidden: true };
+    throw error;
+  }
+}
+
 // ---------- People ----------
 
 /** Correct a person's details (not their email, which is how Join and events find them). */

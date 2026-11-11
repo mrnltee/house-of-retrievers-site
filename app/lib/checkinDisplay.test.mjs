@@ -1,0 +1,20 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { DISPLAY_SECONDS, MAX_QUEUE, QUEUED_SECONDS, enqueue, holdSeconds } from "./checkinDisplay.mjs";
+
+test("a welcome stays 10 s alone, 5 s when others are waiting", () => {
+  assert.equal(DISPLAY_SECONDS, 10);
+  assert.equal(holdSeconds(0), 10);
+  assert.equal(holdSeconds(2), QUEUED_SECONDS);
+});
+
+test("arrivals queue oldest first, once each, capped", () => {
+  const seen = new Set(["a"]);
+  const q = enqueue([], [{ id: "c", at: "2026-11-30T07:00:03Z" }, { id: "a", at: "2026-11-30T07:00:00Z" }, { id: "b", at: "2026-11-30T07:00:01Z" }], seen);
+  assert.deepEqual(q.map((x) => x.id), ["b", "c"]);
+  assert.deepEqual(enqueue(q, [{ id: "b", at: "x" }], seen).map((x) => x.id), ["b", "c"]);
+  const many = Array.from({ length: 20 }, (_, i) => ({ id: `n${i}`, at: `2026-11-30T07:01:${String(i).padStart(2, "0")}Z` }));
+  const capped = enqueue([], many, new Set());
+  assert.equal(capped.length, MAX_QUEUE);
+  assert.equal(capped.at(-1).id, "n19");
+});

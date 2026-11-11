@@ -1010,3 +1010,37 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .repeat-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 600; }
 .repeat-line select { width: auto; min-width: 9ch; }
 .repeat-count { max-width: 460px; }
+
+/* Check-in display screen (owner, 2026-11-12): a laptop or TV welcoming guests checked in at the door. */
+.checkin-display { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: auto 1fr auto; background: radial-gradient(circle at 50% 40%, #1d1912, #0d0d0d 70%); color: var(--a-ivory); overflow: hidden; }
+.checkin-display .tag { margin: 0; color: var(--a-gold); font-size: clamp(12px, 1.4vw, 18px); font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.checkin-display-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 14px 24px; border-bottom: 1px solid #2a2419; font-size: 15px; }
+.checkin-display-title { font: 400 20px/1.2 "DM Serif Display", serif; color: var(--a-gold); margin-right: auto; }
+.checkin-display-count { font-weight: 600; }
+.checkin-display-status { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: #2a2620; }
+.checkin-display-status.is-live { background: #20402a; color: #bfe6c9; }
+.checkin-display-status.is-offline, .checkin-display-status.is-forbidden { background: #4a2020; color: #f2c4c4; }
+.checkin-display-btn { padding: 6px 12px; border: 1px solid #4a3f2c; border-radius: 999px; background: transparent; color: var(--a-ivory); font: inherit; font-size: 13px; text-decoration: none; cursor: pointer; }
+.checkin-display-btn:hover, .checkin-display-btn:focus-visible { border-color: var(--a-gold); }
+.checkin-display-stage { display: grid; place-items: center; padding: 24px; text-align: center; }
+.checkin-display-card, .checkin-display-idle { display: grid; justify-items: center; gap: 6px; width: min(900px, 100%); }
+.checkin-display-event { margin: 4px 0 6px; color: var(--a-ivory); font: 400 clamp(26px, 3.6vw, 52px)/1.05 "DM Serif Display", serif; }
+.checkin-display-name { margin: 10px 0 0; color: var(--a-ivory); font: 400 clamp(44px, 7vw, 104px)/1 "DM Serif Display", serif; }
+.checkin-display-furbaby { margin: 4px 0 0; font-size: clamp(18px, 2.4vw, 32px); opacity: .9; }
+.checkin-display-message { margin: 14px 0 0; max-width: 40ch; font-size: clamp(16px, 1.8vw, 24px); color: #e7dfcd; }
+.checkin-display-more { margin: 16px 0 0; color: var(--a-gold); font-weight: 700; }
+.checkin-display-idle p:last-child { margin: 8px 0 0; color: #cfc8b6; font-size: clamp(15px, 1.6vw, 20px); }
+.checkin-display .checkin-welcome-comp { margin: 8px auto 0; padding: 4px 14px; border: 1px solid var(--a-gold); border-radius: 999px; color: var(--a-gold); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: clamp(12px, 1.3vw, 16px); }
+.display-face.is-big { width: clamp(140px, 20vw, 260px); height: clamp(140px, 20vw, 260px); margin-bottom: 14px; }
+.display-face.is-big .checkin-welcome-initials { font-size: clamp(52px, 7vw, 96px); }
+.display-face.is-small { width: 44px; height: 44px; margin: 0; border-width: 2px; flex: none; }
+.display-face.is-small .checkin-welcome-initials { font-size: 17px; }
+.checkin-display-recent { display: flex; align-items: center; gap: 18px; padding: 12px 24px 16px; border-top: 1px solid #2a2419; overflow: hidden; }
+.checkin-display-recent ol { display: flex; gap: 22px; margin: 0; padding: 0; list-style: none; overflow: hidden; }
+.checkin-display-recent li { display: flex; align-items: center; gap: 10px; white-space: nowrap; font-size: 14px; }
+.checkin-display-recent small { color: #cfc8b6; }
+@media (prefers-reduced-motion: no-preference) {
+  .checkin-display-card { animation: display-in .45s ease-out; }
+  @keyframes display-in { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+}
+.checkin-top .checkin-display-link { justify-self: start; margin-top: 6px; color: white; border-color: rgba(255,255,255,.35); }
