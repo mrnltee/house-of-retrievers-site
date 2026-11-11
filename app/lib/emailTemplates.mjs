@@ -511,18 +511,52 @@ export function invitationEmail({ subject, cover, filename, name = "", cardSrc =
   const paragraphs = messageParagraphs(blocks.join("\n\n"), {});
   // The card sits after the opening line, so the guest sees it right away.
   const [lead = "", ...after] = paragraphs;
-  return build({
-    subject,
-    preheader: messagePreview(blocks.join(" ")),
-    greeting: greeting || undefined,
-    heading: subject,
-    showHeading: false,
-    centered: false,
-    paragraphs: lead ? [lead] : [],
-    image: { src: cardSrc, width: 480, height: 600, alt: `Invitation card${name ? ` for ${name}` : ""}` },
-    after,
-    footnote: `Your full invitation is attached as a PDF (${filename}). Reply to this email to let us know if you can join us.`,
-  });
+  const image = { src: cardSrc, width: 480, height: 600, alt: `Invitation card${name ? ` for ${name}` : ""}` };
+  const footnote = `Your full invitation is attached as a PDF (${filename}). Reply to this email to let us know if you can join us.`;
+  const parts = { subject, greeting: greeting || undefined, heading: subject, showHeading: false, centered: true, paragraphs: lead ? [lead] : [], image, after, footnote };
+  return { subject, html: invitationFrame({ ...parts, preheader: messagePreview(blocks.join(" ")) }), text: plain(parts) };
+}
+
+/**
+ * The invitation email, dressed like HOR's card (owner, 2026-11-11): black with
+ * gold rules and serif type, the logo band on top, the card in the middle.
+ * Declared dark-only, so mail apps don't recolour it in dark mode. The sign-off
+ * and footer keep their markers, so HOR's saved ones (applyEmailFrame) still apply.
+ */
+function invitationFrame({ preheader, greeting, paragraphs, image, after = [], footnote, heading }) {
+  const GOLD = "#C9A04E";
+  const IVORY = "#EFE9DA";
+  const MUTED = "#A9A294";
+  const serif = "Georgia,'Times New Roman',serif";
+  const p = (html) => `<p style="margin:0 0 16px;font:17px/1.65 ${serif};color:${IVORY};text-align:center">${html}</p>`;
+  const rule = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 22px"><tr><td style="padding:0 64px"><div style="height:1px;line-height:1px;font-size:0;background:${GOLD}">&nbsp;</div></td></tr></table>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"><title>${esc(heading)}</title>
+<style>:root{color-scheme:dark;supported-color-schemes:dark} a{color:${GOLD}} .em-text-link{color:${GOLD}!important}</style></head>
+<body style="margin:0;padding:0;background:#000000">
+<span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000" bgcolor="#000000"><tr><td align="center" style="padding:24px 12px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0D0D0D" style="max-width:560px;background:#0D0D0D;border:1px solid #3a3122;border-radius:18px;overflow:hidden">
+    <tr><td style="padding:0;line-height:0;background:#0D0D0D"><img src="${HEADER_CENTER}" width="560" alt="${ORG}" style="display:block;border:0;width:100%;max-width:560px;height:auto"></td></tr>
+    <tr><td align="center" style="padding:8px 32px 0;text-align:center">
+      <p style="margin:0 0 10px;font:12px/1.4 ${serif};letter-spacing:4px;text-transform:uppercase;color:${GOLD}">You are cordially invited</p>
+      ${rule}
+      ${greeting ? `<p style="margin:0 0 18px;font:italic 24px/1.35 ${serif};color:${GOLD};text-align:center">${esc(greeting)}</p>` : ""}
+      ${paragraphs.map(p).join("\n      ")}
+    </td></tr>
+    <tr><td align="center" style="padding:6px 24px 22px">
+      <img src="${esc(image.src)}" width="${image.width}" height="${image.height}" alt="${esc(image.alt)}" style="display:block;margin:0 auto;border:1px solid ${GOLD};border-radius:6px;width:100%;max-width:${image.width}px;height:auto;background:#000000">
+    </td></tr>
+    <tr><td align="center" style="padding:0 32px 8px;text-align:center">
+      ${after.map(p).join("\n      ")}
+      ${rule}
+      <p style="margin:0 0 26px;font:italic 17px/1.6 ${serif};color:${GOLD};text-align:center"><!--hor-signoff-->${SIGNOFF.join("<br>")}<!--/hor-signoff--></p>
+    </td></tr>
+    <tr><td align="center" style="padding:20px 32px 26px;border-top:1px solid #2a2419;font:13px/1.55 Helvetica,Arial,sans-serif;color:${MUTED};text-align:center">
+      <!--hor-foot-->THORSI · ${ORG}<br>Reply to this email to reach the team.<!--/hor-foot-->${footnote ? `<br><br>${esc(footnote)}` : ""}
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>`;
 }
 
 const messagePreview = (text) => String(text || "").replace(/\[([^\]]+)\]\(https:\/\/[^)]+\)/g, "$1").replace(/\*\*/g, "").replace(/\s+/g, " ").trim().slice(0, 110);
