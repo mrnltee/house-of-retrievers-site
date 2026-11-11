@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import FormatBar, { boldKey } from "./FormatBar";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate, prepareLetter } from "../../../../lib/letters.mjs";
-import { applyEmailFrame, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, invitationEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { cleanInvitation } from "../../../../lib/invitationCard.mjs";
+import InvitationCardField, { invitationPostFields } from "./InvitationCardField";
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
@@ -13,7 +15,9 @@ import LetterView from "../LetterView";
 
 const SAMPLE = "Pawsome Pet Shop";
 // The sample recipient for the preview: fills the address block like a real record would.
-const TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
+const LETTER_TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
+// Invitation cards preview for the guest the card's sample is drawn for.
+const INVITE_TO = { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez", address: "", salutation: "Ms. Perez" };
 
 /** Edits one letter with a live preview. "Preview PDF" posts the unsaved wording to the PDF route. */
 export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "", eventFills = null, eventTitle = "", frame = null }) {
@@ -24,8 +28,16 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const [attachPdf, setAttachPdf] = useState(savedAttach);
   // Signature settings; `upload` is a newly picked image (a data URL) until saved.
   const [sig, setSig] = useState({ ...savedSig, upload: "" });
+  // Invitation card (owner, 2026-11-11): new pictures are data URLs until saved.
+  const savedInv = cleanInvitation(letter.invitation);
+  const freshInv = () => ({ ...savedInv, pages: [...savedInv.pages], cardUpload: "", pageUploads: [] });
+  const [inv, setInv] = useState(freshInv);
+  const [cardSrc, setCardSrc] = useState("");
+  const invChanged = inv.cardUpload !== "" || inv.pageUploads.some(Boolean) || ["on", "card", "y", "nameSize", "orgSize"].some((k) => inv[k] !== savedInv[k]) || inv.pages.join() !== savedInv.pages.join();
+  const invite = inv.on;
+  const TO = invite ? INVITE_TO : LETTER_TO;
   const sigChanged = sig.upload !== "" || ["on", "x", "dy", "width"].some((k) => sig[k] !== savedSig[k]) || sig.image !== savedSig.image;
-  const changed = sigChanged || attachPdf !== savedAttach || JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
+  const changed = invChanged || sigChanged || attachPdf !== savedAttach || JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const sigView = { on: sig.on, src: sig.upload || sig.image, x: sig.x, dy: sig.dy, width: sig.width };
   const moveSig = ({ x, dy }) => setSig((s) => ({ ...s, x: Math.min(SIGNATURE_LIMITS.x[1], Math.max(0, Math.round(x * 1000) / 1000)), dy: Math.min(SIGNATURE_LIMITS.dy[1], Math.max(SIGNATURE_LIMITS.dy[0], Math.round(dy))) }));
   // "Put it above the signatory's name": before the line naming who signs, else the sign-off.
@@ -39,10 +51,10 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [changed]);
-  const texts = attachPdf ? [fields.subject, fields.cover, fields.body] : [fields.subject, fields.cover];
-  const blanks = useMemo(() => blanksOf(...texts), [fields, attachPdf]); // eslint-disable-line react-hooks/exhaustive-deps
+  const texts = attachPdf && !invite ? [fields.subject, fields.cover, fields.body] : [fields.subject, fields.cover];
+  const blanks = useMemo(() => blanksOf(...texts), [fields, attachPdf, invite]); // eslint-disable-line react-hooks/exhaustive-deps
   // The automatic blanks this letter uses, e.g. [Company Name].
-  const autos = useMemo(() => Object.keys(AUTO_BLANKS).filter((label) => texts.some((t) => t.includes(`[${label}]`) || t.includes(`[${label}?]`))), [fields, attachPdf]); // eslint-disable-line react-hooks/exhaustive-deps
+  const autos = useMemo(() => Object.keys(AUTO_BLANKS).filter((label) => texts.some((t) => t.includes(`[${label}]`) || t.includes(`[${label}?]`))), [fields, attachPdf, invite]); // eslint-disable-line react-hooks/exhaustive-deps
   // An event's letter: its [Event …] blanks show that event's real details, and aren't asked when sending.
   const values = useMemo(() => ({ ...standard, ...(eventFills || {}) }), [standard, eventFills]);
   const fromEvent = eventFills ? blanks.filter((b) => eventFills[b.label] !== undefined) : [];
@@ -51,8 +63,9 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values }), [fields.body, values]);
   const email = useMemo(() => {
     const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { ...TO, values });
+    if (invite) return applyEmailFrame(invitationEmail({ subject: p.subject, cover: p.cover, filename: p.filename, name: "Ms. Malou Perez", cardSrc: cardSrc || "data:," }), frame);
     return applyEmailFrame(letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename, attached: attachPdf }), frame);
-  }, [fields, letter.name, values, attachPdf, frame]);
+  }, [fields, letter.name, values, attachPdf, frame, invite, cardSrc]);
   // Puts [Label] where the cursor is in the letter (or at the end).
   const insertBlank = (label) => {
     const el = bodyRef.current;
@@ -81,18 +94,24 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
           <input type="text" name="subject" maxLength={LETTER_LIMITS.subject} required value={fields.subject} onChange={set("subject")} />
         </label>
         <label className="check attach-choice">
+          <input type="checkbox" checked={invite} onChange={(e) => setInv((s) => ({ ...s, on: e.target.checked }))} />
+          <span><strong>Send as an invitation card</strong><br /><span className="small muted">{invite ? "Each guest gets their own card with their name in gold script and their organization under it: shown in the email, and as a PDF with the pages you add." : "For distinguished guests: a personalised card in place of a typed letter."}</span></span>
+        </label>
+        {!invite && <label className="check attach-choice">
           <input type="checkbox" checked={attachPdf} onChange={(e) => setAttachPdf(e.target.checked)} />
           <span><strong>Attach a PDF letter</strong><br /><span className="small muted">{attachPdf ? "The email goes out with the letter below as a PDF, on HOR's letterhead." : "Email only: no letter and no PDF. The email below is the whole message."}</span></span>
-        </label>
-        <input type="hidden" name="attachPdf" value={attachPdf ? "yes" : "no"} />
-        <h2 className="letter-step"><span>2</span> {attachPdf ? "Covering email" : "Email"}</h2>
+        </label>}
+        <input type="hidden" name="attachPdf" value={attachPdf || invite ? "yes" : "no"} />
+        <h2 className="letter-step"><span>2</span> {invite ? "Personal note (the email)" : attachPdf ? "Covering email" : "Email"}</h2>
         <div className="field">
-          <label htmlFor="letter-cover" className="field-head">Email text <small>{attachPdf ? "The short message the PDF is attached to. Start with “Dear [Salutation],”, keep it to a few lines; the details go in the letter." : "The whole message. Start with “Dear [Salutation],”. **Bold**, [links](https://…) and [fill-ins] work here."}</small></label>
+          <label htmlFor="letter-cover" className="field-head">Email text <small>{invite ? "Start with “Dear [Salutation],”. The guest's card appears after the first paragraph; the rest follows it." : attachPdf ? "The short message the PDF is attached to. Start with “Dear [Salutation],”, keep it to a few lines; the details go in the letter." : "The whole message. Start with “Dear [Salutation],”. **Bold**, [links](https://…) and [fill-ins] work here."}</small></label>
           <FormatBar target={coverRef} keys={["greeting", "|", "link", "blank"]} value={fields.cover} onChange={put("cover")} label="Covering email formatting">
             <textarea id="letter-cover" ref={coverRef} name="cover" rows={6} maxLength={LETTER_LIMITS.cover} required value={fields.cover} onChange={set("cover")} />
           </FormatBar>
         </div>
-        {attachPdf && (
+        {invite && <h2 className="letter-step"><span>3</span> The invitation card</h2>}
+        <InvitationCardField inv={inv} setInv={setInv} letterKey={letter.key} action={pdfAction} onPreview={setCardSrc} />
+        {attachPdf && !invite && (
           <>
         <h2 className="letter-step"><span>3</span> The letter (PDF attachment)</h2>
         <div className="field">
@@ -107,7 +126,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
         </details>
           </>
         )}
-        <h2 className="letter-step"><span>{attachPdf ? 4 : 3}</span> Blanks in this {attachPdf ? "letter" : "email"}</h2>
+        <h2 className="letter-step"><span>{attachPdf || invite ? 4 : 3}</span> Blanks in this {attachPdf && !invite ? "letter" : "email"}</h2>
         <p className="small muted" style={{ margin: 0 }}>Words in [square brackets] are filled in for each recipient. A ? (like [Address?]) makes it optional: its line is left out when there&apos;s nothing to put.</p>
         <div className="template-vars letter-blanks">
           {eventFills && (
@@ -136,7 +155,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
             <ul>{asked.map((b) => <li key={b.label}><span className="tag-badge">[{b.label}{b.optional ? "?" : ""}]</span> <span className="small muted">{b.optional ? "optional" : "required"}{blankSample(b.label, letter.key) ? <> · e.g. <em>{blankSample(b.label, letter.key).replace(/^e\.g\. /, "")}</em></> : null}</span></li>)}</ul>
           ) : <p className="small muted">Nothing. This letter sends without typing anything.</p>}
         </div>
-        {attachPdf && (
+        {attachPdf && !invite && (
           <>
         <h2 className="letter-step"><span>5</span> Signature <small className="muted">optional</small></h2>
         {sigChanged && <p className="small sig-status is-warn" role="status" style={{ margin: 0 }}>● Signature changes aren&apos;t saved yet. Press Save below; letters are sent with the saved version.</p>}
@@ -167,17 +186,23 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
               Back to the original
             </ConfirmButton>
           )}
-          {original && changed && <button type="button" className="linkish" onClick={() => { setFields({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body }); setSig({ ...savedSig, upload: "" }); setAttachPdf(savedAttach); }}>Undo my edits</button>}
+          {original && changed && <button type="button" className="linkish" onClick={() => { setFields({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body }); setSig({ ...savedSig, upload: "" }); setAttachPdf(savedAttach); setInv(freshInv()); }}>Undo my edits</button>}
         </div>
       </form>
 
       <section className="card template-preview">
         <div className="template-preview-head">
           <div>
-            <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {SAMPLE}</p>
+            <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {invite ? INVITE_TO.contact : SAMPLE}</p>
             <p className="template-subject"><strong>{fillLetter(fields.subject, { ...TO, values })}</strong></p>
           </div>
-          {attachPdf && <form method="post" action={pdfAction} target="_blank">
+          {invite && <form method="post" action={pdfAction} target="_blank">
+            <input type="hidden" name="letter" value={letter.key} />
+            <input type="hidden" name="subject" value={fields.subject} />
+            {Object.entries(invitationPostFields(inv)).flatMap(([k, v]) => (Array.isArray(v) ? v : [v]).map((one, i) => <input key={`${k}${i}`} type="hidden" name={k} value={one} />))}
+            <button type="submit" className="btn ghost" data-confirm="not-needed-read-only">Preview PDF</button>
+          </form>}
+          {attachPdf && !invite && <form method="post" action={pdfAction} target="_blank">
             <input type="hidden" name="letter" value={letter.key} />
             <input type="hidden" name="sample" value="1" />
             <input type="hidden" name="subject" value={fields.subject} />
@@ -186,7 +211,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
             <button type="submit" className="btn ghost" data-confirm="not-needed-read-only">Preview PDF</button>
           </form>}
         </div>
-        <LetterView emailOnly={!attachPdf} text={preview} email={email} signature={sigView} onMoveSignature={sig.on ? moveSig : undefined} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body, signature: JSON.stringify({ on: sig.on, image: sig.image, x: sig.x, dy: sig.dy, width: sig.width }), signatureUpload: sig.upload }} />
+        <LetterView emailOnly={!attachPdf || invite} text={preview} email={email} signature={sigView} onMoveSignature={sig.on ? moveSig : undefined} action={pdfAction} fields={{ letter: letter.key, sample: "1", subject: fields.subject, cover: fields.cover, body: fields.body, signature: JSON.stringify({ on: sig.on, image: sig.image, x: sig.x, dy: sig.dy, width: sig.width }), signatureUpload: sig.upload }} />
       </section>
     </div>
   );
@@ -197,7 +222,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
  * signature can be placed the same way in every letter. Typing is clamped to
  * the range when the box loses focus.
  */
-function SliderField({ label, hint, unit, min, max, step, value, onChange }) {
+export function SliderField({ label, hint, unit, min, max, step, value, onChange }) {
   const [draft, setDraft] = useState(null);
   const clamp = (n) => Math.min(max, Math.max(min, Math.round(n / step) * step));
   const commit = () => {

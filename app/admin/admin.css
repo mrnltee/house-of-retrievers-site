@@ -844,6 +844,10 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .letter-sign-off { margin: 0; padding: 4px 8px; border: 1px dashed var(--a-line); border-radius: 6px; color: var(--a-muted); font-style: italic; }
 .signature-controls { display: grid; gap: 10px; }
 .signature-controls input[type="range"] { width: 100%; }
+/* Invitation card: the sample card as the server draws it (4:5). */
+.invitation-card-preview { display: grid; gap: 6px; justify-items: center; padding: 10px; border-radius: 12px; background: #0D0D0D; min-height: 120px; align-content: center; }
+.invitation-card-preview img { display: block; width: 100%; max-width: 360px; aspect-ratio: 4 / 5; border-radius: 8px; }
+.invitation-card-preview .muted { color: #cfc8b6; }
 
 /* Signature sliders: the exact value beside each, in HOR's colours. */
 .slider-field { gap: 4px; }

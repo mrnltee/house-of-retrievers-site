@@ -218,7 +218,7 @@ export function letterWithOverride(key, saved) {
   const starter = LETTER_STARTERS.find((l) => l.key === key);
   if (!starter && !saved) return null;
   const pick = (field) => (saved && typeof saved[field] === "string" && saved[field] ? saved[field] : starter?.[field] || "");
-  return { key, name: pick("name"), subject: pick("subject"), cover: pick("cover"), body: pick("body"), signature: saved?.signature || null, attachPdf: saved ? saved.attach_pdf !== false : true, custom: Boolean(saved), starter: Boolean(starter) };
+  return { key, name: pick("name"), subject: pick("subject"), cover: pick("cover"), body: pick("body"), signature: saved?.signature || null, invitation: saved?.invitation || null, attachPdf: saved ? saved.attach_pdf !== false : true, custom: Boolean(saved), starter: Boolean(starter) };
 }
 
 /** Everything one recipient gets: email subject and cover text, and the letter's blocks. */

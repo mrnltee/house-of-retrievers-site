@@ -61,7 +61,7 @@ function frame({ preheader, greeting, heading, paragraphs, image, button, after 
   // A centered picture after the message (the check-in QR), with a caption under it.
   const picture = image
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px"><tr><td align="center">
-         <img src="${esc(image.src)}" width="${image.width || 200}" height="${image.width || 200}" alt="${esc(image.alt || "")}" style="display:block;margin:0 auto;border:0;border-radius:8px;background:#ffffff">
+         <img src="${esc(image.src)}" width="${image.width || 200}" height="${image.height || image.width || 200}" alt="${esc(image.alt || "")}" style="display:block;margin:0 auto;border:0;border-radius:8px;background:${image.height ? "#0D0D0D" : "#ffffff"};${image.height ? "width:100%;max-width:" + image.width + "px;height:auto;" : ""}">
          ${image.caption ? `<p class="em-p" style="margin:10px 0 0;font:700 15px Helvetica,Arial,sans-serif;color:#2b2a27;letter-spacing:1px">${esc(image.caption)}</p>` : ""}
        </td></tr></table>`
     : "";
@@ -492,6 +492,36 @@ export function letterCoverEmail({ subject, cover, filename, attached = true }) 
     // the fill-in fields (owner, 2026-10-28), so point to a PDF viewer.
     // An email-only letter (no PDF, owner 2026-11-04) has no attachment note.
     footnote: attached ? `Our letter is attached as a PDF (${filename}). To fill in its form, open it in a PDF viewer such as Adobe Acrobat Reader (free), Preview on a Mac, or Microsoft Edge, rather than Google Docs, which changes the layout. Reply to this email to talk to the team.` : undefined,
+  });
+}
+
+/** The Content-ID of the guest's card picture inside an invitation email. */
+export const INVITATION_CARD_CID = "invitation-card";
+
+/**
+ * An invitation card email (owner, 2026-11-11): the personal note (a first
+ * "Dear …," paragraph becomes the greeting), the guest's own card under it,
+ * the rest of the note, and a line saying the full invitation is attached.
+ * `cardSrc` is the inline picture (cid:) when sending; previews pass a URL.
+ */
+export function invitationEmail({ subject, cover, filename, name = "", cardSrc = `cid:${INVITATION_CARD_CID}` }) {
+  const text = String(cover || "").replace(/\r\n?/g, "\n").trim();
+  const blocks = text.split(/\n{2,}/);
+  const greeting = /^dear\b/i.test(blocks[0] || "") ? blocks.shift().trim() : "";
+  const paragraphs = messageParagraphs(blocks.join("\n\n"), {});
+  // The card sits after the opening line, so the guest sees it right away.
+  const [lead = "", ...after] = paragraphs;
+  return build({
+    subject,
+    preheader: messagePreview(blocks.join(" ")),
+    greeting: greeting || undefined,
+    heading: subject,
+    showHeading: false,
+    centered: false,
+    paragraphs: lead ? [lead] : [],
+    image: { src: cardSrc, width: 480, height: 600, alt: `Invitation card${name ? ` for ${name}` : ""}` },
+    after,
+    footnote: `Your full invitation is attached as a PDF (${filename}). Reply to this email to let us know if you can join us.`,
   });
 }
 

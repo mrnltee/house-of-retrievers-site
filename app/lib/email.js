@@ -14,7 +14,7 @@ export function emailReady() {
 /**
  * `idempotencyKey` ("<event>/<id>") stops a retry from sending twice: Resend
  * returns the first result for the same key within 24 hours. `attachments`:
- * [{ filename, content: Buffer }] (a letter's PDF). `cc`: more addresses copied in (a guest's representative); `bcc`: blind copies.
+ * [{ filename, content: Buffer, contentId? }] (a letter's PDF; contentId makes a picture inline, shown with src="cid:<id>"). `cc`: more addresses copied in (a guest's representative); `bcc`: blind copies.
  */
 export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, idempotencyKey, attachments }) {
   // HOR's saved sign-off and footer (Email templates), in place of the standard ones.
@@ -38,7 +38,7 @@ export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, id
         subject,
         html,
         text,
-        ...(attachments?.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content).toString("base64") })) } : {}),
+        ...(attachments?.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content).toString("base64"), ...(a.contentId ? { content_id: a.contentId } : {}) })) } : {}),
         ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
       }),
       signal: AbortSignal.timeout(attachments?.length ? 20000 : 10000),

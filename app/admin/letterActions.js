@@ -7,7 +7,7 @@ import { emailReady, sendEmail } from "../lib/email";
 import { logSend } from "../lib/letterSendsStore";
 import { EVENT_BLANKS, eventLetterKey } from "../lib/letterEvent.mjs";
 import { eventFills } from "../lib/letterEventStore";
-import { letterCoverEmail } from "../lib/emailTemplates.mjs";
+import { INVITATION_CARD_CID, invitationEmail, letterCoverEmail } from "../lib/emailTemplates.mjs";
 import { escapeFills, fillDesign, renderDesign, sendBlanks } from "../lib/emailDesign.mjs";
 import { loadDesign, loadHouse } from "../lib/emailDesignStore";
 import { LETTER_LIMITS, LETTER_STARTERS, MAX_LETTER_RECIPIENTS, blanksOf, cleanEdits, fillLetter, unionBlanks, wordingFor, letterDate, missingBlanks, prepareLetter, recipientFields } from "../lib/letters.mjs";
@@ -21,6 +21,8 @@ import { cleanSignature } from "../lib/letterSignature.mjs";
 import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
 import { copiesFor, parseCopies } from "../lib/letterCopies.mjs";
 import { readSendTo, withSendTo } from "../lib/letterSendTo.mjs";
+import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames } from "../lib/invitationCard.mjs";
+import { extraPages, invitationPdf, renderCard } from "../lib/invitationRender";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -51,23 +53,38 @@ export async function saveLetter(data) {
     if (!looksLikeKey(key) || !before) await backWith("/letters", "error", "That letter doesn't exist.");
     // Email only (no PDF): the letter text and signature aren't shown, so the saved ones are kept as they are.
     const attachPdf = form(data, "attachPdf") !== "no";
-    const f = { name: form(data, "name").trim(), subject: form(data, "subject").replace(/\s+/g, " ").trim(), cover: form(data, "cover").replace(/\r\n?/g, "\n").trim(), body: attachPdf ? form(data, "body").replace(/\r\n?/g, "\n").trim() : before.body };
+    const f = { name: form(data, "name").trim(), subject: form(data, "subject").replace(/\s+/g, " ").trim(), cover: form(data, "cover").replace(/\r\n?/g, "\n").trim(), body: attachPdf && data.has("body") ? form(data, "body").replace(/\r\n?/g, "\n").trim() : before.body };
     for (const [field, max] of Object.entries({ name: LETTER_LIMITS.name, subject: LETTER_LIMITS.subject, cover: LETTER_LIMITS.cover, body: LETTER_LIMITS.body })) {
       if (!f[field]) await backWith(back, "error", `The ${field === "body" ? "letter" : field === "cover" ? "email text" : field} can't be empty.`);
       if (f[field].length > max) await backWith(back, "error", `The ${field === "body" ? "letter" : field} is too long (${max.toLocaleString("en-PH")} characters at most).`);
     }
     // Signature: switched on or off, where it sits, and its image (PNG or JPEG for the PDF).
     let signature = before.signature;
-    if (attachPdf) {
+    if (attachPdf && data.has("signatureOn")) {
       const image = await pictureFrom(data, "signature", admin.email, { types: /^image\/(?:png|jpeg)$/, private: true });
       if (image.error) await backWith(back, "error", image.error);
       signature = cleanSignature({ on: form(data, "signatureOn"), image: image.url, x: form(data, "signatureX"), dy: form(data, "signatureDy"), width: form(data, "signatureWidth") });
       if (signature.on && !signature.image) await backWith(back, "error", "Add a signature image, or switch the signature off.");
     }
+    // Invitation card (owner, 2026-11-11): the card art, its extra pages and where the name goes.
+    // A form without the card section (an older open tab) keeps the saved settings.
+    let invitation = before.invitation;
+    if (data.has("invitationOn")) {
+      const card = await pictureFrom(data, "inviteCard", admin.email, { private: true });
+      if (card.error) await backWith(back, "error", card.error);
+      const pages = [];
+      for (let i = 0; i < MAX_INVITATION_PAGES; i += 1) {
+        const page = await pictureFrom(data, `invitePage${i}`, admin.email, { private: true });
+        if (page.error) await backWith(back, "error", page.error);
+        if (page.url) pages.push(page.url);
+      }
+      invitation = cleanInvitation({ on: form(data, "invitationOn") === "1", card: card.url, pages, y: form(data, "invitationY"), nameSize: form(data, "invitationNameSize"), orgSize: form(data, "invitationOrgSize") });
+      if (invitation.on && !invitation.card) await backWith(back, "error", "Upload the blank invitation card, or switch the invitation card off.");
+    }
     await sql(
-      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, attach_pdf, updated_by, updated_at) VALUES ($1, $2, $3, $4, $5, $7, $8, $6, now())
-       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, cover = EXCLUDED.cover, body = EXCLUDED.body, signature = EXCLUDED.signature, attach_pdf = EXCLUDED.attach_pdf, updated_by = EXCLUDED.updated_by, updated_at = now()`,
-      [key, f.name, f.subject, f.cover, f.body, admin.email, signature ? JSON.stringify(signature) : null, attachPdf],
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, attach_pdf, invitation, updated_by, updated_at) VALUES ($1, $2, $3, $4, $5, $7, $8, $9, $6, now())
+       ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, subject = EXCLUDED.subject, cover = EXCLUDED.cover, body = EXCLUDED.body, signature = EXCLUDED.signature, attach_pdf = EXCLUDED.attach_pdf, invitation = EXCLUDED.invitation, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+      [key, f.name, f.subject, f.cover, f.body, admin.email, signature ? JSON.stringify(signature) : null, attachPdf || isInvitation(invitation), invitation ? JSON.stringify(invitation) : null],
     );
     await logActivity(admin.email, "letter.save", f.name, { letter: key, ...(attachPdf ? {} : { pdf: "none" }) });
     await backWith(back, "ok", "Saved. Letters sent from now on use this wording.");
@@ -118,9 +135,11 @@ export async function sendLetters(data) {
     const letter = await loadLetter(form(data, "letter"));
     if (!letter) await backWith(back, "error", "Pick a letter.");
     // A letter set to email only never attaches a PDF; a PDF letter can skip it for one send.
-    const attach = letter.attachPdf && form(data, "attach") !== "no";
+    // An invitation card always goes with its card picture and PDF (owner, 2026-11-11).
+    const invite = isInvitation(letter.invitation);
+    const attach = invite || (letter.attachPdf && form(data, "attach") !== "no");
     // A brand email design (Email templates → Brand email designs), when one was picked.
-    const design = isUuid(form(data, "design")) ? await loadDesign(form(data, "design")) : null;
+    const design = !invite && isUuid(form(data, "design")) ? await loadDesign(form(data, "design")) : null;
     if (form(data, "design") && (!design || design.kind === "house")) await backWith(back, "error", "That email design wasn't found. Pick another.");
     // Wording edited for this send (one brand, or all): every version's fill-ins are asked.
     const sendRefs = [...new Set(data.getAll("to").filter((v) => typeof v === "string"))];
@@ -159,7 +178,14 @@ export async function sendLetters(data) {
     const house = design ? await loadHouse() : null;
     const date = letterDate();
     const batch = Date.now();
-    const signature = attach ? await signatureForPdf(letter.signature) : null;
+    const signature = attach && !invite ? await signatureForPdf(letter.signature) : null;
+    // Invitation cards: each guest's name and organization (typed on the send page, else from the record),
+    // and the extra pages, made once for the whole send.
+    const typedNames = readCardNames(form(data, "cardNames"), refs).byRef;
+    let invitePages = [];
+    if (invite) {
+      try { invitePages = await extraPages(letter.invitation); } catch (error) { await backWith(back, "error", `The invitation's pages couldn't be read (${error?.message || error}).`); }
+    }
     const sent = [];
     const skipped = [];
     const failed = [];
@@ -170,7 +196,18 @@ export async function sendLetters(data) {
       // A design: its email, filled in for this recipient (PDF attached when on). Else, with the
       // PDF: a short cover email with the letter attached; without: the letter is the email.
       let mail;
-      if (design) {
+      if (invite) {
+        const names = cardNames(r, typedNames[r.ref]);
+        try {
+          const card = await renderCard(letter.invitation, names);
+          const pdf = await invitationPdf([card, ...invitePages], { title: prepared.subject });
+          mail = { ...invitationEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, name: names.name }), attachments: [{ filename: "invitation-card.jpg", content: card, contentId: INVITATION_CARD_CID }, { filename: prepared.filename, content: pdf }] };
+        } catch (error) {
+          console.error("invitation card not made", error?.message || error);
+          failed.push(r.name);
+          continue;
+        }
+      } else if (design) {
         const to = { name: r.name, contact: r.contact, address: r.address, salutation: r.salutation, date, values };
         const escaped = escapeFills(to);
         const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
@@ -214,6 +251,14 @@ export async function sendLetters(data) {
   });
 }
 
+/** A new invitation card for an event: the personal note; the card art is uploaded in the editor. */
+const INVITATION_BLANK = {
+  subject: "You're invited: [Event Name]",
+  cover: "Dear [Salutation],\n\nIt would be our honour to have you with us at [Event Name] on [Event Date], [Event Time], at [Event Location].\n\nYour personal invitation is below. The full invitation, with our attire guide and the organisations we are supporting, is attached.\n\nKindly let us know whether you can join us by replying to this email.",
+  body: "Invitation card",
+  invitation: { on: true, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28 },
+};
+
 const slug = (text) => String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "letter";
 
 /** A new letter's content from a Word file (read in the browser by WordImport): its text as the body, its "Subject:" line or name as the subject. */
@@ -241,8 +286,8 @@ export async function createLetter(data) {
     };
     const l = source || fromWord(data, blank, name) || blank;
     await sql(
-      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $7, $6, now(), $6, now())`,
-      [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null],
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, invitation, updated_by, updated_at, created_by, created_at) VALUES ($1, $2, $3, $4, $5, $7, $8, $6, now(), $6, now())`,
+      [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null, l.invitation ? JSON.stringify(l.invitation) : null],
     );
     await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null, ...(l !== blank && !source ? { word: true } : {}) });
     await backWith(`/letters/${key}`, "ok", source ? `Copied “${source.name}”. Edit the copy, then save.` : l !== blank ? "Letter made from your Word file. Check it, add any [fill-ins], then save." : "New letter made. Write it, then save.");
@@ -259,23 +304,26 @@ export async function createEventLetter(data) {
     if (!event) await backWith("/events", "error", "That event wasn't found.");
     // A Word file, when one was picked, wins over "Start from".
     const word = form(data, "body").trim() ? true : false;
-    const from = word ? "" : form(data, "from");
+    // "An invitation card" (owner, 2026-11-11): a blank invitation, card art uploaded in the editor.
+    const invite = !word && form(data, "from") === "invitation-card";
+    const from = word || invite ? "" : form(data, "from");
     const source = from ? await loadLetter(from) : null;
     if (from && !source) await backWith(back, "error", "The letter to start from wasn't found.");
-    const name = (form(data, "name").trim() || (source ? `${source.name} — ${event.title}` : `Letter — ${event.title}`)).slice(0, LETTER_LIMITS.name);
+    const name = (form(data, "name").trim() || (source ? `${source.name} — ${event.title}` : `${invite ? "Invitation card" : "Letter"} — ${event.title}`)).slice(0, LETTER_LIMITS.name);
     const key = eventLetterKey(name);
     const blank = {
       subject: "[Event Name]",
       cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers’ Society, Inc.\n\nOur letter about [Event Name] on [Event Date] is attached.",
       body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: [Event Name]**\n\nDear [Salutation]:\n\nWrite the letter here. [Event Name] is on [Event Date], [Event Time], at [Event Location].\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
     };
-    const l = source || fromWord(data, blank, name) || blank;
+    const l = source || (invite ? INVITATION_BLANK : null) || fromWord(data, blank, name) || blank;
     await sql(
-      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, updated_by, updated_at, created_by, created_at, event_id, based_on)
-       VALUES ($1, $2, $3, $4, $5, $7, $6, now(), $6, now(), $8, $9)`,
-      [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null, event.id, source?.key || null],
+      `INSERT INTO letter_templates (key, name, subject, cover, body, signature, invitation, updated_by, updated_at, created_by, created_at, event_id, based_on)
+       VALUES ($1, $2, $3, $4, $5, $7, $10, $6, now(), $6, now(), $8, $9)`,
+      [key, name, l.subject, l.cover, l.body, admin.email, l.signature ? JSON.stringify(l.signature) : null, event.id, source?.key || null, l.invitation ? JSON.stringify(l.invitation) : null],
     );
     await logActivity(admin.email, "letter.create", name, { letter: key, from: from || null, eventId: event.id });
+    if (invite) await backWith(`/letters/${key}`, "ok", "Invitation card made. Upload the blank card and its other pages, place the name, then save.");
     await backWith(`/letters/${key}`, "ok", source ? `Made “${name}” from “${source.name}” for this event. Edit it, then save.` : l !== blank ? "Event letter made from your Word file. Check it, add any [fill-ins], then save." : "New event letter made. Write it, then save.");
   });
 }

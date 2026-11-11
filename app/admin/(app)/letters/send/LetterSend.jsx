@@ -4,7 +4,8 @@ import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
 import EditWording from "./EditWording";
-import { applyEmailFrame, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, invitationEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
+import { INVITATION_LIMITS, cardNames, isInvitation } from "../../../../lib/invitationCard.mjs";
 import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
@@ -60,6 +61,35 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   // Attach the PDF (a short cover email), or send the letter itself as the email (owner, 2026-11-04).
   // A letter set to email only never has a PDF; a PDF letter can skip it for this send.
   const pdfLetter = letter.attachPdf !== false;
+  // Invitation card (owner, 2026-11-11): each guest's name and organization on the card, editable for this send.
+  const invite = isInvitation(letter.invitation);
+  const [onCard, setOnCard] = useState({});
+  const namesFor = (r) => cardNames(r, onCard[r.ref] ? { ...cardNames(r), ...onCard[r.ref] } : null);
+  const cardNamesJson = JSON.stringify(Object.fromEntries(recipients.filter((r) => onCard[r.ref]).map((r) => [r.ref, namesFor(r)])));
+  const setCardName = (r, key, value) => setOnCard((all) => ({ ...all, [r.ref]: { ...cardNames(r), ...all[r.ref], [key]: value } }));
+  const [cardSrc, setCardSrc] = useState("");
+  const whoNames = who ? namesFor(who) : { name: "", org: "" };
+  useEffect(() => {
+    if (!invite || !who) return undefined;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      const body = new FormData();
+      body.set("letter", letter.key);
+      body.set("format", "card");
+      body.set("previewTo", who.ref);
+      body.set("sendTo", sendToJson);
+      body.set("cardNames", JSON.stringify({ [who.ref]: whoNames }));
+      try {
+        const response = await fetch(pdfAction, { method: "POST", body, signal: controller.signal });
+        if (!response.ok) throw new Error(await response.text());
+        const blob = await response.blob();
+        setCardSrc(await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); }));
+      } catch (error) {
+        if (error.name !== "AbortError") setCardSrc("");
+      }
+    }, 400);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [invite, who?.ref, whoNames.name, whoNames.org, sendToJson]); // eslint-disable-line react-hooks/exhaustive-deps
   const [attach, setAttach] = useState(pdfLetter);
   // Fill-ins for every version being sent (edited wording can add some).
   const shownBlanks = useMemo(() => unionBlanks([letter, ...[...picked].map((ref) => wordingFor(letter, edits, ref))].map((v) => sendBlanks(v, design, attach))), [letter, edits, picked, design, attach]);
@@ -80,8 +110,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
       return renderDesign(filled.doc, { house, subject: filled.subject });
     }
+    if (invite) return applyEmailFrame(invitationEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, name: whoNames.name, cardSrc: cardSrc || "data:," }), frame);
     return applyEmailFrame(letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, attached: attach }), frame);
-  }, [prepared, attach, design, house, who, date, values, frame]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [prepared, attach, design, house, who, date, values, frame, invite, cardSrc]); // eslint-disable-line react-hooks/exhaustive-deps
   const missing = missingBlanks(shownBlanks, values);
   const count = picked.size;
 
@@ -117,6 +148,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         <input type="hidden" name="attach" value={attach ? "yes" : "no"} />
         <input type="hidden" name="design" value={designId} />
         <input type="hidden" name="sendTo" value={sendToJson} />
+        <input type="hidden" name="cardNames" value={invite ? cardNamesJson : ""} />
         <input type="hidden" name="edits" value={edits.all || Object.keys(edits.byRef).length ? JSON.stringify(edits) : ""} />
         <label className="field">
           <span>Letter</span>
@@ -135,6 +167,18 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
                   <span><strong>{r.name}</strong> <span className="small muted">· {r.note} · {r.onRecord !== undefined ? <><strong className="send-to-other">{r.email}</strong> for this send{r.onRecord ? <> (instead of {r.onRecord})</> : null}</> : r.email || "no email on record: add one, or send to another email"}{r.cc?.length ? ` (cc ${r.cc.join(", ")})` : ""}</span></span>
                 </label>
                 <button type="button" className="linkish small send-to-toggle" aria-expanded={openOther.has(r.ref)} onClick={() => toggleOther(r.ref)}>{openOther.has(r.ref) ? "Use the email on record" : "Send to another email"}</button>
+                {invite && (
+                  <div className="send-to-other-fields card-names">
+                    <label className="field">
+                      <span>Name on the card <small>In gold script, e.g. Ms. Malou Perez</small></span>
+                      <input type="text" maxLength={INVITATION_LIMITS.name} value={namesFor(r).name} onChange={(e) => setCardName(r, "name", e.target.value)} onFocus={() => setPreviewRef(r.ref)} autoComplete="off" />
+                    </label>
+                    <label className="field">
+                      <span>Organization under it <small>Leave empty for none</small></span>
+                      <input type="text" maxLength={INVITATION_LIMITS.org} value={namesFor(r).org} onChange={(e) => setCardName(r, "org", e.target.value)} onFocus={() => setPreviewRef(r.ref)} autoComplete="off" />
+                    </label>
+                  </div>
+                )}
                 {openOther.has(r.ref) && (
                   <div className="send-to-other-fields">
                     <label className="field">
@@ -180,7 +224,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </details>
         )}
 
-        {designs.length > 0 && (
+        {designs.length > 0 && !invite && (
           <label className="field">
             <span>Email design <small>A designed email from Brand email designs, or HOR&apos;s standard email</small></span>
             <select value={designId} onChange={(e) => setDesignId(e.target.value)}>
@@ -190,7 +234,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             </select>
           </label>
         )}
-        {pdfLetter ? <label className="check attach-choice">
+        {invite ? <p className="small muted" style={{ margin: 0 }}>An <strong>invitation card</strong>: each guest&apos;s card is in the email, and the full invitation is attached as a PDF.</p> : pdfLetter ? <label className="check attach-choice">
           <input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} />
           <span><strong>Attach the letter as a PDF</strong><br /><span className="small muted">{design ? (attach ? "The design goes out with the letter attached as a PDF." : "The design is the whole email; the letter isn't sent.") : attach ? "A short cover email goes out with the letter attached." : "Email only for this send: just the email, no PDF."}</span></span>
         </label> : <p className="small muted" style={{ margin: 0 }}>This letter is set to <strong>email only</strong>: no PDF is attached. Change it in the letter editor.</p>}
@@ -199,13 +243,13 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           <ConfirmButton
             disabled={!ready || count === 0 || count > max || missing.length > 0 || Boolean(copyError) || Boolean(sendToCheck.error)}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
-            items={[design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(otherCount ? [`${otherCount} go${otherCount === 1 ? "es" : ""} to another email for this send; ${otherCount === 1 ? "that record keeps" : "those records keep"} their saved email`] : []), ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
+            items={[invite ? "Each guest gets the invitation email with their own card, and the full invitation as a PDF" : design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(otherCount ? [`${otherCount} go${otherCount === 1 ? "es" : ""} to another email for this send; ${otherCount === 1 ? "that record keeps" : "those records keep"} their saved email`] : []), ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
           >
             Send to {count}
           </ConfirmButton>
           {attach && <button type="submit" formAction={pdfAction} formTarget="_blank" formMethod="post" name="download" value="1" className="btn ghost" data-confirm="not-needed-read-only" onClick={(e) => { e.currentTarget.form.elements.namedItem("previewTo").value = previewRef; }}>
-            Download PDF for {who?.name}
+            Download {invite ? "invitation" : "PDF"} for {who?.name}
           </button>}
           <input type="hidden" name="previewTo" />
         </div>
@@ -216,7 +260,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 
       <section className="card template-preview">
         <RecipientTabs recipients={recipients} current={previewRef} picked={picked} onPick={setPreviewRef} edited={(ref) => Boolean(edits.byRef[ref] || edits.all)} />
-        {who && <EditWording key={`${who.ref}-${JSON.stringify(edits)}`} wording={{ subject: active.subject, cover: active.cover, body: active.body }} showBody={attach && !design} name={who.name} count={picked.size} mine={Boolean(edits.byRef[who.ref])} forAll={Boolean(edits.all)} onApply={applyEdit} onReset={resetEdit} />}
+        {who && <EditWording key={`${who.ref}-${JSON.stringify(edits)}`} wording={{ subject: active.subject, cover: active.cover, body: active.body }} showBody={attach && !design && !invite} name={who.name} count={picked.size} mine={Boolean(edits.byRef[who.ref])} forAll={Boolean(edits.all)} onApply={applyEdit} onReset={resetEdit} />}
         <div className="mail-head" aria-label="The email as it arrives">
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>
@@ -225,12 +269,12 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             {whoCopies.bcc.length > 0 && <div><dt>Bcc</dt><dd>{whoCopies.bcc.join(", ")} <span className="small muted">(hidden from them)</span></dd></div>}
             <div><dt>Subject</dt><dd><strong>{email.subject || prepared.subject}</strong></dd></div>
           </dl>
-          {attach && <SignatureStatus check={signatureCheck} editHref={editHref} />}
+          {attach && !invite && <SignatureStatus check={signatureCheck} editHref={editHref} />}
           {attach ? <p className="mail-attachment" title="The letter, filled in for this recipient">
-            <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">PDF letter · addressed to {who?.name}</span></span>
+            <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">{invite ? `PDF invitation · card for ${whoNames.name}` : `PDF letter · addressed to ${who?.name}`}</span></span>
           </p> : <p className="small muted">No attachment: email only.</p>}
         </div>
-        <LetterView emailOnly={!attach} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values), sendTo: sendToJson, ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
+        <LetterView emailOnly={!attach || invite} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values), sendTo: sendToJson, cardNames: invite ? JSON.stringify({ [previewRef]: whoNames }) : "", ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
       </section>
     </div>
   );

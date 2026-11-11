@@ -6,6 +6,8 @@ import { readSendTo } from "../../../../lib/letterSendTo.mjs";
 import { letterPdf } from "../../../../lib/letterPdf.mjs";
 import { loadLetter, savedAnswers, signatureForPdf } from "../../../../lib/letterStore";
 import { eventFills } from "../../../../lib/letterEventStore";
+import { cardNames, cleanInvitation, isInvitation, readCardNames } from "../../../../lib/invitationCard.mjs";
+import { extraPages, invitationPdf, renderCard } from "../../../../lib/invitationRender";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +58,27 @@ export async function POST(request) {
   // Addressed to someone else for this send (the send page's "Send to someone else").
   const other = readSendTo(field("sendTo"), [field("previewTo") || field("to")]).byRef[field("previewTo") || field("to")];
   if (other?.contact) to = { ...to, contact: other.contact, salutation: other.contact };
+  // An invitation card: the guest's card (format=card: just the picture) or the card plus its pages.
+  // The editor posts its unsaved settings and any newly picked pictures (data URLs).
+  let invitation = saved.invitation;
+  if (field("invitation") && can(admin, "letters:edit")) { try { invitation = JSON.parse(field("invitation")); } catch { invitation = saved.invitation; } }
+  const cardUpload = can(admin, "letters:edit") ? field("inviteCardUpload") : "";
+  if (isInvitation(invitation) || (cleanInvitation(invitation).on && cardUpload)) {
+    const ref = field("previewTo") || field("to");
+    const sample = !ref ? { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez" } : to;
+    const names = cardNames(sample, readCardNames(field("cardNames"), [ref]).byRef[ref]);
+    try {
+      const card = await renderCard(invitation, names, { cardUpload });
+      if (field("format") === "card") return new Response(card, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } });
+      const uploads = can(admin, "letters:edit") ? data.getAll("invitePageUploads").filter((v) => typeof v === "string" && v.startsWith("data:image/")) : [];
+      const prepared = prepareLetter(letter, { ...to, values });
+      const pdf = await invitationPdf([card, ...(await extraPages(invitation, uploads))], { title: prepared.subject });
+      const ascii = prepared.filename.replace(/[^\x20-\x7e]/g, "-").replace(/"/g, "'");
+      return new Response(pdf, { headers: { "Content-Type": "application/pdf", "Content-Disposition": `${field("download") ? "attachment" : "inline"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(prepared.filename)}`, "Cache-Control": "no-store" } });
+    } catch (error) {
+      return new Response(String(error?.message || "The invitation couldn't be made."), { status: 400 });
+    }
+  }
   // The editor posts its unsaved signature settings (and a new image, if picked) to preview them.
   let posted = null;
   if (field("signature") && can(admin, "letters:edit")) { try { posted = JSON.parse(field("signature")); } catch { posted = null; } }

@@ -20,7 +20,7 @@ const nextConfig = {
   // Don't announce the framework in every response (security audit, 9 Nov 2026).
   poweredByHeader: false,
   // pdfkit reads its font metrics from its own folder at runtime, so it isn't bundled.
-  serverExternalPackages: ["pdfkit"],
+  serverExternalPackages: ["pdfkit", "fontkit"],
   // Admin forms carry a resized event photo or a QR image (under ~2 MB).
   // 4 MB stays under Vercel's 4.5 MB request cap; the editor keeps photos well below it.
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
