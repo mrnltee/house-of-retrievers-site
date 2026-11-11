@@ -5,6 +5,7 @@ import AdminNav from "./AdminNav";
 import GuideTour from "./GuideTour";
 import Presence from "./Presence";
 import PasteImages from "./PasteImages";
+import SendLetterModal from "./SendLetterModal";
 import { sql } from "../../lib/db";
 import { CHAT_ROOM_DAYS } from "../../lib/admin/chat.mjs";
 import { exitPreview } from "../previewActions";
@@ -66,6 +67,7 @@ export default async function AdminAppLayout({ children }) {
       {!admin.preview && <GuideTour steps={tour} autoStart={!admin.guide_hidden} hidden={Boolean(admin.guide_hidden)} sessionKey={`hor-guide-${admin.authTime || 0}`} />}
       {!admin.preview && <Presence />}
       {!admin.preview && <PasteImages />}
+      {!admin.preview && <SendLetterModal base={base} />}
       <main className="admin-main" id="admin-main">
         {admin.preview && (
           <div className="banner alert preview-bar" role="status">

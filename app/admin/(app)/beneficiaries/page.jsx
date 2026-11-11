@@ -60,7 +60,7 @@ export default async function BeneficiariesPage({ searchParams }) {
         {canSend && rows.length > 0 && (
           <div className="actions" style={{ flexWrap: "wrap" }}>
             <TickedSubmit />
-            <span className="small muted">Letter: <a href={`${base}/letters/${letterKey}`}>{letterName(letterKey)}</a>. You can pick another letter on the next page.</span>
+            <span className="small muted">Letter: <a href={`${base}/letters/${letterKey}`}>{letterName(letterKey)}</a>. You can pick another letter in the send window.</span>
           </div>
         )}
         <div className="table-wrap" style={{ marginTop: 10 }}>

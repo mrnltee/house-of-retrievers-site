@@ -47,3 +47,19 @@ export async function passCodes(ids, { eventId, admin } = {}) {
   );
   return new Map(rows.filter((r) => r.check_in_code && reminderEligibility(r, { feeRequired: Boolean(r.fee_required) }).ok).map((r) => [r.id, { code: r.check_in_code, comp: r.comp_type }]));
 }
+
+/**
+ * Every confirmed participant of an event who can be sent a letter (paid on a
+ * paid event; reminderEligibility), as registration ids, for the send window's
+ * "participants=all". Same permission check as registrationRecipients.
+ */
+export async function eventParticipantIds(eventId, { admin } = {}) {
+  if (!isUuid(eventId) || !admin || !can(admin, "registrations:view")) return [];
+  const rows = await sql(
+    `SELECT r.id, r.email, r.status, r.fee_status, r.deleted_at, e.fee_required
+       FROM registrations r JOIN events e ON e.id = r.event_id
+      WHERE r.event_id = $1 AND r.deleted_at IS NULL AND r.status = 'confirmed' ORDER BY lower(r.name)`,
+    [eventId],
+  );
+  return rows.filter((r) => reminderEligibility(r, { feeRequired: Boolean(r.fee_required) }).ok).map((r) => r.id);
+}

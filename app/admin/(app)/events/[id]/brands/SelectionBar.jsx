@@ -7,7 +7,7 @@ const ticked = () => [...document.querySelectorAll("input[name='to'][form='track
 /**
  * Sits above the tracker table: a quiet hint until brands are ticked, then
  * "N selected · Review & send · Clear". The letter used is named here because
- * it only matters when sending (it can be switched on the next page).
+ * it only matters when sending (it can be switched in the send window).
  */
 export default function SelectionBar({ letterHref, letterName, ownLetterHref }) {
   const [count, setCount] = useState(0);
@@ -32,7 +32,7 @@ export default function SelectionBar({ letterHref, letterName, ownLetterHref }) 
       ) : (
         <span className="muted">Select brands to send them a letter.</span>
       )}
-      <span className="selection-letter small muted">Letter: <a href={letterHref}>{letterName}</a> · switch on the next page or <a href={ownLetterHref}>make one for this event</a></span>
+      <span className="selection-letter small muted">Letter: <a href={letterHref}>{letterName}</a> · switch it in the send window or <a href={ownLetterHref}>make one for this event</a></span>
     </div>
   );
 }

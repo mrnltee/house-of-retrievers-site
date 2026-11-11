@@ -108,7 +108,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
             <div className="actions" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
               <div>
                 <h2 style={{ margin: 0 }}>{g.label} <span className="muted small">({g.rows.length})</span></h2>
-                <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${g.letter}`}>{letterName(g.letter)}</a>. You can pick another on the next page.</p>
+                <p className="small muted" style={{ margin: "4px 0 0" }}>Letter: <a href={`${base}/letters/${g.letter}`}>{letterName(g.letter)}</a>. You can pick another in the send window.</p>
               </div>
               {canSend && <TickedSubmit />}
             </div>

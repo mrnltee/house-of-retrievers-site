@@ -22,7 +22,7 @@ const CARD_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xml
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, max, ready, pdfAction, back, eventId = "", designs = [], house = null, frame = null }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, initialPicked = null, max, ready, pdfAction, back, returnTo = "", onSwitchLetter = null, eventId = "", designs = [], house = null, frame = null }) {
   const isStandard = (label) => standard.includes(label);
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
@@ -47,8 +47,15 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
     if (next.has(ref)) { next.delete(ref); setSendTo((all) => { const rest = { ...all }; delete rest[ref]; return rest; }); } else next.add(ref);
     return next;
   });
-  const [picked, setPicked] = useState(() => new Set(listed.filter((r) => r.email).map((r) => r.ref)));
-  const [previewRef, setPreviewRef] = useState(listed.find((r) => r.email)?.ref || listed[0]?.ref);
+  const [picked, setPicked] = useState(() => new Set(Array.isArray(initialPicked) ? initialPicked : listed.filter((r) => r.email).map((r) => r.ref)));
+  const [previewRef, setPreviewRef] = useState(() => (Array.isArray(initialPicked) && initialPicked[0]) || listed.find((r) => r.email)?.ref || listed[0]?.ref);
+  // Long lists (e.g. every paid participant): a search, and quick ticks that never go over the send limit.
+  const [find, setFind] = useState("");
+  const shown = find.trim() ? listed.filter((r) => `${r.name} ${r.email || ""} ${r.note || ""}`.toLowerCase().includes(find.trim().toLowerCase())) : listed;
+  const shownRefs = new Set(shown.map((r) => r.ref));
+  const tickOnly = (rows) => setPicked(new Set(rows.filter((r) => r.email).slice(0, max).map((r) => r.ref)));
+  const unsent = listed.filter((r) => !r.sentAt);
+  const sentDay = (iso) => new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" });
   const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
   const whoCopies = copiesFor({ to: who?.email || "", cc: who?.cc || [] }, extraCc.emails, extraBcc.emails);
   // Wording edited for this send: { all, byRef } (EditWording); the saved letter is unchanged.
@@ -136,6 +143,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const count = picked.size;
 
   function switchLetter(key) {
+    if (onSwitchLetter) return onSwitchLetter(key);
     const url = new URL(window.location.href);
     url.searchParams.set("letter", key);
     window.location.assign(url.toString());
@@ -162,6 +170,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       <form action={sendLetters} className="form card">
         <input type="hidden" name="letter" value={letter.key} />
         <input type="hidden" name="back" value={back} />
+        {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
         {eventId && <input type="hidden" name="event" value={eventId} />}
         <input type="hidden" name="values" value={JSON.stringify(values)} />
         <input type="hidden" name="attach" value={attach ? "yes" : "no"} />
@@ -178,12 +187,24 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 
         <fieldset className="field">
           <legend className="field-head">Send to <small>{count} of {recipients.length} ticked{count > max ? ` — ${max} at most at a time` : ""}</small></legend>
+          {listed.length > 5 && (
+            <div className="letter-pick-tools">
+              <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a name or email" aria-label="Find a recipient" autoComplete="off" />
+              <span className="actions">
+                {unsent.length !== listed.length && <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => tickOnly(unsent)}>Not sent yet ({unsent.length})</button>}
+                <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => tickOnly(listed)}>{listed.filter((r) => r.email).length > max ? `First ${max}` : "All"}</button>
+                <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => setPicked(new Set())}>None</button>
+              </span>
+              {listed.length > max && <p className="small muted" style={{ margin: 0 }}>Up to {max} per send. Send these, then open this again for the rest.</p>}
+            </div>
+          )}
           <ul className="plain-list letter-recipients">
             {recipients.map((r) => (
-              <li key={r.ref}>
+              // Hidden by a search, not removed, so a ticked person is still sent.
+              <li key={r.ref} hidden={!shownRefs.has(r.ref)}>
                 <label className="check">
                   <input type="checkbox" name="to" value={r.ref} checked={picked.has(r.ref)} disabled={!r.email} onChange={() => toggle(r.ref)} />
-                  <span><strong>{r.name}</strong> <span className="small muted">· {r.note} · {r.onRecord !== undefined ? <><strong className="send-to-other">{r.email}</strong> for this send{r.onRecord ? <> (instead of {r.onRecord})</> : null}</> : r.email || "no email on record: add one, or send to another email"}{r.cc?.length ? ` (cc ${r.cc.join(", ")})` : ""}</span></span>
+                  <span><strong>{r.name}</strong>{r.sentAt && <> <span className="chip letter-sent-chip" title="This letter was already sent to them">Sent {sentDay(r.sentAt)}</span></>} <span className="small muted">· {r.note} · {r.onRecord !== undefined ? <><strong className="send-to-other">{r.email}</strong> for this send{r.onRecord ? <> (instead of {r.onRecord})</> : null}</> : r.email || "no email on record: add one, or send to another email"}{r.cc?.length ? ` (cc ${r.cc.join(", ")})` : ""}</span></span>
                 </label>
                 <button type="button" className="linkish small send-to-toggle" aria-expanded={openOther.has(r.ref)} onClick={() => toggleOther(r.ref)}>{openOther.has(r.ref) ? "Use the email on record" : "Send to another email"}</button>
                 {invite && (

@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 /**
  * The send button on lists: disabled until at least one row (an input
- * name="to" in the same form) is ticked. It opens the review page (each
+ * name="to" in the same form) is ticked. It opens the send window (each
  * person's email and PDF) and sends nothing itself, hence "Review & send",
  * with the count when more than one is ticked (owner, 2026-10-31).
  */

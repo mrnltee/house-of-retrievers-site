@@ -1,7 +1,8 @@
 "use server";
 
 import { sql } from "../lib/db";
-import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
+import { actionAdmin, adminBase, backWith, Forbidden } from "../lib/admin/guard";
+import { safeReturn } from "../lib/letterReturn.mjs";
 import { logActivity } from "../lib/admin/log";
 import { emailReady, sendEmail } from "../lib/email";
 import { logSend } from "../lib/letterSendsStore";
@@ -259,6 +260,9 @@ export async function sendLetters(data) {
     if (skipped.length) parts.push(`no email for ${skipped.join(", ")}`);
     if (failed.length) parts.push(`didn't go through for ${failed.join(", ")} (try again)`);
     const list = new URLSearchParams(back.split("?")[1] || "").get("list");
+    // Sent from the send window: back to the page it was opened over.
+    const returnTo = safeReturn(form(data, "returnTo"));
+    if (returnTo) await backWith(returnTo, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
     await backWith(event ? (list === "registrations" ? `/registrations/${event.id}` : `/events/${event.id}/${["guests", "donors"].includes(list) ? list : "brands"}`) : back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
   });
 }
@@ -404,3 +408,19 @@ export async function saveGroupLetters(data) {
   });
 }
 
+
+/**
+ * The send window (owner, 2026-11-12): everything the send page shows, for a
+ * query like the page's ("letter=…&to=…"), so any send button can open it over
+ * the page it's on. Same permission as the page.
+ */
+export async function openLetterSend(query) {
+  try {
+    const admin = await actionAdmin("letters:edit");
+    const { loadSendData, paramsFromQuery } = await import("./(app)/letters/send/sendData");
+    return { ok: true, ...(await loadSendData(paramsFromQuery(query), { admin, base: await adminBase() })) };
+  } catch (error) {
+    if (error instanceof Forbidden) return { ok: false, error: error.message };
+    throw error;
+  }
+}

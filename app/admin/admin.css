@@ -1079,3 +1079,20 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .display-bg-spec ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
 .display-bg-notes { padding: 10px 14px; border-radius: 12px; border: 1px solid #d9a441; background: #fff6e0; }
 .display-bg-notes p { margin: 0 0 4px; }
+/* Send a letter: tools for long recipient lists (owner, 2026-11-12). */
+.letter-pick-tools { display: grid; gap: 8px; margin: 4px 0 10px; }
+.letter-pick-tools input[type="search"] { width: 100%; }
+.letter-pick-tools .actions { gap: 6px; flex-wrap: wrap; }
+.letter-sent-chip { font-size: 11px; padding: 1px 8px; }
+/* The send window (owner, 2026-11-12): the send form over the page it was opened from. */
+.send-modal { width: min(1280px, 96vw); height: min(94vh, 1200px); max-width: none; max-height: none; padding: 0; border: 0; border-radius: 20px; background: var(--a-ivory, #fbf7ef); color: var(--a-ink); box-shadow: 0 30px 90px -30px rgba(13,13,13,.6); overflow: hidden; }
+.send-modal[open] { display: grid; grid-template-rows: auto 1fr; }
+.send-modal::backdrop { background: rgba(13,13,13,.55); }
+.send-modal-head { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--a-line, #e6dcc6); background: #fff; }
+.send-modal-head h2 { margin: 0 auto 0 0; font: 400 24px/1.1 "DM Serif Display", serif; }
+.send-modal-body { overflow: auto; padding: 18px 20px 28px; }
+.send-modal-body > .card { margin-bottom: 12px; }
+html.send-modal-open { overflow: hidden; }
+@media (max-width: 860px) { .send-modal { width: 100vw; height: 100dvh; border-radius: 0; } }
+/* Notes in the send window read as one paragraph (.card is a grid elsewhere). */
+.send-modal-body > p.card { display: block; }

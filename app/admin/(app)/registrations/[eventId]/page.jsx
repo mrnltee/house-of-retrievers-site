@@ -47,12 +47,16 @@ export default async function EventRegistrations({ params, searchParams }) {
   // who haven't had it yet (a failed or bounced email counts as not sent), up to a send's limit at a time.
   const inviteLetter = can(admin, "letters:edit") ? participantInvitation(await eventLetters(eventId)) : null;
   let inviteTodo = [];
+  let inviteEligible = [];
   if (inviteLetter) {
     const sent = new Set((await sql("SELECT DISTINCT ref FROM letter_sends WHERE letter_key = $1 AND status NOT IN ('failed', 'bounced')", [inviteLetter.key])).map((r) => r.ref));
-    inviteTodo = all.filter((r) => reminderEligibility(r, { feeRequired: Boolean(paidEvent) }).ok && !sent.has(`registration:${r.id}`));
+    inviteEligible = all.filter((r) => !r.deleted_at && reminderEligibility(r, { feeRequired: Boolean(paidEvent) }).ok);
+    inviteTodo = inviteEligible.filter((r) => !sent.has(`registration:${r.id}`));
   }
-  const inviteHref = inviteLetter && inviteTodo.length
-    ? `${base}/letters/send?${new URLSearchParams([["letter", inviteLetter.key], ["event", eventId], ["list", "registrations"], ...inviteTodo.slice(0, MAX_LETTER_RECIPIENTS).map((r) => ["to", `registration:${r.id}`])]).toString()}`
+  // Still offered once everyone has it, to resend to someone (they start unticked).
+  const inviteHref = inviteLetter && inviteEligible.length
+    // Every paid participant is listed in the send window; those who haven't had it yet start ticked.
+    ? `${base}/letters/send?${new URLSearchParams([["letter", inviteLetter.key], ["event", eventId], ["list", "registrations"], ["participants", "all"], ["pick", "unsent"]]).toString()}`
     : "";
   const acknowledgementEnabled = Boolean(event.rsvp_form_config?.consentEnabled);
   const tableQuestions = cleanCustomQuestions(event.rsvp_form_config?.questions).filter((q) => q.showInTable);
@@ -123,7 +127,7 @@ export default async function EventRegistrations({ params, searchParams }) {
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}
-        {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length > MAX_LETTER_RECIPIENTS ? `Opens the first ${MAX_LETTER_RECIPIENTS}; the rest come up after that send` : "Confirmed participants who haven't had the invitation card yet"}>Send invitation cards · {inviteTodo.length}</a>}
+        {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length ? `${inviteTodo.length} confirmed participant${inviteTodo.length === 1 ? "" : "s"} haven't had the invitation card yet${inviteTodo.length > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{inviteTodo.length ? `Send invitation cards · ${inviteTodo.length}` : "Invitation cards sent ✓"}</a>}
         {inviteLetter && !inviteTodo.length && <span className="small muted" style={{ alignSelf: "center" }}>Invitation cards sent to everyone confirmed</span>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
         {can(admin, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
