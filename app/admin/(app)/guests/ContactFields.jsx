@@ -1,4 +1,4 @@
-import { CONTACT_CATEGORIES, CONTACT_LIMITS, SEND_TO } from "../../../lib/contacts.mjs";
+import { CONTACT_CATEGORIES, CONTACT_LIMITS, GUEST_SPECIFICATIONS, SEND_TO } from "../../../lib/contacts.mjs";
 import ImageField from "../ImageField";
 
 /** The fields of one Guest list contact (add form and edit page). */
@@ -6,14 +6,18 @@ export default function ContactFields({ row = {}, category = "" }) {
   return (
     <>
       <div className="row-2">
-        <label className="field"><span>Category <small>Picks the letter</small></span>
-          <select name="category" defaultValue={row.category || category} required>
+        <label className="field"><span>Category <small>Picks the letter. Left on Choose…, the specification picks it</small></span>
+          <select name="category" defaultValue={row.category || category}>
             <option value="">Choose…</option>
             {CONTACT_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
         </label>
         <label className="field"><span>Name <small>The person (e.g. Jessie Mae Gabriel), or the brand if there's no contact yet</small></span><input name="name" defaultValue={row.name || ""} maxLength={CONTACT_LIMITS.name} required /></label>
       </div>
+      <label className="field"><span>Guest specification <small>Optional. Pick one or type your own, e.g. Celebrity / Actress, Petfluencer</small></span>
+        <input name="specification" list="guest-specifications" defaultValue={row.specification || ""} maxLength={CONTACT_LIMITS.specification} autoComplete="off" />
+        <datalist id="guest-specifications">{GUEST_SPECIFICATIONS.map((s) => <option key={s.label} value={s.label} />)}</datalist>
+      </label>
       <label className="field"><span>Company / brand / office <small>Optional. When filled, the letter is addressed to this company, attention of the name above</small></span><input name="organization" defaultValue={row.organization || ""} maxLength={CONTACT_LIMITS.organization} /></label>
       <div className="row-3">
         <label className="field"><span>Email <small>Where letters go</small></span><input name="email" type="email" defaultValue={row.email || ""} maxLength={CONTACT_LIMITS.email} /></label>

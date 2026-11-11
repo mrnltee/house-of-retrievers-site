@@ -15,7 +15,25 @@ export const CONTACT_CATEGORIES = [
   { key: "donor", label: "Cash donors", letter: "donation-letter" },
 ];
 
-export const CONTACT_LIMITS = { name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
+/**
+ * Guest specifications (owner, 2026-11-12): what a guest is, from HOR's guest
+ * sheet. A suggestion list (HOR can type another); each suggests the category
+ * (and so the letter) when none is picked.
+ */
+export const GUEST_SPECIFICATIONS = [
+  { label: "VIP", category: "vip" },
+  { label: "Celebrity / Actress", category: "celebrity" },
+  { label: "Celebrity / Actor", category: "celebrity" },
+  { label: "Media Personality / News Anchor", category: "media" },
+  { label: "Social Media Personality", category: "influencer" },
+  { label: "Influencer", category: "influencer" },
+  { label: "Petfluencer", category: "influencer" },
+];
+
+/** The category a specification suggests ("Petfluencer" → influencer), else null. */
+export const categoryForSpecification = (text) => GUEST_SPECIFICATIONS.find((s) => s.label.toLowerCase() === String(text || "").replace(/\s+/g, " ").trim().toLowerCase())?.category || null;
+
+export const CONTACT_LIMITS = { specification: 60, name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
 
 /** Who a guest's letters are emailed to. */
 export const SEND_TO = [
@@ -47,7 +65,9 @@ const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().sl
 
 /** Form fields → { contact } or { error }. */
 export function cleanContact(input = {}) {
-  const category = categoryOf(input.category)?.key;
+  const specification = clean(input.specification, CONTACT_LIMITS.specification);
+  // No category picked: a known specification picks it (Petfluencer → Influencers & creators).
+  const category = categoryOf(input.category)?.key || categoryForSpecification(specification);
   if (!category) return { error: "Pick a category." };
   const name = clean(input.name, CONTACT_LIMITS.name);
   if (!name) return { error: "Type the name as it should appear on the letter." };
@@ -60,7 +80,7 @@ export function cleanContact(input = {}) {
   const notes = String(input.notes ?? "").trim().slice(0, CONTACT_LIMITS.notes);
   return {
     contact: {
-      category, name, email: email || null,
+      category, name, email: email || null, specification: specification || null,
       organization: clean(input.organization, CONTACT_LIMITS.organization) || null,
       phone: clean(input.phone, CONTACT_LIMITS.phone) || null,
       handle: clean(input.handle, CONTACT_LIMITS.handle) || null,

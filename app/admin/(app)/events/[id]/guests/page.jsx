@@ -37,7 +37,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
   const [guests, others, letters, chosen] = await Promise.all([
     sql(`SELECT c.*, eg.reply, eg.notes AS event_notes FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
           WHERE eg.event_id = $1 AND c.deleted_at IS NULL ORDER BY lower(c.name)`, [event.id]),
-    sql(`SELECT id, name, organization, category, email FROM letter_contacts c WHERE deleted_at IS NULL
+    sql(`SELECT id, name, organization, specification, category, email FROM letter_contacts c WHERE deleted_at IS NULL
           AND NOT EXISTS (SELECT 1 FROM event_guests eg WHERE eg.event_id = $1 AND eg.contact_id = c.id) ORDER BY lower(name)`, [event.id]),
     listLetters(),
     groupLetters(),
@@ -87,7 +87,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                 <legend className="strong">{c.label}</legend>
                 <ul className="tracker-pick">
                   {others.filter((o) => o.category === c.key).map((o) => (
-                    <li key={o.id}><label className="check"><input type="checkbox" name="contact" value={o.id} /> <span>{o.name}{o.organization ? <span className="small muted"> · {o.organization}</span> : null}{!o.email && <span className="small muted"> · no email yet</span>}</span></label></li>
+                    <li key={o.id}><label className="check"><input type="checkbox" name="contact" value={o.id} /> <span>{o.name}{o.specification ? <span className="small muted"> · {o.specification}</span> : null}{o.organization ? <span className="small muted"> · {o.organization}</span> : null}{!o.email && <span className="small muted"> · no email yet</span>}</span></label></li>
                   ))}
                 </ul>
               </fieldset>
@@ -121,7 +121,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                   <tr key={r.id}>
                     {canSend && <td><input type="checkbox" form={`send-${g.key}`} name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
                     <td className="strong">
-                      <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{r.organization && <><br /><span className="small muted">{r.organization}</span></>}</span></span>
+                      <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}</span></span>
                       {canEdit && (
                         <details className="tracker-edit">
                           <summary className="small">Reply &amp; notes</summary>

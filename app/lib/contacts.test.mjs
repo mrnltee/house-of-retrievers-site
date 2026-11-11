@@ -15,7 +15,7 @@ test("contacts need a category and a name; email is checked", () => {
   assert.match(cleanContact({ category: "vip" }).error, /name/);
   assert.match(cleanContact({ category: "vip", name: "X", email: "bad" }).error, /email/);
   assert.deepEqual(cleanContact({ category: "media", name: "  Jane   Doe ", email: "J@X.PH", organization: "" }).contact,
-    { category: "media", name: "Jane Doe", email: "j@x.ph", organization: null, phone: null, handle: null, address: null, salutation: null, repName: null, repEmail: null, repPhone: null, sendTo: "person", notes: null });
+    { category: "media", name: "Jane Doe", email: "j@x.ph", specification: null, organization: null, phone: null, handle: null, address: null, salutation: null, repName: null, repEmail: null, repPhone: null, sendTo: "person", notes: null });
 });
 
 test("a group's letter: the admin's choice, else the default", async () => {
@@ -34,4 +34,17 @@ test("a guest's letter goes to the person, the representative, or both", async (
   assert.deepEqual(letterEmails({ ...c, send_to: "both" }), { to: "anne@x.ph", cc: ["mgr@x.ph"] });
   assert.deepEqual(letterEmails({ rep_email: "mgr@x.ph", send_to: "person" }), { to: "mgr@x.ph", cc: [] });
   assert.match(cleanContact({ category: "vip", name: "X", repEmail: "bad" }).error, /representative/);
+});
+
+test("guest specification: kept, and picks the category when none is chosen", async () => {
+  const { cleanContact, categoryForSpecification } = await import("./contacts.mjs");
+  assert.equal(categoryForSpecification("Petfluencer"), "influencer");
+  assert.equal(categoryForSpecification("  celebrity /  actress "), "celebrity");
+  assert.equal(categoryForSpecification("Media Personality / News Anchor"), "media");
+  assert.equal(categoryForSpecification("Chef"), null);
+  assert.equal(cleanContact({ name: "Mavey Wavey", specification: "Petfluencer" }).contact.category, "influencer");
+  assert.equal(cleanContact({ name: "Ricky Isla", specification: "VIP", category: "media" }).contact.category, "media");
+  assert.equal(cleanContact({ name: "Someone", specification: "Chef" }).error, "Pick a category.");
+  assert.equal(cleanContact({ name: "Someone", category: "vip", specification: "Chef" }).contact.specification, "Chef");
+  assert.equal(cleanContact({ name: "Someone", category: "vip" }).contact.specification, null);
 });

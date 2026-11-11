@@ -45,7 +45,7 @@ export default async function GuestsPage({ searchParams }) {
     ...c,
     letter: letterFor(c.key, chosen),
     rows: [
-      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: r.organization, email: letterEmails(r).to, rep: r.rep_name ? `Rep: ${r.rep_name}${r.send_to !== "person" ? " (gets letters)" : ""}` : "", greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
+      ...contacts.filter((r) => r.category === c.key).map((r) => ({ ref: `contact:${r.id}`, id: r.id, photo: r.photo, logo: r.logo, name: r.name, sub: [r.specification, r.organization].filter(Boolean).join(" · "), email: letterEmails(r).to, rep: r.rep_name ? `Rep: ${r.rep_name}${r.send_to !== "person" ? " (gets letters)" : ""}` : "", greeting: greetingOf(recipientFields({ contact: r })), href: `${base}/guests/${r.id}`, last: r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : "" })),
     ],
   }));
   // Letter email status: check Resend for recent sends, then read each person's log.

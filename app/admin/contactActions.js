@@ -18,7 +18,7 @@ const LISTS = {
   donors: { table: "event_donors", one: "donor", name: "donor list" },
 };
 const listOf = (data) => (form(data, "list") === "donors" ? "donors" : "guests");
-const fields = (data) => Object.fromEntries(["category", "name", "organization", "email", "phone", "handle", "address", "salutation", "notes", "repName", "repEmail", "repPhone", "sendTo"].map((k) => [k, form(data, k)]));
+const fields = (data) => Object.fromEntries(["category", "specification", "name", "organization", "email", "phone", "handle", "address", "salutation", "notes", "repName", "repEmail", "repPhone", "sendTo"].map((k) => [k, form(data, k)]));
 
 async function guarded(path, work) {
   try {
@@ -47,9 +47,9 @@ export async function saveContact(data) {
     if (photo.error || logo.error) await backWith(back, "error", photo.error || logo.error);
     if (isUuid(id)) {
       await sql(
-        `UPDATE letter_contacts SET category=$2, name=$3, organization=$4, email=$5, phone=$6, handle=$7, notes=$8, address=$9, salutation=$10, photo=$11, logo=$12, rep_name=$13, rep_email=$14, rep_phone=$15, send_to=$16, updated_at=now()
+        `UPDATE letter_contacts SET category=$2, name=$3, organization=$4, email=$5, phone=$6, handle=$7, notes=$8, address=$9, salutation=$10, photo=$11, logo=$12, rep_name=$13, rep_email=$14, rep_phone=$15, send_to=$16, specification=$17, updated_at=now()
           WHERE id=$1 AND deleted_at IS NULL`,
-        [id, c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, c.address, c.salutation, photo.url, logo.url, c.repName, c.repEmail, c.repPhone, c.sendTo],
+        [id, c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, c.address, c.salutation, photo.url, logo.url, c.repName, c.repEmail, c.repPhone, c.sendTo, c.specification],
       );
       await logActivity(admin.email, "contact.update", c.name, { contactId: id });
       await backWith(eventBack || `/guests?category=${c.category}`, "ok", `Saved ${c.name}.`);
@@ -62,8 +62,8 @@ export async function saveContact(data) {
       await backWith(eventBack, "ok", `${c.name} was already in your guests; added them to this event.`);
     }
     const [row] = await sql(
-      `INSERT INTO letter_contacts (category, name, organization, email, phone, handle, notes, created_by, address, salutation, photo, logo, rep_name, rep_email, rep_phone, send_to) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
-      [c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, admin.email, c.address, c.salutation, photo.url, logo.url, c.repName, c.repEmail, c.repPhone, c.sendTo],
+      `INSERT INTO letter_contacts (category, name, organization, email, phone, handle, notes, created_by, address, salutation, photo, logo, rep_name, rep_email, rep_phone, send_to, specification) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
+      [c.category, c.name, c.organization, c.email, c.phone, c.handle, c.notes, admin.email, c.address, c.salutation, photo.url, logo.url, c.repName, c.repEmail, c.repPhone, c.sendTo, c.specification],
     );
     if (eventId) await sql(`INSERT INTO ${table} (event_id, contact_id, added_by) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [eventId, row.id, admin.email]);
     await logActivity(admin.email, "contact.add", c.name, { category: c.category, contactId: row.id, ...(eventId ? { eventId } : {}) });
