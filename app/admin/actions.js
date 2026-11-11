@@ -491,7 +491,8 @@ export async function checkedInList(eventId) {
  */
 export async function checkinFeed(eventId, since) {
   try {
-    await actionAdmin("checkin:view");
+    // The same right as the scanner's arrivals list (checkedInList).
+    await actionAdmin("checkin");
     if (!isUuid(eventId)) return { arrivals: [], cursor: null };
     const [{ now }] = await sql("SELECT now() AS now");
     const after = since && !Number.isNaN(Date.parse(since)) ? new Date(since).toISOString() : null;

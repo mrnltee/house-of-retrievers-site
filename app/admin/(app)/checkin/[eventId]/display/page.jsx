@@ -9,7 +9,7 @@ export const metadata = { title: "Check-in display" };
 /** The check-in display screen: a laptop or TV that welcomes every guest checked in at the door. */
 export default async function CheckInDisplayPage({ params }) {
   const { eventId } = await params;
-  const { allowed } = await pageAdmin("checkin:view");
+  const { allowed } = await pageAdmin("checkin");
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(eventId)) notFound();
   const [event] = await sql("SELECT id, title, checkin_success_message FROM events WHERE id = $1", [eventId]);
