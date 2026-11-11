@@ -4,6 +4,7 @@ import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import { normalizeCode } from "./admin/registrations.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
+import { passQrColor } from "./passQr.mjs";
 import { hasDatabase, sql } from "./db.js";
 import { CARD_GOLD, CARD_HEIGHT, CARD_WHITE, CARD_WIDTH, MAX_INVITATION_PAGES, cardLayout, cleanInvitation, qrBox } from "./invitationCard.mjs";
 import { SANS_WOFF, SCRIPT_WOFF } from "./invitations/fonts.mjs";
@@ -91,12 +92,12 @@ export async function extraPages(settings, uploads = []) {
  * email and the door use (`/r/<code>` on the events host). Anyone else's pages
  * come back unchanged.
  */
-export async function withPassQr(pages, settings, code) {
+export async function withPassQr(pages, settings, code, { comp = null } = {}) {
   const s = cleanInvitation(settings);
   const pass = normalizeCode(code);
   if (!s.qr.on || !pass || !pages.length) return pages;
   const { left, top, px } = qrBox(s);
-  const qr = await QRCode.toBuffer(`${EVENTS_URL}/r/${pass}`, { type: "png", width: px, margin: 2, errorCorrectionLevel: "M", color: { dark: "#0d0d0d", light: "#ffffff" } });
+  const qr = await QRCode.toBuffer(`${EVENTS_URL}/r/${pass}`, { type: "png", width: px, margin: 2, errorCorrectionLevel: "M", color: passQrColor(comp) });
   const last = await sharp(pages[pages.length - 1]).composite([{ input: qr, left, top }]).jpeg({ quality: 88, mozjpeg: true }).toBuffer();
   return [...pages.slice(0, -1), last];
 }

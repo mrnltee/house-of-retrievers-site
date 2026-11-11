@@ -80,7 +80,7 @@ export async function POST(request) {
       const prepared = prepareLetter(letter, { ...withCardName(to, readCardNames(field("cardNames"), [ref]).byRef[ref]), values });
       let pages = await extraPages(invitation, uploads);
       // A participant's own check-in QR on the last page; the editor's preview shows a sample one.
-      if (type === "registration" && isUuid(id)) pages = await withPassQr(pages, invitation, (await passCodes([id], { eventId, admin })).get(id));
+      if (type === "registration" && isUuid(id)) { const pass = (await passCodes([id], { eventId, admin })).get(id); pages = await withPassQr(pages, invitation, pass?.code, { comp: pass?.comp }); }
       else if (!ref) pages = await withPassQr(pages, invitation, "SAMPEPASS2");
       const pdf = await invitationPdf([card, ...pages], { title: prepared.subject });
       const ascii = prepared.filename.replace(/[^\x20-\x7e]/g, "-").replace(/"/g, "'");

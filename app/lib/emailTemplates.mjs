@@ -6,6 +6,7 @@
  * Voice: warm but grounded (see the content voice notes). Never promise a
  * date, a reply time or a benefit HOR hasn't set.
  */
+import { compPassLine } from "./passQr.mjs";
 import { HOME_URL } from "./siteSeo.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
 import { formatWhen } from "./share.mjs";
@@ -571,7 +572,11 @@ const RSVP_FOOTNOTE = `You're getting this because this email address was used t
 const eventBox = (event) => `<strong>${esc(event.title)}</strong><br>${esc(formatWhen(event))}<br>${esc([event.venue, event.city].filter(Boolean).join(", "))}`;
 
 /** The check-in QR as a picture in the email (served by /api/pass-qr/[code]). */
-export const passQrImage = (code) => ({ src: `${EVENTS_URL}/api/pass-qr/${code}`, width: 200, alt: `Check-in QR code ${code}`, caption: `Code ${code.slice(0, 5)} ${code.slice(5)}` });
+// A complimentary guest's QR is printed in gold, with "VIP · Complimentary" under the code.
+export const passQrImage = (code, comp = null) => {
+  const line = compPassLine(comp);
+  return { src: `${EVENTS_URL}/api/pass-qr/${code}${line ? "?tone=comp" : ""}`, width: 200, alt: `Check-in QR code ${code}${line ? `, ${line}` : ""}`, caption: `Code ${code.slice(0, 5)} ${code.slice(5)}${line ? ` · ${line}` : ""}` };
+};
 
 /**
  * The pass: sent when someone RSVPs and gets a spot on a free event, or when
@@ -580,7 +585,7 @@ export const passQrImage = (code) => ({ src: `${EVENTS_URL}/api/pass-qr/${code}`
  * or the default; the QR picture, pass button and fixed lines are added.
  * The waitlist note is fixed.
  */
-export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLine = "", consentRequired = false, custom = null, ref = "rsvp-confirmed" }) {
+export function rsvpConfirmed({ name, event, status, passUrl, code = "", comp = null, paidLine = "", consentRequired = false, custom = null, ref = "rsvp-confirmed" }) {
   const waitlist = status === "waitlist";
   const after = ["Can't make it after all? Reply to this email so someone else can have the spot."];
   if (!waitlist) {
@@ -589,7 +594,7 @@ export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLin
         ...(paidLine ? [`We matched your payment (${esc(paidLine)}). Thank you!`] : []),
         ...(consentRequired ? ["Please review and acknowledge the event guidelines before viewing your QR pass."] : []),
       ],
-      image: code ? passQrImage(code) : undefined,
+      image: code ? passQrImage(code, comp) : undefined,
       button: { label: consentRequired ? "Review and acknowledge" : "Open my pass", href: passUrl },
       after: paidLine ? [...after, paymentNotice(event)] : after,
       footnote: RSVP_FOOTNOTE,
@@ -613,10 +618,10 @@ export function rsvpConfirmed({ name, event, status, passUrl, code = "", paidLin
  * event box, the check-in QR and the pass button, like the pass email. With an
  * acknowledgement to complete first, the button goes there and the QR waits.
  */
-export function eventReminder({ name, event, passUrl, code = "", consentRequired = false, custom = null }) {
+export function eventReminder({ name, event, passUrl, code = "", comp = null, consentRequired = false, custom = null }) {
   return renderTemplate("event-reminder", custom, { name, event }, {
     paragraphs: consentRequired ? ["Please review and acknowledge the event guidelines before viewing your QR pass."] : [],
-    image: code && !consentRequired ? passQrImage(code) : undefined,
+    image: code && !consentRequired ? passQrImage(code, comp) : undefined,
     button: { label: consentRequired ? "Review and acknowledge" : "Open my pass", href: passUrl },
     after: ["Can't make it after all? Reply to this email so someone else can have the spot."],
     footnote: RSVP_FOOTNOTE,

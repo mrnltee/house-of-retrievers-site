@@ -55,6 +55,7 @@ function WelcomeCard({ base, eventId, title, person, message, onClose }) {
         </span>
         <p className="tag">Welcome to</p>
         <h2 id="checkin-success-title" className="checkin-welcome-event">{title}</h2>
+        {person?.comp && <p className="checkin-welcome-comp">{person.comp} · Complimentary</p>}
         <p className="checkin-welcome-name">{person?.name || "Our guest"}</p>
         {person?.furbaby && <p className="checkin-welcome-furbaby">with {person.furbaby}</p>}
         {line && <p className="checkin-welcome-message">{line}</p>}

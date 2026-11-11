@@ -726,6 +726,7 @@ main:focus { outline: none; }
 .rsvp-pass-when { color: var(--muted-on-light); font-weight: 600; }
 .rsvp-pass-qr { width: min(260px, 100%); justify-self: center; }
 .rsvp-pass-qr svg { width: 100%; height: auto; display: block; }
+.rsvp-pass-comp { justify-self: center; margin: 0; padding: 4px 12px; border: 1px solid #7a5a12; border-radius: 999px; color: #7a5a12; font-weight: 600; letter-spacing: .04em; }
 .rsvp-pass-code { text-align: center; letter-spacing: .08em; }
 .rsvp-pass-fee { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; }
 .rsvp-pass-fee h2 { margin: 0; font: 400 24px "DM Serif Display", serif; }

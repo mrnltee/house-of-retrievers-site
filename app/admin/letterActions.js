@@ -211,7 +211,7 @@ export async function sendLetters(data) {
           // The pass QR only goes to the participant's own address on record: never with CC/BCC
           // copies or a "Send to another email" address, since whoever holds it can check in.
           const ownInbox = r.onRecord === undefined && !extraCc.emails.length && !extraBcc.emails.length && !(r.cc || []).length;
-          const pages = r.type === "registration" && ownInbox ? await withPassQr(invitePages, letter.invitation, codes.get(r.id)) : invitePages;
+          const pages = r.type === "registration" && ownInbox ? await withPassQr(invitePages, letter.invitation, codes.get(r.id)?.code, { comp: codes.get(r.id)?.comp }) : invitePages;
           const pdf = await invitationPdf([card, ...pages], { title: prepared.subject });
           mail = { ...invitationEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, name: names.name }), attachments: [{ filename: "invitation-card.jpg", content: card, contentId: INVITATION_CARD_CID }, { filename: prepared.filename, content: pdf }] };
         } catch (error) {

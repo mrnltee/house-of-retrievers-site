@@ -1,3 +1,4 @@
+import { compPassLine, passQrColor } from "../../../lib/passQr.mjs";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { hasDatabase, sql } from "../../../lib/db";
@@ -27,7 +28,7 @@ export default async function RsvpPass({ params }) {
   const code = normalizeCode(raw);
   if (!code || !hasDatabase()) notFound();
   const [reg] = await sql(
-    `SELECT r.id, r.name, r.status, r.fee_status, r.checked_in_at, r.created_at, r.event_id, r.consent_completed_at, r.consent_name, r.hold_expires_at,
+    `SELECT r.id, r.name, r.status, r.fee_status, r.comp_type, r.checked_in_at, r.created_at, r.event_id, r.consent_completed_at, r.consent_name, r.hold_expires_at,
        r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.proof_at, r.fee_note,
        e.title, e.date, e.start_time, e.end_time, e.venue, e.city, e.fee_required, e.cost, e.is_charity, e.onsite_payment, e.rsvp_form_config
      FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.check_in_code = $1 AND r.deleted_at IS NULL`,
@@ -51,7 +52,7 @@ export default async function RsvpPass({ params }) {
   const paying = ["waiting", "review", "rejected"].includes(state);
   const methods = paying ? publicMethods(await sql("SELECT key, enabled, details, qr_image, updated_at FROM payment_methods")).filter((m) => PAY_METHODS[m.key]) : [];
   const qr = canViewQr
-    ? await QRCode.toString(`${EVENTS_URL}/r/${code}`, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0d0d0d", light: "#ffffff" } })
+    ? await QRCode.toString(`${EVENTS_URL}/r/${code}`, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: passQrColor(reg.comp_type) })
     : null;
   const firstName = reg.name.split(" ")[0];
   const time = [reg.start_time, reg.end_time].filter(Boolean).join("–");
@@ -75,8 +76,9 @@ export default async function RsvpPass({ params }) {
         {state === "pass" && canViewQr && (
           <>
             <p>Hi {firstName}! {reg.fee_required && reg.fee_status === "paid" ? "Your payment is confirmed. " : ""}Show this QR at the door. A screenshot works too.</p>
-            <div className="rsvp-pass-qr" role="img" aria-label={`Check-in QR code. Code ${code}`} dangerouslySetInnerHTML={{ __html: qr }} />
+            <div className="rsvp-pass-qr" role="img" aria-label={`Check-in QR code. Code ${code}${compPassLine(reg.comp_type) ? `. ${compPassLine(reg.comp_type)}` : ""}`} dangerouslySetInnerHTML={{ __html: qr }} />
             <p className="rsvp-pass-code">Code <strong>{code.slice(0, 5)} {code.slice(5)}</strong></p>
+            {compPassLine(reg.comp_type) && <p className="rsvp-pass-comp">{compPassLine(reg.comp_type)}</p>}
           </>
         )}
         {state === "pass" && acknowledgementRequired && !acknowledgementComplete && (

@@ -15,7 +15,7 @@ import { formatOpens } from "./rsvpOpens.mjs";
 
 async function load(registrationId) {
   const [row] = await sql(
-    `SELECT r.id, r.name, r.email, r.status, r.fee_status, r.reminder_sent_at, r.reminder_count, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at, r.hold_reminders,
+    `SELECT r.id, r.name, r.email, r.status, r.fee_status, r.comp_type, r.reminder_sent_at, r.reminder_count, r.check_in_code, r.ticket_label, r.ticket_amount, r.amount_due, r.pay_method, r.pay_amount, r.fee_reference, r.fee_note, r.hold_expires_at, r.hold_reminders,
             e.fee_required, e.title, e.date, e.start_time, e.end_time, e.all_day, e.venue, e.city, e.email_template_id, e.is_charity, e.onsite_payment, e.rsvp_form_config
        FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.id = $1 AND r.deleted_at IS NULL`,
     [registrationId],
@@ -67,6 +67,7 @@ export async function sendPass(registrationId, { paid = false, again = false } =
     status: "confirmed",
     passUrl: needsAcknowledgement ? consentUrl(row) : passUrl(row),
     code: needsAcknowledgement ? "" : row.check_in_code,
+    comp: row.comp_type,
     consentRequired: needsAcknowledgement,
     paidLine: paid ? paidLine(row) : "",
     custom,
@@ -120,6 +121,7 @@ export async function sendReminder(registrationId, fields) {
     event: eventOf(row),
     passUrl: needsAcknowledgement ? consentUrl(row) : passUrl(row),
     code: row.check_in_code,
+    comp: row.comp_type,
     consentRequired: needsAcknowledgement,
     custom: fields,
   });
