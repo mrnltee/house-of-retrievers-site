@@ -1075,3 +1075,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 /* The admin's own footer styles mustn't paint the display's "Just arrived" strip. */
 .checkin-display footer.checkin-display-recent { background: transparent; color: inherit; }
 .checkin-display.is-bg-image footer.checkin-display-recent, .checkin-display.is-bg-poster footer.checkin-display-recent { background: rgba(13,13,13,.45); }
+.display-bg-spec { padding: 12px 14px; border-radius: 12px; background: var(--a-sand, #f6efe0); font-size: 14px; }
+.display-bg-spec ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.display-bg-notes { padding: 10px 14px; border-radius: 12px; border: 1px solid #d9a441; background: #fff6e0; }
+.display-bg-notes p { margin: 0 0 4px; }

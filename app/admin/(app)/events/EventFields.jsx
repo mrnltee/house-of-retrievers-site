@@ -8,7 +8,7 @@ import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, t
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 import { MAX_PAYMENT_HOLD_MINUTES, PAYMENT_HOLD_OPTIONS, holdLabel, holdParts, isPresetHold } from "../../../lib/registrationHolds.mjs";
 import { DEFAULT_WELCOME_MESSAGE } from "../../../lib/welcomePhoto.mjs";
-import { DISPLAY_BACKGROUNDS } from "../../../lib/checkinDisplay.mjs";
+import { DISPLAY_BACKGROUNDS, displayImageNotes } from "../../../lib/checkinDisplay.mjs";
 import ImageField from "../ImageField";
 import { MONTHS, NTH_OPTIONS, REPEAT_COUNT_DEFAULT, REPEAT_COUNT_MAX, WEEKDAYS, describeRule, occurrences } from "../../../lib/eventRecurrence.mjs";
 
@@ -787,6 +787,7 @@ export function RsvpFormSettings({ initial, vaccinationRecordRequired }) {
 
 export function CheckinSettings({ eventId, message, preset, failurePreset, hasCustomSound, displayBg = "dark", displayImage = "", hasPoster = false }) {
   const [bg, setBg] = useState(displayBg || "dark");
+  const [bgNotes, setBgNotes] = useState([]);
   const [sound, setSound] = useState(preset || "dazzle");
   const [failureSound, setFailureSound] = useState(failurePreset || "warning");
   const [data, setData] = useState("");
@@ -848,7 +849,22 @@ export function CheckinSettings({ eventId, message, preset, failurePreset, hasCu
             </label>
           ))}
         </div>
-        {bg === "image" && <ImageField name="checkinDisplayImage" label="Background image" hint="Landscape works best, e.g. 1920 × 1080. It's darkened so the white names stay readable. Only admins see it." current={displayImage || ""} maxEdge={1600} />}
+        {bg === "image" && (
+          <div className="form" style={{ gap: 10 }}>
+            <div className="display-bg-spec">
+              <strong>Background image size</strong>
+              <ul>
+                <li><b>Shape:</b> landscape, <b>16:9</b> (the shape of a TV or laptop screen).</li>
+                <li><b>Size:</b> <b>1920 × 1080 px</b> is ideal; at least 1280 × 720. In Canva: Presentation (16:9) or a custom 1920 × 1080 design.</li>
+                <li><b>File:</b> JPG, PNG or WebP. It&apos;s resized to 1920 px wide, so bigger files are fine.</li>
+                <li><b>Layout:</b> keep the middle calm. The guest&apos;s photo, name and message sit there, and the &ldquo;Just arrived&rdquo; strip runs along the bottom. Keep logos and words at least 5% in from the edges, since screens that aren&apos;t exactly 16:9 trim a little.</li>
+                <li>It&apos;s darkened on the screen so the white names stay readable, so pick a picture that still looks good a bit darker.</li>
+              </ul>
+            </div>
+            <ImageField name="checkinDisplayImage" label="Background image" hint="16:9 · 1920 × 1080 px. Only admins see it." current={displayImage || ""} maxEdge={1920} onChange={(url, size) => setBgNotes(url && size ? displayImageNotes(size) : [])} />
+            {bgNotes.length > 0 && <div className="display-bg-notes" role="status">{bgNotes.map((n) => <p key={n} className="small">{n}</p>)}<p className="small muted">You can still save it; it's only a heads-up.</p></div>}
+          </div>
+        )}
       </fieldset>
     </div>
   </details>;

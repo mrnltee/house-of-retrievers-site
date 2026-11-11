@@ -43,3 +43,24 @@ export function displayBackground({ bg, poster = "", image = "" } = {}) {
   if (kind === "image") return image ? { kind, image } : { kind: "dark", image: "" };
   return { kind, image: "" };
 }
+
+/**
+ * The display background picture (owner, 2026-11-12): 16:9 like a TV or
+ * laptop screen, 1920 × 1080 ideal, 1280 × 720 at least. Returns the notes to
+ * show for an upload of this size (empty when it fits).
+ */
+export const DISPLAY_IMAGE_SPEC = { ratio: "16:9", width: 1920, height: 1080, minWidth: 1280, minHeight: 720 };
+export function displayImageNotes({ width, height } = {}) {
+  const w = Number(width);
+  const h = Number(height);
+  if (!w || !h) return [];
+  const notes = [];
+  const ratio = w / h;
+  if (Math.abs(ratio - 16 / 9) / (16 / 9) > 0.05) {
+    notes.push(`This picture is ${w} × ${h}, ${ratio < 16 / 9 ? "taller" : "wider"} than 16:9, so the screen will cut off its ${ratio < 16 / 9 ? "top and bottom" : "sides"}.`);
+  }
+  if (w < DISPLAY_IMAGE_SPEC.minWidth || h < DISPLAY_IMAGE_SPEC.minHeight) {
+    notes.push(`It's small (${w} × ${h}) and may look blurry on a big TV. Use at least ${DISPLAY_IMAGE_SPEC.minWidth} × ${DISPLAY_IMAGE_SPEC.minHeight}, ideally ${DISPLAY_IMAGE_SPEC.width} × ${DISPLAY_IMAGE_SPEC.height}.`);
+  }
+  return notes;
+}

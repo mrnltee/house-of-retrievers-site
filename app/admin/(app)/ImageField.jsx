@@ -11,15 +11,19 @@ async function shrink(file, maxEdge, format) {
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
   canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  if (format === "png") return canvas.toDataURL("image/png");
-  const webp = canvas.toDataURL("image/webp", 0.88);
-  return webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/png");
+  const size = { width: bitmap.width, height: bitmap.height };
+  if (format === "png") return { url: canvas.toDataURL("image/png"), size };
+  // A big, detailed picture (e.g. a full-screen background) gets a little more compression to stay under the upload cap.
+  let webp = canvas.toDataURL("image/webp", 0.88);
+  if (webp.startsWith("data:image/webp") && webp.length > 880_000) webp = canvas.toDataURL("image/webp", 0.76);
+  return { url: webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/png"), size };
 }
 
 /**
  * A photo or logo picker with a preview. Sends `<name>Data` (new picture),
  * `<name>` (keep the current one) or `<name>Remove`; the server reads them with
- * pictureFrom (app/lib/admin/imageUpload.js).
+ * pictureFrom (app/lib/admin/imageUpload.js). `onChange(url, size)` also gets
+ * the original picture's { width, height } (before shrinking) when one is picked.
  */
 export default function ImageField({ name, label, hint, current = "", round = false, maxEdge = 800, format = "", onChange }) {
   const [preview, setPreview] = useState(current);
@@ -35,10 +39,10 @@ export default function ImageField({ name, label, hint, current = "", round = fa
       return;
     }
     try {
-      const url = await shrink(file, maxEdge, format);
+      const { url, size } = await shrink(file, maxEdge, format);
       setData(url);
       setPreview(url);
-      onChange?.(url);
+      onChange?.(url, size);
       setRemoved(false);
       setNote("");
     } catch {

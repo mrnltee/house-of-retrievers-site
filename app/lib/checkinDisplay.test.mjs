@@ -28,3 +28,14 @@ test("display background: chosen kind, black & gold without a picture", async ()
   assert.deepEqual(displayBackground({ bg: "image", image: "/api/event-image/x" }), { kind: "image", image: "/api/event-image/x" });
   assert.deepEqual(displayBackground({ bg: "ivory", image: "/x" }), { kind: "ivory", image: "" });
 });
+
+test("display image notes: 16:9 at full HD fits, others explain the problem", async () => {
+  const { displayImageNotes } = await import("./checkinDisplay.mjs");
+  assert.deepEqual(displayImageNotes({ width: 1920, height: 1080 }), []);
+  assert.deepEqual(displayImageNotes({ width: 3840, height: 2160 }), []);
+  assert.match(displayImageNotes({ width: 1080, height: 1350 })[0], /taller than 16:9.*top and bottom/);
+  assert.match(displayImageNotes({ width: 2400, height: 800 })[0], /wider than 16:9.*sides/);
+  const small = displayImageNotes({ width: 960, height: 540 });
+  assert.equal(small.length, 1);
+  assert.match(small[0], /at least 1280 × 720, ideally 1920 × 1080/);
+});
