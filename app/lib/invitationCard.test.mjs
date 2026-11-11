@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cardLayout, cardNames, cleanInvitation, isInvitation, readCardNames } from "./invitationCard.mjs";
+import { cardLayout, cardNames, cleanInvitation, isInvitation, participantInvitation, readCardNames } from "./invitationCard.mjs";
 
 const IMG = "/api/event-image/11111111-1111-1111-1111-111111111111";
 
@@ -67,4 +67,20 @@ test("furbabyCardLine lists a participant's furbabies", async () => {
 test("cardNames uses a participant's own card line", () => {
   assert.deepEqual(cardNames({ name: "Alyzza Bayaban", contact: "", cardLine: "& Mochi" }), { name: "Alyzza Bayaban", org: "& Mochi" });
   assert.deepEqual(cardNames({ name: "Ana", contact: "", cardLine: "" }), { name: "Ana", org: "" });
+});
+
+test("invitation audience: guests by default, participants only when asked", () => {
+  assert.equal(cleanInvitation({}).audience, "guests");
+  assert.equal(cleanInvitation({ audience: "participants" }).audience, "participants");
+  assert.equal(cleanInvitation({ audience: "everyone" }).audience, "guests");
+});
+
+test("participantInvitation picks the participants' card, else any invitation", () => {
+  const card = "/api/event-image/00000000-0000-0000-0000-000000000001";
+  const guests = { key: "g", invitation: { on: true, card, audience: "guests" } };
+  const people = { key: "p", invitation: { on: true, card, audience: "participants" } };
+  const off = { key: "o", invitation: { on: false, card, audience: "participants" } };
+  assert.equal(participantInvitation([guests, people]).key, "p");
+  assert.equal(participantInvitation([off, guests]).key, "g");
+  assert.equal(participantInvitation([{ key: "x" }]), null);
 });

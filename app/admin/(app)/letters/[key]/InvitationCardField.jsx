@@ -10,7 +10,7 @@ const PAGE_HINTS = ["e.g. the Attire guide", "e.g. A Celebration with Purpose (b
 /** The invitation settings to post for a preview: saved pictures kept, new ones sent alongside. */
 export function invitationPostFields(inv) {
   return {
-    invitation: JSON.stringify({ on: inv.on, card: inv.card, pages: inv.pages.filter((p, i) => p && !inv.pageUploads[i]), y: inv.y, nameSize: inv.nameSize, orgSize: inv.orgSize }),
+    invitation: JSON.stringify({ on: inv.on, card: inv.card, pages: inv.pages.filter((p, i) => p && !inv.pageUploads[i]), y: inv.y, nameSize: inv.nameSize, orgSize: inv.orgSize, audience: inv.audience }),
     inviteCardUpload: inv.cardUpload,
     invitePageUploads: inv.pageUploads.filter(Boolean),
   };
@@ -49,7 +49,7 @@ export default function InvitationCardField({ inv, setInv, letterKey, action, on
       }
     }, 400);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [inv.on, inv.card, inv.cardUpload, inv.y, inv.nameSize, inv.orgSize, letterKey, action, hasCard]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inv.on, inv.card, inv.cardUpload, inv.y, inv.nameSize, inv.orgSize, inv.audience, letterKey, action, hasCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setPage = (i) => (url) => setInv((s) => {
     const pageUploads = [...s.pageUploads];
@@ -62,6 +62,7 @@ export default function InvitationCardField({ inv, setInv, letterKey, action, on
   return (
     <div className="signature-controls invitation-controls">
       <input type="hidden" name="invitationOn" value={inv.on ? "1" : ""} />
+      <input type="hidden" name="invitationAudience" value={inv.audience} />
       <input type="hidden" name="invitationY" value={inv.y} />
       <input type="hidden" name="invitationNameSize" value={inv.nameSize} />
       <input type="hidden" name="invitationOrgSize" value={inv.orgSize} />
@@ -71,7 +72,7 @@ export default function InvitationCardField({ inv, setInv, letterKey, action, on
         <SliderField label="Name size" hint="Height of the cursive name" unit="px" min={INVITATION_LIMITS.nameSize[0]} max={INVITATION_LIMITS.nameSize[1]} step={1} value={inv.nameSize} onChange={(v) => setInv((s) => ({ ...s, nameSize: v }))} />
         <SliderField label="Organization size" hint="The line under the name" unit="px" min={INVITATION_LIMITS.orgSize[0]} max={INVITATION_LIMITS.orgSize[1]} step={1} value={inv.orgSize} onChange={(v) => setInv((s) => ({ ...s, orgSize: v }))} />
         <div className="invitation-card-preview" aria-live="polite">
-          {state.src ? <img src={state.src} alt="The card as a guest gets it, for the sample guest Ms. Malou Perez" /> : <p className="small muted">{state.error || (hasCard ? "Drawing the card…" : "Upload the card to see it with a guest's name.")}</p>}
+          {state.src ? <img src={state.src} alt={inv.audience === "participants" ? "The card as a participant gets it, for the sample participant Jessie Mae Gabriel" : "The card as a guest gets it, for the sample guest Ms. Malou Perez"} /> : <p className="small muted">{state.error || (hasCard ? "Drawing the card…" : "Upload the card to see it with a guest's name.")}</p>}
           {state.busy && state.src && <span className="small muted">Updating…</span>}
         </div>
         <span className="field-head">Pages after the card <small>In the PDF only, in this order. 4:5 like the card.</small></span>

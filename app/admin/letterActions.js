@@ -79,7 +79,7 @@ export async function saveLetter(data) {
         if (page.error) await backWith(back, "error", page.error);
         if (page.url) pages.push(page.url);
       }
-      invitation = cleanInvitation({ on: form(data, "invitationOn") === "1", card: card.url, pages, y: form(data, "invitationY"), nameSize: form(data, "invitationNameSize"), orgSize: form(data, "invitationOrgSize") });
+      invitation = cleanInvitation({ on: form(data, "invitationOn") === "1", card: card.url, pages, y: form(data, "invitationY"), nameSize: form(data, "invitationNameSize"), orgSize: form(data, "invitationOrgSize"), audience: form(data, "invitationAudience") });
       if (invitation.on && !invitation.card) await backWith(back, "error", "Upload the blank invitation card, or switch the invitation card off.");
     }
     await sql(
@@ -259,7 +259,15 @@ const INVITATION_BLANK = {
   subject: "You're invited: [Event Name]",
   cover: "Dear [Salutation],\n\nIt would be our honour to have you with us at [Event Name] on [Event Date], [Event Time], at [Event Location].\n\nYour personal invitation is below. The full invitation, with our attire guide and the organisations we are supporting, is attached.\n\nKindly let us know whether you can join us by replying to this email.",
   body: "Invitation card",
-  invitation: { on: true, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28 },
+  invitation: { on: true, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28, audience: "guests" },
+};
+
+/** The same card for registered participants: their place is confirmed, so it never asks them to RSVP. */
+const INVITATION_PARTICIPANTS = {
+  subject: "Your invitation to [Event Name]",
+  cover: "Dear [Salutation],\n\nThank you for registering for [Event Name]. Your place is confirmed, and we are delighted to welcome you on [Event Date], [Event Time], at [Event Location].\n\nYour personal invitation is below. The full invitation, with our attire guide and the organisations your registration supports, is attached.\n\nAt the door, we'll scan the QR pass from your confirmation email, so please keep it handy.\n\nWe look forward to celebrating with you.",
+  body: "Invitation card",
+  invitation: { ...INVITATION_BLANK.invitation, audience: "participants" },
 };
 
 const slug = (text) => String(text || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "letter";
@@ -308,18 +316,19 @@ export async function createEventLetter(data) {
     // A Word file, when one was picked, wins over "Start from".
     const word = form(data, "body").trim() ? true : false;
     // "An invitation card" (owner, 2026-11-11): a blank invitation, card art uploaded in the editor.
-    const invite = !word && form(data, "from") === "invitation-card";
+    const inviteKind = word ? "" : { "invitation-card": "guests", "invitation-participants": "participants" }[form(data, "from")] || "";
+    const invite = Boolean(inviteKind);
     const from = word || invite ? "" : form(data, "from");
     const source = from ? await loadLetter(from) : null;
     if (from && !source) await backWith(back, "error", "The letter to start from wasn't found.");
-    const name = (form(data, "name").trim() || (source ? `${source.name} — ${event.title}` : `${invite ? "Invitation card" : "Letter"} — ${event.title}`)).slice(0, LETTER_LIMITS.name);
+    const name = (form(data, "name").trim() || (source ? `${source.name} — ${event.title}` : `${inviteKind === "participants" ? "Invitation card for participants" : invite ? "Invitation card" : "Letter"} — ${event.title}`)).slice(0, LETTER_LIMITS.name);
     const key = eventLetterKey(name);
     const blank = {
       subject: "[Event Name]",
       cover: "Dear [Salutation],\n\nWarm greetings from The House of Retrievers’ Society, Inc.\n\nOur letter about [Event Name] on [Event Date] is attached.",
       body: "[Date]\n\n[Their Contact Person?]\n[Company Name]\n[Address?]\n\n**Subject: [Event Name]**\n\nDear [Salutation]:\n\nWrite the letter here. [Event Name] is on [Event Date], [Event Time], at [Event Location].\n\nSincerely yours,\n\n**[Signatory Name]**\n\n[Signatory Position]\n\n**THE HOUSE OF RETRIEVERS’ SOCIETY, INC.**",
     };
-    const l = source || (invite ? INVITATION_BLANK : null) || fromWord(data, blank, name) || blank;
+    const l = source || (invite ? (inviteKind === "participants" ? INVITATION_PARTICIPANTS : INVITATION_BLANK) : null) || fromWord(data, blank, name) || blank;
     await sql(
       `INSERT INTO letter_templates (key, name, subject, cover, body, signature, invitation, updated_by, updated_at, created_by, created_at, event_id, based_on)
        VALUES ($1, $2, $3, $4, $5, $7, $10, $6, now(), $6, now(), $8, $9)`,

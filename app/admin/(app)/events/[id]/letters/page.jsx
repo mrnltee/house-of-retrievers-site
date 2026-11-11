@@ -53,7 +53,7 @@ export default async function EventLettersPage({ params, searchParams }) {
                 {mine.map((l) => (
                   <tr key={l.key}>
                     <td className="strong"><a href={`${base}/letters/${l.key}`}>{l.name}</a><br /><span className="small muted">{l.subject}</span></td>
-                    <td className="small">{l.invitation?.on ? "Invitation card" : l.basedOn ? nameOf(l.basedOn) : "Blank"}</td>
+                    <td className="small">{l.invitation?.on ? (l.invitation.audience === "participants" ? "Invitation card · participants" : "Invitation card · guests") : l.basedOn ? nameOf(l.basedOn) : "Blank"}</td>
                     <td className="small">{l.updatedAt ? formatWhen(l.updatedAt) : "—"}</td>
                     <td>
                       <span className="actions" style={{ justifyContent: "flex-end" }}>
@@ -115,7 +115,8 @@ export default async function EventLettersPage({ params, searchParams }) {
               <label className="field"><span>Start from <small>A copy is made for this event; the original in Letters stays as it is. A Word file below is used instead, if you pick one.</small></span>
                 <select name="from" defaultValue={general.find((l) => l.key.startsWith("sponsor"))?.key || ""}>
                   <option value="">Blank letter</option>
-                  <option value="invitation-card">Invitation card (personalised for each guest)</option>
+                  <option value="invitation-card">Invitation card for invited guests (asks them to reply)</option>
+                  <option value="invitation-participants">Invitation card for registered participants (place confirmed)</option>
                   {general.map((l) => <option key={l.key} value={l.key}>{l.name}</option>)}
                 </select>
               </label>

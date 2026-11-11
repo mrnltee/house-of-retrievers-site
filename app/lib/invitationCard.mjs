@@ -10,7 +10,14 @@ export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
 export const MAX_INVITATION_PAGES = 3;
 export const INVITATION_LIMITS = { y: [0.1, 0.95], nameSize: [36, 120], orgSize: [16, 48], name: 60, org: 80 };
-export const INVITATION_DEFAULT = { on: false, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28 };
+export const INVITATION_DEFAULT = { on: false, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28, audience: "guests" };
+/**
+ * Who an invitation letter is written for (owner, 2026-11-11): invited guests
+ * (VIPs, who are asked to reply) or registered participants (already confirmed,
+ * so never asked to RSVP). Registrations' "Send invitation cards" uses the
+ * participants' one.
+ */
+export const INVITATION_AUDIENCES = ["guests", "participants"];
 /** Gold as on HOR's cards, and the white of its organization line. */
 export const CARD_GOLD = "#C9A04E";
 export const CARD_WHITE = "#FFFFFF";
@@ -32,6 +39,7 @@ export function cleanInvitation(input) {
     y: Math.round(clamp(s.y, INVITATION_LIMITS.y, INVITATION_DEFAULT.y) * 1000) / 1000,
     nameSize: Math.round(clamp(s.nameSize, INVITATION_LIMITS.nameSize, INVITATION_DEFAULT.nameSize)),
     orgSize: Math.round(clamp(s.orgSize, INVITATION_LIMITS.orgSize, INVITATION_DEFAULT.orgSize)),
+    audience: s.audience === "participants" ? "participants" : "guests",
   };
 }
 
@@ -40,6 +48,12 @@ export const isInvitation = (settings) => {
   const s = cleanInvitation(settings);
   return s.on && Boolean(s.card);
 };
+
+/** The letter Registrations sends its invitation cards with: the participants' one, else any invitation. */
+export function participantInvitation(letters = []) {
+  const invites = letters.filter((l) => isInvitation(l.invitation));
+  return invites.find((l) => cleanInvitation(l.invitation).audience === "participants") || invites[0] || null;
+}
 
 const tidy = (text, max) => String(text ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 

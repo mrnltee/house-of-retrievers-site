@@ -18,6 +18,8 @@ const SAMPLE = "Pawsome Pet Shop";
 const LETTER_TO = { name: SAMPLE, contact: "Jessie Mae Gabriel", address: "123 Katipunan Ave.\nQuezon City 1108", salutation: "Ms. Jessie" };
 // Invitation cards preview for the guest the card's sample is drawn for.
 const INVITE_TO = { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez", address: "", salutation: "Ms. Perez" };
+// A registered participant, for the participants' invitation preview.
+const PARTICIPANT_TO = { name: "Jessie Mae Gabriel", contact: "", address: "", salutation: "Jessie Mae Gabriel" };
 
 /** Edits one letter with a live preview. "Preview PDF" posts the unsaved wording to the PDF route. */
 export default function LetterEditor({ letter, original, pdfAction, standard = {}, detailsHref = "", eventFills = null, eventTitle = "", frame = null }) {
@@ -33,9 +35,10 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const freshInv = () => ({ ...savedInv, pages: [...savedInv.pages], cardUpload: "", pageUploads: [] });
   const [inv, setInv] = useState(freshInv);
   const [cardSrc, setCardSrc] = useState("");
-  const invChanged = inv.cardUpload !== "" || inv.pageUploads.some(Boolean) || ["on", "card", "y", "nameSize", "orgSize"].some((k) => inv[k] !== savedInv[k]) || inv.pages.join() !== savedInv.pages.join();
+  const invChanged = inv.cardUpload !== "" || inv.pageUploads.some(Boolean) || ["on", "card", "y", "nameSize", "orgSize", "audience"].some((k) => inv[k] !== savedInv[k]) || inv.pages.join() !== savedInv.pages.join();
   const invite = inv.on;
-  const TO = invite ? INVITE_TO : LETTER_TO;
+  const forParticipants = invite && inv.audience === "participants";
+  const TO = forParticipants ? PARTICIPANT_TO : invite ? INVITE_TO : LETTER_TO;
   const sigChanged = sig.upload !== "" || ["on", "x", "dy", "width"].some((k) => sig[k] !== savedSig[k]) || sig.image !== savedSig.image;
   const changed = invChanged || sigChanged || attachPdf !== savedAttach || JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
   const sigView = { on: sig.on, src: sig.upload || sig.image, x: sig.x, dy: sig.dy, width: sig.width };
@@ -63,9 +66,9 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const preview = useMemo(() => fillLetter(fields.body, { ...TO, date: letterDate(), values }), [fields.body, values]);
   const email = useMemo(() => {
     const p = prepareLetter({ ...fields, name: fields.name || letter.name }, { ...TO, values });
-    if (invite) return applyEmailFrame(invitationEmail({ subject: p.subject, cover: p.cover, filename: p.filename, name: "Ms. Malou Perez", cardSrc: cardSrc || "data:," }), frame);
+    if (invite) return applyEmailFrame(invitationEmail({ subject: p.subject, cover: p.cover, filename: p.filename, name: TO.contact || TO.name, cardSrc: cardSrc || "data:," }), frame);
     return applyEmailFrame(letterCoverEmail({ subject: p.subject, cover: p.cover, filename: p.filename, attached: attachPdf }), frame);
-  }, [fields, letter.name, values, attachPdf, frame, invite, cardSrc]);
+  }, [fields, letter.name, values, attachPdf, frame, invite, forParticipants, cardSrc]);
   // Puts [Label] where the cursor is in the letter (or at the end).
   const insertBlank = (label) => {
     const el = bodyRef.current;
@@ -97,6 +100,11 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
           <input type="checkbox" checked={invite} onChange={(e) => setInv((s) => ({ ...s, on: e.target.checked }))} />
           <span><strong>Send as an invitation card</strong><br /><span className="small muted">{invite ? "Each guest gets their own card with their name in gold script and their organization under it: shown in the email, and as a PDF with the pages you add." : "For distinguished guests: a personalised card in place of a typed letter."}</span></span>
         </label>
+        {invite && <fieldset className="field invitation-audience">
+          <legend className="field-head">Who it&apos;s for <small>Registrations&apos; “Send invitation cards” uses the participants&apos; one.</small></legend>
+          <label className="check"><input type="radio" name="invitationAudienceChoice" checked={inv.audience !== "participants"} onChange={() => setInv((s) => ({ ...s, audience: "guests" }))} /> <span><strong>Invited guests</strong> <span className="small muted">· VIPs and distinguished guests, asked to let HOR know if they can come</span></span></label>
+          <label className="check"><input type="radio" name="invitationAudienceChoice" checked={inv.audience === "participants"} onChange={() => setInv((s) => ({ ...s, audience: "participants" }))} /> <span><strong>Registered participants</strong> <span className="small muted">· their place is confirmed, so don&apos;t ask them to RSVP; mention their QR pass</span></span></label>
+        </fieldset>}
         {!invite && <label className="check attach-choice">
           <input type="checkbox" checked={attachPdf} onChange={(e) => setAttachPdf(e.target.checked)} />
           <span><strong>Attach a PDF letter</strong><br /><span className="small muted">{attachPdf ? "The email goes out with the letter below as a PDF, on HOR's letterhead." : "Email only: no letter and no PDF. The email below is the whole message."}</span></span>
@@ -193,7 +201,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
       <section className="card template-preview">
         <div className="template-preview-head">
           <div>
-            <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {invite ? INVITE_TO.contact : SAMPLE}</p>
+            <p className="small muted" style={{ margin: 0 }}>Preview, addressed to {forParticipants ? PARTICIPANT_TO.name : invite ? INVITE_TO.contact : SAMPLE}</p>
             <p className="template-subject"><strong>{fillLetter(fields.subject, { ...TO, values })}</strong></p>
           </div>
           {invite && <form method="post" action={pdfAction} target="_blank">

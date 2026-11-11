@@ -18,7 +18,7 @@ import ConfirmButton from "../../ConfirmButton";
 import { isActivityCategory } from "../../../../lib/eventCategories.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 import { eventLetters } from "../../../../lib/letterStore";
-import { isInvitation } from "../../../../lib/invitationCard.mjs";
+import { participantInvitation } from "../../../../lib/invitationCard.mjs";
 import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 
@@ -42,9 +42,9 @@ export default async function EventRegistrations({ params, searchParams }) {
   const base = await adminBase();
   const all = await sql("SELECT * FROM registrations WHERE event_id=$1 ORDER BY created_at", [eventId]);
   const paidEvent = event.fee_required;
-  // Invitation cards (owner, 2026-11-11): the event's invitation letter, sent to confirmed participants
+  // Invitation cards (owner, 2026-11-11): the event's invitation letter for participants (else any invitation), sent to confirmed participants
   // who haven't had it yet (a failed or bounced email counts as not sent), up to a send's limit at a time.
-  const inviteLetter = can(admin, "letters:edit") ? (await eventLetters(eventId)).find((l) => isInvitation(l.invitation)) : null;
+  const inviteLetter = can(admin, "letters:edit") ? participantInvitation(await eventLetters(eventId)) : null;
   let inviteTodo = [];
   if (inviteLetter) {
     const sent = new Set((await sql("SELECT DISTINCT ref FROM letter_sends WHERE letter_key = $1 AND status NOT IN ('failed', 'bounced')", [inviteLetter.key])).map((r) => r.ref));

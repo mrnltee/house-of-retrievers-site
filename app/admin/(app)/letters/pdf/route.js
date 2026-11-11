@@ -65,7 +65,8 @@ export async function POST(request) {
   const cardUpload = can(admin, "letters:edit") ? field("inviteCardUpload") : "";
   if (isInvitation(invitation) || (cleanInvitation(invitation).on && cardUpload)) {
     const ref = field("previewTo") || field("to");
-    const sample = !ref ? { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez" } : to;
+    // The editor's sample: an invited guest, or a registered participant with their furbabies under the name.
+    const sample = !ref ? (cleanInvitation(invitation).audience === "participants" ? { name: "Jessie Mae Gabriel", contact: "", cardLine: "& Mochi and Fudge" } : { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez" }) : to;
     const names = cardNames(sample, readCardNames(field("cardNames"), [ref]).byRef[ref]);
     try {
       const card = await renderCard(invitation, names, { cardUpload });

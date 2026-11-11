@@ -512,7 +512,8 @@ export function invitationEmail({ subject, cover, filename, name = "", cardSrc =
   // The card sits after the opening line, so the guest sees it right away.
   const [lead = "", ...after] = paragraphs;
   const image = { src: cardSrc, width: 480, height: 600, alt: `Invitation card${name ? ` for ${name}` : ""}` };
-  const footnote = `Your full invitation is attached as a PDF (${filename}). Reply to this email if you have any questions.`;
+  // The footer already says to reply to reach the team, so this line only names the attachment.
+  const footnote = `Your full invitation is attached as a PDF (${filename}).`;
   const parts = { subject, greeting: greeting || undefined, heading: subject, showHeading: false, centered: true, paragraphs: lead ? [lead] : [], image, after, footnote };
   return { subject, html: invitationFrame({ ...parts, preheader: messagePreview(blocks.join(" ")) }), text: plain(parts) };
 }
