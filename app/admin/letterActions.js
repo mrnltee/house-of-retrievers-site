@@ -21,7 +21,7 @@ import { cleanSignature } from "../lib/letterSignature.mjs";
 import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
 import { copiesFor, parseCopies } from "../lib/letterCopies.mjs";
 import { readSendTo, withSendTo } from "../lib/letterSendTo.mjs";
-import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames } from "../lib/invitationCard.mjs";
+import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames, withCardName } from "../lib/invitationCard.mjs";
 import { extraPages, invitationPdf, renderCard } from "../lib/invitationRender";
 
 const form = (data, key) => {
@@ -192,7 +192,7 @@ export async function sendLetters(data) {
     for (const r of recipients) {
       if (!looksLikeEmail(r.email)) { skipped.push(r.name); continue; }
       const own = wordingFor(letter, edits, r.ref);
-      const prepared = prepareLetter(own, { ...r, date, values, signed: Boolean(signature) });
+      const prepared = prepareLetter(own, { ...(invite ? withCardName(r, typedNames[r.ref]) : r), date, values, signed: Boolean(signature) });
       // A design: its email, filled in for this recipient (PDF attached when on). Else, with the
       // PDF: a short cover email with the letter attached; without: the letter is the email.
       let mail;

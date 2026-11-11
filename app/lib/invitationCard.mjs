@@ -74,3 +74,12 @@ export function cardLayout(settings, { org = "" } = {}) {
   const nameBaseline = Math.round(s.y * CARD_HEIGHT);
   return { nameBaseline, nameSize: s.nameSize, orgBaseline: org ? Math.round(nameBaseline + s.orgSize * 1.55) : null, orgSize: s.orgSize };
 }
+
+/**
+ * The recipient as the email addresses them: a name typed for the card (owner,
+ * 2026-11-11) is also who the note greets ("Dear Hon. Juan Miguel Zubiri,").
+ */
+export function withCardName(recipient = {}, override = null) {
+  const typed = tidy(override?.name, INVITATION_LIMITS.name);
+  return typed ? { ...recipient, contact: typed, salutation: typed } : recipient;
+}

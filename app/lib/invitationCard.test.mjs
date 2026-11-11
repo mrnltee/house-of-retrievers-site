@@ -46,3 +46,11 @@ test("cardLayout puts the org line under the name only when there is one", () =>
   assert.ok(withOrg.orgBaseline > withOrg.nameBaseline);
   assert.equal(cardLayout({ y: 0.8 }, { org: "" }).orgBaseline, null);
 });
+
+test("withCardName greets the name typed for the card", async () => {
+  const { withCardName } = await import("./invitationCard.mjs");
+  const r = { name: "Acme", contact: "Ana", salutation: "Ms. Ana" };
+  assert.deepEqual(withCardName(r, { name: " Hon.  Ana Reyes " }), { name: "Acme", contact: "Hon. Ana Reyes", salutation: "Hon. Ana Reyes" });
+  assert.equal(withCardName(r, { name: "" }), r);
+  assert.equal(withCardName(r, null), r);
+});

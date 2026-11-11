@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { fillLetter, letterDate, missingBlanks, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
 import EditWording from "./EditWording";
 import { applyEmailFrame, invitationEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
-import { INVITATION_LIMITS, cardNames, isInvitation } from "../../../../lib/invitationCard.mjs";
+import { INVITATION_LIMITS, cardNames, isInvitation, withCardName } from "../../../../lib/invitationCard.mjs";
 import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "../../../../lib/emailDesign.mjs";
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
@@ -52,18 +52,20 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const [edits, setEdits] = useState({ all: null, byRef: {} });
   const active = wordingFor(letter, edits, who?.ref);
   const date = letterDate();
-  const to = { name: who?.name || "", contact: who?.contact || "", address: who?.address || "", salutation: who?.salutation || "", date, values };
+  const [onCard, setOnCard] = useState({});
+  // An invitation greets the name typed for the card (withCardName).
+  const greeted = isInvitation(letter.invitation) && who ? withCardName(who, onCard[who.ref]) : who;
+  const to = { name: greeted?.name || "", contact: greeted?.contact || "", address: greeted?.address || "", salutation: greeted?.salutation || "", date, values };
   // Same as the PDF: a signature that is on, with an image, gets a place even if the letter has no {signature} line.
   const signed = Boolean(letter.signature?.on && letter.signature?.image);
   const body = signed && !hasSignatureMark(active.body) ? placeSignatureMark(active.body) : active.body;
-  const filled = useMemo(() => fillLetter(body, to), [body, who, date, values]); // eslint-disable-line react-hooks/exhaustive-deps
-  const prepared = useMemo(() => prepareLetter(active, { ...to, signed }), [letter, edits, who, date, values, signed]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filled = useMemo(() => fillLetter(body, to), [body, who, date, values, onCard]); // eslint-disable-line react-hooks/exhaustive-deps
+  const prepared = useMemo(() => prepareLetter(active, { ...to, signed }), [letter, edits, who, date, values, signed, onCard]); // eslint-disable-line react-hooks/exhaustive-deps
   // Attach the PDF (a short cover email), or send the letter itself as the email (owner, 2026-11-04).
   // A letter set to email only never has a PDF; a PDF letter can skip it for this send.
   const pdfLetter = letter.attachPdf !== false;
   // Invitation card (owner, 2026-11-11): each guest's name and organization on the card, editable for this send.
   const invite = isInvitation(letter.invitation);
-  const [onCard, setOnCard] = useState({});
   // What's typed stays as typed (spaces and all); it's tidied only when used.
   const namesFor = (r) => cardNames(r, onCard[r.ref] ? { ...cardNames(r), ...onCard[r.ref] } : null);
   const typedCard = (r, key) => onCard[r.ref]?.[key] ?? cardNames(r)[key];
