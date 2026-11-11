@@ -2,7 +2,7 @@ import * as fontkit from "fontkit";
 import sharp from "sharp";
 import PDFDocument from "pdfkit";
 import { hasDatabase, sql } from "./db.js";
-import { CARD_GOLD, CARD_HEIGHT, CARD_WHITE, CARD_WIDTH, cardLayout, cleanInvitation } from "./invitationCard.mjs";
+import { CARD_GOLD, CARD_HEIGHT, CARD_WHITE, CARD_WIDTH, MAX_INVITATION_PAGES, cardLayout, cleanInvitation } from "./invitationCard.mjs";
 import { SANS_WOFF, SCRIPT_WOFF } from "./invitations/fonts.mjs";
 
 /**
@@ -58,7 +58,8 @@ async function imageBytes(src) {
 }
 
 /** A picture fitted to 1080 × 1350 (cover, centred). */
-const fitted = (bytes) => sharp(bytes).resize(CARD_WIDTH, CARD_HEIGHT, { fit: "cover", position: "centre" });
+// limitInputPixels: no picture larger than 4096 × 4096 is decoded.
+const fitted = (bytes) => sharp(bytes, { limitInputPixels: 4096 * 4096 }).resize(CARD_WIDTH, CARD_HEIGHT, { fit: "cover", position: "centre" });
 
 /**
  * One guest's card as a JPEG. `settings` may carry unsaved uploads in
@@ -74,7 +75,7 @@ export async function renderCard(settings, names, { cardUpload = "" } = {}) {
 export async function extraPages(settings, uploads = []) {
   const s = cleanInvitation(settings);
   const out = [];
-  for (const src of [...s.pages, ...uploads]) {
+  for (const src of [...s.pages, ...uploads].slice(0, MAX_INVITATION_PAGES)) {
     const bytes = await imageBytes(src);
     if (bytes) out.push(await fitted(bytes).jpeg({ quality: 86, mozjpeg: true }).toBuffer());
   }
