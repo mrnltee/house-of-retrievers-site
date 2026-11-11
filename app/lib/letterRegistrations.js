@@ -32,11 +32,13 @@ export async function registrationRecipients(ids, { eventId, admin } = {}) {
 /**
  * The check-in codes of participants in this send, for the QR on their
  * invitation's last page: id → code. Server-side only (never sent to the
- * browser), with the same permission, event and eligibility checks as above.
+ * browser), with the same event and eligibility checks as above. A pass code
+ * is as good as the pass, so it needs registrations:edit, the right that shows
+ * a pass link on the registration page.
  */
 export async function passCodes(ids, { eventId, admin } = {}) {
   const wanted = [...new Set(ids)].filter(isUuid);
-  if (!wanted.length || !isUuid(eventId) || !admin || !can(admin, "registrations:view")) return new Map();
+  if (!wanted.length || !isUuid(eventId) || !admin || !can(admin, "registrations:view") || !can(admin, "registrations:edit")) return new Map();
   const rows = await sql(
     `SELECT r.id, r.check_in_code, r.email, r.status, r.fee_status, r.deleted_at, e.fee_required
        FROM registrations r JOIN events e ON e.id = r.event_id
