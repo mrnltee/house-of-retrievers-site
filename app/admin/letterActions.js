@@ -107,7 +107,7 @@ export async function resetLetter(data) {
 }
 
 /** "supporter:<uuid>" / "person:<uuid>" → rows with who to send to. */
-async function loadRecipients(refs) {
+async function loadRecipients(refs, { eventId = null, admin = null } = {}) {
   const ids = (kind) => refs.filter((r) => r.startsWith(`${kind}:`)).map((r) => r.slice(kind.length + 1)).filter(isUuid);
   const [supporters, people, contacts, beneficiaries] = await Promise.all([
     ids("supporter").length ? sql("SELECT id, name, kind, contact_email, contact_name, address, salutation, greeting FROM supporters WHERE id = ANY($1::uuid[])", [ids("supporter")]) : [],
@@ -115,7 +115,7 @@ async function loadRecipients(refs) {
     ids("contact").length ? sql("SELECT id, name, organization, email, rep_email, send_to, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
     ids("beneficiary").length ? sql("SELECT id, name, contact_name, contact_email, address, salutation FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("beneficiary")]) : [],
   ]);
-  const registrations = await registrationRecipients(ids("registration"));
+  const registrations = await registrationRecipients(ids("registration"), { eventId, admin });
   return [
     ...registrations,
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim() })),
@@ -172,7 +172,7 @@ export async function sendLetters(data) {
     // Another email (and name) for some recipients, for this send only; their records stay as they are.
     const sendTo = readSendTo(form(data, "sendTo"), refs);
     if (sendTo.error) await backWith(back, "error", sendTo.error);
-    const recipients = (await loadRecipients(refs)).map((r) => withSendTo(r, sendTo.byRef[r.ref]));
+    const recipients = (await loadRecipients(refs, { eventId: event?.id || null, admin })).map((r) => withSendTo(r, sendTo.byRef[r.ref]));
     // Extra CC / BCC typed for this send: copied on every recipient's email.
     const extraCc = parseCopies(form(data, "copyCc"), "CC");
     const extraBcc = parseCopies(form(data, "copyBcc"), "BCC");

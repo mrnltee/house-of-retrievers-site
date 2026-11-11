@@ -25,7 +25,7 @@ const clean = (value, max = 80) => String(value || "").trim().slice(0, max);
  */
 export default async function SendLetterPage({ searchParams }) {
   const params = await searchParams;
-  const { allowed } = await pageAdmin("letters:edit");
+  const { admin, allowed } = await pageAdmin("letters:edit");
   if (!allowed) return <NotAllowed />;
   const base = await adminBase();
   const allLetters = await listLetters();
@@ -61,7 +61,7 @@ export default async function SendLetterPage({ searchParams }) {
   const beneficiaries = beneficiaryIds.length ? await sql("SELECT id, name, contact_name, contact_email, address, salutation, kind, status FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [beneficiaryIds]) : [];
   const people = personIds.length ? await sql("SELECT id, name, email, organization, kind FROM people WHERE id = ANY($1::uuid[]) ORDER BY name", [personIds]) : [];
   // Registered participants (an event's Registrations → Send invitation cards); only confirmed ones load.
-  const registrations = await registrationRecipients(refs.filter((r) => r.startsWith("registration:")).map((r) => r.slice(13)));
+  const registrations = await registrationRecipients(refs.filter((r) => r.startsWith("registration:")).map((r) => r.slice(13)), { eventId: event?.id, admin });
   const recipients = [
     ...registrations.map((r) => ({ ...r, note: "Registered participant", href: event ? `${base}/registrations/${event.id}/r/${r.id}` : "" })),
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim(), note: `${s.kind} · ${s.status}`, href: `${base}/supporters/${s.id}` })),
