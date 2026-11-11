@@ -35,7 +35,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const freshInv = () => ({ ...savedInv, pages: [...savedInv.pages], cardUpload: "", pageUploads: [] });
   const [inv, setInv] = useState(freshInv);
   const [cardSrc, setCardSrc] = useState("");
-  const invChanged = inv.cardUpload !== "" || inv.pageUploads.some(Boolean) || ["on", "card", "y", "nameSize", "orgSize", "audience"].some((k) => inv[k] !== savedInv[k]) || inv.pages.join() !== savedInv.pages.join();
+  const invChanged = inv.cardUpload !== "" || inv.pageUploads.some(Boolean) || (["on", "card", "y", "nameSize", "orgSize", "audience"].some((k) => inv[k] !== savedInv[k]) || JSON.stringify(inv.qr) !== JSON.stringify(savedInv.qr)) || inv.pages.join() !== savedInv.pages.join();
   const invite = inv.on;
   const forParticipants = invite && inv.audience === "participants";
   const TO = forParticipants ? PARTICIPANT_TO : invite ? INVITE_TO : LETTER_TO;

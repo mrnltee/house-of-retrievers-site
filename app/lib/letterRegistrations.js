@@ -28,3 +28,20 @@ export async function registrationRecipients(ids, { eventId, admin } = {}) {
       return { ref: `registration:${r.id}`, id: r.id, type: "registration", name, contact: "", address: "", salutation: name, cardLine: furbabyCardLine(r.furbaby_name), email: String(r.email || "").trim() };
     });
 }
+
+/**
+ * The check-in codes of participants in this send, for the QR on their
+ * invitation's last page: id → code. Server-side only (never sent to the
+ * browser), with the same permission, event and eligibility checks as above.
+ */
+export async function passCodes(ids, { eventId, admin } = {}) {
+  const wanted = [...new Set(ids)].filter(isUuid);
+  if (!wanted.length || !isUuid(eventId) || !admin || !can(admin, "registrations:view")) return new Map();
+  const rows = await sql(
+    `SELECT r.id, r.check_in_code, r.email, r.status, r.fee_status, r.deleted_at, e.fee_required
+       FROM registrations r JOIN events e ON e.id = r.event_id
+      WHERE r.id = ANY($1::uuid[]) AND r.event_id = $2`,
+    [wanted, eventId],
+  );
+  return new Map(rows.filter((r) => r.check_in_code && reminderEligibility(r, { feeRequired: Boolean(r.fee_required) }).ok).map((r) => [r.id, r.check_in_code]));
+}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import ImageField from "../../ImageField";
-import { INVITATION_LIMITS, MAX_INVITATION_PAGES } from "../../../../lib/invitationCard.mjs";
+import { INVITATION_LIMITS, MAX_INVITATION_PAGES, qrBox } from "../../../../lib/invitationCard.mjs";
 import { SliderField } from "./LetterEditor";
 
 const PAGE_HINTS = ["e.g. the Attire guide", "e.g. A Celebration with Purpose (beneficiaries)", "Optional"];
@@ -10,7 +11,7 @@ const PAGE_HINTS = ["e.g. the Attire guide", "e.g. A Celebration with Purpose (b
 /** The invitation settings to post for a preview: saved pictures kept, new ones sent alongside. */
 export function invitationPostFields(inv) {
   return {
-    invitation: JSON.stringify({ on: inv.on, card: inv.card, pages: inv.pages.filter((p, i) => p && !inv.pageUploads[i]), y: inv.y, nameSize: inv.nameSize, orgSize: inv.orgSize, audience: inv.audience }),
+    invitation: JSON.stringify({ on: inv.on, card: inv.card, pages: inv.pages.filter((p, i) => p && !inv.pageUploads[i]), y: inv.y, nameSize: inv.nameSize, orgSize: inv.orgSize, audience: inv.audience, qr: inv.qr }),
     inviteCardUpload: inv.cardUpload,
     invitePageUploads: inv.pageUploads.filter(Boolean),
   };
@@ -63,6 +64,7 @@ export default function InvitationCardField({ inv, setInv, letterKey, action, on
     <div className="signature-controls invitation-controls">
       <input type="hidden" name="invitationOn" value={inv.on ? "1" : ""} />
       <input type="hidden" name="invitationAudience" value={inv.audience} />
+      <input type="hidden" name="invitationQr" value={JSON.stringify(inv.qr)} />
       <input type="hidden" name="invitationY" value={inv.y} />
       <input type="hidden" name="invitationNameSize" value={inv.nameSize} />
       <input type="hidden" name="invitationOrgSize" value={inv.orgSize} />
@@ -79,7 +81,43 @@ export default function InvitationCardField({ inv, setInv, letterKey, action, on
         {Array.from({ length: MAX_INVITATION_PAGES }, (_, i) => (
           <ImageField key={i} name={`invitePage${i}`} label={`Page ${i + 2}`} hint={PAGE_HINTS[i]} current={inv.pages[i] || ""} maxEdge={1350} onChange={setPage(i)} />
         ))}
+        <QrField inv={inv} setInv={setInv} />
       </div>
+    </div>
+  );
+}
+
+const SAMPLE_QR = "https://events.houseofretrieversph.org/r/SAMPEPASS2";
+
+/**
+ * The participant's check-in QR on the last page (owner, 2026-11-11): on/off,
+ * where it sits and how big, over the last page you uploaded. The QR shown is
+ * a sample; each participant gets their own, the one the door scans.
+ */
+function QrField({ inv, setInv }) {
+  const [sample, setSample] = useState("");
+  useEffect(() => { QRCode.toDataURL(SAMPLE_QR, { margin: 2, width: 300, errorCorrectionLevel: "M", color: { dark: "#0d0d0d", light: "#ffffff" } }).then(setSample).catch(() => setSample("")); }, []);
+  const last = [...Array(MAX_INVITATION_PAGES).keys()].map((i) => inv.pageUploads[i] || inv.pages[i] || "").filter(Boolean).pop() || "";
+  const qr = inv.qr;
+  const set = (key) => (v) => setInv((s) => ({ ...s, qr: { ...s.qr, [key]: key === "on" ? v : v / 100 } }));
+  const box = qrBox(qr);
+  return (
+    <div className="signature-controls invitation-qr">
+      <label className="check"><input type="checkbox" checked={qr.on} onChange={(e) => set("on")(e.target.checked)} /> <span><strong>Put their check-in QR on the last page</strong> <span className="small muted">· registered participants only, each with their own pass (the one the door scans). Invited guests have no pass, so their last page goes without it.</span></span></label>
+      {qr.on && (last ? (
+        <>
+          <SliderField label="QR left ↔ right" hint="Where its centre sits" unit="%" min={INVITATION_LIMITS.qrX[0] * 100} max={INVITATION_LIMITS.qrX[1] * 100} step={0.5} value={Math.round(qr.x * 1000) / 10} onChange={set("x")} />
+          <SliderField label="QR up ↕ down" hint="Where its centre sits" unit="%" min={INVITATION_LIMITS.qrY[0] * 100} max={INVITATION_LIMITS.qrY[1] * 100} step={0.5} value={Math.round(qr.y * 1000) / 10} onChange={set("y")} />
+          <SliderField label="QR size" hint="Its width, as a share of the page. Keep it at 20 % or more so phones scan it easily" unit="%" min={INVITATION_LIMITS.qrSize[0] * 100} max={INVITATION_LIMITS.qrSize[1] * 100} step={0.5} value={Math.round(qr.size * 1000) / 10} onChange={set("size")} />
+          <div className="invitation-card-preview invitation-qr-preview">
+            <div className="invitation-qr-page">
+              <img src={last} alt="The invitation's last page" />
+              {sample && <img className="invitation-qr-code" src={sample} alt="Sample check-in QR" style={{ left: `${(box.left / 1080) * 100}%`, top: `${(box.top / 1350) * 100}%`, width: `${(box.px / 1080) * 100}%` }} />}
+            </div>
+            <span className="small muted">Sample QR. Each participant&apos;s PDF has their own.</span>
+          </div>
+        </>
+      ) : <p className="small muted">Upload the pages after the card first; the QR goes on the last one.</p>)}
     </div>
   );
 }

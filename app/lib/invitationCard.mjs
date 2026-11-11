@@ -9,8 +9,15 @@ import { splitFurbabyNames } from "./attendeeNames.mjs";
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
 export const MAX_INVITATION_PAGES = 3;
-export const INVITATION_LIMITS = { y: [0.1, 0.95], nameSize: [36, 120], orgSize: [16, 48], name: 60, org: 80 };
-export const INVITATION_DEFAULT = { on: false, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28, audience: "guests" };
+export const INVITATION_LIMITS = { y: [0.1, 0.95], nameSize: [36, 120], orgSize: [16, 48], name: 60, org: 80, qrX: [0.1, 0.9], qrY: [0.1, 0.9], qrSize: [0.12, 0.5] };
+/**
+ * The participant's check-in QR on the invitation's last page (owner,
+ * 2026-11-11): x / y are where its centre sits (shares of the page's width and
+ * height), size its width as a share of the page width. Only registered
+ * participants have a pass, so invited guests' pages go without it.
+ */
+export const QR_DEFAULT = { on: false, x: 0.5, y: 0.78, size: 0.26 };
+export const INVITATION_DEFAULT = { on: false, card: "", pages: [], y: 0.84, nameSize: 72, orgSize: 28, audience: "guests", qr: QR_DEFAULT };
 /**
  * Who an invitation letter is written for (owner, 2026-11-11): invited guests
  * (VIPs, who are asked to reply) or registered participants (already confirmed,
@@ -40,7 +47,30 @@ export function cleanInvitation(input) {
     nameSize: Math.round(clamp(s.nameSize, INVITATION_LIMITS.nameSize, INVITATION_DEFAULT.nameSize)),
     orgSize: Math.round(clamp(s.orgSize, INVITATION_LIMITS.orgSize, INVITATION_DEFAULT.orgSize)),
     audience: s.audience === "participants" ? "participants" : "guests",
+    qr: cleanQr(s.qr),
   };
+}
+
+const share = (n) => Math.round(n * 1000) / 1000;
+
+/** The QR settings, cleaned. */
+export function cleanQr(input) {
+  const q = input && typeof input === "object" ? input : {};
+  return {
+    on: q.on === true || q.on === "1" || q.on === "true",
+    x: share(clamp(q.x, INVITATION_LIMITS.qrX, QR_DEFAULT.x)),
+    y: share(clamp(q.y, INVITATION_LIMITS.qrY, QR_DEFAULT.y)),
+    size: share(clamp(q.size, INVITATION_LIMITS.qrSize, QR_DEFAULT.size)),
+  };
+}
+
+/** Where the QR goes on a 1080 × 1350 page, in pixels, kept inside the page. */
+export function qrBox(settings) {
+  const q = cleanQr(settings?.qr ?? settings);
+  const px = Math.round(q.size * CARD_WIDTH);
+  const left = Math.min(CARD_WIDTH - px, Math.max(0, Math.round(q.x * CARD_WIDTH - px / 2)));
+  const top = Math.min(CARD_HEIGHT - px, Math.max(0, Math.round(q.y * CARD_HEIGHT - px / 2)));
+  return { left, top, px };
 }
 
 /** Is this letter sent as an invitation card (on, with card art)? */

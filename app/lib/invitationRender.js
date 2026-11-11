@@ -1,8 +1,11 @@
 import * as fontkit from "fontkit";
 import sharp from "sharp";
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
+import { normalizeCode } from "./admin/registrations.mjs";
+import { EVENTS_URL } from "./eventsHost.mjs";
 import { hasDatabase, sql } from "./db.js";
-import { CARD_GOLD, CARD_HEIGHT, CARD_WHITE, CARD_WIDTH, MAX_INVITATION_PAGES, cardLayout, cleanInvitation } from "./invitationCard.mjs";
+import { CARD_GOLD, CARD_HEIGHT, CARD_WHITE, CARD_WIDTH, MAX_INVITATION_PAGES, cardLayout, cleanInvitation, qrBox } from "./invitationCard.mjs";
 import { SANS_WOFF, SCRIPT_WOFF } from "./invitations/fonts.mjs";
 
 /**
@@ -80,6 +83,22 @@ export async function extraPages(settings, uploads = []) {
     if (bytes) out.push(await fitted(bytes).jpeg({ quality: 86, mozjpeg: true }).toBuffer());
   }
   return out;
+}
+
+/**
+ * The pages with a participant's check-in QR on the last one, when the letter
+ * has the QR switched on and `code` is their pass code. The same QR the pass
+ * email and the door use (`/r/<code>` on the events host). Anyone else's pages
+ * come back unchanged.
+ */
+export async function withPassQr(pages, settings, code) {
+  const s = cleanInvitation(settings);
+  const pass = normalizeCode(code);
+  if (!s.qr.on || !pass || !pages.length) return pages;
+  const { left, top, px } = qrBox(s);
+  const qr = await QRCode.toBuffer(`${EVENTS_URL}/r/${pass}`, { type: "png", width: px, margin: 2, errorCorrectionLevel: "M", color: { dark: "#0d0d0d", light: "#ffffff" } });
+  const last = await sharp(pages[pages.length - 1]).composite([{ input: qr, left, top }]).jpeg({ quality: 88, mozjpeg: true }).toBuffer();
+  return [...pages.slice(0, -1), last];
 }
 
 /** The invitation PDF: the guest's card, then the extra pages, each a full 4:5 page. */

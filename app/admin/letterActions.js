@@ -22,9 +22,10 @@ import { LETTER_GROUPS, letterEmails } from "../lib/contacts.mjs";
 import { copiesFor, parseCopies } from "../lib/letterCopies.mjs";
 import { readSendTo, withSendTo } from "../lib/letterSendTo.mjs";
 import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames, withCardName } from "../lib/invitationCard.mjs";
-import { extraPages, invitationPdf, renderCard } from "../lib/invitationRender";
-import { registrationRecipients } from "../lib/letterRegistrations";
+import { extraPages, invitationPdf, renderCard, withPassQr } from "../lib/invitationRender";
+import { passCodes, registrationRecipients } from "../lib/letterRegistrations";
 
+const parseJson = (text) => { try { return JSON.parse(text); } catch { return null; } };
 const form = (data, key) => {
   const value = data.get(key);
   return typeof value === "string" ? value : "";
@@ -79,7 +80,7 @@ export async function saveLetter(data) {
         if (page.error) await backWith(back, "error", page.error);
         if (page.url) pages.push(page.url);
       }
-      invitation = cleanInvitation({ on: form(data, "invitationOn") === "1", card: card.url, pages, y: form(data, "invitationY"), nameSize: form(data, "invitationNameSize"), orgSize: form(data, "invitationOrgSize"), audience: form(data, "invitationAudience") });
+      invitation = cleanInvitation({ on: form(data, "invitationOn") === "1", card: card.url, pages, y: form(data, "invitationY"), nameSize: form(data, "invitationNameSize"), orgSize: form(data, "invitationOrgSize"), audience: form(data, "invitationAudience"), qr: data.has("invitationQr") ? parseJson(form(data, "invitationQr")) : before.invitation?.qr });
       if (invitation.on && !invitation.card) await backWith(back, "error", "Upload the blank invitation card, or switch the invitation card off.");
     }
     await sql(
@@ -189,6 +190,10 @@ export async function sendLetters(data) {
     if (invite) {
       try { invitePages = await extraPages(letter.invitation); } catch (error) { await backWith(back, "error", `The invitation's pages couldn't be read (${error?.message || error}).`); }
     }
+    // Participants' check-in QR on the last page (when the letter has it on).
+    const codes = invite && cleanInvitation(letter.invitation).qr.on
+      ? await passCodes(recipients.filter((r) => r.type === "registration").map((r) => r.id), { eventId: event?.id || null, admin })
+      : new Map();
     const sent = [];
     const skipped = [];
     const failed = [];
@@ -203,7 +208,8 @@ export async function sendLetters(data) {
         const names = cardNames(r, typedNames[r.ref]);
         try {
           const card = await renderCard(letter.invitation, names);
-          const pdf = await invitationPdf([card, ...invitePages], { title: prepared.subject });
+          const pages = r.type === "registration" ? await withPassQr(invitePages, letter.invitation, codes.get(r.id)) : invitePages;
+          const pdf = await invitationPdf([card, ...pages], { title: prepared.subject });
           mail = { ...invitationEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, name: names.name }), attachments: [{ filename: "invitation-card.jpg", content: card, contentId: INVITATION_CARD_CID }, { filename: prepared.filename, content: pdf }] };
         } catch (error) {
           console.error("invitation card not made", error?.message || error);

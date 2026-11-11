@@ -84,3 +84,14 @@ test("participantInvitation picks the participants' card, else any invitation", 
   assert.equal(participantInvitation([off, guests]).key, "g");
   assert.equal(participantInvitation([{ key: "x" }]), null);
 });
+
+test("invitation QR: off by default, clamped, kept on the page", async () => {
+  const { cleanQr, qrBox } = await import("./invitationCard.mjs");
+  assert.deepEqual(cleanInvitation({}).qr, { on: false, x: 0.5, y: 0.78, size: 0.26 });
+  assert.deepEqual(cleanQr({ on: "1", x: 2, y: -1, size: 0.9 }), { on: true, x: 0.9, y: 0.1, size: 0.5 });
+  const box = qrBox({ qr: { on: true, x: 0.9, y: 0.9, size: 0.5 } });
+  assert.equal(box.px, 540);
+  assert.equal(box.left, 1080 - 540);
+  assert.equal(box.top, 1350 - 540);
+  assert.deepEqual(qrBox({ qr: { x: 0.5, y: 0.5, size: 0.2 } }), { left: 432, top: 567, px: 216 });
+});

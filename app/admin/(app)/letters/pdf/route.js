@@ -1,3 +1,4 @@
+import { passCodes, registrationRecipients } from "../../../../lib/letterRegistrations";
 import { sql } from "../../../../lib/db";
 import { currentAdmin } from "../../../../lib/admin/auth";
 import { can } from "../../../../lib/admin/roles.mjs";
@@ -7,7 +8,7 @@ import { letterPdf } from "../../../../lib/letterPdf.mjs";
 import { loadLetter, savedAnswers, signatureForPdf } from "../../../../lib/letterStore";
 import { eventFills } from "../../../../lib/letterEventStore";
 import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames, withCardName } from "../../../../lib/invitationCard.mjs";
-import { extraPages, invitationPdf, renderCard } from "../../../../lib/invitationRender";
+import { extraPages, invitationPdf, renderCard, withPassQr } from "../../../../lib/invitationRender";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,10 @@ export async function POST(request) {
   } else if (type === "beneficiary" && isUuid(id)) {
     const [row] = await sql("SELECT name, contact_name, address, salutation FROM beneficiaries WHERE id = $1 AND deleted_at IS NULL", [id]);
     if (row) to = recipientFields({ beneficiary: row });
+  } else if (type === "registration" && isUuid(id)) {
+    // A registered participant (permission and event checked there).
+    const [row] = await registrationRecipients([id], { eventId, admin });
+    if (row) to = row;
   } else if (type === "contact" && isUuid(id)) {
     const [row] = await sql("SELECT name, organization, address, salutation FROM letter_contacts WHERE id = $1 AND deleted_at IS NULL", [id]);
     if (row) to = recipientFields({ contact: row });
@@ -73,7 +78,11 @@ export async function POST(request) {
       if (field("format") === "card") return new Response(card, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } });
       const uploads = can(admin, "letters:edit") ? data.getAll("invitePageUploads").filter((v) => typeof v === "string" && v.startsWith("data:image/")).slice(0, MAX_INVITATION_PAGES) : [];
       const prepared = prepareLetter(letter, { ...withCardName(to, readCardNames(field("cardNames"), [ref]).byRef[ref]), values });
-      const pdf = await invitationPdf([card, ...(await extraPages(invitation, uploads))], { title: prepared.subject });
+      let pages = await extraPages(invitation, uploads);
+      // A participant's own check-in QR on the last page; the editor's preview shows a sample one.
+      if (type === "registration" && isUuid(id)) pages = await withPassQr(pages, invitation, (await passCodes([id], { eventId, admin })).get(id));
+      else if (!ref) pages = await withPassQr(pages, invitation, "SAMPEPASS2");
+      const pdf = await invitationPdf([card, ...pages], { title: prepared.subject });
       const ascii = prepared.filename.replace(/[^\x20-\x7e]/g, "-").replace(/"/g, "'");
       return new Response(pdf, { headers: { "Content-Type": "application/pdf", "Content-Disposition": `${field("download") ? "attachment" : "inline"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(prepared.filename)}`, "Cache-Control": "no-store" } });
     } catch (error) {
