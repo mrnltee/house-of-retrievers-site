@@ -64,7 +64,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   // Invitation card (owner, 2026-11-11): each guest's name and organization on the card, editable for this send.
   const invite = isInvitation(letter.invitation);
   const [onCard, setOnCard] = useState({});
+  // What's typed stays as typed (spaces and all); it's tidied only when used.
   const namesFor = (r) => cardNames(r, onCard[r.ref] ? { ...cardNames(r), ...onCard[r.ref] } : null);
+  const typedCard = (r, key) => onCard[r.ref]?.[key] ?? cardNames(r)[key];
   const cardNamesJson = JSON.stringify(Object.fromEntries(recipients.filter((r) => onCard[r.ref]).map((r) => [r.ref, namesFor(r)])));
   const setCardName = (r, key, value) => setOnCard((all) => ({ ...all, [r.ref]: { ...cardNames(r), ...all[r.ref], [key]: value } }));
   const [cardSrc, setCardSrc] = useState("");
@@ -171,11 +173,11 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
                   <div className="send-to-other-fields card-names">
                     <label className="field">
                       <span>Name on the card <small>In gold script, e.g. Ms. Malou Perez</small></span>
-                      <input type="text" maxLength={INVITATION_LIMITS.name} value={namesFor(r).name} onChange={(e) => setCardName(r, "name", e.target.value)} onFocus={() => setPreviewRef(r.ref)} autoComplete="off" />
+                      <input type="text" maxLength={INVITATION_LIMITS.name} value={typedCard(r, "name")} onChange={(e) => setCardName(r, "name", e.target.value)} onFocus={() => setPreviewRef(r.ref)} autoComplete="off" />
                     </label>
                     <label className="field">
                       <span>Organization under it <small>Leave empty for none</small></span>
-                      <input type="text" maxLength={INVITATION_LIMITS.org} value={namesFor(r).org} onChange={(e) => setCardName(r, "org", e.target.value)} onFocus={() => setPreviewRef(r.ref)} autoComplete="off" />
+                      <input type="text" maxLength={INVITATION_LIMITS.org} value={typedCard(r, "org")} onChange={(e) => setCardName(r, "org", e.target.value)} onFocus={() => setPreviewRef(r.ref)} autoComplete="off" />
                     </label>
                   </div>
                 )}
