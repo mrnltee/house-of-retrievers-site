@@ -1,6 +1,8 @@
 "use server";
 
 import { compLabel } from "../lib/compTickets.mjs";
+import { cleanDisplayBg } from "../lib/checkinDisplay.mjs";
+import { pictureFrom } from "../lib/admin/imageUpload";
 import { cleanPromoCodes } from "../lib/promoCodes.mjs";
 import { cleanRainbow, livingFurbabyNames } from "../lib/attendeeNames.mjs";
 import { cleanCustomQuestions } from "../lib/customQuestions.mjs";
@@ -310,6 +312,13 @@ export async function saveEvent(data) {
       } else {
         await sql("UPDATE events SET checkin_success_title=COALESCE($1, checkin_success_title), checkin_success_message=COALESCE($2, checkin_success_message), checkin_sound_preset=$3, checkin_failure_sound_preset=$4 WHERE id=$5", [title, message, preset, failurePreset, eventId]);
       }
+    }
+    // Check-in display screen background; an older tab without the field keeps what's saved.
+    if (data.has("checkinDisplayBg")) {
+      const bg = cleanDisplayBg(form(data, "checkinDisplayBg"));
+      const picture = bg === "image" ? await pictureFrom(data, "checkinDisplayImage", admin.email, { private: true }) : { url: null };
+      if (picture.error) await backWith(back, "error", `Saved, except the display background: ${picture.error}`);
+      await sql("UPDATE events SET checkin_display_bg=$1, checkin_display_image=CASE WHEN $1 = 'image' THEN $2 ELSE checkin_display_image END WHERE id=$3", [bg === "image" && !picture.url ? "dark" : bg, picture.url, eventId]);
     }
     if (photo) {
       await sql("UPDATE events SET image_source=$1, image_crop=$2 WHERE id=$3", [photo.source, photo.crop && JSON.stringify(photo.crop), eventId]);

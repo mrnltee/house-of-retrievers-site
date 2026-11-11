@@ -26,3 +26,20 @@ export function enqueue(queue, arrivals, seen) {
   for (const a of fresh) seen.add(a.id);
   return [...queue, ...fresh].slice(-MAX_QUEUE);
 }
+
+/** The display screen's background (owner, 2026-11-12), set per event in Check-in experience. */
+export const DISPLAY_BACKGROUNDS = [
+  { key: "dark", label: "Black & gold", hint: "The usual look" },
+  { key: "ivory", label: "Ivory", hint: "Light and warm, for bright venues" },
+  { key: "poster", label: "Event poster", hint: "The event's poster, blurred and darkened" },
+  { key: "image", label: "Your own image", hint: "Upload a background, darkened so names stay readable" },
+];
+export const cleanDisplayBg = (value) => (DISPLAY_BACKGROUNDS.some((b) => b.key === value) ? value : "dark");
+
+/** What the display shows behind the welcome: { kind, image }. Falls back to black & gold without a picture. */
+export function displayBackground({ bg, poster = "", image = "" } = {}) {
+  const kind = cleanDisplayBg(bg);
+  if (kind === "poster") return poster ? { kind, image: poster } : { kind: "dark", image: "" };
+  if (kind === "image") return image ? { kind, image } : { kind: "dark", image: "" };
+  return { kind, image: "" };
+}

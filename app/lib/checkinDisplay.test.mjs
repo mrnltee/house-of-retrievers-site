@@ -18,3 +18,13 @@ test("arrivals queue oldest first, once each, capped", () => {
   assert.equal(capped.length, MAX_QUEUE);
   assert.equal(capped.at(-1).id, "n19");
 });
+
+test("display background: chosen kind, black & gold without a picture", async () => {
+  const { cleanDisplayBg, displayBackground } = await import("./checkinDisplay.mjs");
+  assert.equal(cleanDisplayBg("ivory"), "ivory");
+  assert.equal(cleanDisplayBg("neon"), "dark");
+  assert.deepEqual(displayBackground({ bg: "poster", poster: "/p.jpg" }), { kind: "poster", image: "/p.jpg" });
+  assert.deepEqual(displayBackground({ bg: "poster" }), { kind: "dark", image: "" });
+  assert.deepEqual(displayBackground({ bg: "image", image: "/api/event-image/x" }), { kind: "image", image: "/api/event-image/x" });
+  assert.deepEqual(displayBackground({ bg: "ivory", image: "/x" }), { kind: "ivory", image: "" });
+});

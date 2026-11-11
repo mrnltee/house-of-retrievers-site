@@ -24,7 +24,7 @@ function Face({ base, eventId, person, size = "big" }) {
  * scan or by name) and pops up a welcome for each: 10 s alone, 5 s each when
  * others are waiting. Nothing here checks anyone in.
  */
-export default function Display({ base, eventId, title, message, back }) {
+export default function Display({ base, eventId, title, message, background = { kind: "dark", image: "" }, back }) {
   const [current, setCurrent] = useState(null);
   const [queue, setQueue] = useState([]);
   const [recent, setRecent] = useState([]);
@@ -89,7 +89,8 @@ export default function Display({ base, eventId, title, message, back }) {
   const fullScreen = () => document.documentElement.requestFullscreen?.().catch(() => null);
 
   return (
-    <div className="checkin-display">
+    <div className={`checkin-display is-bg-${background.kind}`}>
+      {background.image && <div className="checkin-display-bg" aria-hidden="true" style={{ backgroundImage: `url("${background.image.replace(/"/g, "")}")` }} />}
       <header className="checkin-display-head">
         <span className="checkin-display-title">{title}</span>
         <span className="checkin-display-count" aria-live="polite">{counts.checked} of {counts.confirmed} checked in</span>

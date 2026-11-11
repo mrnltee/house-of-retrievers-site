@@ -1044,3 +1044,34 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
   @keyframes display-in { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 }
 .checkin-top .checkin-display-link { justify-self: start; margin-top: 6px; color: white; border-color: rgba(255,255,255,.35); }
+/* Display screen backgrounds (owner, 2026-11-12). */
+.checkin-display > * { position: relative; z-index: 1; }
+.checkin-display .checkin-display-bg { position: absolute; inset: -40px; z-index: 0; background: center / cover no-repeat; }
+.checkin-display.is-bg-poster .checkin-display-bg { filter: blur(28px) brightness(.38) saturate(1.1); }
+.checkin-display.is-bg-image .checkin-display-bg { filter: brightness(.42); }
+.checkin-display.is-bg-image::after, .checkin-display.is-bg-poster::after { content: ""; position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle at 50% 45%, rgba(13,13,13,.15), rgba(13,13,13,.55) 75%); }
+.checkin-display.is-bg-ivory { background: radial-gradient(circle at 50% 40%, #fffaf0, #f3ead8 72%); color: #0d0d0d; }
+.checkin-display.is-bg-ivory .checkin-display-head, .checkin-display.is-bg-ivory .checkin-display-recent { border-color: #e2d6bd; }
+.checkin-display.is-bg-ivory .tag, .checkin-display.is-bg-ivory .checkin-display-title, .checkin-display.is-bg-ivory .checkin-display-more { color: #7a5a12; }
+.checkin-display.is-bg-ivory .checkin-display-event, .checkin-display.is-bg-ivory .checkin-display-name { color: #0d0d0d; }
+.checkin-display.is-bg-ivory .checkin-display-message, .checkin-display.is-bg-ivory .checkin-display-idle p:last-child, .checkin-display.is-bg-ivory .checkin-display-recent small { color: #4a4334; }
+.checkin-display.is-bg-ivory .checkin-display-btn { color: #0d0d0d; border-color: #cdbf9f; }
+.checkin-display.is-bg-ivory .checkin-welcome-comp { color: #7a5a12; border-color: #7a5a12; }
+.checkin-display.is-bg-ivory .checkin-display-status { background: #ece2cc; }
+.checkin-display.is-bg-ivory .checkin-display-status.is-live { background: #d7ecd9; color: #1f5130; }
+.checkin-display.is-bg-image .checkin-display-name, .checkin-display.is-bg-poster .checkin-display-name, .checkin-display.is-bg-image .checkin-display-event, .checkin-display.is-bg-poster .checkin-display-event { text-shadow: 0 2px 18px rgba(0,0,0,.55); }
+/* The editor's background choice. */
+.display-bg-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.display-bg-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--a-line, #e2d6bd); border-radius: 12px; cursor: pointer; }
+.display-bg-option.is-picked { border-color: var(--a-gold); box-shadow: 0 0 0 1px var(--a-gold); }
+.display-bg-option input { position: absolute; opacity: 0; pointer-events: none; }
+.display-bg-option:focus-within { outline: 2px solid var(--a-gold); outline-offset: 2px; }
+.display-bg-option small { display: block; color: var(--a-muted, #6b6455); font-size: 12px; }
+.display-bg-swatch { flex: none; width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(0,0,0,.15); }
+.display-bg-option.is-dark .display-bg-swatch { background: radial-gradient(circle at 50% 40%, #3a3122, #0d0d0d 75%); }
+.display-bg-option.is-ivory .display-bg-swatch { background: radial-gradient(circle at 50% 40%, #fffaf0, #eadfc6); }
+.display-bg-option.is-poster .display-bg-swatch { background: linear-gradient(135deg, #6d5420, #1b1710); filter: blur(.4px); }
+.display-bg-option.is-image .display-bg-swatch { background: repeating-linear-gradient(45deg, #d9ccb0 0 6px, #efe6d2 6px 12px); }
+/* The admin's own footer styles mustn't paint the display's "Just arrived" strip. */
+.checkin-display footer.checkin-display-recent { background: transparent; color: inherit; }
+.checkin-display.is-bg-image footer.checkin-display-recent, .checkin-display.is-bg-poster footer.checkin-display-recent { background: rgba(13,13,13,.45); }

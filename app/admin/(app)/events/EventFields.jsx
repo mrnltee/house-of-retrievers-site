@@ -8,6 +8,8 @@ import { MAX_TIERS, activeTiers, cleanTiers, parsePeso, priceSummary, tierKey, t
 import { formatOpens, manilaInstant, manilaParts, opensLater } from "../../../lib/rsvpOpens.mjs";
 import { MAX_PAYMENT_HOLD_MINUTES, PAYMENT_HOLD_OPTIONS, holdLabel, holdParts, isPresetHold } from "../../../lib/registrationHolds.mjs";
 import { DEFAULT_WELCOME_MESSAGE } from "../../../lib/welcomePhoto.mjs";
+import { DISPLAY_BACKGROUNDS } from "../../../lib/checkinDisplay.mjs";
+import ImageField from "../ImageField";
 import { MONTHS, NTH_OPTIONS, REPEAT_COUNT_DEFAULT, REPEAT_COUNT_MAX, WEEKDAYS, describeRule, occurrences } from "../../../lib/eventRecurrence.mjs";
 
 /**
@@ -783,7 +785,8 @@ export function RsvpFormSettings({ initial, vaccinationRecordRequired }) {
   return <fieldset className="rsvp-form-settings indent-full"><legend>Participant form</legend><p className="small muted">Required identity and attendee details stay in the form. Choose optional questions, then arrange the blocks with the arrows.</p><div className="check-row">{["photoConsent", "under18", "vaccination"].map((key) => <label key={key} className="check"><input type="checkbox" checked={optional.includes(key)} disabled={key === "vaccination" && !vaccinationRecordRequired} onChange={() => toggle(key)} /> {labels[key]}{key === "vaccination" && !vaccinationRecordRequired ? " (turn it on above first)" : ""}</label>)}</div><ol className="rsvp-order-list">{order.filter((key) => key === "identity" || key === "attendees" || optional.includes(key)).map((key, index, list) => <li key={key}><span>{labels[key]}{key === "identity" || key === "attendees" ? " · required" : ""}</span><span><button type="button" className="linkish" disabled={index === 0} onClick={() => move(key, -1)} aria-label={`Move ${labels[key]} up`}>↑</button><button type="button" className="linkish" disabled={index === list.length - 1} onClick={() => move(key, 1)} aria-label={`Move ${labels[key]} down`}>↓</button></span></li>)}</ol>{optional.includes("vaccination") && vaccinationRecordRequired && <label className="switch"><input type="checkbox" checked={vaccinationRequired} onChange={(e) => setVaccinationRequired(e.target.checked)} /><span><strong>Require a vaccination card for each furbaby</strong><small>The RSVP can't be sent until every furbaby has a card photo. Hooman only tickets aren't asked.</small></span></label>}<label className="switch"><input type="checkbox" checked={dogWaitlist} onChange={(e) => setDogWaitlist(e.target.checked)} /><span><strong>Offer a dog waitlist when dog tickets sell out</strong><small>Once every ticket with a furbaby is sold out, the RSVP also offers "Join the dog waitlist": no ticket, no payment, no slot taken. To offer someone a place, edit their registration to pick a ticket, then move them to confirmed.</small></span></label><div className="custom-questions"><strong>Your own questions</strong><p className="small muted" style={{ margin: 0 }}>Each one shows on this event's RSVP as a required Yes / No, e.g. "Interested in checking in at Novotel?". Answers are on each registration and in the CSV; tick "Show on RSVP table" to add a column.</p>{questions.map((q, i) => <div key={q.id} className="custom-question-row"><label className="field"><span className="visually-hidden">Question {i + 1}</span><input type="text" maxLength={200} value={q.label} placeholder="e.g. Interested in checking in at Novotel?" onChange={(e) => setQuestion(i, { label: e.target.value })} aria-label={`Question ${i + 1}`} /></label><label className="check small"><input type="checkbox" checked={q.showInTable} onChange={(e) => setQuestion(i, { showInTable: e.target.checked })} /> Show on RSVP table</label><button type="button" className="linkish" onClick={() => setQuestions((list) => list.filter((_, j) => j !== i))} aria-label={`Remove question ${i + 1}`}>Remove</button></div>)}{questions.length < 10 && <button type="button" className="btn ghost small" style={{ justifySelf: "start" }} onClick={() => setQuestions((list) => [...list, { id: newId(), label: "", showInTable: true }])}>+ Add a Yes / No question</button>}</div><label className="switch"><input type="checkbox" checked={consentEnabled} onChange={(e) => setConsentEnabled(e.target.checked)} /><span><strong>Add an event acknowledgement</strong><small>Participants complete it from their private RSVP page. No extra email is sent.</small></span></label>{consentEnabled && <><label className="field"><span>Starting template</span><select value={consentTemplate} onChange={(e) => setConsentTemplate(e.target.value)}>{Object.entries(CONSENT_TEMPLATES).map(([key, template]) => <option key={key} value={key}>{template.label}</option>)}</select></label><label className="field"><span>Acknowledgement introduction <small>Optional. Do not add legal wording unless HOR has approved it.</small></span><textarea maxLength={1000} value={consentIntro} onChange={(e) => setConsentIntro(e.target.value)} rows={3} /></label><label className="switch"><input type="checkbox" checked={consentRequiredBeforeCheckin} onChange={(e) => setConsentRequiredBeforeCheckin(e.target.checked)} /><span><strong>Require it before check-in</strong><small>The QR still works and the registration stays confirmed; the door team will ask them to complete it first.</small></span></label></>}<input type="hidden" name="rsvpFormConfig" value={JSON.stringify({ optional, order, consentEnabled, consentIntro, consentRequiredBeforeCheckin, consentTemplate, questions: questions.filter((q) => q.label.trim()), vaccinationRequired: vaccinationRequired && optional.includes("vaccination"), dogWaitlist })} /></fieldset>;
 }
 
-export function CheckinSettings({ eventId, message, preset, failurePreset, hasCustomSound }) {
+export function CheckinSettings({ eventId, message, preset, failurePreset, hasCustomSound, displayBg = "dark", displayImage = "", hasPoster = false }) {
+  const [bg, setBg] = useState(displayBg || "dark");
   const [sound, setSound] = useState(preset || "dazzle");
   const [failureSound, setFailureSound] = useState(failurePreset || "warning");
   const [data, setData] = useState("");
@@ -822,7 +825,7 @@ export function CheckinSettings({ eventId, message, preset, failurePreset, hasCu
     reader.readAsDataURL(file);
   }
   return <details className="card disclosure-card">
-    <summary><h2>Check-in experience</h2><span className="small muted">Success message and sound</span></summary>
+    <summary><h2>Check-in experience</h2><span className="small muted">Success message, sound and display screen</span></summary>
     <div className="form" style={{ gap: 14, marginTop: 16 }}>
       <p className="small muted" style={{ margin: 0 }}>After a successful scan, the door screen welcomes the guest by name, with their furbaby&apos;s photo or their initials, and plays the selected sound. Failed scans keep the standard warning tone.</p>
       <label className="field"><span>Message under the guest&apos;s name <small>Optional. Leave empty to show no message.</small></span><textarea name="checkinSuccessMessage" maxLength={300} rows={2} defaultValue={message ?? DEFAULT_WELCOME_MESSAGE} /></label>
@@ -833,6 +836,20 @@ export function CheckinSettings({ eventId, message, preset, failurePreset, hasCu
       <input type="hidden" name="checkinSoundData" value={data} />
       {error && <p className="form-error" role="alert">{error}</p>}
       <p className="small muted">Custom sounds must be MP3, WAV or OGG and under 512 KB. Keep them short and use a sound you have permission to use.</p>
+      <fieldset className="field">
+        <legend className="field-head">Display screen background <small>For the laptop or TV on “Open display screen”. The phones that scan keep their usual look.</small></legend>
+        <input type="hidden" name="checkinDisplayBg" value={bg} />
+        <div className="display-bg-options">
+          {DISPLAY_BACKGROUNDS.map((b) => (
+            <label key={b.key} className={`display-bg-option is-${b.key}${bg === b.key ? " is-picked" : ""}`}>
+              <input type="radio" name="checkinDisplayBgChoice" value={b.key} checked={bg === b.key} onChange={() => setBg(b.key)} />
+              <span className="display-bg-swatch" aria-hidden="true" />
+              <span><strong>{b.label}</strong><small>{b.key === "poster" && !hasPoster ? "Add a poster above first; until then it's black & gold" : b.hint}</small></span>
+            </label>
+          ))}
+        </div>
+        {bg === "image" && <ImageField name="checkinDisplayImage" label="Background image" hint="Landscape works best, e.g. 1920 × 1080. It's darkened so the white names stay readable. Only admins see it." current={displayImage || ""} maxEdge={1600} />}
+      </fieldset>
     </div>
   </details>;
 }
