@@ -14,6 +14,9 @@ import { MAX_COPIES, copiesFor, parseCopies } from "../../../../lib/letterCopies
 import { SEND_TO_NAME_MAX, readSendTo, withSendTo } from "../../../../lib/letterSendTo.mjs";
 import LetterView from "../LetterView";
 
+/** Shown in place of a guest's card while it's being drawn (4:5, HOR black and gold). */
+const CARD_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="600" viewBox="0 0 480 600"><rect width="480" height="600" fill="#0D0D0D"/><rect x="12" y="12" width="456" height="576" fill="none" stroke="#C9A04E" stroke-opacity="0.5"/><text x="240" y="300" fill="#C9A04E" font-family="Georgia, serif" font-size="22" font-style="italic" text-anchor="middle">Drawing this guest\u2019s card\u2026</text></svg>')}`;
+
 /**
  * Pick the letter, tick recipients, fill the blanks (standard details fill in
  * by themselves; last values are offered again), check each recipient's email
@@ -71,29 +74,41 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const typedCard = (r, key) => onCard[r.ref]?.[key] ?? cardNames(r)[key];
   const cardNamesJson = JSON.stringify(Object.fromEntries(recipients.filter((r) => onCard[r.ref]).map((r) => [r.ref, namesFor(r)])));
   const setCardName = (r, key, value) => setOnCard((all) => ({ ...all, [r.ref]: { ...cardNames(r), ...all[r.ref], [key]: value } }));
-  const [cardSrc, setCardSrc] = useState("");
+  // Each guest's card, drawn on the server once per name + organization and kept, so switching
+  // guests is instant. Until a guest's own card is ready the preview shows a placeholder,
+  // never another guest's card.
+  const [cards, setCards] = useState({});
+  const cardKey = (n) => `${n.name}\u0001${n.org}`;
   const whoNames = who ? namesFor(who) : { name: "", org: "" };
+  const cardSrc = cards[cardKey(whoNames)] || CARD_PLACEHOLDER;
+  const wanted = invite ? [who, ...recipients.filter((r) => r !== who && picked.has(r.ref))].filter(Boolean).map((r) => ({ ref: r.ref, names: namesFor(r) })) : [];
+  const wantedKey = JSON.stringify(wanted.map((w) => cardKey(w.names)));
   useEffect(() => {
-    if (!invite || !who) return undefined;
+    if (!invite) return undefined;
     const controller = new AbortController();
+    // A short pause so typing a name doesn't draw a card per keystroke; the current guest first.
     const timer = setTimeout(async () => {
-      const body = new FormData();
-      body.set("letter", letter.key);
-      body.set("format", "card");
-      body.set("previewTo", who.ref);
-      body.set("sendTo", sendToJson);
-      body.set("cardNames", JSON.stringify({ [who.ref]: whoNames }));
-      try {
-        const response = await fetch(pdfAction, { method: "POST", body, signal: controller.signal });
-        if (!response.ok) throw new Error(await response.text());
-        const blob = await response.blob();
-        setCardSrc(await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); }));
-      } catch (error) {
-        if (error.name !== "AbortError") setCardSrc("");
+      for (const { ref, names } of wanted) {
+        if (controller.signal.aborted) return;
+        if (cards[cardKey(names)]) continue;
+        const body = new FormData();
+        body.set("letter", letter.key);
+        body.set("format", "card");
+        body.set("previewTo", ref);
+        body.set("cardNames", JSON.stringify({ [ref]: names }));
+        try {
+          const response = await fetch(pdfAction, { method: "POST", body, signal: controller.signal });
+          if (!response.ok) continue;
+          const blob = await response.blob();
+          const src = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });
+          setCards((all) => ({ ...all, [cardKey(names)]: src }));
+        } catch (error) {
+          if (error.name === "AbortError") return;
+        }
       }
-    }, 400);
+    }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [invite, who?.ref, whoNames.name, whoNames.org, sendToJson]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [invite, wantedKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [attach, setAttach] = useState(pdfLetter);
   // Fill-ins for every version being sent (edited wording can add some).
   const shownBlanks = useMemo(() => unionBlanks([letter, ...[...picked].map((ref) => wordingFor(letter, edits, ref))].map((v) => sendBlanks(v, design, attach))), [letter, edits, picked, design, attach]);
@@ -114,7 +129,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       const filled = fillDesign(design.doc, design.subject || prepared.subject, (text, { html }) => fillLetter(text, html ? escaped : to, { plain: !html }));
       return renderDesign(filled.doc, { house, subject: filled.subject });
     }
-    if (invite) return applyEmailFrame(invitationEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, name: whoNames.name, cardSrc: cardSrc || "data:," }), frame);
+    if (invite) return applyEmailFrame(invitationEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, name: whoNames.name, cardSrc }), frame);
     return applyEmailFrame(letterCoverEmail({ subject: prepared.subject, cover: prepared.cover, filename: prepared.filename, attached: attach }), frame);
   }, [prepared, attach, design, house, who, date, values, frame, invite, cardSrc]); // eslint-disable-line react-hooks/exhaustive-deps
   const missing = missingBlanks(shownBlanks, values);
