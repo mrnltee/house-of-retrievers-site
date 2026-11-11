@@ -23,6 +23,7 @@ import { copiesFor, parseCopies } from "../lib/letterCopies.mjs";
 import { readSendTo, withSendTo } from "../lib/letterSendTo.mjs";
 import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames, withCardName } from "../lib/invitationCard.mjs";
 import { extraPages, invitationPdf, renderCard } from "../lib/invitationRender";
+import { registrationRecipients } from "../lib/letterRegistrations";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -114,7 +115,9 @@ async function loadRecipients(refs) {
     ids("contact").length ? sql("SELECT id, name, organization, email, rep_email, send_to, address, salutation FROM letter_contacts WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("contact")]) : [],
     ids("beneficiary").length ? sql("SELECT id, name, contact_name, contact_email, address, salutation FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL", [ids("beneficiary")]) : [],
   ]);
+  const registrations = await registrationRecipients(ids("registration"));
   return [
+    ...registrations,
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, id: s.id, type: "supporter", ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim() })),
     ...people.map((p) => ({ ref: `person:${p.id}`, id: p.id, type: "person", ...recipientFields({ person: p }), email: (p.email || "").trim() })),
     ...contacts.map((c) => ({ ref: `contact:${c.id}`, id: c.id, type: "contact", ...recipientFields({ contact: c }), email: letterEmails(c).to, cc: letterEmails(c).cc })),
@@ -247,7 +250,7 @@ export async function sendLetters(data) {
     if (skipped.length) parts.push(`no email for ${skipped.join(", ")}`);
     if (failed.length) parts.push(`didn't go through for ${failed.join(", ")} (try again)`);
     const list = new URLSearchParams(back.split("?")[1] || "").get("list");
-    await backWith(event ? `/events/${event.id}/${["guests", "donors"].includes(list) ? list : "brands"}` : back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
+    await backWith(event ? (list === "registrations" ? `/registrations/${event.id}` : `/events/${event.id}/${["guests", "donors"].includes(list) ? list : "brands"}`) : back, failed.length && !sent.length ? "error" : "ok", `${parts.join("; ")}.`);
   });
 }
 

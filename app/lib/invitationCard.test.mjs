@@ -54,3 +54,17 @@ test("withCardName greets the name typed for the card", async () => {
   assert.equal(withCardName(r, { name: "" }), r);
   assert.equal(withCardName(r, null), r);
 });
+
+test("furbabyCardLine lists a participant's furbabies", async () => {
+  const { furbabyCardLine } = await import("./invitationCard.mjs");
+  assert.equal(furbabyCardLine("Mochi"), "& Mochi");
+  assert.equal(furbabyCardLine("Mochi, Fudge"), "& Mochi and Fudge");
+  assert.equal(furbabyCardLine("Mochi, Fudge and Bean"), "& Mochi, Fudge and Bean");
+  assert.equal(furbabyCardLine(""), "");
+  assert.equal(furbabyCardLine(null), "");
+});
+
+test("cardNames uses a participant's own card line", () => {
+  assert.deepEqual(cardNames({ name: "Alyzza Bayaban", contact: "", cardLine: "& Mochi" }), { name: "Alyzza Bayaban", org: "& Mochi" });
+  assert.deepEqual(cardNames({ name: "Ana", contact: "", cardLine: "" }), { name: "Ana", org: "" });
+});

@@ -53,6 +53,7 @@ export const ACTION_LABELS = {
   "event.posters.reframe": "Re-framed event posters to 4:5",
   "supporter.letter": "Sent a letter",
   "person.letter": "Sent a letter",
+  "registration.letter": "Sent an invitation card to a participant",
   "letter.save": "Saved a letter's wording",
   "letter.reset": "Put a letter back to its original wording",
   "journey.save": "Changed the journey timeline settings",

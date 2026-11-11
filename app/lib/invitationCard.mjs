@@ -4,6 +4,8 @@
  * three more pages (Attire, Beneficiaries…); each guest's name is written on
  * the card in gold script with their organization under it. Pure functions.
  */
+import { splitFurbabyNames } from "./attendeeNames.mjs";
+
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
 export const MAX_INVITATION_PAGES = 3;
@@ -50,7 +52,9 @@ const tidy = (text, max) => String(text ?? "").replace(/\s+/g, " ").trim().slice
 export function cardNames(recipient = {}, override = null) {
   const contact = tidy(recipient.contact, INVITATION_LIMITS.name);
   const name = tidy(recipient.name, INVITATION_LIMITS.org);
-  const fromRecord = contact ? { name: contact, org: name } : { name: tidy(name, INVITATION_LIMITS.name), org: "" };
+  // A registered participant's line is set by the record (their furbabies, cardLine).
+  const fromRecord = typeof recipient.cardLine === "string" ? { name: tidy(contact || name, INVITATION_LIMITS.name), org: tidy(recipient.cardLine, INVITATION_LIMITS.org) }
+    : contact ? { name: contact, org: name } : { name: tidy(name, INVITATION_LIMITS.name), org: "" };
   if (!override || typeof override !== "object") return fromRecord;
   const typedName = tidy(override.name, INVITATION_LIMITS.name);
   return { name: typedName || fromRecord.name, org: "org" in override ? tidy(override.org, INVITATION_LIMITS.org) : fromRecord.org };
@@ -82,4 +86,16 @@ export function cardLayout(settings, { org = "" } = {}) {
 export function withCardName(recipient = {}, override = null) {
   const typed = tidy(override?.name, INVITATION_LIMITS.name);
   return typed ? { ...recipient, contact: typed, salutation: typed } : recipient;
+}
+
+/**
+ * The line under a registered participant's name (owner, 2026-11-11): their
+ * furbabies, "& Mochi", "& Mochi and Fudge", "& Mochi, Fudge and Bean"; empty
+ * for a hooman-only registration.
+ */
+export function furbabyCardLine(furbabyName) {
+  const names = splitFurbabyNames(furbabyName);
+  if (!names.length) return "";
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return tidy(`& ${list}`, INVITATION_LIMITS.org);
 }

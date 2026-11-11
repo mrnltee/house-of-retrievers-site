@@ -11,6 +11,7 @@ import { eventFills } from "../../../../lib/letterEventStore";
 import { listDesigns, loadDesign, loadHouse } from "../../../../lib/emailDesignStore";
 import { designTexts } from "../../../../lib/emailDesign.mjs";
 import { categoryOf, letterEmails, letterFor } from "../../../../lib/contacts.mjs";
+import { registrationRecipients } from "../../../../lib/letterRegistrations";
 
 export const maxDuration = 120;
 
@@ -59,7 +60,10 @@ export default async function SendLetterPage({ searchParams }) {
   const beneficiaryIds = refs.filter((r) => r.startsWith("beneficiary:")).map((r) => r.slice(12)).filter(isUuid);
   const beneficiaries = beneficiaryIds.length ? await sql("SELECT id, name, contact_name, contact_email, address, salutation, kind, status FROM beneficiaries WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL ORDER BY name", [beneficiaryIds]) : [];
   const people = personIds.length ? await sql("SELECT id, name, email, organization, kind FROM people WHERE id = ANY($1::uuid[]) ORDER BY name", [personIds]) : [];
+  // Registered participants (an event's Registrations → Send invitation cards); only confirmed ones load.
+  const registrations = await registrationRecipients(refs.filter((r) => r.startsWith("registration:")).map((r) => r.slice(13)));
   const recipients = [
+    ...registrations.map((r) => ({ ...r, note: "Registered participant", href: event ? `${base}/registrations/${event.id}/r/${r.id}` : "" })),
     ...supporters.map((s) => ({ ref: `supporter:${s.id}`, ...recipientFields({ supporter: s }), email: (s.contact_email || "").trim(), note: `${s.kind} · ${s.status}`, href: `${base}/supporters/${s.id}` })),
     ...contacts.map((c) => ({ ref: `contact:${c.id}`, ...recipientFields({ contact: c }), email: letterEmails(c).to, cc: letterEmails(c).cc, note: categoryOf(c.category)?.label || "Guest list", href: `${base}/guests/${c.id}`, category: c.category })),
     ...beneficiaries.map((b) => ({ ref: `beneficiary:${b.id}`, ...recipientFields({ beneficiary: b }), email: (b.contact_email || "").trim(), note: "Beneficiary", href: `${base}/beneficiaries/${b.id}`, category: "beneficiary" })),
@@ -86,12 +90,12 @@ export default async function SendLetterPage({ searchParams }) {
   for (const r of recipients) backQuery.append("to", r.ref);
   if (event) backQuery.set("event", event.id);
   // Which event list the send started from (Brand tracker, Guest list or Donors), to go back there after.
-  if (event && ["brands", "guests", "donors"].includes(params?.list)) backQuery.set("list", params.list);
+  if (event && ["brands", "guests", "donors", "registrations"].includes(params?.list)) backQuery.set("list", params.list);
 
   return (
     <>
       <p className="small">Back to <a href={`${base}/guests`}>Guest list</a> · <a href={`${base}/beneficiaries`}>Beneficiaries</a> · <a href={`${base}/supporters?view=list`}>Brands & Partners</a> · <a href={`${base}/letters`}>Letters</a></p>
-      {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={`${base}/events/${event.id}/${["guests", "donors"].includes(params?.list) ? params.list : "brands"}`}>{params?.list === "guests" ? "Guest list" : params?.list === "donors" ? "Donors" : "Brand tracker"}</a>, and its details fill in [Event Name], [Event Date], [Event Sponsors] and the other event fill-ins.</p>}
+      {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={params?.list === "registrations" ? `${base}/registrations/${event.id}` : `${base}/events/${event.id}/${["guests", "donors"].includes(params?.list) ? params.list : "brands"}`}>{params?.list === "registrations" ? "Registrations" : params?.list === "guests" ? "Guest list" : params?.list === "donors" ? "Donors" : "Brand tracker"}</a>, and its details fill in [Event Name], [Event Date], [Event Sponsors] and the other event fill-ins.</p>}
       <PageHead title="Send a letter" lead={`The letter is filled in with each recipient's name and sent as a PDF attached to a short email, or written in the email itself. Up to ${MAX_LETTER_RECIPIENTS} at a time.`} />
       <Flash params={params} />
       {mismatched.length > 0 && <p className="card" role="alert" style={{ borderLeft: "4px solid #b8860b" }}>Check the letter: {mismatched.map((r) => `${r.name} (${r.note})`).join(", ")} {mismatched.length === 1 ? "is" : "are"} usually sent a different letter.</p>}

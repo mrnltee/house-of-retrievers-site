@@ -17,6 +17,10 @@ import FurbabyList from "../FurbabyList";
 import ConfirmButton from "../../ConfirmButton";
 import { isActivityCategory } from "../../../../lib/eventCategories.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
+import { eventLetters } from "../../../../lib/letterStore";
+import { isInvitation } from "../../../../lib/invitationCard.mjs";
+import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
+import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -38,6 +42,17 @@ export default async function EventRegistrations({ params, searchParams }) {
   const base = await adminBase();
   const all = await sql("SELECT * FROM registrations WHERE event_id=$1 ORDER BY created_at", [eventId]);
   const paidEvent = event.fee_required;
+  // Invitation cards (owner, 2026-11-11): the event's invitation letter, sent to confirmed participants
+  // who haven't had it yet (a failed or bounced email counts as not sent), up to a send's limit at a time.
+  const inviteLetter = can(admin, "letters:edit") ? (await eventLetters(eventId)).find((l) => isInvitation(l.invitation)) : null;
+  let inviteTodo = [];
+  if (inviteLetter) {
+    const sent = new Set((await sql("SELECT DISTINCT ref FROM letter_sends WHERE letter_key = $1 AND status NOT IN ('failed', 'bounced')", [inviteLetter.key])).map((r) => r.ref));
+    inviteTodo = all.filter((r) => reminderEligibility(r, { feeRequired: Boolean(paidEvent) }).ok && !sent.has(`registration:${r.id}`));
+  }
+  const inviteHref = inviteLetter && inviteTodo.length
+    ? `${base}/letters/send?${new URLSearchParams([["letter", inviteLetter.key], ["event", eventId], ["list", "registrations"], ...inviteTodo.slice(0, MAX_LETTER_RECIPIENTS).map((r) => ["to", `registration:${r.id}`])]).toString()}`
+    : "";
   const acknowledgementEnabled = Boolean(event.rsvp_form_config?.consentEnabled);
   const tableQuestions = cleanCustomQuestions(event.rsvp_form_config?.questions).filter((q) => q.showInTable);
 
@@ -102,6 +117,8 @@ export default async function EventRegistrations({ params, searchParams }) {
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}
+        {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length > MAX_LETTER_RECIPIENTS ? `Opens the first ${MAX_LETTER_RECIPIENTS}; the rest come up after that send` : "Confirmed participants who haven't had the invitation card yet"}>Send invitation cards · {inviteTodo.length}</a>}
+        {inviteLetter && !inviteTodo.length && <span className="small muted" style={{ alignSelf: "center" }}>Invitation cards sent to everyone confirmed</span>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
         {can(admin, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
       </PageHead>
