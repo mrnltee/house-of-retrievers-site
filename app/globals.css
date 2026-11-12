@@ -1634,17 +1634,33 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .media-angle-grid h4 { margin: 12px 0 7px; font-size: 17px; line-height: 1.2; }
 .media-angle-grid p { margin: 0; color: var(--media-muted); font-size: 14px; line-height: 1.55; }
 .media-download-links { display: grid; gap: 7px; margin-top: 18px; font-size: 13px; line-height: 1.4; }
-.media-brand-notes { display: grid; grid-template-columns: .8fr 1fr; gap: clamp(28px, 6vw, 80px); margin-top: 42px; padding-top: 24px; border-top: 1px solid rgba(13,13,13,.16); }
+.media-brand-assets { margin-top: 70px; padding-top: 28px; border-top: 1px solid rgba(13,13,13,.16); scroll-margin-top: 90px; }
+.media-brand-intro { max-width: 620px; margin: 0 0 30px; color: var(--media-muted); font-size: 15px; line-height: 1.6; }
+.media-logo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 14px; }
+.media-logo-tile { margin: 0; }
+.media-logo-tile > div { display: grid; place-items: center; height: clamp(220px, 26vw, 340px); padding: 34px; border: 1px solid rgba(13,13,13,.17); border-radius: 16px; background: white; }
+.media-logo-tile-dark > div { border-color: var(--media-black); background: var(--media-black); }
+.media-logo-tile img { max-width: min(100%, 420px); max-height: 100%; object-fit: contain; }
+.media-logo-tile figcaption { display: grid; gap: 5px; padding-top: 14px; }
+.media-logo-tile figcaption strong { font-size: 14px; }
+.media-logo-tile figcaption > span { color: var(--media-muted); font-size: 13px; line-height: 1.5; }
+.media-logo-tile .media-download-links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 4px; }
+.media-brand-notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(28px, 4vw, 56px); margin-top: 56px; }
 .media-brand-notes strong { display: block; margin-bottom: 14px; color: #7a5a1c; font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
 .media-swatches, .media-usage { margin: 0; padding: 0; list-style: none; }
-.media-swatches { display: grid; gap: 10px; }
-.media-swatches li { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px; font-size: 14px; }
-.media-swatches span { width: 34px; height: 34px; border: 1px solid rgba(13,13,13,.2); border-radius: 50%; }
-.media-swatches b { font-weight: 700; }
-.media-swatches code { color: var(--media-muted); font-size: 13px; }
-.media-usage { display: grid; gap: 9px; color: var(--media-muted); font-size: 14px; line-height: 1.55; }
-.media-usage li { padding-left: 16px; border-left: 1px solid var(--media-gold); }
-@media (max-width: 800px) { .media-press-grid, .media-brand-notes { grid-template-columns: 1fr; gap: 42px; } .media-angle-grid { grid-template-columns: 1fr; } .media-fact-list > div { grid-template-columns: 1fr; gap: 4px; } }
+.media-swatches { display: grid; gap: 16px; }
+.media-swatches li { display: grid; grid-template-columns: 40px 1fr; align-items: start; gap: 14px; }
+.media-swatches li > span { width: 40px; height: 40px; border: 1px solid rgba(13,13,13,.2); border-radius: 50%; }
+.media-swatches li > div { display: grid; gap: 2px; }
+.media-swatches b { font-size: 14px; font-weight: 700; }
+.media-swatches code { font-size: 12px; }
+.media-swatches small, .media-logo-rules dd { color: var(--media-muted); font-size: 13px; line-height: 1.5; }
+.media-logo-rules { display: grid; gap: 14px; margin: 0; }
+.media-logo-rules dt { font-size: 14px; font-weight: 700; }
+.media-logo-rules dd { margin: 3px 0 0; }
+.media-usage { display: grid; gap: 9px; color: var(--media-muted); font-size: 13px; line-height: 1.5; }
+.media-usage li { padding-left: 14px; border-left: 1px solid #b3261e; }
+@media (max-width: 800px) { .media-press-grid, .media-brand-notes { grid-template-columns: 1fr; gap: 42px; } .media-angle-grid, .media-logo-grid { grid-template-columns: 1fr; } .media-fact-list > div { grid-template-columns: 1fr; gap: 4px; } }
 .media-editorial-note { display: grid; grid-template-columns: .35fr 1fr; gap: 24px; margin-top: 42px; padding-top: 24px; border-top: 1px solid rgba(13,13,13,.17); }
 .media-editorial-note strong { color: var(--media-gold); font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
 .media-editorial-note p { max-width: 600px; margin: 0; color: var(--media-muted); font-size: 14px; line-height: 1.6; }

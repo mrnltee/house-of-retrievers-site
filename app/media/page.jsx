@@ -27,28 +27,35 @@ const purposes = [
 const downloads = [
   { title: "Organization fact sheet", body: "A concise reference for reporters, producers, and partners.", links: [["Read it on this page ↑", "#press-kit"]] },
   { title: "Short and long boilerplates", body: "Descriptions for listings, articles, and introductions. Draft wording, awaiting HOR approval.", links: [["Read them on this page ↑", "#press-kit"]] },
-  { title: "Logo and brand assets", body: "The supplied artwork for light and dark backgrounds.", links: [
-    ["Horizontal, light (SVG)", "/press/house-of-retrievers-logo-horizontal-light.svg", true],
-    ["Horizontal, dark (SVG)", "/press/house-of-retrievers-logo-horizontal-dark.svg", true],
-    ["Stacked, light (SVG)", "/press/house-of-retrievers-logo-stacked-light.svg", true],
-    ["Stacked, dark (SVG)", "/press/house-of-retrievers-logo-stacked-dark.svg", true],
-    ["Horizontal, light (PNG)", "/house-of-retrievers-logo-original.png", true],
-    ["Horizontal, dark (PNG)", "/house-of-retrievers-logo-reverse.png", true],
-  ] },
+  { title: "Logo and brand assets", body: "The supplied artwork for light and dark backgrounds, with colours and usage rules.", links: [["See the logo files below ↓", "#brand-assets"]] },
   { title: "Photo and video library", body: "Selected, credited media for approved editorial use.", status: "Coming soon" },
 ];
 
-const brandColors = [
-  ["Retriever gold", "#AD8330"],
-  ["Ink", "#0D0D0D"],
-  ["White", "#FFFFFF"],
+const logoLockups = [
+  { title: "Horizontal · on light", note: "Primary lockup. Use for headers, letterheads, press materials and partner decks.", tone: "light", src: "/press/house-of-retrievers-logo-horizontal-light.svg", png: "/house-of-retrievers-logo-original.png" },
+  { title: "Horizontal · on dark", note: "Use on black backgrounds. The black retriever and wordmark turn white.", tone: "dark", src: "/press/house-of-retrievers-logo-horizontal-dark.svg", png: "/house-of-retrievers-logo-reverse.png" },
+  { title: "Stacked · on light", note: "Use where width is limited: posters, social tiles, signage, merchandise.", tone: "light", src: "/press/house-of-retrievers-logo-stacked-light.svg" },
+  { title: "Stacked · on dark", note: "Stacked lockup for black backgrounds.", tone: "dark", src: "/press/house-of-retrievers-logo-stacked-dark.svg" },
 ];
 
-const logoUsage = [
-  "Use the light version on white or pale backgrounds and the dark version on black.",
-  "Keep clear space around the logo equal to the height of the “H” in HOUSE.",
-  "Do not recolour, stretch, rotate, crop, or rearrange it, and do not retype the wordmark.",
-  "Avoid gold or busy photo backgrounds, where the golden retriever disappears.",
+const brandColors = [
+  ["Retriever Gold", "#AD8330", "173 · 131 · 48", "The gold retriever and “Society Inc.”. Accents, rules and large display text."],
+  ["Ink", "#0D0D0D", "13 · 13 · 13", "The black retriever. Text and dark backgrounds, instead of pure black."],
+  ["Paper", "#FFFFFF", "255 · 255 · 255", "Default light background and reversed text."],
+];
+
+const logoRules = [
+  ["Clear space", "Keep a margin on every side equal to the height of the “H” in HOUSE. No text, logos or image edges inside it."],
+  ["Minimum size", "Horizontal: 180 px or 45 mm wide. Stacked: 120 px or 30 mm wide. Below that the tagline stops being legible."],
+  ["Backgrounds", "Light version on white or pale backgrounds, dark version on black. On photos, use a calm light or dark area."],
+];
+
+const logoDonts = [
+  "Place it on gold or mid-tones. The gold retriever disappears.",
+  "Rotate, skew or stretch it.",
+  "Fade it or add shadows, glows or outlines.",
+  "Recolour the retrievers or the wordmark.",
+  "Rearrange or crop the elements, retype the wordmark, or swap the tagline for other text.",
 ];
 
 const factSheet = [
@@ -212,9 +219,15 @@ export default async function MediaPage() {
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
         <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Logo files are ready to download. The photo and video library will be added once images are selected, credited, and cleared for publication.</p></div>
         <div className="media-download-grid">{downloads.map(({ title, body, status, links }) => <article key={title}><div className="media-download-icon" aria-hidden="true">↘</div><h3>{title}</h3><p>{body}</p>{links ? <div className="media-download-links">{links.map(([label, href, file]) => <a key={href + label} href={href} download={file ? true : undefined}>{label}</a>)}</div> : <span className="media-download-status">{status}</span>}</article>)}</div>
-        <div className="media-brand-notes">
-          <div><strong>Logo colours</strong><ul className="media-swatches">{brandColors.map(([name, hex]) => <li key={hex}><span style={{ background: hex }} aria-hidden="true" /><b>{name}</b><code>{hex}</code></li>)}</ul></div>
-          <div><strong>Using the logo</strong><ul className="media-usage">{logoUsage.map((line) => <li key={line}>{line}</li>)}</ul></div>
+        <div className="media-brand-assets" id="brand-assets">
+          <h3 className="media-press-title">Logo</h3>
+          <p className="media-brand-intro">A gold and a black retriever sitting back to back, the wordmark, the “Society Inc.” line, a paw rule and the tagline. Always use the supplied artwork; never retype or redraw it.</p>
+          <div className="media-logo-grid">{logoLockups.map(({ title, note, tone, src, png }) => <figure key={src} className={`media-logo-tile media-logo-tile-${tone}`}><div><img src={src} alt={`The House of Retrievers Society Inc. logo, ${title.toLowerCase().replace(" · ", ", ")}`} loading="lazy" /></div><figcaption><strong>{title}</strong><span>{note}</span><span className="media-download-links"><a href={src} download>Download SVG</a>{png ? <a href={png} download>Download PNG</a> : null}</span></figcaption></figure>)}</div>
+          <div className="media-brand-notes">
+            <div><strong>Logo colours</strong><ul className="media-swatches">{brandColors.map(([name, hex, rgb, role]) => <li key={hex}><span style={{ background: hex }} aria-hidden="true" /><div><b>{name}</b><code>{hex} · RGB {rgb}</code><small>{role}</small></div></li>)}</ul></div>
+            <div><strong>Using the logo</strong><dl className="media-logo-rules">{logoRules.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}</dl></div>
+            <div><strong>Do not</strong><ul className="media-usage">{logoDonts.map((line) => <li key={line}>{line}</li>)}</ul></div>
+          </div>
         </div>
         <div className="media-editorial-note"><strong>For editors and producers</strong><p>HOR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>
