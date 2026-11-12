@@ -8,11 +8,11 @@ export const MEDIA_THUMBNAILS = [
 ];
 
 export const DEFAULT_MEDIA_TIMELINE = [
-  { activity: "Pawres de Mayo", date: "17 May 2026", location: "Parklinks Pet Park", purpose: "Beneficiary: MBY Pet Rescue and Sanctuary", thumbnail: "/1-purpaws/purpaw1.jpg" },
+  { activity: "Pawres de Mayo", date: "17 May 2026", location: "Parklinks Pet Park", purpose: "Beneficiary: MBY Pet Rescue and Sanctuary", thumbnail: "/3-giveback/mby-give-back-poster.jpg" },
   { activity: "International Free Hugs Day", date: "July 2026", location: "BGC, Taguig", purpose: "Where Purpose to Care began", thumbnail: "" },
   { activity: "Basic Embroidery Class", date: "August 2026", location: "Quezon City", purpose: "Purpose to Learn, with Pawfect Blooms", thumbnail: "" },
-  { activity: "Purpose to Care visit", date: "August 2026", location: "Milagros Elderly Home Care and Services", purpose: "A visit shaped around care and companionship", thumbnail: "/2-better/better1.jpg" },
-  { activity: "Community Pack Walk", date: "23 August 2026", location: "Ayala Triangle, Makati", purpose: "HoR × Beagle Buddies PH", thumbnail: "/house-of-retrievers-hero-poster.jpg" },
+  { activity: "Purpose to Care visit", date: "August 2026", location: "Milagros Elderly Home Care and Services", purpose: "A visit shaped around care and companionship", thumbnail: "" },
+  { activity: "Community Pack Walk", date: "23 August 2026", location: "Ayala Triangle, Makati", purpose: "HoR × Beagle Buddies PH", thumbnail: "" },
   { activity: "FreeHugs @ BGC", date: "September 2026, then monthly", location: "BGC, Taguig", purpose: "Held on the last Sunday of each month", thumbnail: "" },
   { activity: "Weekend Social Run", date: "11 October 2026", location: "Filinvest City Central Park, Muntinlupa", purpose: "", thumbnail: "" },
   { activity: "Bedazzle Barkdate", date: "October 2026", location: "Wiltlover Cafe, MET Live Mall, Pasay", purpose: "", thumbnail: "" },
@@ -24,13 +24,13 @@ export const DEFAULT_MEDIA_PROFILE = {
   intro: "For a quick briefing, here is the information most useful to editors, producers, and potential partners.",
   cards: [
     { value: "09", label: "documented activities", note: "From Pawres de Mayo in May to the Retriever Romp in November 2026." },
-    { value: "05", label: "purpose areas", note: "Celebrate, Learn, Give Back, Care, and one area pending final wording." },
-    { value: "PH", label: "community-rooted", note: "A Philippine nonprofit built around dogs, people, and responsible care." },
+    { value: "05", label: "purpose areas", note: "Celebrate, Learn, Give Back, Care, and Connect." },
+    { value: "SEC", label: "registered nonprofit", note: "Registered in September 2026, No. 2026090268846-04." },
   ],
   images: [
     { src: "/1-purpaws/purpaw1.jpg", alt: "House of Retrievers community moment with dogs and their families", caption: "Community, with purpose" },
     { src: "/2-better/better1.jpg", alt: "Retriever family participating in a House of Retrievers activity", caption: "Better humans for better dogs" },
-    { src: "/house-of-retrievers-hero-poster.jpg", alt: "House of Retrievers families and furbabies together", caption: "Good dogs. Good people." },
+    { src: "/cta-join-us-poster.jpg", alt: "House of Retrievers members and their dogs at a community gathering", caption: "Good dogs. Good people." },
   ],
 };
 

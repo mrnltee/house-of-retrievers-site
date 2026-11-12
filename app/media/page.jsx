@@ -26,7 +26,7 @@ const purposes = [
   ["02", "Purpose to Learn", "Responsible pet ownership and community education."],
   ["03", "Purpose to Give Back", "Practical support for rescue organizations."],
   ["04", "Purpose to Care", "Visits that bring comfort and companionship."],
-  ["05", "Purpose to Connect", "A community-wide role documented in HOR materials; final wording pending confirmation."],
+  ["05", "Purpose to Connect", "Friendships across dog communities."],
 ];
 
 const downloads = [
@@ -80,6 +80,8 @@ const partnershipPathways = [
   ["Venue, content, and CSR", "Open a space, tell a thoughtful story, or bring a team to volunteer."],
 ];
 
+const STORY_TITLES = ["Pawres de Mayo", "Care and companionship", "Community collaboration"];
+
 const FALLBACK_CONTENT = {
   heroTitle: "A house with<br><em>a purpose.</em>",
   heroLead: "The media hub for The House of Retrievers Society Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
@@ -97,6 +99,8 @@ export default async function MediaPage() {
   const published = await loadPublishedMediaContent();
   const content = { ...FALLBACK_CONTENT, ...published };
   const kit = pressKitFrom(published);
+  // One story per line: the editor saves single line breaks, so splitting only on blank lines ran all three together.
+  const storyParts = String(content.stories || "").split(/\n+/).map((line) => line.trim()).filter(Boolean).slice(0, 6);
   const albums = await loadMediaAlbums();
   const albumDate = (value) => new Date(value).toLocaleDateString("en-PH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Manila" });
   const timeline = Array.isArray(content.timeline) ? cleanMediaTimeline(content.timeline) : DEFAULT_MEDIA_TIMELINE;
@@ -117,12 +121,15 @@ export default async function MediaPage() {
             <a className="media-text-link" href="#downloads">Explore resources <span aria-hidden="true">↓</span></a>
           </div>
         </div>
-        <div className="media-hero-note" aria-label="Organization positioning">
-          <span>Our advocacy platform</span>
-          <strong>Paws for<br />a Purpose</strong>
-          <span className="media-hero-note-mark" aria-hidden="true">✦</span>
-        </div>
       </section>
+
+      <nav className="media-essentials" aria-label="Press essentials">
+        <a href="#launch"><span>Launch · 30 November</span><strong>Golden Beginning</strong><small>Novotel Manila Araneta City</small></a>
+        <a href="/media/fact-sheet"><span>Fact sheet</span><strong>Download the PDF</strong><small>Facts, mission, boilerplates</small></a>
+        <a href="#brand-assets"><span>Logos</span><strong>Brand assets</strong><small>SVG and PNG, light and dark</small></a>
+        <a href="#photo-library"><span>Photos</span><strong>Credited photos</strong><small>From past events</small></a>
+        <a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry"><span>Media contact</span><strong>Email us</strong><small>houseofretrieversph@gmail.com</small></a>
+      </nav>
 
       <section className="media-section media-intro media-chapter" id="about" aria-labelledby="about-title">
         <div className="media-section-label">01 / The Society</div>
@@ -139,7 +146,7 @@ export default async function MediaPage() {
       <section className="media-purpose media-chapter" aria-labelledby="purpose-title">
         <div className="media-section-label media-section-label-light">02 / Five purpose areas</div>
         <div className="media-purpose-head"><h2 id="purpose-title">The work<br /><em>in five ways.</em></h2><p>Every activity begins with a simple question: how can our community use the bond between dogs and people to do some good?</p></div>
-        <div className="media-purpose-grid">{purposes.map(([number, title, body]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
+        <div className="media-purpose-grid">{purposes.map(([number, title, body]) => <article key={number}><h3>{title}</h3><p>{body}</p></article>)}</div>
       </section>
 
       <section className="media-section media-profile media-chapter" aria-labelledby="profile-title">
@@ -157,17 +164,17 @@ export default async function MediaPage() {
         <div className="media-section-label">04 / For the media</div>
         <div className="media-stories-grid">
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
-          <div className="media-angle-list"><article><span>01</span><h3>Pawres de Mayo</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[0])} /></article><article><span>02</span><h3>Care and companionship</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[1] || "")} /></article><article><span>03</span><h3>Community collaboration</h3><p dangerouslySetInnerHTML={rich(content.stories.split("\n\n")[2] || "")} /></article></div>
+          <div className="media-angle-list">{storyParts.map((text, index) => <article key={text.slice(0, 32)}>{STORY_TITLES[index] ? <h3>{STORY_TITLES[index]}</h3> : null}<p dangerouslySetInnerHTML={rich(text)} /></article>)}</div>
         </div>
         <div className={`media-timeline media-timeline-${timelineOrientation}`} aria-label="Documented activity timeline">
-          <div className="media-timeline-heading"><span>Activity history</span><p>Completed activities are listed separately from upcoming or proposed work.</p></div>
-          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt="" /> : <span aria-hidden="true">✦</span>}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
+          <div className="media-timeline-heading"><span>Activity history</span></div>
+          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} /> : <span aria-hidden="true">✦</span>}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
         </div>
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
           <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
-        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
+        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}</div>
         <div className="media-quote"><span aria-hidden="true">“</span><p>Raise responsibly.<br />Serve generously.</p><small>House of Retrievers</small></div>
       </section>
 
@@ -186,7 +193,7 @@ export default async function MediaPage() {
           <div>
             <h3 className="media-press-title">About House of Retrievers</h3>
             {[["Short, about 50 words", kit.boilerplateShort], ["Long, about 150 words", kit.boilerplateLong]].map(([label, text]) => <article className="media-boilerplate" key={label}><header><strong>{label}</strong>{kit.boilerplatesApproved ? null : <span className="media-draft-tag">Draft for approval</span>}<CopyButton text={text} label="Copy text" /></header>{text.split("\n\n").map((paragraph) => <p key={paragraph.slice(0, 24)}>{paragraph}</p>)}</article>)}
-            <article className="media-launch-card">
+            <article className="media-launch-card" id="launch">
               <span>Official launch · 30 November 2026</span>
               <h3>Golden Beginning:<br /><em>Paws and Purpose</em></h3>
               <p>Monday, 2:30 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly.</p>
@@ -199,13 +206,13 @@ export default async function MediaPage() {
         </div>
         <div className="media-press-angles">
           <h3 className="media-press-title">Story angles</h3>
-          <div className="media-angle-grid">{storyAngles.map(([title, body], index) => <article key={title}><span>0{index + 1}</span><h4>{title}</h4><p>{body}</p></article>)}</div>
+          <div className="media-angle-grid">{storyAngles.map(([title, body], index) => <article key={title}><h4>{title}</h4><p>{body}</p></article>)}</div>
         </div>
       </section>
 
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
         <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>The fact sheet, logo files, and credited event photos, ready for editors, producers, and partners.</p></div>
-        <div className="media-download-grid">{downloads.map(({ title, body, status, links }) => <article key={title}><div className="media-download-icon" aria-hidden="true">↘</div><h3>{title}</h3><p>{body}</p>{links ? <div className="media-download-links">{links.map(([label, href, file]) => <a key={href + label} href={href} download={file ? true : undefined}>{label}</a>)}</div> : <span className="media-download-status">{status}</span>}</article>)}</div>
+        <div className="media-download-grid">{downloads.map(({ title, body, status, links }) => <article key={title}><h3>{title}</h3><p>{body}</p>{links ? <div className="media-download-links">{links.map(([label, href, file]) => <a key={href + label} href={href} download={file ? true : undefined}>{label}</a>)}</div> : <span className="media-download-status">{status}</span>}</article>)}</div>
         <div className="media-brand-assets" id="brand-assets">
           <h3 className="media-press-title">Logo</h3>
           <p className="media-brand-intro">A gold and a black retriever sitting back to back, the wordmark, the “Society Inc.” line, a paw rule and the tagline. Always use the supplied artwork; never retype or redraw it.</p>
