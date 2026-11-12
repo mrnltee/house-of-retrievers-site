@@ -40,7 +40,7 @@ export default function AdminNav({ groups, home, me }) {
       </div>
       <div className="admin-menu" id="admin-menu">
       <a className="logo" href={home}>
-        <img src="/house-of-retrievers-logo-reverse.png" alt="The House of Retrievers Society Inc. — admin home" width="1396" height="564" />
+        <img src="/house-of-retrievers-logo-reverse.png" alt="The House of Retrievers’ Society, Inc. — admin home" width="1396" height="564" />
       </a>
       <p className="tag">ADMIN</p>
       {groups.map(([label, items]) => (

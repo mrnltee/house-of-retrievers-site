@@ -41,7 +41,7 @@ export default function MediaHeader() {
         <Link className="media-brand" href="/" aria-label="House of Retrievers home">
           <LogoMoments tone="dark" priority />
         </Link>
-        <div className="media-orgname" aria-label="The House of Retrievers Society Inc.">The House of Retrievers <span>Society Inc.</span></div>
+        <div className="media-orgname" aria-label="The House of Retrievers’ Society, Inc.">The House of Retrievers’ <span>Society, Inc.</span></div>
       </div>
       <nav aria-label="Media hub navigation" className="media-nav media-glass-dock">
         {SECTIONS.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={current === id ? "true" : undefined}>{label}</a>)}

@@ -173,6 +173,14 @@ test("letters agree on the facts (owner, 2026-10-31): 3:00 PM, “A Golden Begin
   }
 });
 
+test("the org is written “The House of Retrievers’ Society, Inc.” (owner, 2026-11-12)", async () => {
+  const { readFileSync } = await import("node:fs");
+  for (const f of ["app/lib/legal.mjs", "app/lib/siteSeo.mjs", "app/lib/mediaPressKit.mjs", "app/components/LogoMoments.jsx", "app/media/page.jsx"]) {
+    const src = readFileSync(new URL(`../../${f}`, import.meta.url), "utf8");
+    assert.doesNotMatch(src, /House of Retrievers Society Inc/, f);
+  }
+});
+
 test("letters name HOR's beneficiaries (owner, 2026-10-31), not “selected animal shelters”", () => {
   for (const l of LETTER_STARTERS.filter((x) => x.key !== "beneficiary-proposal")) {
     const text = `${l.cover}\n${l.body}`;

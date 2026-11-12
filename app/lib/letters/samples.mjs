@@ -7,7 +7,7 @@
 const SAMPLES = {
   Address: "e.g. 123 Katipunan Ave., Quezon City 1108",
   "HOR Bank": "e.g. BDO Unibank, Araneta Center branch",
-  "HOR Account Name": "e.g. The House of Retrievers Society Inc.",
+  "HOR Account Name": "e.g. The House of Retrievers’ Society, Inc.",
   "HOR Account Number": "e.g. 0012 3456 7890",
   "HOR GCash Number / Name": "e.g. 0969 086 3183 / Angelique Serrano",
   "Proposed Partner Designation": "e.g. Official Pet Food Partner",

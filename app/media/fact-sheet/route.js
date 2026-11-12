@@ -20,7 +20,7 @@ const LABEL_WIDTH = 132;
 
 function buildPdf(kit) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: MARGIN, info: { Title: "Organization fact sheet | The House of Retrievers Society Inc.", Author: "The House of Retrievers Society Inc." } });
+    const doc = new PDFDocument({ size: "A4", margin: MARGIN, info: { Title: "Organization fact sheet | The House of Retrievers’ Society, Inc.", Author: "The House of Retrievers’ Society, Inc." } });
     const chunks = [];
     doc.on("data", (chunk) => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -35,7 +35,7 @@ function buildPdf(kit) {
     doc.y = MARGIN + 100;
     doc.font("Helvetica-Bold").fontSize(22).fillColor(INK).text("Organization fact sheet", MARGIN, doc.y);
     doc.moveDown(0.25);
-    doc.font("Helvetica").fontSize(10).fillColor(MUTED).text("The House of Retrievers Society Inc. · Paws for a Purpose", { width });
+    doc.font("Helvetica").fontSize(10).fillColor(MUTED).text("The House of Retrievers’ Society, Inc. · Paws for a Purpose", { width });
     doc.moveDown(1.1);
 
     const rows = [...kit.factSheet, ["Mission", kit.mission], ["Media contact", "houseofretrieversph@gmail.com"]];

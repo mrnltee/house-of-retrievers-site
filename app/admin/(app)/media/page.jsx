@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 
 const DEFAULTS = {
   heroTitle: "A house with<br><em>a purpose.</em>",
-  heroLead: "The media hub for The House of Retrievers Society Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
-  about: "We’re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.\n\nThe House of Retrievers Society Inc., formerly known as House of Retrievers PH, is a Philippine SEC-registered nonprofit organization built around the relationship between dogs and the people who love them.",
+  heroLead: "The media hub for The House of Retrievers’ Society, Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
+  about: "We’re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.\n\nThe House of Retrievers’ Society, Inc., formerly known as House of Retrievers PH, is a Philippine SEC-registered nonprofit organization built around the relationship between dogs and the people who love them.",
   mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
   stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park · Beneficiary: MBY Pet Rescue and Sanctuary\n\nPurpose to Care visit · Milagros Elderly Home Care and Services\n\nHoR × Beagle Buddies PH Community Pack Walk · 23 August 2026 · Ayala Triangle, Makati",
   partnerships: "Event partnerships, Purpose program partnerships, advocacy campaigns, product and in-kind support, educational sessions, venue collaborations, content partnerships, and CSR volunteering.",
@@ -22,8 +22,8 @@ const DEFAULTS = {
   timeline: DEFAULT_MEDIA_TIMELINE,
   profile: DEFAULT_MEDIA_PROFILE,
   contactEmail: "houseofretrieversph@gmail.com",
-  seoTitle: "Media hub | The House of Retrievers Society Inc.",
-  seoDescription: "Press resources, organization information, partnership context, and media contact details for The House of Retrievers Society Inc.",
+  seoTitle: "Media hub | The House of Retrievers’ Society, Inc.",
+  seoDescription: "Press resources, organization information, partnership context, and media contact details for The House of Retrievers’ Society, Inc.",
 };
 
 export default async function MediaAdminPage({ searchParams }) {

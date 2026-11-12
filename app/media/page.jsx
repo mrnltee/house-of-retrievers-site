@@ -11,12 +11,12 @@ import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, clean
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Media hub | The House of Retrievers Society Inc.",
-  description: "Press resources, organization information, partnership context, and media contact details for The House of Retrievers Society Inc.",
+  title: "Media hub | The House of Retrievers’ Society, Inc.",
+  description: "Press resources, organization information, partnership context, and media contact details for The House of Retrievers’ Society, Inc.",
   alternates: { canonical: "https://media.houseofretrieversph.org/" },
   openGraph: {
-    title: "Media hub | The House of Retrievers Society Inc.",
-    description: "Press resources and partnership information from The House of Retrievers Society Inc.",
+    title: "Media hub | The House of Retrievers’ Society, Inc.",
+    description: "Press resources and partnership information from The House of Retrievers’ Society, Inc.",
     url: "https://media.houseofretrieversph.org/",
     images: [{ url: "/house-of-retrievers-hero-poster.jpg", width: 1280, height: 720, alt: "House of Retrievers families and furbabies together" }],
   },
@@ -85,7 +85,7 @@ const STORY_TITLES = ["Pawres de Mayo", "Care and companionship", "Community col
 
 const FALLBACK_CONTENT = {
   heroTitle: "A house with<br><em>a purpose.</em>",
-  heroLead: "The media hub for The House of Retrievers Society Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
+  heroLead: "The media hub for The House of Retrievers’ Society, Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
   about: "We&apos;re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.",
   mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
   stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park · Beneficiary: MBY Pet Rescue and Sanctuary\n\nPurpose to Care visit · Milagros Elderly Home Care and Services\n\nHoR × Beagle Buddies PH Community Pack Walk · 23 August 2026 · Ayala Triangle, Makati",
@@ -216,7 +216,7 @@ export default async function MediaPage() {
         <div className="media-brand-assets" id="brand-assets">
           <h3 className="media-press-title">Logo</h3>
           <p className="media-brand-intro">A gold and a black retriever sitting back to back, the wordmark, the “Society Inc.” line, a paw rule and the tagline. Always use the supplied artwork; never retype or redraw it.</p>
-          <div className="media-logo-grid">{logoLockups.map(({ title, note, tone, src, png }) => <figure key={src} className={`media-logo-tile media-logo-tile-${tone}`}><div><img src={src} alt={`The House of Retrievers Society Inc. logo, ${title.toLowerCase().replace(" · ", ", ")}`} loading="lazy" /></div><figcaption><strong>{title}</strong><span>{note}</span><span className="media-download-links"><a href={src} download>Download SVG</a>{png ? <a href={png} download>Download PNG</a> : null}</span></figcaption></figure>)}</div>
+          <div className="media-logo-grid">{logoLockups.map(({ title, note, tone, src, png }) => <figure key={src} className={`media-logo-tile media-logo-tile-${tone}`}><div><img src={src} alt={`The House of Retrievers’ Society, Inc. logo, ${title.toLowerCase().replace(" · ", ", ")}`} loading="lazy" /></div><figcaption><strong>{title}</strong><span>{note}</span><span className="media-download-links"><a href={src} download>Download SVG</a>{png ? <a href={png} download>Download PNG</a> : null}</span></figcaption></figure>)}</div>
           <div className="media-brand-notes">
             <div><strong>Logo colours</strong><ul className="media-swatches">{brandColors.map(([name, hex, rgb, role]) => <li key={hex}><span style={{ background: hex }} aria-hidden="true" /><div><b>{name}</b><code>{hex} · RGB {rgb}</code><small>{role}</small></div></li>)}</ul></div>
             <div><strong>Using the logo</strong><dl className="media-logo-rules">{logoRules.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}</dl></div>
@@ -236,7 +236,7 @@ export default async function MediaPage() {
       </section>
 
       <PhotoLightbox />
-      <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers Society Inc.</span><a href="https://www.houseofretrieversph.org/">Visit the main site ↗</a></div></footer>
+      <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers’ Society, Inc.</span><a href="https://www.houseofretrieversph.org/">Visit the main site ↗</a></div></footer>
     </main>
   );
 }
