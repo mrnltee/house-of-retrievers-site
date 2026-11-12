@@ -1,8 +1,13 @@
 import MediaHeader from "./MediaHeader";
 import LogoMoments from "../components/LogoMoments";
-import { hasDatabase, sql } from "../lib/db";
+import CopyButton from "./CopyButton";
+import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
+import { pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
+
+// Re-rendered hourly so new event albums and photographer credits reach the photo library; a publish in Admin → Media hub refreshes it at once.
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Media hub | The House of Retrievers Society Inc.",
@@ -25,10 +30,10 @@ const purposes = [
 ];
 
 const downloads = [
-  { title: "Organization fact sheet", body: "A concise reference for reporters, producers, and partners.", links: [["Read it on this page ↑", "#press-kit"]] },
-  { title: "Short and long boilerplates", body: "Descriptions for listings, articles, and introductions. Draft wording, awaiting HOR approval.", links: [["Read them on this page ↑", "#press-kit"]] },
+  { title: "Organization fact sheet", body: "A concise reference for reporters, producers, and partners.", links: [["Download the PDF", "/media/fact-sheet"], ["Read it on this page ↑", "#press-kit"]] },
+  { title: "Short and long boilerplates", body: "Descriptions for listings, articles, and introductions, ready to copy.", links: [["Copy them on this page ↑", "#press-kit"]] },
   { title: "Logo and brand assets", body: "The supplied artwork for light and dark backgrounds, with colours and usage rules.", links: [["See the logo files below ↓", "#brand-assets"]] },
-  { title: "Photo and video library", body: "Selected, credited media for approved editorial use.", status: "Coming soon" },
+  { title: "Photo and video library", body: "Credited photos from past events, with links to our social channels.", links: [["Browse the photos below ↓", "#photo-library"]] },
 ];
 
 const logoLockups = [
@@ -56,24 +61,6 @@ const logoDonts = [
   "Fade it or add shadows, glows or outlines.",
   "Recolour the retrievers or the wordmark.",
   "Rearrange or crop the elements, retype the wordmark, or swap the tagline for other text.",
-];
-
-const factSheet = [
-  ["Legal name", "The House of Retrievers Society Inc."],
-  ["Also known as", "House of Retrievers, HoR. Formerly House of Retrievers PH."],
-  ["What it is", "A Philippine nonprofit, registered with the SEC in September 2026."],
-  ["SEC registration", "No. 2026090268846-04"],
-  ["Advocacy platform", "Paws for a Purpose"],
-  ["Purpose areas", "Celebrate · Learn · Give Back · Care · Connect"],
-  ["Who can join", "Pet parents of every breed, and volunteers with or without a dog."],
-  ["First fundraiser", "Pawres de Mayo, 17 May 2026, for MBY Pet Rescue and Sanctuary."],
-  ["Official launch", "Golden Beginning: Paws and Purpose, 30 November 2026, Novotel Manila Araneta City, Quezon City."],
-  ["Online", "houseofretrieversph.org · Facebook and Instagram @houseofretrieversph"],
-];
-
-const boilerplates = [
-  ["Short, about 50 words", "The House of Retrievers Society Inc. is an SEC-registered nonprofit in the Philippines that brings responsible pet parents and their dogs together to do good. Through five purpose areas (Celebrate, Learn, Give Back, Care, and Connect), HoR supports rescues and communities, naming every beneficiary up front. Paws for a Purpose."],
-  ["Long, about 150 words", "The House of Retrievers Society Inc. (HoR) began when retriever families met through a group chat to plan a doggie run. That gathering became Pawres de Mayo in May 2026, a celebration that supported MBY Pet Rescue and Sanctuary and published a breakdown of what was turned over. By September 2026, HoR was registered with the SEC as a nonprofit.\n\nToday HoR welcomes pet parents of every breed and volunteers with or without dogs. Its work runs through five purpose areas: Celebrate, Learn, Give Back, Care, and Connect. Activities have included free hugs events in BGC, a creative workshop with Pawfect Blooms, a visit to elderly residents at Milagros Elderly Home Care and Services, and a pack walk with Beagle Buddies PH. Every activity names its beneficiary before it starts. HoR’s promise: Raise responsibly. Serve generously. HoR launches publicly on 30 November 2026 at Novotel Manila Araneta City."],
 ];
 
 const storyAngles = [
@@ -107,11 +94,11 @@ function rich(value) {
 }
 
 export default async function MediaPage() {
-  let content = FALLBACK_CONTENT;
-  if (hasDatabase()) {
-    const [document] = await sql("SELECT content FROM media_hub_documents WHERE id=true AND status='published'");
-    if (document?.content && Object.keys(document.content).length) content = { ...content, ...document.content };
-  }
+  const published = await loadPublishedMediaContent();
+  const content = { ...FALLBACK_CONTENT, ...published };
+  const kit = pressKitFrom(published);
+  const albums = await loadMediaAlbums();
+  const albumDate = (value) => new Date(value).toLocaleDateString("en-PH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Manila" });
   const timeline = Array.isArray(content.timeline) ? cleanMediaTimeline(content.timeline) : DEFAULT_MEDIA_TIMELINE;
   const timelineOrientation = cleanTimelineOrientation(content.timelineOrientation);
   const profile = cleanMediaProfile(content.profile || DEFAULT_MEDIA_PROFILE);
@@ -191,14 +178,14 @@ export default async function MediaPage() {
           <div>
             <h3 className="media-press-title">Fact sheet</h3>
             <dl className="media-fact-list">
-              {factSheet.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}
+              {kit.factSheet.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}
               <div><dt>Mission</dt><dd dangerouslySetInnerHTML={rich(content.mission)} /></div>
               <div><dt>Media contact</dt><dd><a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry">houseofretrieversph@gmail.com</a></dd></div>
             </dl>
           </div>
           <div>
             <h3 className="media-press-title">About House of Retrievers</h3>
-            {boilerplates.map(([label, text]) => <article className="media-boilerplate" key={label}><header><strong>{label}</strong><span className="media-draft-tag">Draft for approval</span></header>{text.split("\n\n").map((paragraph) => <p key={paragraph.slice(0, 24)}>{paragraph}</p>)}</article>)}
+            {[["Short, about 50 words", kit.boilerplateShort], ["Long, about 150 words", kit.boilerplateLong]].map(([label, text]) => <article className="media-boilerplate" key={label}><header><strong>{label}</strong>{kit.boilerplatesApproved ? null : <span className="media-draft-tag">Draft for approval</span>}<CopyButton text={text} label="Copy text" /></header>{text.split("\n\n").map((paragraph) => <p key={paragraph.slice(0, 24)}>{paragraph}</p>)}</article>)}
             <article className="media-launch-card">
               <span>Official launch · 30 November 2026</span>
               <h3>Golden Beginning:<br /><em>Paws and Purpose</em></h3>
@@ -217,7 +204,7 @@ export default async function MediaPage() {
       </section>
 
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
-        <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Logo files are ready to download. The photo and video library will be added once images are selected, credited, and cleared for publication.</p></div>
+        <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>The fact sheet, logo files, and credited event photos, ready for editors, producers, and partners.</p></div>
         <div className="media-download-grid">{downloads.map(({ title, body, status, links }) => <article key={title}><div className="media-download-icon" aria-hidden="true">↘</div><h3>{title}</h3><p>{body}</p>{links ? <div className="media-download-links">{links.map(([label, href, file]) => <a key={href + label} href={href} download={file ? true : undefined}>{label}</a>)}</div> : <span className="media-download-status">{status}</span>}</article>)}</div>
         <div className="media-brand-assets" id="brand-assets">
           <h3 className="media-press-title">Logo</h3>
@@ -228,6 +215,15 @@ export default async function MediaPage() {
             <div><strong>Using the logo</strong><dl className="media-logo-rules">{logoRules.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}</dl></div>
             <div><strong>Do not</strong><ul className="media-usage">{logoDonts.map((line) => <li key={line}>{line}</li>)}</ul></div>
           </div>
+        </div>
+        <div className="media-photo-library" id="photo-library">
+          <h3 className="media-press-title">Photo and video library</h3>
+          <p className="media-brand-intro">Photos from past House of Retrievers activities, credited to the photographers who took them. They are shown here for reference: please email us for high-resolution files and permission before publishing, and keep the photographer’s credit with every photo.</p>
+          {albums.length ? albums.map((album) => <section className="media-album" key={album.url} aria-label={`${album.title} photos`}>
+            <header><div><h4>{album.title}</h4><p>{albumDate(album.date)}{album.photographers ? ` · Photos by ${album.photographers}` : ""}</p></div><a href={album.url}>See all {album.total} photos <span aria-hidden="true">↗</span></a></header>
+            <div className="media-album-grid">{album.photos.map((photo) => <figure key={photo.thumb}><a href={photo.full}><img src={photo.thumb} alt={photo.alt || `${album.title}, House of Retrievers`} loading="lazy" /></a><figcaption>Photo: {photo.credit}</figcaption></figure>)}</div>
+          </section>) : <p className="media-photo-empty">Credited event photos will appear here as albums are added to past events and their photographers are recorded.</p>}
+          <div className="media-photo-links"><strong>More photos and video</strong><a href="https://www.instagram.com/houseofretrieversph/">Instagram @houseofretrieversph <span aria-hidden="true">↗</span></a><a href="https://www.facebook.com/houseofretrieversph">Facebook /houseofretrieversph <span aria-hidden="true">↗</span></a><a href="mailto:houseofretrieversph@gmail.com?subject=Photo%20request">Request photos or permission <span aria-hidden="true">↗</span></a></div>
         </div>
         <div className="media-editorial-note"><strong>For editors and producers</strong><p>HOR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>

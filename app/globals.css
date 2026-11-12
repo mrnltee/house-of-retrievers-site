@@ -1634,6 +1634,23 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .media-angle-grid h4 { margin: 12px 0 7px; font-size: 17px; line-height: 1.2; }
 .media-angle-grid p { margin: 0; color: var(--media-muted); font-size: 14px; line-height: 1.55; }
 .media-download-links { display: grid; gap: 7px; margin-top: 18px; font-size: 13px; line-height: 1.4; }
+.media-copy-button { margin-left: auto; padding: 6px 12px; border: 1px solid rgba(13,13,13,.3); border-radius: 999px; background: transparent; color: var(--media-black); font: inherit; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.media-copy-button:hover, .media-copy-button:focus-visible { background: var(--media-black); color: white; }
+.media-photo-library { margin-top: 70px; padding-top: 28px; border-top: 1px solid rgba(13,13,13,.16); scroll-margin-top: 90px; }
+.media-album { margin-top: 34px; }
+.media-album > header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; margin-bottom: 14px; }
+.media-album h4 { margin: 0 0 4px; font-size: 18px; line-height: 1.2; }
+.media-album header p { margin: 0; color: var(--media-muted); font-size: 13px; }
+.media-album header a, .media-photo-links a { color: var(--media-black); font-size: 13px; font-weight: 700; text-decoration: underline; text-decoration-color: var(--media-gold); text-underline-offset: 3px; }
+.media-album-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.media-album-grid figure { margin: 0; }
+.media-album-grid a { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 10px; background: rgba(13,13,13,.08); }
+.media-album-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-album-grid figcaption { padding-top: 6px; color: var(--media-muted); font-size: 11px; line-height: 1.4; }
+.media-photo-empty { margin: 0; padding: 22px; border: 1px dashed rgba(13,13,13,.3); color: var(--media-muted); font-size: 14px; line-height: 1.6; }
+.media-photo-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 26px; margin-top: 34px; }
+.media-photo-links strong { color: #7a5a1c; font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
+@media (max-width: 800px) { .media-album-grid { grid-template-columns: repeat(3, 1fr); } .media-brand-notes { grid-template-columns: 1fr; } }
 .media-brand-assets { margin-top: 70px; padding-top: 28px; border-top: 1px solid rgba(13,13,13,.16); scroll-margin-top: 90px; }
 .media-brand-intro { max-width: 620px; margin: 0 0 30px; color: var(--media-muted); font-size: 15px; line-height: 1.6; }
 .media-logo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 14px; }
