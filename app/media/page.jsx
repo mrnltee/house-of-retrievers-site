@@ -174,8 +174,7 @@ export default async function MediaPage() {
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
           <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
-        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}</div>
-        <div className="media-quote"><span aria-hidden="true">“</span><p>Raise responsibly.<br />Serve generously.</p><small>House of Retrievers</small></div>
+        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br />Serve generously.</p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
       </section>
 
       <section className="media-section media-press media-chapter" id="press-kit" aria-labelledby="press-title">
