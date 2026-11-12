@@ -1730,6 +1730,42 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .media-pathways .media-quote p { margin: 10px 0 14px; font-size: clamp(24px, 2.2vw, 30px); line-height: 1; }
 .media-quote figcaption { color: rgba(255,255,255,.62); font-size: 12px; letter-spacing: .15em; text-transform: uppercase; }
 @media (max-width: 560px) { .media-pathways { grid-template-columns: 1fr; } }
+/* Bento pass, whole media hub (12 Nov 2026, owner): cards are rounded tiles separated by space, no hairline dividers */
+.media-hub { --media-tile: #fff; --media-tile-dark: #1b1b1b; --media-radius: 18px; --media-gap: 12px; }
+.media-proof-grid, .media-purpose-grid, .media-angle-list, .media-angle-grid, .media-timeline-list, .media-timeline-horizontal .media-timeline-list, .media-download-grid, .media-brand-notes, .media-essentials { gap: var(--media-gap); border: 0; }
+.media-angle-list, .media-timeline-list { display: grid; }
+.media-proof-grid article, .media-proof-grid article:last-child, .media-angle-list article, .media-angle-grid article, .media-timeline-list article, .media-timeline-horizontal .media-timeline-list article, .media-timeline-horizontal .media-timeline-list article:last-child, .media-download-grid article, .media-boilerplate, .media-fact-list, .media-brand-notes > div, .media-photo-empty, .media-editorial-note { padding: 22px; border: 0; border-radius: var(--media-radius); background: var(--media-tile); }
+.media-proof-grid article { min-height: 0; padding: 18px 16px; }
+.media-download-grid article { min-height: 220px; }
+.media-boilerplate { margin-bottom: var(--media-gap); }
+.media-timeline-thumb { border-radius: 12px; }
+.media-fact-list > div { padding: 11px 0; border: 0; }
+.media-fact-list > div:first-child { padding-top: 0; }
+.media-fact-list > div:last-child { padding-bottom: 0; }
+.media-purpose-grid { margin-top: 64px; }
+.media-purpose-grid article, .media-purpose-grid article:last-child { padding: 22px 20px; border: 0; border-radius: var(--media-radius); background: var(--media-tile-dark); }
+.media-essentials { padding: var(--media-gap) clamp(24px, 10vw, 150px); }
+.media-essentials a { border-radius: var(--media-radius); }
+.media-mission { border: 0; border-radius: var(--media-radius); }
+.media-note, .media-timeline, .media-photo-library, .media-brand-assets, .media-editorial-note, .media-footer-bottom { border-top: 0; }
+.media-note, .media-timeline, .media-photo-library, .media-brand-assets { padding-top: 0; }
+.media-logo-tile > div { border: 0; border-radius: var(--media-radius); }
+.media-photo-empty { border: 0; }
+.media-usage li { position: relative; padding-left: 16px; border: 0; }
+.media-usage li::before { content: ""; position: absolute; left: 0; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: #b3261e; }
+@media (max-width: 800px) {
+  .media-essentials { padding: var(--media-gap); }
+  .media-purpose-grid article:nth-child(2n), .media-proof-grid article, .media-proof-grid article:last-child { padding: 20px; border: 0; }
+  .media-timeline-list article, .media-timeline-horizontal .media-timeline-list article { padding: 16px; border: 0; }
+  .media-timeline-horizontal .media-timeline-list { display: grid; }
+}
+/* Media hub photo viewer (PhotoLightbox.jsx): the event lightbox, borderless buttons, with album and credit */
+.media-lightbox button { border: 0; background: rgba(255,255,255,.12); }
+.media-lightbox-figure { display: grid; justify-items: center; gap: 12px; margin: 0; }
+.media-lightbox-figure img { max-height: 78dvh; border-radius: 14px; }
+.media-lightbox-figure figcaption { display: grid; gap: 2px; text-align: center; font-size: 13px; color: rgba(255,255,255,.75); }
+.media-lightbox-figure strong { color: white; font-size: 14px; }
+.media-album-grid a { cursor: zoom-in; }
 @media (prefers-reduced-motion: reduce) { .media-essentials a { transition: none; } }
 @keyframes media-reveal { from { opacity: .18; transform: translateY(34px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 800px) { .media-stories-grid > :first-child { position: static; } }

@@ -1,6 +1,7 @@
 import MediaHeader from "./MediaHeader";
 import LogoMoments from "../components/LogoMoments";
 import CopyButton from "./CopyButton";
+import PhotoLightbox from "./PhotoLightbox";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
@@ -227,13 +228,14 @@ export default async function MediaPage() {
           <p className="media-brand-intro">Photos from past House of Retrievers activities, credited to the photographers who took them. They are shown here for reference: please email us for high-resolution files and permission before publishing, and keep the photographer’s credit with every photo.</p>
           {albums.length ? albums.map((album) => <section className="media-album" key={album.url} aria-label={`${album.title} photos`}>
             <header><div><h4>{album.title}</h4><p>{albumDate(album.date)}{album.photographers ? ` · Photos by ${album.photographers}` : ""}</p></div><a href={album.url}>See all {album.total} photos <span aria-hidden="true">↗</span></a></header>
-            <div className="media-album-grid">{album.photos.map((photo) => <figure key={photo.thumb}><a href={photo.full}><img src={photo.thumb} alt={photo.alt || `${album.title}, House of Retrievers`} loading="lazy" /></a><figcaption>Photo: {photo.credit}</figcaption></figure>)}</div>
+            <div className="media-album-grid">{album.photos.map((photo) => <figure key={photo.thumb}><a href={photo.full} data-lightbox={album.url} data-album={album.title} data-caption={`Photo: ${photo.credit}`}><img src={photo.thumb} alt={photo.alt || `${album.title}, House of Retrievers`} loading="lazy" /></a><figcaption>Photo: {photo.credit}</figcaption></figure>)}</div>
           </section>) : <p className="media-photo-empty">Credited event photos will appear here as albums are added to past events and their photographers are recorded.</p>}
           <div className="media-photo-links"><strong>More photos and video</strong><a href="https://www.instagram.com/houseofretrieversph/">Instagram @houseofretrieversph <span aria-hidden="true">↗</span></a><a href="https://www.facebook.com/houseofretrieversph">Facebook /houseofretrieversph <span aria-hidden="true">↗</span></a><a href="mailto:houseofretrieversph@gmail.com?subject=Photo%20request">Request photos or permission <span aria-hidden="true">↗</span></a></div>
         </div>
         <div className="media-editorial-note"><strong>For editors and producers</strong><p>HOR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>
 
+      <PhotoLightbox />
       <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers Society Inc.</span><a href="https://www.houseofretrieversph.org/">Visit the main site ↗</a></div></footer>
     </main>
   );
