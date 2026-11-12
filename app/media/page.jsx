@@ -2,6 +2,7 @@ import MediaHeader from "./MediaHeader";
 import LogoMoments from "../components/LogoMoments";
 import CopyButton from "./CopyButton";
 import PhotoLightbox from "./PhotoLightbox";
+import MessageForm from "./MessageForm";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
@@ -118,7 +119,7 @@ export default async function MediaPage() {
           <h1 id="media-title" dangerouslySetInnerHTML={rich(content.heroTitle)} />
           <p className="media-lead" dangerouslySetInnerHTML={rich(content.heroLead)} />
           <div className="media-actions">
-            <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry">Make a media inquiry <span aria-hidden="true">↗</span></a>
+            <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry">Make a media inquiry <span aria-hidden="true">↗</span></a>
             <a className="media-text-link" href="#downloads">Explore resources <span aria-hidden="true">↓</span></a>
           </div>
         </div>
@@ -129,7 +130,7 @@ export default async function MediaPage() {
         <a href="/media/fact-sheet"><span>Fact sheet</span><strong>Download the PDF</strong><small>Facts, mission, boilerplates</small></a>
         <a href="#brand-assets"><span>Logos</span><strong>Brand assets</strong><small>SVG and PNG, light and dark</small></a>
         <a href="#photo-library"><span>Photos</span><strong>Credited photos</strong><small>From past events</small></a>
-        <a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry"><span>Media contact</span><strong>Email us</strong><small>houseofretrieversph@gmail.com</small></a>
+        <a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry"><span>Media contact</span><strong>Email us</strong><small>houseofretrieversph@gmail.com</small></a>
       </nav>
 
       <section className="media-section media-intro media-chapter" id="about" aria-labelledby="about-title">
@@ -164,7 +165,7 @@ export default async function MediaPage() {
       <section className="media-section media-stories media-chapter" id="stories" aria-labelledby="stories-title">
         <div className="media-section-label">04 / For the media</div>
         <div className="media-stories-grid">
-          <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers">Share a story idea <span aria-hidden="true">↗</span></a></div>
+          <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers" data-message="story">Share a story idea <span aria-hidden="true">↗</span></a></div>
           <div className="media-angle-list">{storyParts.map((text, index) => <article key={text.slice(0, 32)}>{STORY_TITLES[index] ? <h3>{STORY_TITLES[index]}</h3> : null}<p dangerouslySetInnerHTML={rich(text)} /></article>)}</div>
         </div>
         <div className={`media-timeline media-timeline-${timelineOrientation}`} aria-label="Documented activity timeline">
@@ -174,7 +175,7 @@ export default async function MediaPage() {
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
-          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
+          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry" data-message="partnership">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
         <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br />Serve generously.</p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
       </section>
 
@@ -198,7 +199,7 @@ export default async function MediaPage() {
               <h3>Golden Beginning:<br /><em>Paws and Purpose</em></h3>
               <p>Monday, 2:30 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly.</p>
               <div className="media-actions">
-                <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning">Ask about media access <span aria-hidden="true">↗</span></a>
+                <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <span aria-hidden="true">↗</span></a>
                 <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11">Event details <span aria-hidden="true">↗</span></a>
               </div>
             </article>
@@ -236,6 +237,7 @@ export default async function MediaPage() {
       </section>
 
       <PhotoLightbox />
+      <MessageForm />
       <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers’ Society, Inc.</span><a href="https://www.houseofretrieversph.org/">Visit the main site ↗</a></div></footer>
     </main>
   );

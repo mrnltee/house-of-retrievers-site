@@ -14,9 +14,9 @@ export function emailReady() {
 /**
  * `idempotencyKey` ("<event>/<id>") stops a retry from sending twice: Resend
  * returns the first result for the same key within 24 hours. `attachments`:
- * [{ filename, content: Buffer, contentId? }] (a letter's PDF; contentId makes a picture inline, shown with src="cid:<id>"). `cc`: more addresses copied in (a guest's representative); `bcc`: blind copies.
+ * [{ filename, content: Buffer, contentId? }] (a letter's PDF; contentId makes a picture inline, shown with src="cid:<id>"). `cc`: more addresses copied in (a guest's representative); `bcc`: blind copies; `replyTo`: where replies go instead of EMAIL_REPLY_TO.
  */
-export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, idempotencyKey, attachments }) {
+export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, idempotencyKey, attachments, replyTo }) {
   // HOR's saved sign-off and footer (Email templates), in place of the standard ones.
   ({ html, text } = applyEmailFrame({ html, text }, await loadEmailFrame()));
   const key = process.env.RESEND_API_KEY;
@@ -39,7 +39,8 @@ export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, id
         html,
         text,
         ...(attachments?.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content).toString("base64"), ...(a.contentId ? { content_id: a.contentId } : {}) })) } : {}),
-        ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
+        // `replyTo` (a form sender) wins over the standard reply address.
+        ...(replyTo || process.env.EMAIL_REPLY_TO ? { reply_to: replyTo || process.env.EMAIL_REPLY_TO } : {}),
       }),
       signal: AbortSignal.timeout(attachments?.length ? 20000 : 10000),
     });

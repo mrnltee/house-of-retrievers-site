@@ -45,7 +45,7 @@ export default function MediaHeader() {
       </div>
       <nav aria-label="Media hub navigation" className="media-nav media-glass-dock">
         {SECTIONS.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={current === id ? "true" : undefined}>{label}</a>)}
-        <a className="media-nav-contact" href="mailto:houseofretrieversph@gmail.com">Contact media</a>
+        <a className="media-nav-contact" href="mailto:houseofretrieversph@gmail.com" data-message="inquiry">Contact media</a>
       </nav>
     </header>
   );
