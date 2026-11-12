@@ -33,6 +33,7 @@ export default function MediaHeader() {
         <a href="#about">About</a>
         <a href="#stories">Stories</a>
         <a href="#partnerships">Partnerships</a>
+        <a href="#press-kit">Press kit</a>
         <a href="#downloads">Downloads</a>
         <a className="media-nav-contact" href="mailto:houseofretrieversph@gmail.com">Contact media</a>
       </nav>

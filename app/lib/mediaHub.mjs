@@ -9,15 +9,21 @@ export const MEDIA_THUMBNAILS = [
 
 export const DEFAULT_MEDIA_TIMELINE = [
   { activity: "Pawres de Mayo", date: "17 May 2026", location: "Parklinks Pet Park", purpose: "Beneficiary: MBY Pet Rescue and Sanctuary", thumbnail: "/1-purpaws/purpaw1.jpg" },
-  { activity: "Purpose to Care visit", date: "Documented activity", location: "Milagros Elderly Home Care and Services", purpose: "A visit shaped around care and companionship", thumbnail: "/2-better/better1.jpg" },
+  { activity: "International Free Hugs Day", date: "July 2026", location: "BGC, Taguig", purpose: "Where Purpose to Care began", thumbnail: "" },
+  { activity: "Basic Embroidery Class", date: "August 2026", location: "Quezon City", purpose: "Purpose to Learn, with Pawfect Blooms", thumbnail: "" },
+  { activity: "Purpose to Care visit", date: "August 2026", location: "Milagros Elderly Home Care and Services", purpose: "A visit shaped around care and companionship", thumbnail: "/2-better/better1.jpg" },
   { activity: "Community Pack Walk", date: "23 August 2026", location: "Ayala Triangle, Makati", purpose: "HoR × Beagle Buddies PH", thumbnail: "/house-of-retrievers-hero-poster.jpg" },
+  { activity: "FreeHugs @ BGC", date: "September 2026, then monthly", location: "BGC, Taguig", purpose: "Held on the last Sunday of each month", thumbnail: "" },
+  { activity: "Weekend Social Run", date: "11 October 2026", location: "Filinvest City Central Park, Muntinlupa", purpose: "", thumbnail: "" },
+  { activity: "Bedazzle Barkdate", date: "October 2026", location: "Wiltlover Cafe, MET Live Mall, Pasay", purpose: "", thumbnail: "" },
+  { activity: "Retriever Romp", date: "8 November 2026", location: "Parklinks Pet Park", purpose: "All breeds welcome", thumbnail: "" },
 ];
 
 export const DEFAULT_MEDIA_PROFILE = {
   title: "The details behind the work.",
   intro: "For a quick briefing, here is the information most useful to editors, producers, and potential partners.",
   cards: [
-    { value: "03", label: "documented activities", note: "Pawres de Mayo, a care visit, and a community pack walk." },
+    { value: "09", label: "documented activities", note: "From Pawres de Mayo in May to the Retriever Romp in November 2026." },
     { value: "05", label: "purpose areas", note: "Celebrate, Learn, Give Back, Care, and one area pending final wording." },
     { value: "PH", label: "community-rooted", note: "A Philippine nonprofit built around dogs, people, and responsible care." },
   ],
