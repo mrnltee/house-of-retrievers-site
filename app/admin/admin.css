@@ -821,7 +821,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .recipient-tab:hover { border-color: var(--a-ink); }
 .recipient-tab[aria-selected="true"] { background: var(--a-ink); border-color: var(--a-ink); color: #fff; }
 .recipient-tab:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
-.recipient-tab.is-out { text-decoration: line-through; opacity: .6; }
+.template-preview-empty { margin: 0; padding: 32px 16px; text-align: center; }
 .recipient-tab.no-email { border-style: dashed; }
 
 /* Sidebar footer: your avatar, name and role (links to My profile), and the profile page. */
@@ -937,6 +937,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .selection-letter { margin-left: auto; }
 .tracker-table thead th { position: sticky; top: 0; z-index: 1; }
 .tracker-table th:first-child input, .tracker-table td:first-child input { width: 20px; height: 20px; }
+.tracker-row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .invite-dialog { width: min(760px, calc(100vw - 32px)); }
 .invite-dialog .invite-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .invite-dialog .tracker-pick { max-height: min(52vh, 460px); }

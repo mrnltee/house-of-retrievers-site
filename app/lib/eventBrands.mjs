@@ -151,3 +151,15 @@ export function followUpLink(base, eventId, rows = []) {
   for (const r of waiting) params.append("to", `supporter:${r.supporter_id}`);
   return { href: `${base}/letters/send?${params}`, count: waiting.length, noEmail: waiting.filter((r) => !r.contact_email).length };
 }
+
+/**
+ * One brand's own buttons on the Brand tracker (owner, 2026-11-15), so a single
+ * letter doesn't need a tick first (ticks are for sending to several at once).
+ * `send` opens the send window with `letter` for just this brand; `followUp`
+ * opens it with the follow-up email, only while they're on No reply yet and an
+ * invite has already gone out (`sent`), since the email follows up on it.
+ */
+export function rowLetterLinks(base, eventId, row, letter, { sent = false } = {}) {
+  const href = (key) => `${base}/letters/send?${new URLSearchParams([["letter", key], ["event", eventId], ["list", "brands"], ["to", `supporter:${row.supporter_id}`]])}`;
+  return { send: href(letter), followUp: row.reply === "waiting" && sent ? href(FOLLOW_UP_LETTER) : "" };
+}

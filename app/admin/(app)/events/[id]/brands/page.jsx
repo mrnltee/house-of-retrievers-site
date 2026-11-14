@@ -6,7 +6,7 @@ import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
 import { GIVES, newBrandHref } from "../../../../../lib/supporters.mjs";
-import { REPLIES, ROLES, replyLabel, sortTracker, trackerCounts, trackerSort, followUpLink } from "../../../../../lib/eventBrands.mjs";
+import { REPLIES, ROLES, replyLabel, sortTracker, trackerCounts, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
 import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
@@ -153,7 +153,19 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                     )}
                   </td>
                   <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
-                  <td className="small"><SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} /></td>
+                  <td className="small">
+                    <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} />
+                    {canSend && (() => {
+                      // One brand, no tick needed: the invite letter, or a follow-up once it went out unanswered.
+                      const links = rowLetterLinks(base, event.id, r, letter, { sent: sendsOf(r).some((x) => !["failed", "bounced"].includes(x.status)) });
+                      return (
+                        <span className="tracker-row-actions">
+                          {links.followUp && <a className="btn small dark" href={links.followUp} title={`Email ${r.name} the follow-up. You can edit the wording before it's sent.`}>Follow up</a>}
+                          <a className={`btn small ${links.followUp ? "ghost" : "dark"}`} href={links.send} title={`Open ${letterName(letter)} for ${r.name} only`}>Send letter</a>
+                        </span>
+                      );
+                    })()}
+                  </td>
                   <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
                   <td className="small">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} people`, r.dogs_attending && `${r.dogs_attending} dogs`].filter(Boolean).join(", ")} coming</span></> : null}</td>
                 </tr>

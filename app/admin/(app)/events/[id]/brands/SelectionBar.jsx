@@ -30,7 +30,7 @@ export default function SelectionBar({ letterHref, letterName, ownLetterHref }) 
           <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={clear}>Clear</button>
         </>
       ) : (
-        <span className="muted">Select brands to send them a letter.</span>
+        <span className="muted">Tick brands to send one letter to several at once. For one brand, use its own Send letter or Follow up.</span>
       )}
       <span className="selection-letter small muted">Letter: <a href={letterHref}>{letterName}</a> · switch it in the send window or <a href={ownLetterHref}>make one for this event</a></span>
     </div>

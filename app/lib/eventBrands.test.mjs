@@ -91,3 +91,15 @@ test("follow up: only brands with no reply yet, with the follow-up email and the
   assert.equal(link.noEmail, 1);
   assert.deepEqual(followUpLink("", "ev1", [rows[1]]), { href: "", count: 0, noEmail: 0 });
 });
+
+test("row letter links: Send letter for every brand, Follow up only once an invite went out and they haven't replied", async () => {
+  const { rowLetterLinks } = await import("./eventBrands.mjs");
+  const waiting = { supporter_id: "a", reply: "waiting", contact_email: "a@x.ph" };
+  const sent = rowLetterLinks("/admin", "ev1", waiting, "ev-letter", { sent: true });
+  assert.equal(sent.send, "/admin/letters/send?letter=ev-letter&event=ev1&list=brands&to=supporter%3Aa");
+  assert.equal(sent.followUp, "/admin/letters/send?letter=brand-follow-up&event=ev1&list=brands&to=supporter%3Aa");
+  assert.equal(rowLetterLinks("/admin", "ev1", waiting, "ev-letter", { sent: false }).followUp, "", "nothing to follow up before the invite is sent");
+  assert.equal(rowLetterLinks("/admin", "ev1", { ...waiting, reply: "yes" }, "ev-letter", { sent: true }).followUp, "", "they replied");
+  // No email on record: still offered, the send window has "Send to another email".
+  assert.match(rowLetterLinks("/admin", "ev1", { ...waiting, contact_email: null }, "ev-letter", { sent: true }).send, /to=supporter%3Aa$/);
+});

@@ -56,7 +56,11 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const tickOnly = (rows) => setPicked(new Set(rows.filter((r) => r.email).slice(0, max).map((r) => r.ref)));
   const unsent = listed.filter((r) => !r.sentAt);
   const sentDay = (iso) => new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" });
-  const who = recipients.find((r) => r.ref === previewRef) || recipients[0];
+  // The preview follows the ticks (owner, 2026-11-15): only ticked people get a tab, an
+  // unticked one is never shown, and with nobody ticked the preview is empty.
+  const pickedList = recipients.filter((r) => picked.has(r.ref));
+  const current = picked.has(previewRef) ? previewRef : pickedList[0]?.ref;
+  const who = pickedList.find((r) => r.ref === current) || null;
   const whoCopies = copiesFor({ to: who?.email || "", cc: who?.cc || [] }, extraCc.emails, extraBcc.emails);
   // Wording edited for this send: { all, byRef } (EditWording); the saved letter is unchanged.
   const [edits, setEdits] = useState({ all: null, byRef: {} });
@@ -148,11 +152,15 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
     url.searchParams.set("letter", key);
     window.location.assign(url.toString());
   }
-  const toggle = (ref) => setPicked((s) => {
-    const next = new Set(s);
-    if (next.has(ref)) next.delete(ref); else next.add(ref);
-    return next;
-  });
+  const toggle = (ref) => {
+    // Ticking someone shows their email; unticking falls back to the next ticked person.
+    if (!picked.has(ref)) setPreviewRef(ref);
+    setPicked((s) => {
+      const next = new Set(s);
+      if (next.has(ref)) next.delete(ref); else next.add(ref);
+      return next;
+    });
+  };
 
   function blankInput(b) {
     const long = b.label.length > 40 || (values[b.label] || "").length > 60;
@@ -288,7 +296,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           >
             Send to {count}
           </ConfirmButton>
-          {attach && <button type="submit" formAction={pdfAction} formTarget="_blank" formMethod="post" name="download" value="1" className="btn ghost" data-confirm="not-needed-read-only" onClick={(e) => { e.currentTarget.form.elements.namedItem("previewTo").value = previewRef; }}>
+          {attach && <button type="submit" formAction={pdfAction} formTarget="_blank" formMethod="post" name="download" value="1" className="btn ghost" data-confirm="not-needed-read-only" disabled={!who} onClick={(e) => { e.currentTarget.form.elements.namedItem("previewTo").value = current; }}>
             Download {invite ? "invitation" : "PDF"} for {who?.name}
           </button>}
           <input type="hidden" name="previewTo" />
@@ -299,7 +307,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
       </form>
 
       <section className="card template-preview">
-        <RecipientTabs recipients={recipients} current={previewRef} picked={picked} onPick={setPreviewRef} edited={(ref) => Boolean(edits.byRef[ref] || edits.all)} />
+        {!who ? <p className="muted template-preview-empty" role="status">Nobody is ticked. Tick a recipient to see their email here.</p> : <>
+        <RecipientTabs recipients={pickedList} current={current} onPick={setPreviewRef} edited={(ref) => Boolean(edits.byRef[ref] || edits.all)} />
         {who && <EditWording key={`${who.ref}-${JSON.stringify(edits)}`} wording={{ subject: active.subject, cover: active.cover, body: active.body }} showBody={attach && !design && !invite} name={who.name} count={picked.size} mine={Boolean(edits.byRef[who.ref])} forAll={Boolean(edits.all)} onApply={applyEdit} onReset={resetEdit} />}
         <div className="mail-head" aria-label="The email as it arrives">
           <dl>
@@ -314,7 +323,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <span aria-hidden="true">📄</span> <span><strong>{prepared.filename}</strong><br /><span className="small muted">{invite ? `PDF invitation · card for ${whoNames.name}` : `PDF letter · addressed to ${who?.name}`}</span></span>
           </p> : <p className="small muted">No attachment: email only.</p>}
         </div>
-        <LetterView emailOnly={!attach || invite} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: previewRef, values: JSON.stringify(values), sendTo: sendToJson, cardNames: invite ? JSON.stringify({ [previewRef]: whoNames }) : "", ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
+        <LetterView emailOnly={!attach || invite} initial="email" text={filled} email={email} signature={letter.signature?.on ? { ...letter.signature, src: letter.signature.image } : null} action={pdfAction} fields={{ letter: letter.key, previewTo: current, values: JSON.stringify(values), sendTo: sendToJson, cardNames: invite ? JSON.stringify({ [current]: whoNames }) : "", ...(active.edited ? { subject: active.subject, cover: active.cover, body: active.body } : {}) }} />
+        </>}
       </section>
     </div>
   );
@@ -323,9 +333,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 /**
  * One tab per recipient above the preview (owner, 2026-10-31): click, or use
  * ← → / Home / End, or the ‹ › buttons. Scrolls sideways when there are many.
- * Unticked people stay as tabs, struck through, so they can be checked too.
+ * Only ticked people get a tab: whoever is unticked won't be sent, so isn't previewed.
  */
-function RecipientTabs({ recipients, current, picked, onPick, edited = () => false }) {
+function RecipientTabs({ recipients, current, onPick, edited = () => false }) {
   const strip = useRef(null);
   const at = Math.max(0, recipients.findIndex((r) => r.ref === current));
   const go = (i) => onPick(recipients[(i + recipients.length) % recipients.length].ref);
@@ -354,7 +364,6 @@ function RecipientTabs({ recipients, current, picked, onPick, edited = () => fal
       <div ref={strip} className="recipient-tablist" role="tablist" aria-label="Recipients" onKeyDown={onKey}>
         {recipients.map((r) => {
           const on = r.ref === current;
-          const out = !picked.has(r.ref);
           return (
             <button
               key={r.ref}
@@ -362,8 +371,8 @@ function RecipientTabs({ recipients, current, picked, onPick, edited = () => fal
               role="tab"
               aria-selected={on}
               tabIndex={on ? 0 : -1}
-              className={`recipient-tab${out ? " is-out" : ""}${!r.email ? " no-email" : ""}`}
-              title={out ? `${r.name} (not ticked: won't be sent)` : r.email ? `${r.name} <${r.email}>` : `${r.name} (no email on record)`}
+              className={`recipient-tab${!r.email ? " no-email" : ""}`}
+              title={r.email ? `${r.name} <${r.email}>` : `${r.name} (no email on record)`}
               onClick={() => onPick(r.ref)}
               data-confirm="not-needed-read-only"
             >
