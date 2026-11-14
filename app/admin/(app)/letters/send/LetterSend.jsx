@@ -2,7 +2,7 @@
 
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fillLetter, letterDate, missingBlanks, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
+import { fillLetter, hasOwnEmailPlaceholder, letterDate, missingBlanks, ownEmailWording, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
 import EditWording from "./EditWording";
 import { applyEmailFrame, invitationEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { INVITATION_LIMITS, cardNames, isInvitation, withCardName } from "../../../../lib/invitationCard.mjs";
@@ -121,6 +121,18 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
     return () => { clearTimeout(timer); controller.abort(); };
   }, [invite, wantedKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [attach, setAttach] = useState(pdfLetter);
+  // "Write my own email" (owner, 2026-11-15): email only, no PDF or design, starting from a
+  // placeholder the admin replaces in Edit wording; sending waits until it's replaced.
+  const [own, setOwn] = useState(false);
+  const [wantWording, setWantWording] = useState(false);
+  function writeOwn(on) {
+    setOwn(on);
+    setAttach(on ? false : pdfLetter);
+    if (on) setDesignId("");
+    setEdits({ all: on ? ownEmailWording() : null, byRef: {} });
+    setWantWording(on);
+  }
+  const ownLeft = own && [...picked].some((ref) => hasOwnEmailPlaceholder(wordingFor(letter, edits, ref)));
   // Fill-ins for every version being sent (edited wording can add some).
   const shownBlanks = useMemo(() => unionBlanks([letter, ...[...picked].map((ref) => wordingFor(letter, edits, ref))].map((v) => sendBlanks(v, design, attach))), [letter, edits, picked, design, attach]);
   function applyEdit(scope, wording) {
@@ -128,7 +140,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   }
   function resetEdit(scope) {
     setEdits((e) => {
-      if (scope === "all") return { ...e, all: null };
+      // Writing their own email, "undo" goes back to the placeholder, never to the letter's text.
+      if (scope === "all") return { ...e, all: own ? ownEmailWording() : null };
       const byRef = { ...e.byRef };
       delete byRef[who.ref];
       return { ...e, byRef };
@@ -272,7 +285,13 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </details>
         )}
 
-        {designs.length > 0 && !invite && (
+        {!invite && (
+          <label className="check attach-choice">
+            <input type="checkbox" checked={own} onChange={(e) => writeOwn(e.target.checked)} />
+            <span><strong>Write my own email (email only)</strong><br /><span className="small muted">{own ? <>No letter and no PDF: just the email you write. Each recipient is still greeted by name. <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}>✎ Write it</button></> : "Skip the letter and write the message yourself, for this send only."}</span></span>
+          </label>
+        )}
+        {designs.length > 0 && !invite && !own && (
           <label className="field">
             <span>Email design <small>A designed email from Brand email designs, or HOR&apos;s standard email</small></span>
             <select value={designId} onChange={(e) => setDesignId(e.target.value)}>
@@ -282,14 +301,14 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             </select>
           </label>
         )}
-        {invite ? <p className="small muted" style={{ margin: 0 }}>An <strong>invitation card</strong>: each guest&apos;s card is in the email, and the full invitation is attached as a PDF.</p> : pdfLetter ? <label className="check attach-choice">
+        {own ? null : invite ? <p className="small muted" style={{ margin: 0 }}>An <strong>invitation card</strong>: each guest&apos;s card is in the email, and the full invitation is attached as a PDF.</p> : pdfLetter ? <label className="check attach-choice">
           <input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} />
           <span><strong>Attach the letter as a PDF</strong><br /><span className="small muted">{design ? (attach ? "The design goes out with the letter attached as a PDF." : "The design is the whole email; the letter isn't sent.") : attach ? "A short cover email goes out with the letter attached." : "Email only for this send: just the email, no PDF."}</span></span>
         </label> : <p className="small muted" style={{ margin: 0 }}>This letter is set to <strong>email only</strong>: no PDF is attached. Change it in the letter editor.</p>}
 
         <div className="actions">
           <ConfirmButton
-            disabled={!ready || count === 0 || count > max || missing.length > 0 || Boolean(copyError) || Boolean(sendToCheck.error)}
+            disabled={!ready || count === 0 || count > max || missing.length > 0 || ownLeft || Boolean(copyError) || Boolean(sendToCheck.error)}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
             items={[invite ? "Each guest gets the invitation email with their own card, and the full invitation as a PDF" : design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(otherCount ? [`${otherCount} go${otherCount === 1 ? "es" : ""} to another email for this send; ${otherCount === 1 ? "that record keeps" : "those records keep"} their saved email`] : []), ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
@@ -303,13 +322,14 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         </div>
         {!ready && <p className="small muted">Sending switches on once the Resend key is in Vercel.</p>}
         {missing.length > 0 && <p className="small muted">Still to fill: {missing.join(", ")}.</p>}
+        {ownLeft && <p className="small muted">Write your subject and message first: <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}>✎ Write your email</button>.</p>}
         {sendToCheck.error && <p className="small error-text" role="alert">{sendToCheck.error}</p>}
       </form>
 
       <section className="card template-preview">
         {!who ? <p className="muted template-preview-empty" role="status">Nobody is ticked. Tick a recipient to see their email here.</p> : <>
         <RecipientTabs recipients={pickedList} current={current} onPick={setPreviewRef} edited={(ref) => Boolean(edits.byRef[ref] || edits.all)} />
-        {who && <EditWording key={`${who.ref}-${JSON.stringify(edits)}`} wording={{ subject: active.subject, cover: active.cover, body: active.body }} showBody={attach && !design && !invite} name={who.name} count={picked.size} mine={Boolean(edits.byRef[who.ref])} forAll={Boolean(edits.all)} onApply={applyEdit} onReset={resetEdit} />}
+        {who && <EditWording key={`${who.ref}-${JSON.stringify(edits)}`} wording={{ subject: active.subject, cover: active.cover, body: active.body }} showBody={attach && !design && !invite} name={who.name} count={picked.size} mine={Boolean(edits.byRef[who.ref])} forAll={Boolean(edits.all) && !own} own={own} autoOpen={wantWording} onOpened={() => setWantWording(false)} onApply={applyEdit} onReset={resetEdit} />}
         <div className="mail-head" aria-label="The email as it arrives">
           <dl>
             <div><dt>From</dt><dd>{from || "HOR's email address"}</dd></div>

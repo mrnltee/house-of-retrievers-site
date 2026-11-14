@@ -254,6 +254,17 @@ export function wordingFor(letter, edits, ref) {
   return e ? { ...letter, subject: e.subject, cover: e.cover, body: e.body ?? letter.body, edited: true } : letter;
 }
 
+/**
+ * "Write my own email" on the send page (owner, 2026-11-15): email only, no PDF,
+ * starting from a placeholder the admin replaces in Edit wording. [Salutation]
+ * still greets each recipient; the house sign-off and footer are added as usual.
+ */
+export const OWN_EMAIL_SUBJECT = "Write your subject here";
+export const OWN_EMAIL_MESSAGE = "Write your message here.";
+export const ownEmailWording = () => ({ subject: OWN_EMAIL_SUBJECT, cover: `Dear [Salutation],\n\n${OWN_EMAIL_MESSAGE}` });
+/** True while the placeholder subject or message is still in the wording, so it isn't sent as is. */
+export const hasOwnEmailPlaceholder = (w) => String(w?.subject || "").includes(OWN_EMAIL_SUBJECT) || String(w?.cover || "").includes(OWN_EMAIL_MESSAGE);
+
 /** The send page's edits (JSON) → { edits: { all, byRef } } or { error }; only refs in this send are kept. */
 export function cleanEdits(json, refs = []) {
   if (!String(json || "").trim()) return { edits: { all: null, byRef: {} } };
@@ -267,6 +278,7 @@ export function cleanEdits(json, refs = []) {
     if (!subject) return { error: "An edited subject can't be empty." };
     if (subject.length > LETTER_LIMITS.subject) return { error: "An edited subject is too long." };
     if (!cover) return { error: "An edited email text can't be empty." };
+    if (hasOwnEmailPlaceholder({ subject, cover })) return { error: "Write your own subject and message first: open ✎ Edit wording and replace the placeholder text." };
     if (cover.length > LETTER_LIMITS.cover) return { error: `An edited email text is too long (${LETTER_LIMITS.cover.toLocaleString("en-PH")} characters at most).` };
     if (body !== undefined && (!body || body.length > LETTER_LIMITS.body)) return { error: "An edited letter text is empty or too long." };
     return { wording: { subject, cover, ...(body !== undefined ? { body } : {}) } };

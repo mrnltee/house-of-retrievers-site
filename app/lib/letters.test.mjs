@@ -266,3 +266,17 @@ test("the brand follow-up is email only, for the event it's sent from", () => {
   for (const fill of ["[Event Name]", "[Event Date]", "[Event Location]", "[Company Name]"]) assert.ok(starter.cover.includes(fill), fill);
   assert.doesNotMatch(starter.cover, /attached/i);
 });
+
+test("write my own email: a placeholder to replace, and it can't be sent as is", async () => {
+  const { ownEmailWording, hasOwnEmailPlaceholder, cleanEdits, OWN_EMAIL_MESSAGE, OWN_EMAIL_SUBJECT } = await import("./letters.mjs");
+  const start = ownEmailWording();
+  assert.match(start.cover, /^Dear \[Salutation\],/, "still greets each recipient by name");
+  assert.ok(start.cover.includes(OWN_EMAIL_MESSAGE));
+  assert.equal(start.subject, OWN_EMAIL_SUBJECT);
+  assert.equal(hasOwnEmailPlaceholder(start), true);
+  assert.equal(hasOwnEmailPlaceholder({ subject: "Thank you", cover: "Dear [Salutation],\n\nThanks!" }), false);
+  assert.equal(hasOwnEmailPlaceholder({ subject: OWN_EMAIL_SUBJECT, cover: "Dear x,\n\nThanks!" }), true, "the subject counts too");
+  assert.match(cleanEdits(JSON.stringify({ all: start })).error, /Write your own/);
+  assert.match(cleanEdits(JSON.stringify({ byRef: { "supporter:a": start } }), ["supporter:a"]).error, /Write your own/);
+  assert.equal(cleanEdits(JSON.stringify({ all: { subject: "Hi", cover: "Dear [Salutation],\n\nHello." } })).error, undefined);
+});
