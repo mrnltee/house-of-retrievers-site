@@ -280,3 +280,12 @@ test("write my own email: a placeholder to replace, and it can't be sent as is",
   assert.match(cleanEdits(JSON.stringify({ byRef: { "supporter:a": start } }), ["supporter:a"]).error, /Write your own/);
   assert.equal(cleanEdits(JSON.stringify({ all: { subject: "Hi", cover: "Dear [Salutation],\n\nHello." } })).error, undefined);
 });
+
+test("write my own email: only the wording each recipient gets is checked (prod refusal, 2026-11-15)", async () => {
+  const { ownEmailWording, cleanEdits } = await import("./letters.mjs");
+  const mine = { subject: "Thank you", cover: "Dear [Salutation],\n\nThanks for coming." };
+  // One brand: the message went to that brand only; the unused "all" placeholder must not block it.
+  assert.equal(cleanEdits(JSON.stringify({ all: ownEmailWording(), byRef: { "supporter:a": mine } }), ["supporter:a"]).error, undefined);
+  // Two brands, only one written: the other would get the placeholder.
+  assert.match(cleanEdits(JSON.stringify({ all: ownEmailWording(), byRef: { "supporter:a": mine } }), ["supporter:a", "supporter:b"]).error, /Write your own/);
+});

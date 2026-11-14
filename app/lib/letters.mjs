@@ -278,7 +278,6 @@ export function cleanEdits(json, refs = []) {
     if (!subject) return { error: "An edited subject can't be empty." };
     if (subject.length > LETTER_LIMITS.subject) return { error: "An edited subject is too long." };
     if (!cover) return { error: "An edited email text can't be empty." };
-    if (hasOwnEmailPlaceholder({ subject, cover })) return { error: "Write your own subject and message first: open ✎ Edit wording and replace the placeholder text." };
     if (cover.length > LETTER_LIMITS.cover) return { error: `An edited email text is too long (${LETTER_LIMITS.cover.toLocaleString("en-PH")} characters at most).` };
     if (body !== undefined && (!body || body.length > LETTER_LIMITS.body)) return { error: "An edited letter text is empty or too long." };
     return { wording: { subject, cover, ...(body !== undefined ? { body } : {}) } };
@@ -292,6 +291,10 @@ export function cleanEdits(json, refs = []) {
     if (r.error) return r;
     if (r.wording) byRef[ref] = r.wording;
   }
+  // Write my own email: refuse only if someone in this send would get the placeholder.
+  // An unused "all" placeholder (the message was written for each brand) is fine.
+  const used = refs.length ? refs.map((ref) => byRef[ref] || all.wording) : [all.wording];
+  if (used.some((w) => w && hasOwnEmailPlaceholder(w))) return { error: "Write your own subject and message first: open ✎ Write your email and replace the placeholder text." };
   return { edits: { all: all.wording, byRef } };
 }
 

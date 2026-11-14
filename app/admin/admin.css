@@ -58,6 +58,8 @@
 .linkish { background: none; border: 0; padding: 0; color: var(--a-gold-ink); font-weight: 700; cursor: pointer; font-size: 14px; }
 
 .card { background: white; border: 1px solid var(--a-line); border-radius: 16px; padding: 24px; display: grid; gap: 16px; }
+/* A one-paragraph card holds running text with links and bold: as a grid, each piece became its own row. */
+p.card { display: block; }
 .card.alert { border: 2px solid var(--a-alert); }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
