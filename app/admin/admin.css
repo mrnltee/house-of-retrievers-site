@@ -867,8 +867,10 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 /* Letter email status (SendStatus.jsx): chip, letter, times, and a History log. */
 .send-status { display: grid; gap: 3px; justify-items: start; min-width: 190px; }
 .send-detail { color: var(--a-alert); }
-.send-log summary { cursor: pointer; color: var(--a-gold-ink); font-weight: 600; min-height: 28px; display: flex; align-items: center; }
-.send-log ol { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+.send-log-open { color: var(--a-gold-ink); font-weight: 600; min-height: 28px; justify-self: start; }
+.send-log-dialog { width: min(560px, calc(100vw - 32px)); }
+.send-log-dialog .invite-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.send-log-list { margin: 0; padding-left: 20px; display: grid; gap: 10px; max-height: min(60vh, 520px); overflow: auto; overflow-wrap: anywhere; }
 
 /* Brand tracker (events/[id]/brands): counts, invite picker, per-row edit. */
 .tracker-summary { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

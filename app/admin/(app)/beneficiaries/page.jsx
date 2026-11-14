@@ -75,7 +75,7 @@ export default async function BeneficiariesPage({ searchParams }) {
                   <td><span className="chip">{statusLabel(r.status)}</span>{isPublicBeneficiary(r) && <><br /><span className="small muted">On the website</span></>}</td>
                   <td>{r.contact_name || "—"}{r.contact_email ? <><br /><span className="small muted">{r.contact_email}</span></> : <><br /><span className="small muted">No email yet</span></>}</td>
                   <td className="small">Dear {recipientFields({ beneficiary: r }).salutation || r.contact_name || r.name},</td>
-                  <td className="small"><SendStatus sends={sends[`beneficiary:${r.id}`]} letterName={letterName} before={r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : ""} /></td>
+                  <td className="small"><SendStatus sends={sends[`beneficiary:${r.id}`]} letterName={letterName} name={r.name} before={r.last_sent_at ? `${letterName(r.last_letter)} · ${formatDay(r.last_sent_at)}` : ""} /></td>
                 </tr>
               ))}
               {rows.length === 0 && <tr><td colSpan={canSend ? 7 : 6} className="muted">{filtered ? "No beneficiaries match these filters." : "No beneficiaries yet."} {canEdit && !filtered && <a href={`${base}/beneficiaries/new`}>+ Add the first one</a>}</td></tr>}

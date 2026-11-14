@@ -100,7 +100,7 @@ export default async function GuestsPage({ searchParams }) {
                       <td className="strong"><span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={r.href}>{r.name}</a>{r.sub && <><br /><span className="small muted">{r.sub}</span></>}</span></span></td>
                       <td>{r.email || <span className="muted">No email yet</span>}{r.rep && <><br /><span className="small muted">{r.rep}</span></>}</td>
                       <td className="small">Dear {r.greeting},</td>
-                      <td className="small"><SendStatus sends={sends[r.ref]} letterName={letterName} before={r.last} /></td>
+                      <td className="small"><SendStatus sends={sends[r.ref]} letterName={letterName} name={r.name} before={r.last} /></td>
                     </tr>
                   ))}
                   {g.rows.length === 0 && <tr><td colSpan={canEdit ? 5 : 4} className="muted">No one here yet.</td></tr>}

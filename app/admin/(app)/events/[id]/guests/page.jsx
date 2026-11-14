@@ -140,7 +140,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                     </td>
                     <td>{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}</td>
                     <td className="small">Dear {greetingOf(recipientFields({ contact: r }))},</td>
-                    <td className="small"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} /></td>
+                    <td className="small"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} name={r.name} /></td>
                     <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span></td>
                   </tr>
                 ))}

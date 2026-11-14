@@ -154,7 +154,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                   </td>
                   <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
                   <td className="small">
-                    <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} />
+                    <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} name={r.name} />
                     {canSend && (() => {
                       // One brand, no tick needed: the invite letter, or a follow-up once it went out unanswered.
                       const links = rowLetterLinks(base, event.id, r, letter, { sent: sendsOf(r).some((x) => !["failed", "bounced"].includes(x.status)) });
