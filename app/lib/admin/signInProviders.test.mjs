@@ -10,6 +10,8 @@ test("Yahoo sign-in exists only when both keys are set", () => {
   assert.equal(p.type, "oauth");
   assert.equal(p.wellKnown, "https://api.login.yahoo.com/.well-known/openid-configuration");
   assert.equal(p.idToken, true);
+  // Yahoo signs its ID token with ES256; the library expects RS256 unless told (prod failure, 2026-11-15).
+  assert.equal(p.client.id_token_signed_response_alg, "ES256");
   assert.equal(p.authorization.params.scope, "openid email profile");
   assert.equal(p.clientId, "id");
   assert.deepEqual(p.profile({ sub: "abc", email: "Pat@Yahoo.com", name: "Pat", picture: "https://x/p.jpg" }), { id: "abc", email: "pat@yahoo.com", name: "Pat", image: "https://x/p.jpg" });

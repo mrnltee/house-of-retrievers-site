@@ -16,6 +16,9 @@ export function yahooProvider(env = process.env) {
     wellKnown: "https://api.login.yahoo.com/.well-known/openid-configuration",
     authorization: { params: { scope: "openid email profile" } },
     idToken: true,
+    // Yahoo signs its ID token with ES256; openid-client assumes RS256 and refuses
+    // the callback ("unexpected JWT alg received") unless the client says so.
+    client: { id_token_signed_response_alg: "ES256" },
     checks: ["state", "nonce"],
     clientId: env.YAHOO_CLIENT_ID,
     clientSecret: env.YAHOO_CLIENT_SECRET,
