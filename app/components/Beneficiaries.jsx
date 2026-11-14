@@ -53,8 +53,10 @@ export default function Beneficiaries() {
   }, []);
 
   if (!list.length) return null;
-  const now = list.filter((b) => b.current);
-  const before = list.filter((b) => !b.current);
+  const now = list.filter((b) => b.group === "now");
+  const before = list.filter((b) => b.group === "past");
+  // Groups the community helped informally, before HOR was a registered society (owner, 2026-11-15).
+  const earlier = list.filter((b) => b.group === "earlier");
 
   return (
     <section className="beneficiaries section-shell" id="beneficiaries" aria-labelledby="beneficiaries-title">
@@ -73,6 +75,12 @@ export default function Beneficiaries() {
         <div className="supporters-group">
           <h3>Past beneficiaries <small>Helped through our earlier events</small></h3>
           <ul className="beneficiary-grid">{before.map((b) => <Card key={b.id} b={b} />)}</ul>
+        </div>
+      )}
+      {earlier.length > 0 && (
+        <div className="supporters-group">
+          <h3>Where it started <small>Before we were a registered society, our community lent a paw to these groups. We remain grateful to them.</small></h3>
+          <ul className="beneficiary-grid">{earlier.map((b) => <Card key={b.id} b={b} />)}</ul>
         </div>
       )}
     </section>

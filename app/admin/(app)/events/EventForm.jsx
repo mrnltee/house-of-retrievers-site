@@ -40,7 +40,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
     event ? sql(`SELECT promo->>'code' AS code, count(*)::int AS used FROM registrations WHERE event_id=$1 AND promo IS NOT NULL AND ${PROMO_USED_WHERE} GROUP BY 1`, [event.id]).then((rows) => Object.fromEntries(rows.map((r) => [r.code, r.used]))).catch(() => ({})) : {},
     // The Beneficiaries list, partnered first, and the ones this event picked.
     sql(`SELECT id, name, kind, status FROM beneficiaries WHERE deleted_at IS NULL
-          ORDER BY array_position(ARRAY['partnered','talking','prospect','ended'], status), lower(name)`).catch(() => []),
+          ORDER BY array_position(ARRAY['partnered','talking','prospect','ended','helped'], status), lower(name)`).catch(() => []),
     event ? sql("SELECT beneficiary_id FROM event_beneficiaries WHERE event_id = $1 ORDER BY position", [event.id]).then((rows) => rows.map((r) => r.beneficiary_id)).catch(() => []) : [],
   ]);
   const v = (key, fallback = "") => (event?.[key] ?? fallback);

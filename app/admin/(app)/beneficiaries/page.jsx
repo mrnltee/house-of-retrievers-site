@@ -28,7 +28,7 @@ export default async function BeneficiariesPage({ searchParams }) {
     sql(
       `SELECT * FROM beneficiaries WHERE deleted_at IS NULL AND ($1 = '' OR kind = $1) AND ($2 = '' OR status = $2)
           AND ($3 = '' OR name ILIKE '%' || $3 || '%' OR coalesce(location,'') ILIKE '%' || $3 || '%' OR coalesce(contact_name,'') ILIKE '%' || $3 || '%')
-        ORDER BY array_position(ARRAY['partnered','talking','prospect','ended'], status), name`,
+        ORDER BY array_position(ARRAY['partnered','talking','prospect','ended','helped'], status), name`,
       [kind, status, q],
     ),
     listLetters(),

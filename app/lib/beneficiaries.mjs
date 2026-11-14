@@ -25,6 +25,9 @@ export const BENEFICIARY_STATUSES = [
   ["talking", "Talking"],
   ["partnered", "Partnered"],
   ["ended", "Ended"],
+  // Groups the community helped informally before HOR was registered (owner, 2026-11-15),
+  // shown on the website to honour them, apart from formal beneficiaries.
+  ["helped", "Helped before we registered"],
 ];
 
 export const BENEFICIARY_LETTER = "beneficiary-proposal";
@@ -97,9 +100,10 @@ export function cleanBeneficiary(input = {}) {
 
 /**
  * The website shows a beneficiary when an admin switched it on, it's Partnered
- * (supporting now) or Ended (helped before), and it has a short public line.
+ * (supporting now), Ended (past beneficiary) or Helped before we registered,
+ * and it has a short public line.
  */
-export const PUBLIC_STATUSES = ["partnered", "ended"];
+export const PUBLIC_STATUSES = ["partnered", "ended", "helped"];
 export const isPublicBeneficiary = (row) => Boolean(row?.show_on_site && PUBLIC_STATUSES.includes(row.status) && String(row.blurb || "").trim());
 
 /** Events that name this beneficiary in "Supports" (either name may be the shorter one). */
@@ -137,6 +141,8 @@ export function publicBeneficiary(row, events = []) {
     x: row.x_profile || null,
     threads: row.threads || null,
     current: row.status === "partnered",
+    // Home-page group: supporting now, past beneficiaries, or helped before we registered.
+    group: row.status === "partnered" ? "now" : row.status === "helped" ? "earlier" : "past",
     from: years.length ? Math.min(...years) : null,
     to: years.length ? Math.max(...years) : null,
     events: events.map((e) => ({ slug: e.slug, title: e.title, date: String(e.date).slice(0, 10), url: e.url })),

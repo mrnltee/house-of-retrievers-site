@@ -46,7 +46,7 @@ export default function BeneficiaryForm({ row = null, canEdit = true }) {
         </section>
         <section className="card form">
           <h2>On the website</h2>
-          <p className="small muted" style={{ margin: 0 }}>The home page lists beneficiaries under the brands: Partnered ones under “Currently supporting”, Ended ones under “Past beneficiaries”, with the events that named them. Prospects and groups you&apos;re still talking to never show. Contact details, address and notes stay here.</p>
+          <p className="small muted" style={{ margin: 0 }}>The home page lists beneficiaries under the brands: Partnered ones under “Currently supporting”, Ended ones under “Past beneficiaries”, and Helped before we registered under “Where it started” (groups the community helped informally, before HOR was a registered society), with the events that named them. Prospects and groups you&apos;re still talking to never show. Contact details, address and notes stay here.</p>
           <label className="check"><input type="checkbox" name="showOnSite" defaultChecked={Boolean(row?.show_on_site)} /> <span>Show on the website</span></label>
           <LogoScaleField logo={v("logo") || v("photo")} value={row?.logo_scale ?? 100} />
           <label className="field"><span>Short line for the website <small>Needed to show. One or two sentences, e.g. “Rescues and rehomes senior dogs in Rizal.”</small></span><textarea name="blurb" rows={2} maxLength={L.blurb} defaultValue={v("blurb")} /></label>

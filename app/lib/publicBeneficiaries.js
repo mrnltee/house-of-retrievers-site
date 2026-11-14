@@ -3,7 +3,7 @@ import { EVENTS_URL } from "./eventsHost.mjs";
 import { isPublicBeneficiary, publicBeneficiary } from "./beneficiaries.mjs";
 
 /**
- * Beneficiaries the website may show (switched on, Partnered or Ended, with a
+ * Beneficiaries the website may show (switched on, Partnered, Ended or Helped, with a
  * short line), each with the published charity events that picked it,
  * newest first. Currently supporting comes first, then by latest event.
  * Empty without a database, so the home page leaves the section out.
@@ -13,7 +13,7 @@ export async function loadPublicBeneficiaries() {
   try {
     const rows = (await sql(
       `SELECT * FROM beneficiaries WHERE deleted_at IS NULL AND show_on_site
-         AND status IN ('partnered', 'ended') AND coalesce(blurb, '') <> '' ORDER BY name`,
+         AND status IN ('partnered', 'ended', 'helped') AND coalesce(blurb, '') <> '' ORDER BY name`,
     )).filter(isPublicBeneficiary);
     if (!rows.length) return [];
     // The published charity events that picked each beneficiary (event form), newest first.

@@ -76,3 +76,18 @@ test("logo size is a percent from 50 to 200, 100 by default, and reaches the web
   assert.equal(publicBeneficiary({ id: "1", name: "A", kind: "shelter", status: "partnered", logo_scale: 130 }).logoScale, 130);
   assert.equal(publicBeneficiary({ id: "1", name: "A", kind: "shelter", status: "partnered" }).logoScale, 100);
 });
+
+test("helped before we registered: a status of its own, shown in its own group", async () => {
+  const { isPublicBeneficiary, publicBeneficiary, statusLabel, cleanBeneficiary: clean, yearsLine } = await import("./beneficiaries.mjs");
+  const row = { id: "1", name: "MBY Pet Rescue and Sanctuary", kind: "rescue", status: "helped", show_on_site: true, blurb: "Our first gathering was for them." };
+  assert.equal(statusLabel("helped"), "Helped before we registered");
+  assert.equal(clean({ name: "MBY", status: "helped" }).beneficiary.status, "helped");
+  assert.equal(isPublicBeneficiary(row), true);
+  assert.equal(isPublicBeneficiary({ ...row, show_on_site: false }), false);
+  const pub = publicBeneficiary(row);
+  assert.equal(pub.group, "earlier");
+  assert.equal(pub.current, false);
+  assert.equal(publicBeneficiary({ ...row, status: "partnered" }).group, "now");
+  assert.equal(publicBeneficiary({ ...row, status: "ended" }).group, "past");
+  assert.equal(yearsLine(pub), "");
+});
