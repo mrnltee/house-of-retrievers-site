@@ -20,6 +20,8 @@ const SAMPLES = {
   "Additional Details": "e.g. We would also like to invite your team to our launch on November 30, 2026.",
   "Event Name": "e.g. A Golden Beginning: Paws & Purpose",
   "Event Short Name": "e.g. A Golden Beginning",
+  "Event Date": "e.g. Monday, November 30, 2026",
+  "Event Location": "e.g. Novotel Manila Araneta City, Quezon City",
   "Reply Deadline": "e.g. November 6, 2026",
   "Proposal Reference": "e.g. HOR-XD-2026-001",
   "Version / Date": "e.g. Version 1 – October 28, 2026",

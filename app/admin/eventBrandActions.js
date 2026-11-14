@@ -6,6 +6,7 @@ import { logActivity } from "../lib/admin/log";
 import { cleanEventBrand, replyLabel } from "../lib/eventBrands.mjs";
 import { inviteBrands, removeFromTracker, saveTrackerRow } from "../lib/eventBrandsStore";
 import { issueSupporterNumber } from "../lib/supporterNumbers";
+import { addedLine, applyEventPicks } from "../lib/brandEventPicks";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -86,5 +87,20 @@ export async function removeTrackerEntry(data) {
     const removed = isUuid(supporterId) ? await removeFromTracker(event.id, supporterId) : [];
     if (removed.length) await logActivity(admin.email, "event.brand.remove", brand?.name || "", { eventId: event.id, supporterId });
     await backWith(back, "ok", removed.length ? `Took ${brand?.name} off this event's tracker.` : "Already off the tracker.");
+  });
+}
+
+/** A brand's page: put it on the ticked events' Brand trackers, upcoming or past. Nothing is emailed. */
+export async function addBrandToEventsAction(data) {
+  const supporterId = form(data, "brand");
+  const back = isUuid(supporterId) ? `/supporters/${supporterId}` : "/supporters";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("supporters:edit");
+    if (!isUuid(supporterId)) await backWith("/supporters", "error", "That brand wasn't found.");
+    if (!data.getAll("addEvents").length) await backWith(back, "error", "Tick at least one event.");
+    const picks = await applyEventPicks(supporterId, data, admin.email);
+    if (!picks.added.length) await backWith(back, "error", "It's already on those events.");
+    const message = [addedLine(picks), picks.number ? `Their number is ${picks.number}.` : "", picks.note].filter(Boolean).join(" ");
+    await backWith(back, picks.note ? "error" : "ok", message);
   });
 }

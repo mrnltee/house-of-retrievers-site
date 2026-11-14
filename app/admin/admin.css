@@ -1096,3 +1096,9 @@ html.send-modal-open { overflow: hidden; }
 @media (max-width: 860px) { .send-modal { width: 100vw; height: 100dvh; border-radius: 0; } }
 /* Notes in the send window read as one paragraph (.card is a grid elsewhere). */
 .send-modal-body > p.card { display: block; }
+
+/* Brands: "Add to events" (EventPicker) on a new brand and a brand's Events card. */
+.event-pick { max-height: 280px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.supporter-grid .tracker-edit .form { min-width: 0; }
+/* Brand search with no results: "Add “…” as a new brand" (directory and + Invite brands). */
+.invite-dialog .empty-search { padding: 12px 14px; border: 1px dashed var(--a-line, #cfc8b6); border-radius: 12px; }

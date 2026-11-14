@@ -4,7 +4,9 @@ import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { actionLabel } from "../../../../lib/admin/activity.mjs";
 import { isPublic, statusLabel, supporterNumber } from "../../../../lib/supporters.mjs";
-import { brandHistory } from "../../../../lib/eventBrandsStore";
+import { brandHistory, eventsForBrand } from "../../../../lib/eventBrandsStore";
+import { addBrandToEventsAction } from "../../../eventBrandActions";
+import EventPicker from "../EventPicker";
 import { replyLabel } from "../../../../lib/eventBrands.mjs";
 import { HOME_URL } from "../../../../lib/siteSeo.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
@@ -23,7 +25,8 @@ export default async function SupporterPage({ params, searchParams }) {
   const [row] = await sql("SELECT * FROM supporters WHERE id = $1", [id]);
   if (!row) notFound();
   const base = await adminBase();
-  const [events, history, around] = await Promise.all([
+  const canEdit = can(admin, "supporters:edit");
+  const [events, history, around, addable] = await Promise.all([
     brandHistory(row.id),
     sql("SELECT at, actor_email, action, details FROM activity_log WHERE details->>'supporterId' = $1 ORDER BY at DESC LIMIT 30", [id]),
     // This brand and its neighbours in the directory's A–Z order, for Previous / Next.
@@ -33,6 +36,7 @@ export default async function SupporterPage({ params, searchParams }) {
        SELECT o.id, o.name, o.n, o.total, o.n - me.n AS step FROM o, me WHERE o.n BETWEEN me.n - 1 AND me.n + 1 ORDER BY o.n`,
       [id],
     ),
+    canEdit ? eventsForBrand(row.id) : [],
   ]);
   const prev = around.find((r) => r.step === -1);
   const next = around.find((r) => r.step === 1);
@@ -68,7 +72,19 @@ export default async function SupporterPage({ params, searchParams }) {
                 ))}
               </ul>
             ) : (
-              <p className="small">Not invited to any event yet. Open an event, then <strong>Brands &amp; partnerships</strong> → + Invite brands.</p>
+              <p className="small">Not on any event yet.</p>
+            )}
+            {canEdit && addable.length > 0 && (
+              <details className="tracker-edit" open={!events.length}>
+                <summary className="small">+ Add to events</summary>
+                <form action={addBrandToEventsAction} className="form">
+                  <input type="hidden" name="brand" value={row.id} />
+                  <EventPicker events={addable} />
+                  <div className="actions">
+                    <ConfirmButton className="btn dark" title={`Add ${row.name} to these events?`} echo={[{ name: "addReply", label: "Their reply" }]} items={["It goes on each ticked event's Brand tracker as " + row.kind, "A Yes gives it a HOR number if it has none yet", "Nothing is emailed"]} yes="Yes, add it">Add to events</ConfirmButton>
+                  </div>
+                </form>
+              </details>
             )}
           </section>
           {can(admin, "supporters:edit") && (

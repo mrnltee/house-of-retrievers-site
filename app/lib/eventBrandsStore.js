@@ -73,3 +73,32 @@ export async function joinedCounts() {
   );
   return Object.fromEntries(rows.map((r) => [r.supporter_id, r.n]));
 }
+
+/** Events a brand isn't on yet (any status, upcoming or past), for "Add to events". No brand = every event. */
+export function eventsForBrand(supporterId = null) {
+  return sql(
+    `SELECT e.id, e.title, e.date, e.status FROM events e
+      WHERE $1::uuid IS NULL OR NOT EXISTS (SELECT 1 FROM event_brands eb WHERE eb.event_id = e.id AND eb.supporter_id = $1)
+      ORDER BY e.date`,
+    [supporterId],
+  );
+}
+
+/**
+ * Puts one brand on several events' Brand trackers with the same reply
+ * (role = their usual kind). Events it's already on are left as they are.
+ * Returns the titles of the events it was added to.
+ */
+export async function addBrandToEvents(supporterId, eventIds, reply, by) {
+  if (!eventIds?.length) return [];
+  const rows = await sql(
+    `INSERT INTO event_brands (event_id, supporter_id, role, reply, replied_at, added_by)
+     SELECT e.id, s.id, s.kind, $3, CASE WHEN $3 <> 'waiting' THEN now() END, $4
+       FROM events e, supporters s WHERE e.id = ANY($2::uuid[]) AND s.id = $1
+     ON CONFLICT (event_id, supporter_id) DO NOTHING RETURNING event_id`,
+    [supporterId, eventIds, reply, by],
+  );
+  if (!rows.length) return [];
+  const titles = await sql("SELECT id, title FROM events WHERE id = ANY($1::uuid[]) ORDER BY date", [rows.map((r) => r.event_id)]);
+  return titles;
+}

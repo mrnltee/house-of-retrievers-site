@@ -3,7 +3,7 @@ import SelectAllBrands from "./SelectAllBrands";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { isPublic, supporterNumber } from "../../../lib/supporters.mjs";
+import { isPublic, supporterNumber, brandNameFrom, newBrandHref } from "../../../lib/supporters.mjs";
 import { joinedCounts } from "../../../lib/eventBrandsStore";
 import { Flash, NotAllowed, PageHead } from "../ui";
 
@@ -96,7 +96,11 @@ export default async function SupportersPage({ searchParams }) {
       </form>
 
       {rows.length === 0 ? (
-        <p className="card muted">{filtered ? "No sponsors or partners match these filters." : "No sponsors or partners yet. Add one, or open a Sponsor or Partner in People and choose “Make a sponsor record”."}</p>
+        <div className="card empty-search">
+          <p className="muted" style={{ margin: 0 }}>{q ? `No brand called “${q}” in the directory${kind || label ? " with these filters" : ""}.` : filtered ? "No sponsors or partners match these filters." : "No sponsors or partners yet. Add one, or open a Sponsor or Partner in People and choose “Make a sponsor record”."}</p>
+          {/* No results for a name: add it, with the name (and the type filter) carried to the form (owner, 2026-11-14). */}
+          {canEdit && q && <p style={{ margin: "12px 0 0" }}><a className="btn gold" href={newBrandHref(base, { name: q, kind })}>Add “{brandNameFrom(q)}” as a new brand</a></p>}
+        </div>
       ) : view === "list" ? (
         <>
         <p className="small muted" style={{ margin: "0 0 8px" }}>Letters to brands are sent from each event: open the event, then <strong>Brands &amp; partnerships</strong>.</p>

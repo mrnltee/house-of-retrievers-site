@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
-import { GIVES } from "../../../../../lib/supporters.mjs";
-import { REPLIES, ROLES, replyLabel, sortTracker, trackerCounts, trackerSort } from "../../../../../lib/eventBrands.mjs";
+import { GIVES, newBrandHref } from "../../../../../lib/supporters.mjs";
+import { REPLIES, ROLES, replyLabel, sortTracker, trackerCounts, trackerSort, followUpLink } from "../../../../../lib/eventBrands.mjs";
 import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
@@ -60,6 +60,8 @@ export default async function BrandTrackerPage({ params, searchParams }) {
   const invited = new Set(rows.map((r) => r.supporter_id));
   const notInvited = directory.filter((d) => !invited.has(d.id));
   const counts = trackerCounts(rows);
+  // Follow up: the brands still on No reply yet, with the follow-up email (wording can be edited in the send window).
+  const followUp = followUpLink(base, event.id, rows);
   const sendsOf = (r) => sends[`supporter:${r.supporter_id}`] || [];
   const lastSent = (r) => sendsOf(r).reduce((max, x) => (!max || new Date(x.sent_at) > new Date(max) ? x.sent_at : max), null);
   const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value);
@@ -73,8 +75,9 @@ export default async function BrandTrackerPage({ params, searchParams }) {
       <PageHead title="Brand tracker" lead={`${event.date ? formatDay(event.date) : "Date to be set"} · who you invited, their reply and what they're giving.`}>
         <a className="btn ghost" href={`${base}/supporters`}>Brand directory</a>
         {can(admin, "letters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/letters`}>Letters</a>}
+        {canSend && followUp.href && <a className="btn ghost" href={followUp.href} title={`Email the ${followUp.count} brand${followUp.count === 1 ? "" : "s"} with no reply yet. You can untick brands and edit the wording before it's sent.${followUp.noEmail ? ` ${followUp.noEmail} ${followUp.noEmail === 1 ? "has" : "have"} no email yet.` : ""}`}>Follow up · {followUp.count}</a>}
         {canEdit && (
-          <InviteDialog>
+          <InviteDialog newHref={newBrandHref(base, { event: event.id })} onTracker={rows.map((r) => r.name)}>
             {notInvited.length === 0 ? (
               <p className="small muted">Every brand in the directory is already on this tracker. <a href={`${base}/supporters/new`}>Add a brand</a>.</p>
             ) : (

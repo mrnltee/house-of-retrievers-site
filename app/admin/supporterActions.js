@@ -7,6 +7,7 @@ import { supporterSlug, validateSupporter } from "../lib/supporters.mjs";
 import { saveOutreach } from "../lib/supporterOutreach";
 import { issueSupporterNumber } from "../lib/supporterNumbers";
 import { saveSocials, socialsFrom } from "../lib/socialsStore";
+import { addedLine, applyEventPicks } from "../lib/brandEventPicks";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -124,8 +125,15 @@ export async function saveSupporter(data) {
     if (before && before.category_label !== value.categoryLabel) details.label = value.categoryLabel || "removed";
     if (!before?.amounts_agreed_at && agreedAt) details.amounts = "agreed";
     await logActivity(admin.email, before ? "supporter.save" : "supporter.create", value.name, details);
-    const message = ["Saved.", numbered ? `Their number is ${numbered}.` : "", ...(notes || [])].filter(Boolean).join(" ");
-    await backWith(`/supporters/${recordId}`, notes?.length ? "error" : "ok", message);
+    // "Add to events" on a new brand: straight onto those events' Brand trackers.
+    const picks = await applyEventPicks(recordId, data, admin.email);
+    const allNotes = [...(notes || []), picks.note].filter(Boolean);
+    const number = numbered || picks.number;
+    const message = ["Saved.", addedLine(picks), number ? `Their number is ${number}.` : "", ...allNotes].filter(Boolean).join(" ");
+    // Added from an event's "+ Invite brands" search: back to that event's tracker once it's on it.
+    const fromEvent = form(data, "fromEvent");
+    const backTo = !before && isUuid(fromEvent) && picks.added.some((e) => e.id === fromEvent) ? `/events/${fromEvent}/brands` : `/supporters/${recordId}`;
+    await backWith(backTo, allNotes.length ? "error" : "ok", backTo.startsWith("/events") ? `Added ${value.name} to the directory. ${message.replace(/^Saved\. /, "")}` : message);
   });
 }
 

@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { LETTER_STARTERS, blanksOf, fillLetter, letterBlocks, letterDate, letterWithOverride, missingBlanks, prepareLetter, recipientFields, recipientName } from "./letters.mjs";
 import { letterPdf, pdfSafe } from "./letterPdf.mjs";
 
-test("the ten starter letters are there, each with a subject", () => {
-  assert.equal(LETTER_STARTERS.length, 10);
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 10);
+test("the eleven starter letters are there, each with a subject", () => {
+  assert.equal(LETTER_STARTERS.length, 11);
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 11);
   for (const l of LETTER_STARTERS) {
     assert.ok(l.subject, l.key);
     if (l.key === "open-donation-letter") continue; // no addressee: its own test below
@@ -21,10 +21,10 @@ test("covering emails (owner's brief, 2026-10-27): portfolio link, official name
     assert.ok(l.cover.includes(portfolio), `${l.key}: portfolio link`);
     assert.match(l.cover, /The House of Retrievers’ Society, Inc\./, l.key); // owner, 2026-10-31
     assert.doesNotMatch(`${l.subject} ${l.cover}`, /beyond/i, l.key);
-    assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
+    if (l.attachPdf !== false) assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
     assert.ok(l.cover.length <= 2000, l.key);
   }
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 10, "each cover is its own");
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 11, "each cover is its own");
   assert.deepEqual(blanksOf(`See our ${portfolio}.`).map((b) => b.label), []);
 });
 
@@ -134,7 +134,7 @@ test("a page break never leaves a blank page (doubled, at the start of a page, o
   assert.equal(await count("---page---\n\nOne"), 1);
 });
 
-test("every blank in the nine letters has a sample answer for the send form", async () => {
+test("every blank in the starter letters has a sample answer for the send form", async () => {
   const { blankSample } = await import("./letters/samples.mjs");
   for (const l of LETTER_STARTERS) {
     for (const b of blanksOf(l.subject, l.cover, l.body)) {
@@ -255,4 +255,14 @@ test("wording edits for one send: one brand, all brands, checks", async () => {
   assert.match(cleanEdits(JSON.stringify({ all: { subject: "a", cover: "x".repeat(9000), body: "b" } }), refs).error, /email/i);
   assert.deepEqual(cleanEdits("", refs).edits, { all: null, byRef: {} });
   assert.match(cleanEdits("{oops", refs).error, /come through/);
+});
+
+test("the brand follow-up is email only, for the event it's sent from", () => {
+  const starter = LETTER_STARTERS.find((l) => l.key === "brand-follow-up");
+  assert.equal(starter.attachPdf, false);
+  assert.equal(letterWithOverride("brand-follow-up", null).attachPdf, false);
+  assert.equal(letterWithOverride("sponsorship-letter", null).attachPdf, true);
+  assert.equal(letterWithOverride("brand-follow-up", { attach_pdf: true, name: "", subject: "", cover: "", body: "" }).attachPdf, true, "HOR can switch the PDF on");
+  for (const fill of ["[Event Name]", "[Event Date]", "[Event Location]", "[Company Name]"]) assert.ok(starter.cover.includes(fill), fill);
+  assert.doesNotMatch(starter.cover, /attached/i);
 });

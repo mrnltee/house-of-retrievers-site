@@ -66,3 +66,13 @@ test("a brand shows on the website once it said Yes to an event; its status does
   assert.equal(isPublic({ ...row, logo: null }, { joined: 2 }), false);
   assert.equal(isPublic({ ...row, show_on_site: false }, { joined: 2 }), false);
 });
+
+test("a search with no results becomes the new-brand form's address", async () => {
+  const { brandNameFrom, newBrandHref } = await import("./supporters.mjs");
+  const ev = "0b6c5c4e-1d2f-4a3b-9c8d-7e6f5a4b3c2d";
+  assert.equal(brandNameFrom("  Pawsome   Pet  Co. "), "Pawsome Pet Co.");
+  assert.equal(brandNameFrom("x".repeat(100)).length, 80);
+  assert.equal(newBrandHref("/admin", { name: " Barkery & Co " }), "/admin/supporters/new?name=Barkery+%26+Co");
+  assert.equal(newBrandHref("", { name: "Pawsome", kind: "Partner", event: ev }), `/supporters/new?name=Pawsome&kind=Partner&event=${ev}`);
+  assert.equal(newBrandHref("", { name: "", kind: "Nope", event: "x" }), "/supporters/new");
+});

@@ -113,3 +113,41 @@ export function sortTracker(rows = [], sort = "name", sentAt = () => null) {
   }[trackerSort(sort)];
   return [...rows].sort(pick);
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Most events one save may add a brand to. */
+export const MAX_EVENT_PICKS = 20;
+
+/**
+ * "Add to events" on a brand (owner, 2026-11-14): the events a brand can be
+ * added to, split by Manila `today` (YYYY-MM-DD). Upcoming soonest first, past
+ * newest first, so the likely pick is at the top of each group.
+ */
+export function eventChoiceGroups(events = [], today) {
+  const day = (e) => String(e.date || "").slice(0, 10);
+  const upcoming = events.filter((e) => day(e) >= today).sort((a, b) => day(a).localeCompare(day(b)));
+  const past = events.filter((e) => day(e) < today).sort((a, b) => day(b).localeCompare(day(a)));
+  return { upcoming, past };
+}
+
+/** The ticked events and the reply for them → { ids, reply } (unknown reply = No reply yet). */
+export function cleanEventPicks(ids = [], reply = "waiting") {
+  const clean = [...new Set([].concat(ids ?? []).filter((id) => typeof id === "string" && UUID.test(id)))].slice(0, MAX_EVENT_PICKS);
+  return { ids: clean, reply: REPLIES.some(([k]) => k === reply) ? reply : "waiting" };
+}
+
+/** The built-in follow-up email for brands that haven't replied (owner, 2026-11-14). */
+export const FOLLOW_UP_LETTER = "brand-follow-up";
+
+/**
+ * Brand tracker "Follow up": the send window's address for this event's brands
+ * still on No reply yet, with the follow-up email chosen. Returns
+ * { href, count, noEmail } (href "" when nobody is waiting).
+ */
+export function followUpLink(base, eventId, rows = []) {
+  const waiting = rows.filter((r) => r.reply === "waiting");
+  if (!waiting.length) return { href: "", count: 0, noEmail: 0 };
+  const params = new URLSearchParams([["letter", FOLLOW_UP_LETTER], ["event", eventId], ["list", "brands"]]);
+  for (const r of waiting) params.append("to", `supporter:${r.supporter_id}`);
+  return { href: `${base}/letters/send?${params}`, count: waiting.length, noEmail: waiting.filter((r) => !r.contact_email).length };
+}

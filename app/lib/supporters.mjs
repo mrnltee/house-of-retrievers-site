@@ -294,3 +294,24 @@ export function byTier(sponsors) {
   groups.push({ key: "other", name: null, items: sponsors.filter((s) => !s.tier) });
   return groups.filter((g) => g.items.length);
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A search typed as a brand name: spaces tidied, at most 80 characters (the Name field's limit). */
+export const brandNameFrom = (query) => String(query ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+
+/**
+ * "Add “Pawsome” as a new brand" when a search finds nothing (owner,
+ * 2026-11-14): the new-brand form's address with the name filled in, the
+ * type when a filter picked one, and the event the search came from (ticked
+ * on the form, and where the save returns to).
+ */
+export function newBrandHref(base, { name = "", kind = "", event = "" } = {}) {
+  const params = new URLSearchParams();
+  const clean = brandNameFrom(name);
+  if (clean) params.set("name", clean);
+  if (KINDS.includes(kind)) params.set("kind", kind);
+  if (UUID_RE.test(String(event))) params.set("event", event);
+  const query = params.toString();
+  return `${base}/supporters/new${query ? `?${query}` : ""}`;
+}

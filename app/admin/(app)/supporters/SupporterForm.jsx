@@ -5,25 +5,28 @@ import LogoField from "./LogoField";
 import SupporterIdentityFields from "./SupporterIdentityFields";
 import ConfirmButton from "../ConfirmButton";
 import GreetingFields from "./GreetingFields";
+import EventPicker from "./EventPicker";
 
 const SHOW_OUTREACH = false;
 const SHOW_GIVING = false;
 
 /** Sponsor or partner record (Figma S2). `row` is a DB row or null; `person` prefills a new one. */
-export default function SupporterForm({ row, person = null, canEdit = true, joined = 0 }) {
+/** `prefill` ({ name, kind, event }) comes from a search with no results; `event` is the event's row. */
+export default function SupporterForm({ row, person = null, canEdit = true, joined = 0, events = null, prefill = null }) {
   const v = (key, fallback = "") => row?.[key] ?? fallback;
   const year = new Date().getFullYear();
-  const kind = row?.kind || person?.kind || "Sponsor";
+  const kind = row?.kind || person?.kind || prefill?.kind || "Sponsor";
   return (
     <form action={saveSupporter} className="form">
       {row && <input type="hidden" name="id" value={row.id} />}
       {person && <input type="hidden" name="personId" value={person.id} />}
+      {!row && prefill?.event && <input type="hidden" name="fromEvent" value={prefill.event.id} />}
       <fieldset disabled={!canEdit} className="plain form" style={{ gap: 20 }}>
         <section className="card form">
           <h2>On the website</h2>
           <LogoField current={row?.logo || ""} />
           <SupporterIdentityFields
-            initialName={v("name", person?.organization || person?.name || "")}
+            initialName={v("name", person?.organization || person?.name || prefill?.name || "")}
             initialCode={v("code")}
             numbered={Boolean(row?.number_no)}
           />
@@ -120,6 +123,15 @@ export default function SupporterForm({ row, person = null, canEdit = true, join
         </section>
         )}
 
+        {/* New brands only: put it straight on events' Brand trackers (owner, 2026-11-14). A saved brand does this from its Events card. */}
+        {!row && events && (
+          <section className="card form">
+            <h2>Add to events <small className="muted">Optional</small></h2>
+            <p className="small muted" style={{ margin: 0 }}>Tick an upcoming event they&apos;re joining, or a past one they were part of. They go on that event&apos;s Brand tracker; nothing is emailed.</p>
+            <EventPicker events={events} checked={prefill?.event ? [prefill.event.id] : []} />
+          </section>
+        )}
+
         <section className="card form">
           <h2>Contact <span className="chip">Admins only</span></h2>
           <div className="row-3">
@@ -139,7 +151,7 @@ export default function SupporterForm({ row, person = null, canEdit = true, join
           <ConfirmButton
             title={row ? `Save changes to ${row.name}?` : "Create this supporter record?"}
             echo={[{ name: "name", label: "Name" }, { name: "code", label: "ID code" }, { name: "kind", label: "Type" }, { name: "categoryLabel", label: "Relationship label" }, { name: "status", label: "Status" }]}
-            items={[row ? "The supporter record is updated" : "A new supporter record is added", "Public details change only when the record is complete, Confirmed and switched on"]}
+            items={[row ? "The supporter record is updated" : "A new supporter record is added", ...(row ? [] : ["Any events ticked under Add to events get it on their Brand tracker (nothing is emailed)"]), "Public details change only when the record is complete, Confirmed and switched on"]}
             yes={row ? "Yes, save changes" : "Yes, create record"}
           >{row ? "Save" : "Create record"}</ConfirmButton>
         </div>
