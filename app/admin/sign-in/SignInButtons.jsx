@@ -27,7 +27,7 @@ export default function SignInButtons({ google, yahoo, dev, callbackUrl, reauth 
           Sign in with Yahoo
         </button>
       )}
-      {!google && !yahoo && !dev && <p className="banner note small">Google sign-in isn&apos;t set up yet.</p>}
+      {!google && !yahoo && !dev && <p className="banner note small">Sign-in isn&apos;t set up yet.</p>}
       {dev && (
         <form
           className="form"

@@ -26,3 +26,11 @@ test("Google and Yahoo accounts need a verified email; other sign-ins aren't che
   assert.equal(verifiedEmail("yahoo", { email_verified: "true" }), false, "only a real true counts");
   assert.equal(verifiedEmail("dev", undefined), true);
 });
+
+test("sign-in names for admin wording: whichever providers are switched on", async () => {
+  const { providerNames } = await import("./signInProviders.mjs");
+  assert.equal(providerNames({ google: true, yahoo: true }), "Google or Yahoo");
+  assert.equal(providerNames({ google: true, yahoo: false }), "Google");
+  assert.equal(providerNames({ google: false, yahoo: true }), "Yahoo");
+  assert.equal(providerNames({}), "Google", "Google is the usual way in, so the wording falls back to it");
+});

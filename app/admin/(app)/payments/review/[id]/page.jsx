@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { sql } from "../../../../../lib/db";
 import { pageAdmin } from "../../../../../lib/admin/guard";
+import { signInWith } from "../../../../../lib/admin/auth";
 import { canApprovePaymentChange, signedInRecently } from "../../../../../lib/admin/roles.mjs";
 import { METHODS, diffChange, formatMobile } from "../../../../../lib/admin/payments.mjs";
 import { approvePaymentRequest, rejectPaymentRequest } from "../../../../actions";
@@ -78,7 +79,7 @@ export default async function ReviewPaymentChange({ params, searchParams }) {
           <p className="small muted">
             {signedInRecently(admin.authTime)
               ? "Approving updates the Support panel straight away and records who requested and who approved."
-              : "Approving asks you to sign in with Google again first. Then come back here and approve."}
+              : `Approving asks you to sign in again first, with ${signInWith}. Then come back here and approve.`}
           </p>
           <div className="actions">
             <ConfirmButton

@@ -12,6 +12,7 @@ import { pickedIds, supportsLine } from "../lib/eventBeneficiaries.mjs";
 import { sql, transaction } from "../lib/db";
 import { actionAdmin, adminHref, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
+import { signInWith } from "../lib/admin/auth";
 import { alertAdmins } from "../lib/admin/notify";
 import { canApprovePaymentChange, cleanPages, cleanRoles, parseEmailList, signedInRecently } from "../lib/admin/roles.mjs";
 import { METHODS, diffChange, needsApproval, validateChange } from "../lib/admin/payments.mjs";
@@ -853,7 +854,7 @@ export async function inviteAdmin(data) {
     const roles = cleanRoles(data.getAll("roles"));
     // Ticked pages win over roles (Owners always get everything).
     const pages = roles.includes("owner") ? [] : cleanPages(data.getAll("pages"));
-    if (!email) await backWith("/admins", "error", "Enter the person's Google email address.");
+    if (!email) await backWith("/admins", "error", "Enter the email they'll sign in with.");
     if (!roles.length && !pages.length) await backWith("/admins", "error", "Tick the pages they can use (or pick a role).");
     await sql(
       `INSERT INTO admins (email, roles, pages, active, invited_by) VALUES ($1, $2, $3, true, $4)
@@ -861,7 +862,7 @@ export async function inviteAdmin(data) {
       [email, roles, pages.length ? pages : null, admin.email],
     );
     await logActivity(admin.email, "admin.invite", email, { roles, pages });
-    await backWith("/admins", "ok", `${email} can sign in now with that Google account.`);
+    await backWith("/admins", "ok", `${email} can sign in now with ${signInWith}, using that email.`);
   });
 }
 

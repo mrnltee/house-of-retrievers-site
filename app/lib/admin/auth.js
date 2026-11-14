@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth/next";
 import { cookies } from "next/headers";
 import { hasDatabase, sql } from "../db";
 import { parseEmailList } from "./roles.mjs";
-import { verifiedEmail, yahooProvider } from "./signInProviders.mjs";
+import { providerNames, verifiedEmail, yahooProvider } from "./signInProviders.mjs";
 
 /**
  * Admin sign-in with Google or Yahoo (Yahoo since 2026-11-15, when its keys are
@@ -73,6 +73,8 @@ const yahoo = yahooProvider();
 if (yahoo) providers.push(yahoo);
 /** Whether the Yahoo button shows on the sign-in page. */
 export const yahooReady = Boolean(yahoo);
+/** "Google or Yahoo" (or just "Google"): how admins can sign in, for page wording. */
+export const signInWith = providerNames({ google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET), yahoo: Boolean(yahoo) });
 if (devLoginEnabled) {
   providers.push(
     CredentialsProvider({

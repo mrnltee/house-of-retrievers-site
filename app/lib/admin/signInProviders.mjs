@@ -41,3 +41,12 @@ export function verifiedEmail(provider, profile) {
   if (provider === "google" || provider === "yahoo") return profile?.email_verified === true;
   return true;
 }
+
+/**
+ * The sign-in choices in words for admin copy ("Google or Yahoo"), so invite
+ * and re-sign-in wording never says Google only once Yahoo is switched on.
+ */
+export function providerNames({ google = false, yahoo = false } = {}) {
+  const names = [google && "Google", yahoo && "Yahoo"].filter(Boolean);
+  return names.length ? names.join(" or ") : "Google";
+}

@@ -1,6 +1,6 @@
 import { sql } from "../../../lib/db";
 import { pageAdmin } from "../../../lib/admin/guard";
-import { ONLINE_MS } from "../../../lib/admin/auth";
+import { ONLINE_MS, signInWith, yahooReady } from "../../../lib/admin/auth";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { PAGES, ROLES, ROLE_LABELS, pageLevel, pagesForRoles, parseEmailList } from "../../../lib/admin/roles.mjs";
 import { startPreview } from "../../previewActions";
@@ -90,9 +90,12 @@ export default async function AdminsPage({ searchParams }) {
 
       <section className="card">
         <h2>Invite an admin</h2>
-        <p className="small muted">While HOR&apos;s Google sign-in app is in Testing, also add their email under Google Cloud → Google Auth Platform → Audience → Test users, or Google will stop them before they reach this site.</p>
+        <p className="small muted">
+          They sign in with {yahooReady ? <><strong>Sign in with Google</strong> or <strong>Sign in with Yahoo</strong></> : <strong>Sign in with Google</strong>}, using exactly the email you type here{yahooReady ? ": Google for a Gmail or Google account, Yahoo for a Yahoo account (some Yahoo accounts use another address, such as a Gmail one)" : ""}. Another email, such as Outlook, works with Google once they make a free Google account with it (accounts.google.com/signup → Use your existing email).
+        </p>
+        <p className="small muted"><strong>Signing in with Google?</strong> While HOR&apos;s Google sign-in app is in Testing, also add their email under Google Cloud → Google Auth Platform → Audience → Test users, or Google will stop them before they reach this site.{yahooReady ? " Yahoo needs no extra step." : ""}</p>
         <form action={inviteAdmin} className="form">
-          <label className="field"><span>Their Google email <small>The account they&apos;ll sign in with</small></span><input type="email" name="email" required /></label>
+          <label className="field"><span>Their email <small>The {signInWith} account they&apos;ll sign in with</small></span><input type="email" name="email" required autoComplete="off" spellCheck={false} /></label>
           <fieldset className="plain">
             <legend>Page access <small className="muted">— hidden · View = read only · Edit = read and write</small></legend>
             <div className="page-ticks">
@@ -111,8 +114,8 @@ export default async function AdminsPage({ searchParams }) {
           <div>
             <ConfirmButton
               title="Invite this admin?"
-              echo={[{ name: "email", label: "Google email" }]}
-              items={["They can sign in once their Google account is also allowed in Google Cloud", "Only pages set to View or Edit show in their sidebar"]}
+              echo={[{ name: "email", label: "Email" }]}
+              items={[`They sign in with ${signInWith} using this email`, yahooReady ? "If they'll use Google, add the email to Google Cloud's test users first (Yahoo needs nothing extra)" : "They can sign in once their Google account is also allowed in Google Cloud", "Only pages set to View or Edit show in their sidebar"]}
               yes="Yes, invite admin"
             >Invite</ConfirmButton>
           </div>
