@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { hasDatabase } from "../../lib/db";
-import { currentAdmin, devLoginEnabled } from "../../lib/admin/auth";
+import { currentAdmin, devLoginEnabled, yahooReady } from "../../lib/admin/auth";
 import { adminHref } from "../../lib/admin/guard";
 import SignInButtons from "./SignInButtons";
 
 const ERRORS = {
-  AccessDenied: "That Google account isn't on the admin list. Ask an Owner to invite it.",
-  Callback: "Google sign-in didn't finish. Try again.",
-  OAuthSignin: "Google sign-in didn't start. Try again.",
+  AccessDenied: "That account isn't on the admin list, or its email isn't verified. Ask an Owner to invite the email you signed in with.",
+  Callback: "Sign-in didn't finish. Try again.",
+  OAuthSignin: "Sign-in didn't start. Try again.",
   Default: "Sign-in didn't work. Try again.",
 };
 
@@ -31,9 +31,9 @@ export default async function SignInPage({ searchParams }) {
         {!ready ? (
           <p className="banner note small">The admin isn&apos;t switched on yet: its database and sign-in settings are still being added.</p>
         ) : (
-          <SignInButtons google={googleReady} dev={devLoginEnabled} callbackUrl={callbackUrl} reauth={Boolean(params?.reauth)} />
+          <SignInButtons google={googleReady} yahoo={yahooReady} dev={devLoginEnabled} callbackUrl={callbackUrl} reauth={Boolean(params?.reauth)} />
         )}
-        <p className="small muted">Only Google accounts an Owner has invited can sign in. Please keep Google&apos;s 2-Step Verification on.</p>
+        <p className="small muted">Only the email an Owner invited can sign in, with Google{yahooReady ? " or Yahoo" : ""}. Please keep 2-step verification on for that account.</p>
       </div>
     </main>
   );

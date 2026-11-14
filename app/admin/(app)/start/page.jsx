@@ -1,5 +1,6 @@
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { PageHead } from "../ui";
+import { yahooReady } from "../../../lib/admin/auth";
 import { StartGuideButton } from "../GuideTour";
 import { HOW, guidePages } from "../../../lib/admin/guide.mjs";
 
@@ -22,7 +23,7 @@ export default async function GettingStarted() {
       <section className="card">
         <h2>1. Signing in</h2>
         <ul>
-          <li>Use <strong>Sign in with Google</strong> with the email you were invited with. No Gmail? Make a free Google account with your own email (Yahoo, Outlook…) at accounts.google.com/signup → “Use your existing email”.</li>
+          {yahooReady ? <li>Use <strong>Sign in with Google</strong> or <strong>Sign in with Yahoo</strong>, with the email you were invited with. Another email (Outlook…)? Make a free Google account with it at accounts.google.com/signup → “Use your existing email”.</li> : <li>Use <strong>Sign in with Google</strong> with the email you were invited with. No Gmail? Make a free Google account with your own email (Yahoo, Outlook…) at accounts.google.com/signup → “Use your existing email”.</li>}
           <li>On a shared or borrowed computer, press <strong>Sign out</strong> (bottom of the menu) when you're done.</li>
         </ul>
       </section>

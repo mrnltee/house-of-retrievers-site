@@ -5,9 +5,11 @@ import { getServerSession } from "next-auth/next";
 import { cookies } from "next/headers";
 import { hasDatabase, sql } from "../db";
 import { parseEmailList } from "./roles.mjs";
+import { verifiedEmail, yahooProvider } from "./signInProviders.mjs";
 
 /**
- * Admin sign-in. Only Google accounts that an Owner invited (rows in `admins`)
+ * Admin sign-in with Google or Yahoo (Yahoo since 2026-11-15, when its keys are
+ * set: signInProviders.mjs). Only accounts whose email an Owner invited (rows in `admins`)
  * or that are listed in ADMIN_OWNER_EMAILS can get in. Sessions are signed
  * cookies (see sessionSecret); roles are read from the database on every
  * request, never trusted from the cookie.
@@ -67,6 +69,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     }),
   );
 }
+const yahoo = yahooProvider();
+if (yahoo) providers.push(yahoo);
+/** Whether the Yahoo button shows on the sign-in page. */
+export const yahooReady = Boolean(yahoo);
 if (devLoginEnabled) {
   providers.push(
     CredentialsProvider({
@@ -88,8 +94,8 @@ export const authOptions = {
   pages: { signIn: "/admin/sign-in", error: "/admin/sign-in" },
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" && profile?.email_verified !== true) {
-        console.warn("admin sign-in refused: Google email not verified", user?.email);
+      if (!verifiedEmail(account?.provider, profile)) {
+        console.warn("admin sign-in refused: email not verified", account?.provider, user?.email);
         return false;
       }
       const allowed = await allowAndRecord(user?.email, user?.name);

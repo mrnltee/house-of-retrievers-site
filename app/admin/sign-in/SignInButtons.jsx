@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
-export default function SignInButtons({ google, dev, callbackUrl, reauth }) {
+export default function SignInButtons({ google, yahoo, dev, callbackUrl, reauth }) {
   const [email, setEmail] = useState("");
   return (
     <div className="form" style={{ width: "100%" }}>
@@ -17,7 +17,17 @@ export default function SignInButtons({ google, dev, callbackUrl, reauth }) {
           Sign in with Google
         </button>
       )}
-      {!google && !dev && <p className="banner note small">Google sign-in isn&apos;t set up yet.</p>}
+      {yahoo && (
+        <button
+          type="button"
+          className="btn"
+          // Yahoo, like Google, is asked to show its login again for a re-check (payment approvals).
+          onClick={() => signIn("yahoo", { callbackUrl }, reauth ? { prompt: "login", max_age: "0" } : undefined)}
+        >
+          Sign in with Yahoo
+        </button>
+      )}
+      {!google && !yahoo && !dev && <p className="banner note small">Google sign-in isn&apos;t set up yet.</p>}
       {dev && (
         <form
           className="form"
