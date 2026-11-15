@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { applyEmailFrame, EVENT_DETAILS_DEFAULT, passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS } from "../../../../lib/emailTemplates.mjs";
+import { applyEmailFrame, EVENT_DETAILS_DEFAULT, letterCoverEmail, passQrImage, renderTemplate, SAMPLE_PERSON, TEMPLATE_LIMITS, templateDef } from "../../../../lib/emailTemplates.mjs";
+import { OWN_TEMPLATE_BLANKS, OWN_TEMPLATE_SAMPLE, ownTemplateSample } from "../../../../lib/letters.mjs";
 import { resetEmailTemplate, saveEmailTemplate, sendTestEmail } from "../../../emailActions";
 import ConfirmButton from "../../ConfirmButton";
 import RichTextField from "../RichTextField";
@@ -17,6 +18,8 @@ const PASS = { button: { label: "Open my pass", href: "#" }, image: passQrImage(
 export default function TemplateEditor({ templateKey, customId, kind, name: initialName = "", initial, defaults, custom, variables, frame = null }) {
   const ref = templateKey || `custom:${kind}`;
   const own = !templateKey;
+  // An Own email template (owner, 2026-11-16): subject + message with letter [fill-ins], previewed as the send window sends it.
+  const letter = Boolean(templateDef(ref)?.letter);
   const event = ref === "rsvp-confirmed" || ref === "custom:event" || ref === "custom:reminder" || ref === "event-reminder";
   const [name, setName] = useState(initialName);
   const startFields = (src) => ({ subject: src.subject || "", greeting: src.greeting || "", heading: src.heading || "", message: src.message || "", ...(event ? { details: typeof src.details === "string" ? src.details : EVENT_DETAILS_DEFAULT } : {}) });
@@ -24,7 +27,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
   const richRefs = { message: useRef(null), details: useRef(null) };
   const [width, setWidth] = useState("phone");
   const last = useRef({ name: "message", el: null });
-  const mail = useMemo(() => applyEmailFrame(renderTemplate(ref, fields, SAMPLE_PERSON, event ? PASS : {}), frame), [ref, event, fields, frame]);
+  const mail = useMemo(() => applyEmailFrame(letter ? letterCoverEmail({ ...ownTemplateSample(fields), attached: false }) : renderTemplate(ref, fields, SAMPLE_PERSON, event ? PASS : {}), frame), [ref, event, letter, fields, frame]);
   const changed = name !== initialName || JSON.stringify(fields) !== JSON.stringify(startFields(initial));
 
   const set = (name) => (e) => {
@@ -72,14 +75,24 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
           </label>
         )}
         {field("subject", "Subject", "The line people see in their inbox")}
-        {field("greeting", "Greeting", "Optional, above the heading, e.g. Hi {{first_name}},")}
-        {field("heading", "Heading", "The big serif line")}
+        {!letter && field("greeting", "Greeting", "Optional, above the heading, e.g. Hi {{first_name}},")}
+        {!letter && field("heading", "Heading", "The big serif line")}
         {event && (
           <RichTextField ref={richRefs.details} name="details" label="Event details" hint="The box under the heading. Remove the text to leave it out."
             value={fields.details} onChange={(v) => setFields((f) => ({ ...f, details: v }))} onFocus={() => { last.current = { name: "details", el: null }; }} minHeight={90} />
         )}
-        <RichTextField ref={richRefs.message} name="message" label="Message" hint="Type it as it will look. Select words to make them bold or a link."
+        <RichTextField ref={richRefs.message} name="message" label="Message" hint={letter ? "Start with Dear [Salutation], so each recipient is greeted by name. Select words to make them bold or a link." : "Type it as it will look. Select words to make them bold or a link."}
           value={fields.message} onChange={(v) => setFields((f) => ({ ...f, message: v }))} onFocus={() => { last.current = { name: "message", el: null }; }} minHeight={220} />
+        {letter ? (
+          <div className="template-vars">
+            <span className="field-head">Fill-ins <small>Click to insert where your cursor is. Filled per recipient when sending; others are asked on the send page.</small></span>
+            <ul>
+              {OWN_TEMPLATE_BLANKS.map(([label, help]) => (
+                <li key={label}><button type="button" className="tag-badge var-chip" onClick={() => insert(`[${label}]`)}>{`[${label}]`}</button> <span className="small muted">{help}</span></li>
+              ))}
+            </ul>
+          </div>
+        ) : (
         <div className="template-vars">
           <span className="field-head">Variables <small>Click to insert where your cursor is</small></span>
           <ul>
@@ -88,6 +101,7 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
             ))}
           </ul>
         </div>
+        )}
         <div className="actions">
           <ConfirmButton
             disabled={!changed && custom}
@@ -125,13 +139,13 @@ export default function TemplateEditor({ templateKey, customId, kind, name: init
             >Delete this template</ConfirmButton>
           )}
         </div>
-        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{event ? "The check-in QR, the payment line (paid events) and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
+        <p className="small muted">{own ? (customId ? "" : "Not saved yet. ") : custom ? "This email uses your saved wording. " : "This email uses HOR's original wording until you save. "}{letter ? "Sent as an email only, with no PDF. You can still change the wording in the send window before sending. " : ""}{event ? "The check-in QR, the payment line (paid events) and the “Open my pass” button are added automatically. " : ""}The logo band, sign-off (“With love and purpose”), footer and the line about why they got the email are added automatically.</p>
       </form>
 
       <section className="card template-preview">
         <div className="template-preview-head">
           <div>
-            <p className="small muted" style={{ margin: 0 }}>Preview, as {SAMPLE_PERSON.name} (dog: {SAMPLE_PERSON.furbaby}{event ? `, at ${SAMPLE_PERSON.event.title}` : ""})</p>
+            <p className="small muted" style={{ margin: 0 }}>{letter ? `Preview, to ${OWN_TEMPLATE_SAMPLE.name} (${OWN_TEMPLATE_SAMPLE.salutation}); other fill-ins show as [labels]` : <>Preview, as {SAMPLE_PERSON.name} (dog: {SAMPLE_PERSON.furbaby}{event ? `, at ${SAMPLE_PERSON.event.title}` : ""})</>}</p>
             <p className="template-subject"><strong>{mail.subject}</strong></p>
           </div>
           <div className="segmented" role="group" aria-label="Preview width">

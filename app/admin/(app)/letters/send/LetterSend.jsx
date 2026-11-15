@@ -2,7 +2,7 @@
 
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fillLetter, hasOwnEmailPlaceholder, letterDate, missingBlanks, ownEmailWording, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
+import { fillLetter, hasOwnEmailPlaceholder, letterDate, missingBlanks, ownEmailWording, ownTemplateWording, prepareLetter, unionBlanks, wordingFor } from "../../../../lib/letters.mjs";
 import EditWording from "./EditWording";
 import { applyEmailFrame, invitationEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
 import { INVITATION_LIMITS, cardNames, isInvitation, withCardName } from "../../../../lib/invitationCard.mjs";
@@ -22,7 +22,7 @@ const CARD_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xml
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, initialPicked = null, max, ready, pdfAction, back, returnTo = "", onSwitchLetter = null, eventId = "", designs = [], house = null, frame = null }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, initialPicked = null, max, ready, pdfAction, back, returnTo = "", onSwitchLetter = null, eventId = "", designs = [], house = null, frame = null, ownTemplates = [], emailsHref = "" }) {
   const isStandard = (label) => standard.includes(label);
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
@@ -125,12 +125,24 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   // placeholder the admin replaces in Edit wording; sending waits until it's replaced.
   const [own, setOwn] = useState(false);
   const [wantWording, setWantWording] = useState(false);
+  // Start from one of HOR's Own email templates (owner, 2026-11-16), or a blank placeholder.
+  const [ownFrom, setOwnFrom] = useState("");
+  const ownTemplate = ownTemplates.find((t) => t.id === ownFrom) || null;
+  const ownStart = () => (ownTemplate ? ownTemplateWording(ownTemplate) : ownEmailWording());
   function writeOwn(on) {
     setOwn(on);
     setAttach(on ? false : pdfLetter);
     if (on) setDesignId("");
+    setOwnFrom("");
     setEdits({ all: on ? ownEmailWording() : null, byRef: {} });
-    setWantWording(on);
+    // With templates to pick from, let them choose first; otherwise open the editor at once.
+    setWantWording(on && !ownTemplates.length);
+  }
+  function startOwnFrom(id) {
+    const t = ownTemplates.find((x) => x.id === id) || null;
+    setOwnFrom(t ? t.id : "");
+    setEdits({ all: t ? ownTemplateWording(t) : ownEmailWording(), byRef: {} });
+    if (!t) setWantWording(true);
   }
   const ownLeft = own && [...picked].some((ref) => hasOwnEmailPlaceholder(wordingFor(letter, edits, ref)));
   // Fill-ins for every version being sent (edited wording can add some).
@@ -141,7 +153,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   function resetEdit(scope) {
     setEdits((e) => {
       // Writing their own email, "undo" goes back to the placeholder, never to the letter's text.
-      if (scope === "all") return { ...e, all: own ? ownEmailWording() : null };
+      if (scope === "all") return { ...e, all: own ? ownStart() : null };
       const byRef = { ...e.byRef };
       delete byRef[who.ref];
       return { ...e, byRef };
@@ -288,7 +300,18 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         {!invite && (
           <label className="check attach-choice">
             <input type="checkbox" checked={own} onChange={(e) => writeOwn(e.target.checked)} />
-            <span><strong>Write my own email (email only)</strong><br /><span className="small muted">{own ? <>No letter and no PDF: just the email you write. Each recipient is still greeted by name. <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}>✎ Write it</button></> : "Skip the letter and write the message yourself, for this send only."}</span></span>
+            <span><strong>Write my own email (email only)</strong><br /><span className="small muted">{own ? <>No letter and no PDF: just the email you write{ownTemplate ? <>, starting from “{ownTemplate.name}”</> : null}. Each recipient is still greeted by name. <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}>✎ Write it</button></> : "Skip the letter and write the message yourself, for this send only."}</span></span>
+          </label>
+        )}
+        {own && (
+          <label className="field">
+            <span>Start from <small>{ownTemplates.length ? <>One of your Own email templates, or a blank message. You can still change the wording for this send.</> : <>No Own email templates yet{emailsHref && <>: <a href={`${emailsHref}/new?kind=own`} target="_blank" rel="noreferrer">write one in Email templates ↗</a></>}.</>}</small></span>
+            {ownTemplates.length > 0 && (
+              <select value={ownFrom} onChange={(e) => startOwnFrom(e.target.value)}>
+                <option value="">Blank message (write it now)</option>
+                {ownTemplates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            )}
           </label>
         )}
         {designs.length > 0 && !invite && !own && (

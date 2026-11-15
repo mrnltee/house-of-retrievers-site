@@ -339,9 +339,16 @@ export const CUSTOM_KINDS = {
     defaults: REMINDER_DEFAULTS,
     event: true,
   },
+  own: {
+    title: "Own email",
+    when: "Pick it when you tick \u201cWrite my own email (email only)\u201d in a letter send window (Brand tracker, Guest list, Beneficiaries\u2026). Use [Salutation] and the other fill-ins to greet each recipient; you can still change the wording before sending.",
+    letter: true,
+    variables: [],
+    defaults: { subject: "A note from House of Retrievers", greeting: "", heading: "", message: "Dear [Salutation],\n\nWrite your message here." },
+  },
 };
 
-/** A built-in key, or "custom:acceptance" / "custom:event" / "custom:reminder". */
+/** A built-in key, or "custom:acceptance" / "custom:event" / "custom:reminder" / "custom:own". */
 export function templateDef(ref) {
   if (String(ref).startsWith("custom:")) return CUSTOM_KINDS[String(ref).slice(7)] || null;
   return EDITABLE_TEMPLATES[ref] || null;

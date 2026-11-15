@@ -4,8 +4,9 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { sendEmail } from "../lib/email";
-import { forgetEmailFrame } from "../lib/emailSettings";
-import { cleanEmailFrame, CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, templateDef, unknownVariables } from "../lib/emailTemplates.mjs";
+import { forgetEmailFrame, loadEmailFrame } from "../lib/emailSettings";
+import { OWN_TEMPLATE_SAMPLE, hasOwnEmailPlaceholder, ownTemplateSample } from "../lib/letters.mjs";
+import { cleanEmailFrame, letterCoverEmail, applyEmailFrame, CUSTOM_KINDS, EDITABLE_TEMPLATES, SAMPLE_PERSON, TEMPLATE_LIMITS, passQrImage, renderTemplate, templateDef, unknownVariables } from "../lib/emailTemplates.mjs";
 
 const form = (data, key) => {
   const value = data.get(key);
@@ -51,7 +52,13 @@ async function readFields(data, t) {
   };
   // The event box only exists on event emails; an older open tab that didn't send it leaves the saved one alone.
   if (templateDef(t.ref)?.event && data.has("details")) fields.details = form(data, "details").replace(/\r\n?/g, "\n").trim();
-  if (!fields.subject || !fields.heading || !fields.message) await backWith(back, "error", "Subject, heading and message can't be empty.");
+  // Own email templates (letter fill-ins, no greeting or heading): subject and message only.
+  if (templateDef(t.ref)?.letter) {
+    fields.greeting = "";
+    fields.heading = "";
+    if (!fields.subject || !fields.message) await backWith(back, "error", "Subject and message can't be empty.");
+    if (hasOwnEmailPlaceholder({ subject: fields.subject, cover: fields.message })) await backWith(back, "error", "Replace “Write your message here.” with your own words first.");
+  } else if (!fields.subject || !fields.heading || !fields.message) await backWith(back, "error", "Subject, heading and message can't be empty.");
   for (const [name, max] of Object.entries(TEMPLATE_LIMITS)) {
     if ((fields[name] ?? "").length > max) await backWith(back, "error", `The ${name} is too long (up to ${max} characters).`);
   }
@@ -100,7 +107,7 @@ export async function saveEmailTemplate(data) {
         [name, t.kind, f.subject, f.greeting, f.heading, f.message, f.details ?? null, admin.email],
       );
       await logActivity(admin.email, "email.custom.new", name, { templateId: row.id, kind: t.kind });
-      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : t.kind === "reminder" ? "Template added. Pick it under “Email participants” on an event's registrations page." : "Template added. Send it from a person's profile.");
+      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : t.kind === "reminder" ? "Template added. Pick it under “Email participants” on an event's registrations page." : t.kind === "own" ? "Template added. Pick it when you tick “Write my own email” in a send window." : "Template added. Send it from a person's profile.");
     }
   });
 }
@@ -132,11 +139,13 @@ export async function sendTestEmail(data) {
     const t = await target(data);
     const f = await readFields(data, t);
     const event = t.ref === "rsvp-confirmed" || t.ref === "custom:event" || t.ref === "custom:reminder" || t.ref === "event-reminder";
-    const mail = renderTemplate(t.ref, f, SAMPLE_PERSON, event ? { button: { label: "Open my pass", href: "https://events.houseofretrieversph.org/" }, image: passQrImage("7KQ2MPX4RT") } : {});
+    const mail = templateDef(t.ref)?.letter
+      ? applyEmailFrame(letterCoverEmail({ ...ownTemplateSample(f), attached: false }), await loadEmailFrame())
+      : renderTemplate(t.ref, f, SAMPLE_PERSON, event ? { button: { label: "Open my pass", href: "https://events.houseofretrieversph.org/" }, image: passQrImage("7KQ2MPX4RT") } : {});
     const sent = await sendEmail({ to: admin.email, ...mail, subject: `[Test] ${mail.subject}`, idempotencyKey: `test/${t.key || t.id || t.kind}/${Date.now()}` });
     if (!sent.ok) await backWith(t.back, "error", sent.skipped ? "Email isn't set up yet (Resend key missing)." : "The test didn't go through. Try again in a moment.");
     await logActivity(admin.email, "email.test", t.title, { template: t.key || t.id || t.kind });
-    await backWith(t.back, "ok", `Test sent to ${admin.email}, with sample details (${SAMPLE_PERSON.name}).`);
+    await backWith(t.back, "ok", `Test sent to ${admin.email}, with sample details (${templateDef(t.ref)?.letter ? OWN_TEMPLATE_SAMPLE.name : SAMPLE_PERSON.name}).`);
   });
 }
 

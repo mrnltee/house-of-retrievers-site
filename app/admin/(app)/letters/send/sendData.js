@@ -1,4 +1,4 @@
-import { loadEmailFrame } from "../../../../lib/emailSettings";
+import { listCustomTemplates, loadEmailFrame } from "../../../../lib/emailSettings";
 import { sql } from "../../../../lib/db";
 import { emailReady } from "../../../../lib/email";
 import { MAX_LETTER_RECIPIENTS, blanksOf, recipientFields } from "../../../../lib/letters.mjs";
@@ -137,6 +137,9 @@ export async function loadSendData(params, { admin, base }) {
       eventId: event?.id || "",
       designs,
       house: designs.length ? await loadHouse() : null,
+      // HOR's saved Own email templates, offered under "Write my own email".
+      ownTemplates: (await listCustomTemplates("own")).map((t) => ({ id: t.id, name: t.name, subject: t.subject, message: t.message })),
+      emailsHref: `${base}/emails`,
     },
   };
 }

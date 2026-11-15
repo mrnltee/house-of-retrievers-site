@@ -289,3 +289,23 @@ test("write my own email: only the wording each recipient gets is checked (prod 
   // Two brands, only one written: the other would get the placeholder.
   assert.match(cleanEdits(JSON.stringify({ all: ownEmailWording(), byRef: { "supporter:a": mine } }), ["supporter:a", "supporter:b"]).error, /Write your own/);
 });
+
+test("Own email templates: wording for the send window, sample preview, no placeholder", async () => {
+  const { ownTemplateWording, ownTemplateSample, hasOwnEmailPlaceholder, cleanEdits, OWN_TEMPLATE_BLANKS } = await import("./letters.mjs");
+  const { CUSTOM_KINDS, templateDef } = await import("./emailTemplates.mjs");
+  const t = { subject: "See you at [Event Name]", message: "Dear [Salutation],\n\nThanks from **HOR** on [Date]." };
+  const w = ownTemplateWording(t);
+  assert.deepEqual(w, { subject: t.subject, cover: t.message });
+  assert.equal(hasOwnEmailPlaceholder(w), false);
+  // A saved template can be sent as is.
+  assert.equal(cleanEdits(JSON.stringify({ all: w, byRef: {} }), ["supporter:a"]).error, undefined);
+  const sample = ownTemplateSample(t);
+  assert.equal(sample.subject, "See you at [Event Name]");
+  assert.match(sample.cover, /^Dear Ms\. Jessie,/);
+  assert.doesNotMatch(sample.cover, /\[Date\]/);
+  // The kind is a letter kind with no {{variables}}, and its default still needs replacing.
+  assert.equal(templateDef("custom:own")?.letter, true);
+  assert.deepEqual(CUSTOM_KINDS.own.variables, []);
+  assert.equal(hasOwnEmailPlaceholder({ subject: CUSTOM_KINDS.own.defaults.subject, cover: CUSTOM_KINDS.own.defaults.message }), true);
+  assert.ok(OWN_TEMPLATE_BLANKS.some(([label]) => label === "Salutation"));
+});

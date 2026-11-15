@@ -262,6 +262,30 @@ export function wordingFor(letter, edits, ref) {
 export const OWN_EMAIL_SUBJECT = "Write your subject here";
 export const OWN_EMAIL_MESSAGE = "Write your message here.";
 export const ownEmailWording = () => ({ subject: OWN_EMAIL_SUBJECT, cover: `Dear [Salutation],\n\n${OWN_EMAIL_MESSAGE}` });
+/**
+ * HOR's saved "Own email" templates (Email templates → Your templates, owner
+ * 2026-11-16): picked under "Write my own email" in the send window. The message
+ * uses the letter fill-ins, never {{variables}}; anything not filled from the
+ * recipient or the event is asked on the send page like any typed blank.
+ */
+export const OWN_TEMPLATE_BLANKS = [
+  ["Salutation", "How to greet them, e.g. Ms. Jessie (their greeting, else the contact person, else the company)"],
+  ["Their Contact Person", "The contact person on their record"],
+  ["Company Name", "The brand, company or shelter; for a guest with no company, their name"],
+  ["Date", "The day it is sent"],
+  ["Event Name", "The event's title, when sent from an event (else asked when sending)"],
+  ["Event Date", "The event's date, when sent from an event"],
+  ["Event Venue", "The event's venue, when sent from an event"],
+];
+/** A saved own-email template → the send window's wording ({ subject, cover }). */
+export const ownTemplateWording = (t) => ({ subject: String(t?.subject || ""), cover: String(t?.message || "") });
+/** The template filled for a sample brand, for the editor preview and the test email. */
+export const OWN_TEMPLATE_SAMPLE = { name: "Paws & Co.", contact: "Jessie Reyes", salutation: "Ms. Jessie" };
+export function ownTemplateSample({ subject = "", message = "" } = {}) {
+  const values = Object.fromEntries(blanksOf(subject, message).map((b) => [b.label, `[${b.label}]`]));
+  const who = { ...OWN_TEMPLATE_SAMPLE, values };
+  return { subject: fillLetter(subject, who).replace(/\s+/g, " ").trim(), cover: fillLetter(message, who, { plain: true }) };
+}
 /** True while the placeholder subject or message is still in the wording, so it isn't sent as is. */
 export const hasOwnEmailPlaceholder = (w) => String(w?.subject || "").includes(OWN_EMAIL_SUBJECT) || String(w?.cover || "").includes(OWN_EMAIL_MESSAGE);
 
