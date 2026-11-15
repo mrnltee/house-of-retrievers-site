@@ -11,9 +11,15 @@
 export const SCENE_TARGETS = {
   tracker: ["invite", "followAll", "row1Tick", "row2Tick", "row1Follow", "row1Send", "row2Send", "review", "newRow"],
   invite: ["search", "pick1", "pick2", "add", "addNew"],
-  send: ["letter", "to1", "to2", "tab1", "tab2", "own", "write", "send", "confirm"],
+  send: ["letter", "to1", "to2", "tab1", "tab2", "own", "write", "send", "confirm", "blank"],
   editor: ["subject", "message", "use"],
   brandForm: ["name", "kind", "code", "event", "create"],
+  letters: ["details", "edit1", "dup1", "newName", "newLetter", "confirm", "group"],
+  letterEditor: ["name", "subject", "cover", "bold", "blankBtn", "body", "preview", "save", "confirm"],
+  details: ["field1", "field2", "save"],
+  people: ["tick1", "tick2", "send"],
+  templates: ["newAcceptance", "newEvent", "edit1"],
+  templateEditor: ["tname", "subject", "heading", "message", "chip", "test", "save"],
 };
 
 export const GUIDES = {
@@ -83,8 +89,77 @@ export const GUIDES = {
   },
 };
 
+Object.assign(GUIDES, {
+  "new-letter": {
+    title: "Make a new letter",
+    steps: [
+      { scene: "letters", target: "newName", act: "type", text: "Thank-you letter (sponsors)", caption: "On Letters, scroll to New letter and type a name. Only admins see it." },
+      { scene: "letters", state: { newName: "Thank-you letter (sponsors)" }, target: "newLetter", act: "click", caption: "Press + New letter." },
+      { scene: "letters", state: { newName: "Thank-you letter (sponsors)", confirm: "Make a new letter?" }, target: "confirm", act: "click", caption: "Confirm. Nothing is sent: it only makes the letter." },
+      { scene: "letterEditor", target: "subject", act: "type", text: "Thank you for joining A Golden Beginning", caption: "The editor opens. Step 1: the subject people see in their inbox." },
+      { scene: "letterEditor", state: { subject: "Thank you for joining A Golden Beginning" }, target: "body", caption: "It already has the address block, greeting and signature. Write your letter in step 3; the preview beside it updates as you type." },
+      { scene: "letterEditor", state: { subject: "Thank you for joining A Golden Beginning" }, target: "save", act: "click", caption: "Press Save and confirm. It's now in Your letters, ready to send." },
+    ],
+  },
+  "duplicate-letter": {
+    title: "Start from an existing letter",
+    steps: [
+      { scene: "letters", target: "dup1", act: "click", caption: "Found a letter close to what you need? Press Duplicate on it." },
+      { scene: "letters", state: { confirm: "Make a copy of “Sponsorship letter”?" }, target: "confirm", act: "click", caption: "Confirm. The original stays exactly as it is." },
+      { scene: "letterEditor", state: { name: "Sponsorship letter (copy)", subject: "An Invitation to Help Create a Golden Beginning" }, target: "name", caption: "Your copy opens in the editor, marked Your own. Rename it…" },
+      { scene: "letterEditor", state: { name: "Sponsorship letter (copy)", subject: "An Invitation to Help Create a Golden Beginning" }, target: "body", caption: "…change the wording you need…" },
+      { scene: "letterEditor", state: { name: "Sponsorship letter (copy)", subject: "An Invitation to Help Create a Golden Beginning" }, target: "save", act: "click", caption: "…and Save. Letters made for one event live on that event's Letters page instead." },
+    ],
+  },
+  "edit-letter": {
+    title: "Write and format a letter",
+    steps: [
+      { scene: "letterEditor", target: "cover", caption: "Step 2 is the short email the PDF is attached to. Keep it to a few lines." },
+      { scene: "letterEditor", target: "body", caption: "Step 3 is the letter itself, the PDF. Select words, then use the buttons above it." },
+      { scene: "letterEditor", target: "bold", act: "click", caption: "Bold, headings, centre, bullets and tables only add marks to the text, so the PDF always matches." },
+      { scene: "letterEditor", target: "blankBtn", act: "click", caption: "Blank adds a [fill-in] such as [Company Name]: it becomes each recipient's details when you send." },
+      { scene: "letterEditor", target: "preview", act: "click", caption: "Preview PDF shows the real attachment, addressed to a sample recipient, before you save." },
+      { scene: "letterEditor", target: "save", act: "click", caption: "Save and confirm. Letters sent from now on use this wording; ones already sent don't change." },
+    ],
+  },
+  "standard-details": {
+    title: "Fill in standard details once",
+    steps: [
+      { scene: "letters", target: "details", act: "click", caption: "Some blanks are the same in every letter, like HOR's contact person or the signatory. Press Standard details." },
+      { scene: "details", target: "field1", act: "type", text: "Ms. Alyzza Angeles", caption: "Type each answer once." },
+      { scene: "details", state: { field1: "Ms. Alyzza Angeles" }, target: "field2", caption: "Bank and GCash details come from Payment settings by themselves, so they're always current." },
+      { scene: "details", state: { field1: "Ms. Alyzza Angeles" }, target: "save", act: "click", caption: "Save. From now on these fill in by themselves when you send; you can still change one for a single send." },
+    ],
+  },
+  "send-letter": {
+    title: "Send a letter to people on a list",
+    steps: [
+      { scene: "people", target: "tick1", act: "tick", caption: "Letters are sent from the lists: the Guest list, Beneficiaries, or an event's Brand tracker. Tick the people." },
+      { scene: "people", state: { ticked: ["tick1"] }, target: "tick2", act: "tick", caption: "Tick everyone who should get it (up to 25 a send)." },
+      { scene: "people", state: { ticked: ["tick1", "tick2"] }, target: "send", act: "click", caption: "Press Send this letter to ticked." },
+      { scene: "send", state: { to: ["to1", "to2"], blank: true }, target: "blank", act: "type", text: "December 5", caption: "Type any blanks the letter still needs. They're the same for everyone in this send." },
+      { scene: "send", state: { to: ["to1", "to2"], blank: true, typedBlank: "December 5" }, target: "tab2", act: "click", caption: "Check each person's email and PDF in the preview tabs." },
+      { scene: "send", state: { to: ["to1", "to2"], blank: true, typedBlank: "December 5" }, target: "send", act: "click", caption: "Press Send and confirm. Each person gets their own email, and the list shows its delivery status." },
+    ],
+  },
+  "new-template": {
+    title: "Make an email template",
+    steps: [
+      { scene: "templates", target: "newAcceptance", act: "click", caption: "On Email templates, under Your templates, press + New acceptance template (sent when you accept someone) or + New event template (an event's confirmation)." },
+      { scene: "templateEditor", target: "tname", act: "type", text: "Volunteer accepted", caption: "Give it a name only admins see." },
+      { scene: "templateEditor", state: { tname: "Volunteer accepted" }, target: "subject", act: "type", text: "Welcome to the pack!", caption: "Write the subject and the big heading." },
+      { scene: "templateEditor", state: { tname: "Volunteer accepted", subject: "Welcome to the pack!" }, target: "message", caption: "Type the message as it should look. Select words to make them bold or a link." },
+      { scene: "templateEditor", state: { tname: "Volunteer accepted", subject: "Welcome to the pack!" }, target: "chip", act: "click", caption: "Click a variable such as {{first_name}} to drop it in where your cursor is: each person sees their own name." },
+      { scene: "templateEditor", state: { tname: "Volunteer accepted", subject: "Welcome to the pack!", chip: true }, target: "test", act: "click", caption: "Send a test to me first, and check it in your inbox." },
+      { scene: "templateEditor", state: { tname: "Volunteer accepted", subject: "Welcome to the pack!", chip: true }, target: "save", act: "click", caption: "Save. Pick it from a person's profile (Send an email) or in an event's Confirmation email." },
+    ],
+  },
+});
+
 /** The brand guides, in the order the guide list shows them. */
 export const BRAND_GUIDES = ["send-one", "follow-up", "send-many", "own-email", "invite", "add-brand"];
+/** Letters and email templates (owner, 2026-11-15). */
+export const LETTER_GUIDES = ["new-letter", "duplicate-letter", "edit-letter", "standard-details", "send-letter", "own-email", "new-template"];
 
 /** How long a step stays up while playing, in ms: longer captions get a little longer. */
 export function stepDuration(step) {

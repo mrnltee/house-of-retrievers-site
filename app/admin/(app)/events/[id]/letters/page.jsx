@@ -11,6 +11,8 @@ import { listDesigns } from "../../../../../lib/emailDesignStore";
 import { designLabel, kindLabel } from "../../../../../lib/emailDesign.mjs";
 import { createDesign, deleteDesign } from "../../../../emailDesignActions";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../../ui";
+import HowTo from "../../../HowTo";
+import { LETTER_GUIDES } from "../../../../../lib/admin/howToGuides.mjs";
 import ConfirmButton from "../../../ConfirmButton";
 
 /**
@@ -38,6 +40,7 @@ export default async function EventLettersPage({ params, searchParams }) {
   return (
     <>
       <PageHead title="Event letters" lead={`${event.title} · ${event.date ? formatDay(event.date) : "date to be set"}. Invites, proposals and other letters for this event: each gets its covering email and PDF, with the event's details filled in.`}>
+        <HowTo guide="new-letter" guides={LETTER_GUIDES} className="btn ghost" />
         <a className="btn ghost" href={`${base}/events/${event.id}`}>Back to the event</a>
         <a className="btn ghost" href={`${base}/events/${event.id}/brands`}>Brands &amp; partnerships</a>
       </PageHead>

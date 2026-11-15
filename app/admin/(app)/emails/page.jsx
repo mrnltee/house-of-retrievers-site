@@ -5,6 +5,8 @@ import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { CUSTOM_KINDS, EDITABLE_TEMPLATES } from "../../../lib/emailTemplates.mjs";
 import { listCustomTemplates, loadEmailFrame } from "../../../lib/emailSettings";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
+import HowTo from "../HowTo";
+import { LETTER_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 
 /** The emails HOR can reword, and the ones HOR has written itself. */
 export default async function EmailsPage({ searchParams }) {
@@ -21,7 +23,9 @@ export default async function EmailsPage({ searchParams }) {
   const custom = await listCustomTemplates();
   return (
     <>
-      <PageHead title="Email templates" lead="Put HOR's emails in its own words. Use {{first_name}} and the other variables to greet each person by name. The logo band stays the same on every email; the sign-off and footer are set below." />
+      <PageHead title="Email templates" lead="Put HOR's emails in its own words. Use {{first_name}} and the other variables to greet each person by name. The logo band stays the same on every email; the sign-off and footer are set below.">
+        <HowTo guide="new-template" guides={LETTER_GUIDES} className="btn ghost" />
+      </PageHead>
       <Flash params={params} />
       <FrameEditor saved={await loadEmailFrame({ fresh: true })} canEdit={can(admin, "emails:edit")} />
       <a className="card supporter-card" href={`${base}/emails/designs`} style={{ marginBottom: 16 }}>

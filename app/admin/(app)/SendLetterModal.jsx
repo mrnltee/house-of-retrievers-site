@@ -77,8 +77,8 @@ export default function SendLetterModal({ base = "" }) {
     <dialog ref={dialog} className="send-modal" aria-labelledby="send-modal-title" onCancel={(e) => { e.preventDefault(); close(); }} onClose={() => state && close()}>
       <div className="send-modal-head">
         <h2 id="send-modal-title">Send a letter</h2>
-        {/* Brand sends get the brand guides; Write my own email works for any list. */}
-        {state?.data && <HowTo guide={state.data.listName === "brands" ? "send-one" : "own-email"} guides={state.data.listName === "brands" ? undefined : ["own-email"]} />}
+        {/* Brand sends get the brand guides; other lists get sending a letter and writing your own email. */}
+        {state?.data && <HowTo guide={state.data.listName === "brands" ? "send-one" : "send-letter"} guides={state.data.listName === "brands" ? undefined : ["send-letter", "own-email"]} />}
         {state?.query && <a className="small" href={`${sendPath}${String(state.query).startsWith("?") ? state.query : `?${state.query}`}`} target="_blank" rel="noreferrer">Open as a page ↗</a>}
         <button type="button" className="btn ghost small" onClick={close} aria-label="Close the send window" data-confirm="not-needed-read-only">✕ Close</button>
       </div>

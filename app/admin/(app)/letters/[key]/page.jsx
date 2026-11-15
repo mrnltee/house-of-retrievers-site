@@ -6,6 +6,8 @@ import { eventFills } from "../../../../lib/letterEventStore";
 import { sql } from "../../../../lib/db";
 import { LETTER_STARTERS } from "../../../../lib/letters.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
+import HowTo from "../../HowTo";
+import { LETTER_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import LetterEditor from "./LetterEditor";
 
 /** One letter's wording: name, email subject, covering email and the letter itself. */
@@ -31,6 +33,7 @@ export default async function LetterPage({ params, searchParams }) {
   return (
     <>
       <PageHead title={letter.name} lead="Edit in four steps. The preview on the right shows it addressed to a sample company; blanks you type when sending stay highlighted.">
+        <HowTo guide="edit-letter" guides={LETTER_GUIDES} className="btn ghost" />
         <nav className="letter-nav" aria-label="Letters">
           {event ? <a className="btn small ghost" href={`${base}/events/${event.id}/letters`}>← {event.title}: letters</a> : <a className="btn small ghost" href={`${base}/letters`}>← Back to Letters</a>}
           {prev ? <a className="btn small" href={`${base}/letters/${prev.key}`} title={prev.name} rel="prev">‹ Previous</a> : <span className="btn small" aria-disabled="true">‹ Previous</span>}

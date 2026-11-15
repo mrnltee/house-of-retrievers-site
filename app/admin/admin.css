@@ -1149,7 +1149,7 @@ html.send-modal-open { overflow: hidden; }
 }
 
 /* The mock screens: simplified, so the pointer's target is easy to see. */
-.ht-screen { position: absolute; inset: 0; padding: 14px; display: grid; align-content: start; gap: 10px; background: var(--a-ivory); }
+.ht-screen { position: absolute; inset: 0; padding: 14px; display: grid; align-content: start; gap: 8px; background: var(--a-ivory); overflow: hidden; }
 .ht-screen.ht-dim { background: rgba(13,13,13,.42); place-items: center; align-content: center; }
 .ht-dialog { width: min(440px, 92%); background: var(--a-ivory); border-radius: 14px; padding: 14px; display: grid; gap: 9px; box-shadow: 0 14px 40px -14px rgba(0,0,0,.5); position: relative; }
 .ht-dialog.is-wide { width: 94%; }
@@ -1197,3 +1197,14 @@ html.send-modal-open { overflow: hidden; }
 .ht-seg span { padding: 5px 12px; font-weight: 700; }
 .ht-seg .is-on { background: var(--a-ink); color: #fff; }
 @media (prefers-reduced-motion: reduce) { .ht-row.is-new, .ht-caret { animation: none; } }
+.ht-row.ht-row-2 { grid-template-columns: minmax(0, 1fr) auto; }
+.ht-card { display: grid; gap: 7px; background: #fff; border: 1px solid var(--a-line); border-radius: 10px; padding: 9px 10px; }
+.ht-card > small { color: var(--a-muted); }
+.ht-field-row.is-end { align-items: end; grid-template-columns: minmax(0, 1fr) auto; }
+.ht-dialog.ht-small { width: min(260px, 80%); text-align: center; justify-items: center; }
+.ht-dialog.ht-small small { color: var(--a-muted); }
+.ht-tools { display: flex; gap: 4px; flex-wrap: wrap; }
+.ht-tool { display: inline-grid; place-items: center; min-width: 26px; padding: 3px 7px; border: 1px solid var(--a-line); border-radius: 6px; background: #fff; font-weight: 700; }
+.ht-page { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--a-line); border-radius: 4px; background: #fff; min-height: 110px; align-content: start; }
+.ht-page .ht-line { background: var(--a-sand); }
+.ht-group .ht-head { flex-wrap: wrap; }

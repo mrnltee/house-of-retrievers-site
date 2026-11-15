@@ -4,6 +4,8 @@ import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { CUSTOM_KINDS, TEMPLATE_VARIABLES } from "../../../../../lib/emailTemplates.mjs";
 import { loadCustomTemplate } from "../../../../../lib/emailSettings";
 import { Flash, NotAllowed, PageHead } from "../../../ui";
+import HowTo from "../../../HowTo";
+import { LETTER_GUIDES } from "../../../../../lib/admin/howToGuides.mjs";
 import TemplateEditor from "../../[key]/TemplateEditor";
 
 /** One of HOR's own templates. */
@@ -19,7 +21,9 @@ export default async function CustomEmailTemplatePage({ params, searchParams }) 
   return (
     <>
       <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
-      <PageHead title={row.name} lead={`${k.title} template. ${k.when}`} />
+      <PageHead title={row.name} lead={`${k.title} template. ${k.when}`}>
+        <HowTo guide="new-template" guides={LETTER_GUIDES} className="btn ghost" />
+      </PageHead>
       <Flash params={query} />
       <TemplateEditor frame={await loadEmailFrame()}
         customId={row.id}

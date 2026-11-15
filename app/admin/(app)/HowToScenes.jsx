@@ -84,7 +84,8 @@ function Invite({ state = {}, typed }) {
   );
 }
 
-function Send({ state = {} }) {
+function Send({ state = {}, typed }) {
+  const blank = typed?.target === "blank" ? typed.text : state.typedBlank;
   const to = state.to || [];
   const people = [{ t: "to1", tab: "tab1", name: "Acuaverde" }, { t: "to2", tab: "tab2", name: "Aeternal Paws" }];
   const shown = people.filter((p) => to.includes(p.t));
@@ -97,6 +98,7 @@ function Send({ state = {} }) {
             <span className="ht-field" {...T("letter")}><small>Letter</small><span className="ht-input">{state.own ? "Your own email" : state.letter || "Sponsorship letter — Golden Beginning"} ▾</span></span>
             <small className="ht-legend">Send to · {to.length} ticked</small>
             {people.map((p) => <span key={p.t} className="ht-pick" {...T(p.t)}><Box on={to.includes(p.t)} /> {p.name}</span>)}
+            {state.blank ? <Field t="blank" label="Fill in for this send · [Reply By Date]" value={blank} placeholder="e.g. December 5" /> : <span {...T("blank")} />}
             <span className="ht-pick" {...T("own")}><Box on={state.own} /> Write my own email (email only)</span>
             <Btn t="send" tone="gold">Send to {to.length}</Btn>
           </div>
@@ -160,7 +162,136 @@ function BrandForm() {
   );
 }
 
-const SCENES = { tracker: Tracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm };
+/** A confirm dialog over a scene (state.confirm = its title). */
+function Confirm({ title }) {
+  return title ? (
+    <div className="ht-screen ht-dim">
+      <div className="ht-dialog ht-small">
+        <strong>{title}</strong>
+        <small>Nothing is sent.</small>
+        <Btn t="confirm" tone="dark">Yes</Btn>
+      </div>
+    </div>
+  ) : null;
+}
+
+function Letters({ state = {}, typed }) {
+  const name = typed?.target === "newName" ? typed.text : state.newName;
+  return (
+    <div className="ht-screen">
+      <div className="ht-head"><strong className="ht-title">Letters</strong><Btn t="details">Standard details (6)</Btn></div>
+      <div className="ht-row ht-row-2">
+        <span className="ht-name"><strong>Sponsorship letter (brands and companies)</strong><small>Sent to: Sponsors · 2 blanks to fill when sending</small></span>
+        <span className="ht-actions"><Btn t="edit1">Edit</Btn><Btn t="dup1">Duplicate</Btn></span>
+      </div>
+      <div className="ht-row ht-row-2">
+        <span className="ht-name"><strong>Invitation: special guests</strong><small>Sent to: VIP furparents · Nothing to type when sending</small></span>
+        <span className="ht-actions"><Btn>Edit</Btn><Btn>Duplicate</Btn></span>
+      </div>
+      <div className="ht-card">
+        <strong>New letter</strong>
+        <span className="ht-field-row is-end"><Field t="newName" label="Name · only admins see this" value={name} placeholder="e.g. Thank-you letter (sponsors)" /><Btn t="newLetter" tone="dark">+ New letter</Btn></span>
+      </div>
+      <div className="ht-card" {...T("group")}><strong>Which letter each group gets</strong><small>Sponsors → Sponsorship letter · Media → Invitation: media</small></div>
+      <Confirm title={state.confirm} />
+      {!state.confirm && <span {...T("confirm")} />}
+    </div>
+  );
+}
+
+function LetterEditor({ state = {}, typed }) {
+  const subject = typed?.target === "subject" ? typed.text : state.subject;
+  return (
+    <div className="ht-screen">
+      <div className="ht-cols">
+        <div className="ht-col">
+          <small className="ht-legend"><strong>1</strong> Name and subject</small>
+          <span className="ht-field-row">
+            <Field t="name" label="Name" value={state.name || "Thank-you letter (sponsors)"} />
+            <Field t="subject" label="Email subject" value={subject} placeholder="The line people see in their inbox" />
+          </span>
+          <small className="ht-legend"><strong>2</strong> Covering email</small>
+          <span className="ht-input" {...T("cover")}>Dear [Salutation], our letter is attached.</span>
+          <small className="ht-legend"><strong>3</strong> The letter (PDF)</small>
+          <span className="ht-tools"><span className="ht-tool" {...T("bold")}><b>B</b></span><span className="ht-tool">H1</span><span className="ht-tool">≡</span><span className="ht-tool">•</span><span className="ht-tool" {...T("blankBtn")}>[ ] Blank</span></span>
+          <span className="ht-input is-tall" {...T("body")}>[Date] · [Company Name]<br />Dear [Salutation]:<br />Thank you for being part of…</span>
+          <span className="ht-actions"><Btn t="save" tone="dark">Save</Btn></span>
+        </div>
+        <div className="ht-col ht-preview">
+          <small>Preview, addressed to a sample brand</small>
+          <span className="ht-page"><span className="ht-line is-short" /><span className="ht-line" /><span className="ht-line" /><span className="ht-line is-short" /><span className="ht-line" /></span>
+          <Btn t="preview">Preview PDF</Btn>
+        </div>
+      </div>
+      <Confirm title={state.confirm} />
+      {!state.confirm && <span {...T("confirm")} />}
+    </div>
+  );
+}
+
+function Details({ state = {}, typed }) {
+  const v1 = typed?.target === "field1" ? typed.text : state.field1;
+  return (
+    <div className="ht-screen">
+      <strong className="ht-title">Standard details</strong>
+      <small className="ht-legend">Filled in by themselves in every letter.</small>
+      <Field t="field1" label="[Signatory Name]" value={v1} placeholder="Who signs the letters" />
+      <span className="ht-field" {...T("field2")}><small>[HOR Bank] · from Payment settings</small><span className="ht-input is-empty">BPI · filled in from Payment settings</span></span>
+      <Field label="[Contact Person]" value="Shey · 0917 •••• 123" />
+      <Btn t="save" tone="dark">Save</Btn>
+    </div>
+  );
+}
+
+function People({ state = {} }) {
+  const ticked = state.ticked || [];
+  const rows = [{ t: "tick1", name: "Ms. Malou Perez", sub: "VIP furparent" }, { t: "tick2", name: "Pawssion Project", sub: "Beneficiary · rescue" }];
+  return (
+    <div className="ht-screen">
+      <div className="ht-head"><strong className="ht-title">Guest list</strong></div>
+      <div className="ht-card ht-group">
+        <span className="ht-head"><strong>VIP furparents · Invitation: special guests</strong><Btn t="send" tone="dark">Send this letter to ticked</Btn></span>
+        {rows.map((r) => <span key={r.t} className="ht-pick" {...T(r.t)}><Box on={ticked.includes(r.t)} /> <strong>{r.name}</strong> <small>· {r.sub}</small></span>)}
+      </div>
+    </div>
+  );
+}
+
+function Templates() {
+  return (
+    <div className="ht-screen">
+      <strong className="ht-title">Email templates</strong>
+      <small className="ht-legend">Sent automatically</small>
+      <div className="ht-row ht-row-2"><span className="ht-name"><strong>RSVP confirmed (standard)</strong><small>Sent when a spot is confirmed</small></span><span className="ht-actions"><Btn t="edit1">Edit</Btn></span></div>
+      <small className="ht-legend">Your templates</small>
+      <span className="ht-actions"><Btn t="newAcceptance">+ New acceptance template</Btn><Btn t="newEvent">+ New event confirmation template</Btn></span>
+    </div>
+  );
+}
+
+function TemplateEditor({ state = {}, typed }) {
+  const val = (key) => (typed?.target === key ? typed.text : state[key]);
+  return (
+    <div className="ht-screen">
+      <div className="ht-cols">
+        <div className="ht-col">
+          <Field t="tname" label="Template name" value={val("tname")} placeholder="e.g. Volunteer accepted" />
+          <Field t="subject" label="Subject" value={val("subject")} placeholder="The line people see in their inbox" />
+          <Field t="heading" label="Heading" value={state.subject ? "You're in!" : undefined} placeholder="The big serif line" />
+          <span className="ht-field" {...T("message")}><small>Message</small><span className="ht-input is-tall">Hi {state.chip ? <b>{"{{first_name}}"}</b> : "…"}, welcome to the House of Retrievers family…</span></span>
+          <span className="ht-actions"><span className="ht-chip" {...T("chip")}>{"{{first_name}}"}</span><span className="ht-chip">{"{{furbaby_name}}"}</span></span>
+          <span className="ht-actions"><Btn t="save" tone="dark">Save</Btn><Btn t="test">Send a test to me</Btn></span>
+        </div>
+        <div className="ht-col ht-preview">
+          <small>Preview</small>
+          <span className="ht-mail"><strong>{state.chip ? "Hi Shey," : "Hi …,"}</strong><span className="ht-title">You&apos;re in!</span><span className="ht-line" /><span className="ht-line is-short" /><small>With love and purpose</small></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const SCENES = { tracker: Tracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
 
 /** One guide step's screen. `typed` is the text typed so far on a typing step. */
 export default function HowToScene({ scene, state, typed }) {

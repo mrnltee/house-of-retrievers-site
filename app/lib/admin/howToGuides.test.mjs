@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BRAND_GUIDES, GUIDES, SCENE_TARGETS, stepDuration } from "./howToGuides.mjs";
+import { BRAND_GUIDES, GUIDES, LETTER_GUIDES, SCENE_TARGETS, stepDuration } from "./howToGuides.mjs";
 
-test("every brand guide exists, has steps, and points only at things its mock draws", () => {
-  for (const key of BRAND_GUIDES) {
+test("every brand, letter and template guide exists, has steps, and points only at things its mock draws", () => {
+  for (const key of [...BRAND_GUIDES, ...LETTER_GUIDES]) {
     const guide = GUIDES[key];
     assert.ok(guide, `${key} is defined`);
     assert.ok(guide.title && guide.steps.length >= 3, `${key} has a title and steps`);

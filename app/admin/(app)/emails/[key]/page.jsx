@@ -4,6 +4,8 @@ import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { EDITABLE_TEMPLATES, TEMPLATE_VARIABLES } from "../../../../lib/emailTemplates.mjs";
 import { loadTemplate } from "../../../../lib/emailSettings";
 import { Flash, NotAllowed, PageHead } from "../../ui";
+import HowTo from "../../HowTo";
+import { LETTER_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import TemplateEditor from "./TemplateEditor";
 
 export default async function EmailTemplatePage({ params, searchParams }) {
@@ -18,7 +20,9 @@ export default async function EmailTemplatePage({ params, searchParams }) {
   return (
     <>
       <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
-      <PageHead title={t.title} lead={t.when} />
+      <PageHead title={t.title} lead={t.when}>
+        <HowTo guide="new-template" guides={LETTER_GUIDES} className="btn ghost" />
+      </PageHead>
       <Flash params={query} />
       <TemplateEditor frame={await loadEmailFrame()}
         templateKey={key}

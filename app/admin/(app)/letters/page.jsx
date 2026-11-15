@@ -7,6 +7,8 @@ import { createLetter, deleteLetter, saveGroupLetters } from "../../letterAction
 import WordImport from "./WordImport";
 import ConfirmButton from "../ConfirmButton";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
+import HowTo from "../HowTo";
+import { LETTER_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 
 /**
  * Settings → Letters: HOR's letters (built-in and HOR's own), sent as a PDF with
@@ -25,6 +27,7 @@ export default async function LettersPage({ searchParams }) {
   return (
     <>
       <PageHead title="Letters" lead="Each letter is a PDF sent with a short covering email, addressed to each recipient by name. Send them from the Guest list, Beneficiaries or Brands & Partners by ticking people.">
+        <HowTo guide="new-letter" guides={LETTER_GUIDES} className="btn ghost" />
         {canEdit && <a className="btn ghost" href={`${base}/letters/details`}>Standard details ({answers.standard.size})</a>}
       </PageHead>
       <Flash params={params} />
