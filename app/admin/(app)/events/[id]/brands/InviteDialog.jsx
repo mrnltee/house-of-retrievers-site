@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { fuzzyMatch, fold } from "../../../../../lib/fuzzy.mjs";
 import { brandNameFrom } from "../../../../../lib/supporters.mjs";
+import HowTo from "../../../HowTo";
 
 /**
  * "+ Invite brands" in the page head: the directory picker in a dialog, with
@@ -34,6 +35,7 @@ export default function InviteDialog({ children, newHref = "", onTracker = [] })
         <div className="confirm-body">
           <div className="invite-head">
             <h2 id="invite-title">Invite brands</h2>
+            <HowTo guide="invite" />
             <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => dialog.current?.close()}>Close</button>
           </div>
           <input type="search" value={q} onChange={(e) => search(e.target.value)} placeholder="Search the directory…" aria-label="Search the directory" autoComplete="off" />
@@ -50,6 +52,7 @@ export default function InviteDialog({ children, newHref = "", onTracker = [] })
             ))}
           </div>
           {children}
+          {newHref && <p className="small muted" style={{ margin: 0 }}>Not in the directory? <a href={newHref}>Add a new brand</a>; it opens over this page and lands on this tracker.</p>}
         </div>
       </dialog>
     </>

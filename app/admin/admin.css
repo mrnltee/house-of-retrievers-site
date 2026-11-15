@@ -944,6 +944,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .tracker-row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .invite-dialog { width: min(760px, calc(100vw - 32px)); }
 .invite-dialog .invite-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.invite-dialog .invite-head h2 { margin-right: auto; }
 .invite-dialog .tracker-pick { max-height: min(52vh, 460px); }
 @media (min-width: 861px) {
   .admin-main:has(.tracker-page) { height: 100dvh; box-sizing: border-box; padding-bottom: 24px; display: flex; flex-direction: column; overflow: hidden; }
@@ -1098,6 +1099,7 @@ button.tag-badge.is-on { background: var(--a-ink); color: white; }
 .send-modal-body { overflow: auto; padding: 18px 20px 28px; }
 .send-modal-body > .card { margin-bottom: 12px; }
 html.send-modal-open { overflow: hidden; }
+.brand-modal { width: min(980px, 96vw); }
 @media (max-width: 860px) { .send-modal { width: 100vw; height: 100dvh; border-radius: 0; } }
 /* Notes in the send window read as one paragraph (.card is a grid elsewhere). */
 .send-modal-body > p.card { display: block; }
@@ -1107,3 +1109,91 @@ html.send-modal-open { overflow: hidden; }
 .supporter-grid .tracker-edit .form { min-width: 0; }
 /* Brand search with no results: "Add “…” as a new brand" (directory and + Invite brands). */
 .invite-dialog .empty-search { padding: 12px 14px; border: 1px dashed var(--a-line, #cfc8b6); border-radius: 12px; }
+
+/* How it works (owner, 2026-11-15): animated guides in a dialog. HowTo.jsx plays them on the mock screens in HowToScenes.jsx. */
+.howto-dialog { width: min(1080px, 96vw); max-height: 94vh; padding: 0; border: 0; border-radius: 20px; background: var(--a-ivory); color: var(--a-ink); box-shadow: 0 30px 90px -30px rgba(13,13,13,.6); overflow: auto; }
+.howto-dialog::backdrop { background: rgba(13,13,13,.55); }
+.howto-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--a-line); background: #fff; position: sticky; top: 0; z-index: 2; }
+.howto-head h2 { margin: 0; font: 400 24px/1.1 "DM Serif Display", serif; }
+.howto-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; padding: 18px 20px 24px; }
+.howto-guides { display: grid; gap: 6px; align-content: start; }
+.howto-guide { text-align: left; padding: 10px 12px; min-height: 44px; border: 1px solid var(--a-line); border-radius: 12px; background: #fff; color: var(--a-ink); font: inherit; font-size: 14px; cursor: pointer; }
+.howto-guide.is-on { background: var(--a-ink); color: #fff; border-color: var(--a-ink); }
+.howto-guide:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
+.howto-main { display: grid; gap: 12px; min-width: 0; }
+.howto-main h3 { margin: 0; font-size: 18px; }
+.howto-stage { position: relative; overflow: hidden; border-radius: 16px; border: 1px solid var(--a-line); background: var(--a-sand); aspect-ratio: 16 / 9; min-height: 300px; font-size: 13px; }
+.howto-ring { position: absolute; top: 0; left: 0; border: 3px solid var(--a-gold); border-radius: 12px; pointer-events: none; transition: transform .6s cubic-bezier(.2,.7,.2,1), width .6s, height .6s; box-shadow: 0 0 0 6px rgba(167,132,64,.18); z-index: 3; }
+.howto-pointer { position: absolute; top: 0; left: 0; z-index: 4; pointer-events: none; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.howto-pointer svg { display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); transition: transform .12s; }
+.howto-pointer.is-pressed svg { transform: scale(.85); }
+.howto-pointer.is-pressed::after { content: ""; position: absolute; left: -10px; top: -10px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--a-gold); animation: howto-ripple .6s ease-out forwards; }
+@keyframes howto-ripple { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
+.howto-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.howto-controls .btn { min-width: 44px; min-height: 40px; }
+.howto-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 14px; }
+/* The number sits inside the button, so a long caption wraps under its own text, not under the number. */
+.howto-step { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: 4px; width: 100%; padding: 5px 8px; border: 0; border-radius: 8px; background: none; color: var(--a-muted); font: inherit; text-align: left; line-height: 1.45; cursor: pointer; }
+.howto-step:hover { background: var(--a-sand); }
+.howto-step:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 1px; }
+.howto-steps li[aria-current="step"] .howto-step { color: var(--a-ink); font-weight: 700; background: #fff; }
+@media (max-width: 760px) {
+  .howto-body { grid-template-columns: 1fr; }
+  .howto-guides { grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); overflow-x: auto; }
+  .howto-stage { aspect-ratio: auto; min-height: 340px; font-size: 11px; }
+  .ht-field-row { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .howto-ring, .howto-pointer, .howto-pointer svg { transition: none; }
+  .howto-pointer.is-pressed::after { animation: none; }
+}
+
+/* The mock screens: simplified, so the pointer's target is easy to see. */
+.ht-screen { position: absolute; inset: 0; padding: 14px; display: grid; align-content: start; gap: 10px; background: var(--a-ivory); }
+.ht-screen.ht-dim { background: rgba(13,13,13,.42); place-items: center; align-content: center; }
+.ht-dialog { width: min(440px, 92%); background: var(--a-ivory); border-radius: 14px; padding: 14px; display: grid; gap: 9px; box-shadow: 0 14px 40px -14px rgba(0,0,0,.5); position: relative; }
+.ht-dialog.is-wide { width: 94%; }
+.ht-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ht-title { font: 400 18px/1.1 "DM Serif Display", serif; }
+.ht-actions { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.ht-btn { display: inline-flex; align-items: center; justify-content: center; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--a-ink); background: #fff; font-weight: 700; font-size: .92em; white-space: nowrap; justify-self: start; }
+.ht-btn.dark { background: var(--a-ink); color: #fff; }
+.ht-btn.gold { background: var(--a-gold); border-color: var(--a-gold); color: var(--a-ink); }
+.ht-bar { padding: 7px 10px; border-radius: 10px; background: var(--a-sand); color: var(--a-muted); display: flex; gap: 10px; align-items: center; min-height: 34px; }
+.ht-bar.is-on { background: #fff; color: var(--a-ink); border: 1px solid var(--a-gold); }
+.ht-table { display: grid; gap: 6px; }
+.ht-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1.5fr) auto; gap: 8px; align-items: center; background: #fff; border: 1px solid var(--a-line); border-radius: 10px; padding: 7px 9px; }
+.ht-row.is-hidden { visibility: hidden; }
+.ht-row.is-new { border-color: var(--a-gold); animation: howto-in .5s ease-out; }
+@keyframes howto-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ht-name, .ht-cell, .ht-field { display: grid; gap: 3px; min-width: 0; }
+.ht-name small, .ht-cell small, .ht-field > small, .ht-legend { color: var(--a-muted); }
+.ht-cell .ht-chip { justify-self: start; }
+.ht-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--a-sand); font-weight: 700; font-size: .85em; white-space: nowrap; }
+.ht-box { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 2px solid var(--a-ink); border-radius: 4px; background: #fff; font-size: 11px; line-height: 1; vertical-align: middle; }
+.ht-box.is-on { background: var(--a-ink); color: #fff; }
+.ht-input { display: block; padding: 7px 9px; border: 1px solid var(--a-line); border-radius: 8px; background: #fff; min-height: 32px; overflow-wrap: anywhere; }
+.ht-input.is-tall { min-height: 70px; }
+.ht-input.is-empty, .ht-placeholder { color: var(--a-field); }
+.ht-caret { display: inline-block; width: 1px; height: 1em; margin-left: 1px; background: var(--a-ink); vertical-align: text-bottom; animation: howto-caret 1s steps(1) infinite; }
+@keyframes howto-caret { 50% { opacity: 0; } }
+.ht-list { display: grid; gap: 6px; }
+.ht-pick { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px; background: #fff; border: 1px solid var(--a-line); }
+.ht-pick small { color: var(--a-muted); }
+.ht-empty { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--a-line); border-radius: 10px; }
+.ht-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 12px; }
+.ht-col { display: grid; gap: 7px; align-content: start; }
+.ht-preview { background: #fff; border-radius: 10px; padding: 9px; }
+.ht-tabs { display: flex; gap: 5px; flex-wrap: wrap; min-height: 24px; }
+.ht-tab { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--a-ink); font-weight: 700; font-size: .9em; }
+.ht-tab.is-on { background: var(--a-ink); color: #fff; }
+.ht-mail { display: grid; gap: 6px; padding: 10px; border-radius: 8px; background: #141414; color: #f2f2f2; }
+.ht-mail small { color: var(--a-gold); font-style: italic; }
+.ht-line { height: 7px; border-radius: 4px; background: #3a3a3a; }
+.ht-line.is-short { width: 60%; }
+.ht-confirm { position: absolute; inset: 22% 22%; background: #fff; border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: center; box-shadow: 0 14px 40px -10px rgba(0,0,0,.5); }
+.ht-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ht-seg { display: inline-flex; border: 1px solid var(--a-ink); border-radius: 999px; overflow: hidden; justify-self: start; }
+.ht-seg span { padding: 5px 12px; font-weight: 700; }
+.ht-seg .is-on { background: var(--a-ink); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .ht-row.is-new, .ht-caret { animation: none; } }

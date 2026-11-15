@@ -6,6 +6,7 @@ import { can } from "../../../lib/admin/roles.mjs";
 import { isPublic, supporterNumber, brandNameFrom, newBrandHref } from "../../../lib/supporters.mjs";
 import { joinedCounts } from "../../../lib/eventBrandsStore";
 import { Flash, NotAllowed, PageHead } from "../ui";
+import HowTo from "../HowTo";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
@@ -56,6 +57,7 @@ export default async function SupportersPage({ searchParams }) {
   return (
     <>
       <PageHead title="Brands & Partners" lead="Who backs HOR and how. Add a clear relationship label, then use cards for a quick scan or the list when the records grow.">
+        <HowTo guide="add-brand" className="btn ghost" />
         {canEdit && <a className="btn ghost" href={`${base}/supporters/import`}>Import from Excel</a>}
         {canEdit && <a className="btn gold" href={`${base}/supporters/new`}>+ Add sponsor or partner</a>}
       </PageHead>

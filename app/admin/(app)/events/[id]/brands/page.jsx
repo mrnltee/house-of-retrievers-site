@@ -20,6 +20,7 @@ import SelectionBar from "./SelectionBar";
 import TrackerTools from "./TrackerTools";
 import SelectAll from "./SelectAll";
 import InviteDialog from "./InviteDialog";
+import HowTo from "../../../HowTo";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
@@ -73,6 +74,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
     <>
       <p className="small"><a href={`${base}/events/${event.id}`}>← {event.title}</a></p>
       <PageHead title="Brand tracker" lead={`${event.date ? formatDay(event.date) : "Date to be set"} · who you invited, their reply and what they're giving.`}>
+        <HowTo guide="send-one" className="btn ghost" />
         <a className="btn ghost" href={`${base}/supporters`}>Brand directory</a>
         {can(admin, "letters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/letters`}>Letters</a>}
         {canSend && followUp.href && <a className="btn ghost" href={followUp.href} title={`Email the ${followUp.count} brand${followUp.count === 1 ? "" : "s"} with no reply yet. You can untick brands and edit the wording before it's sent.${followUp.noEmail ? ` ${followUp.noEmail} ${followUp.noEmail === 1 ? "has" : "have"} no email yet.` : ""}`}>Follow up · {followUp.count}</a>}

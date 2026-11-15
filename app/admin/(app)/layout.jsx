@@ -6,6 +6,7 @@ import GuideTour from "./GuideTour";
 import Presence from "./Presence";
 import PasteImages from "./PasteImages";
 import SendLetterModal from "./SendLetterModal";
+import AddBrandModal from "./AddBrandModal";
 import { sql } from "../../lib/db";
 import { CHAT_ROOM_DAYS } from "../../lib/admin/chat.mjs";
 import { exitPreview } from "../previewActions";
@@ -68,6 +69,7 @@ export default async function AdminAppLayout({ children }) {
       {!admin.preview && <Presence />}
       {!admin.preview && <PasteImages />}
       {!admin.preview && <SendLetterModal base={base} />}
+      {!admin.preview && can(admin, "supporters:edit") && <AddBrandModal base={base} />}
       <main className="admin-main" id="admin-main">
         {admin.preview && (
           <div className="banner alert preview-bar" role="status">

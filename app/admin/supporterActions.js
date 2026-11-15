@@ -3,7 +3,8 @@
 import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
-import { supporterSlug, validateSupporter } from "../lib/supporters.mjs";
+import { KINDS, brandNameFrom, newBrandHref, supporterSlug, validateSupporter } from "../lib/supporters.mjs";
+import { eventsForBrand } from "../lib/eventBrandsStore";
 import { saveOutreach } from "../lib/supporterOutreach";
 import { issueSupporterNumber } from "../lib/supporterNumbers";
 import { saveSocials, socialsFrom } from "../lib/socialsStore";
@@ -39,7 +40,8 @@ async function freeSlug(name, id) {
 /** Saves a sponsor or partner record (create or edit). */
 export async function saveSupporter(data) {
   const id = form(data, "id");
-  const back = isUuid(id) ? `/supporters/${id}` : "/supporters/new";
+  // A new brand that fails a check goes back to the form with its name, type and event kept.
+  const back = isUuid(id) ? `/supporters/${id}` : newBrandHref("", { name: form(data, "name"), kind: form(data, "kind"), event: form(data, "fromEvent") });
   return guarded(back, async () => {
     const admin = await actionAdmin("supporters:edit");
     const before = isUuid(id) ? (await sql("SELECT * FROM supporters WHERE id = $1", [id]))[0] : null;
@@ -193,4 +195,22 @@ export async function deleteSupporters(data) {
     if (kept.length) parts.push(`Kept ${kept.length} on event Brand trackers (take them off the event first): ${kept.slice(0, 5).join(", ")}${kept.length > 5 ? ` and ${kept.length - 5} more` : ""}.`);
     await backWith(back, gone.length ? "ok" : "error", parts.join(" "));
   });
+}
+
+/**
+ * The Add brand window (owner, 2026-11-15): what the new-brand form needs, for
+ * a `?name=&kind=&event=` query like /supporters/new takes. Saving still goes
+ * through saveSupporter, which lands on the brand or the event's tracker.
+ */
+export async function openNewBrand(query) {
+  try {
+    await actionAdmin("supporters:edit");
+    const params = new URLSearchParams(String(query || "").replace(/^\?/, ""));
+    const events = await eventsForBrand();
+    const event = events.find((e) => e.id === params.get("event")) || null;
+    return { ok: true, events, prefill: { name: brandNameFrom(params.get("name")), kind: KINDS.includes(params.get("kind")) ? params.get("kind") : "", event } };
+  } catch (error) {
+    if (error instanceof Forbidden) return { ok: false, error: error.message };
+    throw error;
+  }
 }
