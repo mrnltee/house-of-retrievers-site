@@ -9,7 +9,7 @@ import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { reachFrom, withLiveInstagram } from "../lib/mediaReach.mjs";
 import { loadInstagramCounts } from "../lib/instagramCounts";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
-import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
+import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation, thumbnailFit } from "../lib/mediaHub.mjs";
 
 // Re-rendered hourly so new event albums and photographer credits reach the photo library; a publish in Admin → Media hub refreshes it at once.
 export const revalidate = 3600;
@@ -129,7 +129,7 @@ export default async function MediaPage() {
         <a href="/media/fact-sheet" target="_blank" rel="noopener noreferrer"><span>Fact sheet</span><strong>Download the PDF</strong><small>Facts, mission, boilerplates</small></a>
         <a href="#brand-assets"><span>Logos</span><strong>Brand assets</strong><small>SVG and PNG, light and dark</small></a>
         <a href="#photo-library"><span>Photos</span><strong>Credited photos</strong><small>From past events</small></a>
-        <a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry"><span>Media contact</span><strong>Email us</strong><small>houseofretrieversph@gmail.com</small></a>
+        <a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry"><span>Media contact</span><strong>Email us</strong><small>Message form or email</small></a>
       </nav>
 
       <section className="media-section media-intro media-chapter" id="about" aria-labelledby="about-title">
@@ -169,13 +169,13 @@ export default async function MediaPage() {
         </div>
         <div className={`media-timeline media-timeline-${timelineOrientation}`} aria-label="Documented activity timeline">
           <div className="media-timeline-heading"><span>Activity history</span></div>
-          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} /> : <span aria-hidden="true">✦</span>}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
+          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} className={thumbnailFit(item.thumbnail) === "contain" ? "is-poster" : undefined} /> : <span aria-hidden="true">✦</span>}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
         </div>
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
           <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry" data-message="partnership">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
-        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br />Serve generously.</p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
+        <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br /><em>Serve generously.</em></p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
         <div className="media-reach">
           <div className="media-reach-head"><h3>Our community</h3><p>Followers per channel. Many people follow more than one, so we don’t add them up.</p></div>
           <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <span aria-hidden="true"> ↗</span> : null}</em><span className="media-reach-asof">{channel.live ? "Live · updated hourly" : `As of ${channel.asOf || reach.community.asOf}`}</span></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>

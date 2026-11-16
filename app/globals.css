@@ -1949,3 +1949,50 @@ a.media-reach-channel:hover em, a.media-reach-channel:focus-visible em { text-de
 .media-pack-links a:hover, .media-pack-links a:focus-visible { text-decoration: underline; }
 @media (max-width: 1100px) { .media-pack { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .media-pack { grid-template-columns: 1fr; } .media-pack-inner { min-height: 220px; } }
+
+/* Design review pass (16 Nov 2026, owner). The main site already balances headings and keeps
+   paragraphs free of one-word last lines; the media hub hadn't adopted it (35 orphans at 375 px). */
+.media-hub :is(h1, h2, h3, h4, blockquote p, figcaption, .media-section-label, .media-kicker, .media-pack-face strong, .media-angle-grid span, .media-reach-asof) { text-wrap: balance; }
+.media-hub :is(p, dd, li, small, .media-lead) { text-wrap: pretty; }
+.media-pack-label { white-space: nowrap; }
+/* About: the intro statement ran at line-height normal while the mission under it used 1.72. */
+.media-copy > div { font-size: 18px; line-height: 1.65; }
+/* Profile: heading and intro side by side (like the purpose section), the three proof cards full width
+   below — squeezed into the right column they were 150 px wide and the SEC number broke mid-number. */
+.media-profile-head { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+.media-profile-head > div:first-child { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: clamp(32px, 6vw, 96px); align-items: end; }
+.media-profile-head > div:first-child > p { max-width: 460px; margin: 0; }
+.media-proof-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.media-proof-grid p { overflow-wrap: anywhere; }
+/* Stories: the heading floated halfway down its column (align-items: end); start it level with the cards. */
+.media-stories-grid { align-items: start; }
+.media-angle-list article { display: grid; gap: 8px; align-content: start; }
+.media-angle-list h3, .media-angle-list p { margin: 0; }
+/* Activity history: one 1,152 px row per activity left most of each card empty; two columns on wide screens. */
+@media (min-width: 1024px) {
+  .media-timeline-vertical .media-timeline-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.media-timeline-thumb img.is-poster { object-fit: contain; background: #0d0d0d; }
+/* Partnerships quote: the brand line was dimmer (58% white) than the card titles around it. */
+.media-quote blockquote p { color: #fff; }
+.media-quote blockquote em { color: var(--media-gold); font-style: normal; }
+/* Footer: the 44 px-tall main-site link sat 14 px below the copyright line. */
+.media-footer-bottom { align-items: center; }
+@media (max-width: 800px) {
+  .media-profile-head > div:first-child, .media-proof-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* Short card copy (two or three lines) needs balance; pretty barely acts on text that short. */
+.media-hub :is(.media-purpose-grid p, .media-proof-grid p, .media-timeline-detail small, .media-essentials span, .media-essentials small, .media-download-grid p, .media-fact-list dd, .media-reach-head p, .media-pack-face small) { text-wrap: balance; }
+/* balance only works on block boxes; these date · place lines were inline. */
+.media-angle-grid article span, .media-launch-card span:first-child { display: block; text-wrap: balance; }
+/* Purpose cards were two columns on phones, leaving 98 px for the text. */
+@media (max-width: 560px) { .media-purpose-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 1024px) {
+  /* An odd number of activities would leave the last card alone in its row; let it take the full width. */
+  .media-timeline-vertical .media-timeline-list article:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  /* A 100 px thumbnail beside the text left about 140 px for it ("Pawres / de Mayo"); picture on top instead. */
+  .media-timeline-list article, .media-timeline-horizontal .media-timeline-list article { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .media-timeline-thumb, .media-timeline-horizontal .media-timeline-thumb { width: 100%; height: 170px; }
+}

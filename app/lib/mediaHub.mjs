@@ -16,6 +16,10 @@ export const MEDIA_THUMBNAILS = [
   { path: "/2-better/better2.jpg", label: "Surf day — six retrievers lined up at the surf shop", alt: "Six golden retrievers in bandanas lined up together at the San Juan surf shop" },
   { path: "/2-better/better3.jpg", label: "Embroidery class — the retriever place card", alt: "A place setting for the embroidery class, marked with a golden retriever place card" },
   { path: "/2-better/better8.jpg", label: "Embroidery class — the group photo", alt: "The group gathered for a photo at the end of the embroidery class" },
+  // Event posters: shown whole (fit "contain"), for activities whose only picture is the poster.
+  { path: "/journey/weekend-social-run/1.jpg", label: "Weekend Social Run — poster", alt: "Weekend Social Run poster", fit: "contain" },
+  { path: "/journey/bedazzle-barkdate/1.jpg", label: "Bedazzle Barkdate — poster", alt: "Bedazzle Barkdate poster", fit: "contain" },
+  { path: "/journey/retriever-romp/1.jpg", label: "Retriever Romp — poster", alt: "Retriever Romp poster", fit: "contain" },
   // The home page's own cover images, kept so content saved with them still shows.
   { path: "/house-of-retrievers-hero-poster.jpg", label: "Home page hero — families and furbabies", alt: "House of Retrievers families and furbabies together" },
   { path: "/1-purpaws/purpaw1.jpg", label: "Home page — Purpose cover", alt: "A volunteer kneeling to greet a golden retriever in an orange bandana during a care home visit" },
@@ -32,9 +36,9 @@ export const DEFAULT_MEDIA_TIMELINE = [
   { activity: "Visit to Milagros Elderly Shelter", date: "August 2026", location: "Milagros Elderly Home Care and Services", purpose: "Community outreach: care and companionship", thumbnail: "/journey/milagros-elderly-shelter/4.jpg" },
   { activity: "Pack walk with Beagle Buddies PH", date: "23 August 2026", location: "Ayala Triangle, Makati", purpose: "Our first collaboration with another dog community", thumbnail: "/journey/beagle-buddies-pack-walk/3.jpg" },
   { activity: "FreeHugs", date: "September 2026, then monthly", location: "BGC, Taguig", purpose: "Held on the last Sunday of each month", thumbnail: "/journey/freehugs-bgc/3.jpg" },
-  { activity: "Weekend Social Run", date: "11 October 2026", location: "Filinvest City, Alabang", purpose: "", thumbnail: "" },
-  { activity: "Bedazzle Barkdate", date: "17 October 2026", location: "Wiltlover Café, MetLive Mall, Pasay", purpose: "", thumbnail: "" },
-  { activity: "Retriever Romp", date: "8 November 2026", location: "Parklinks Pet Park, Pasig", purpose: "A retrievers’ casual meet-up", thumbnail: "" },
+  { activity: "Weekend Social Run", date: "11 October 2026", location: "Filinvest City, Alabang", purpose: "", thumbnail: "/journey/weekend-social-run/1.jpg" },
+  { activity: "Bedazzle Barkdate", date: "17 October 2026", location: "Wiltlover Café, MetLive Mall, Pasay", purpose: "", thumbnail: "/journey/bedazzle-barkdate/1.jpg" },
+  { activity: "Retriever Romp", date: "8 November 2026", location: "Parklinks Pet Park, Pasig", purpose: "A retrievers’ casual meet-up", thumbnail: "/journey/retriever-romp/1.jpg" },
 ];
 
 export const DEFAULT_MEDIA_PROFILE = {
@@ -51,6 +55,11 @@ export const DEFAULT_MEDIA_PROFILE = {
     { src: "/journey/pawres-de-mayo/3.jpg", alt: "Members and their golden retrievers gathered on the lawn for a group photo", caption: "Good dogs. Good people." },
   ],
 };
+
+/** "contain" for posters (shown whole), "cover" for photos. */
+export function thumbnailFit(path) {
+  return MEDIA_THUMBNAILS.find((image) => image.path === path)?.fit === "contain" ? "contain" : "cover";
+}
 
 export const TIMELINE_ORIENTATIONS = ["vertical", "horizontal"];
 
