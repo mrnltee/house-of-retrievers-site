@@ -38,8 +38,8 @@ export const PACK_FAMILIES = families.filter((family) => family.socialUrl && fam
 export const DEFAULT_PACK = [
   { handle: "@thegolden.nuggets", show: true, statsOn: false, followers: "1,778", posts: "965", asOf: "16 November 2026" },
   { handle: "@dailydoseofmacchiato_", show: true, statsOn: false, followers: "1,456", posts: "223", asOf: "16 November 2026" },
-  { handle: "@itsmefayethepancakee", show: true, statsOn: false, followers: "", posts: "", asOf: "" },
-  { handle: "@lukaxluji_goldenbros", show: true, statsOn: false, followers: "", posts: "", asOf: "" },
+  { handle: "@itsmefayethepancakee", show: true, statsOn: false, followers: "2,103", posts: "535", asOf: "16 November 2026" },
+  { handle: "@lukaxluji_goldenbros", show: true, statsOn: false, followers: "1,025", posts: "117", asOf: "16 November 2026" },
   { handle: "@molly.maverickthebears", show: true, statsOn: false, followers: "1,368", posts: "1,102", asOf: "16 November 2026" },
 ];
 
