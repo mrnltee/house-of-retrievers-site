@@ -56,7 +56,7 @@ The pre-launch countdown page, quotes, preview cookie/key and launch-time gate w
 
 ## Next.js 16 platform update (13 Oct 2026)
 
-The app runs on Next.js 16.4.0. The former root `middleware.js` is now `proxy.js`, with the same host-routing decisions and matcher; this is the Next.js 16 file convention and does not change public URLs. The duplicate `app/favicon.ico` was removed because its embedded RGB PNG was rejected by Next.js 16's icon decoder. The existing approved `app/icon.png` and `app/apple-icon.png` remain the browser and Apple icons, so no logo artwork was redrawn or replaced. `app/lib/next16Migration.test.mjs` protects these migration requirements. There is no database migration for this update.
+The app runs on Next.js 16.4.6 (16 Nov 2026: patch upgrade for a moderate advisory affecting 16.3.0–16.4.4, information disclosure across root params when a `use cache` function is called through `unstable_cache()`; the app does not use either, so this is hygiene). The former root `middleware.js` is now `proxy.js`, with the same host-routing decisions and matcher; this is the Next.js 16 file convention and does not change public URLs. The duplicate `app/favicon.ico` was removed because its embedded RGB PNG was rejected by Next.js 16's icon decoder. The existing approved `app/icon.png` and `app/apple-icon.png` remain the browser and Apple icons, so no logo artwork was redrawn or replaced. `app/lib/next16Migration.test.mjs` protects these migration requirements. There is no database migration for this update.
 
 ## Admin module (Phase 1)
 
