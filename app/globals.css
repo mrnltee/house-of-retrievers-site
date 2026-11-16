@@ -1627,7 +1627,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .media-press-angles { margin-top: 70px; }
 .media-angle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 28px; }
 .media-angle-grid article { padding: 22px 0 26px; border-top: 1px solid rgba(13,13,13,.16); }
-.media-angle-grid span { color: #7a5a1c; font-size: 11px; font-weight: 800; letter-spacing: .15em; }
+.media-angle-grid span { color: #7a5a1c; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .media-angle-grid h4 { margin: 12px 0 7px; font-size: 17px; line-height: 1.2; }
 .media-angle-grid p { margin: 0; color: var(--media-muted); font-size: 14px; line-height: 1.55; }
 .media-download-links { display: grid; gap: 7px; margin-top: 18px; font-size: 13px; line-height: 1.4; }
