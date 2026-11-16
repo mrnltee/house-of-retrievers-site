@@ -18,12 +18,14 @@ test("plain text drops tags and decodes the hub's entities", () => {
 
 test("press kit falls back to the built-in wording and needs an explicit approval", () => {
   const kit = pressKitFrom({});
-  assert.deepEqual(kit.factSheet, DEFAULT_FACT_SHEET);
+  // The built-in rows, then the dated audience line from app/lib/mediaReach.mjs.
+  assert.deepEqual(kit.factSheet.slice(0, -1), DEFAULT_FACT_SHEET);
+  assert.equal(kit.factSheet.at(-1)[0], "Online audience");
   assert.equal(kit.boilerplateShort, DEFAULT_BOILERPLATE_SHORT);
   assert.equal(kit.boilerplatesApproved, false);
   assert.equal(pressKitFrom({ boilerplatesApproved: "true" }).boilerplatesApproved, false);
   const saved = pressKitFrom({ factSheet: "Name: HoR", boilerplateShort: "Short <em>one</em>", boilerplateLong: "One.\n\n\nTwo.", boilerplatesApproved: true, mission: "A <em>mission</em>" });
-  assert.deepEqual(saved.factSheet, [["Name", "HoR"]]);
+  assert.deepEqual(saved.factSheet[0], ["Name", "HoR"]);
   assert.equal(saved.boilerplateShort, "Short one");
   assert.equal(saved.boilerplateLong, "One.\n\nTwo.");
   assert.equal(saved.boilerplatesApproved, true);

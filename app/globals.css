@@ -1902,3 +1902,27 @@ html.lenis, html.lenis body { height: auto; }
 .media-copy-button span { font-size: 12px; }
 /* The pill stays compact; its tap area reaches 44 px. */
 .media-copy-button::after { content: ""; position: absolute; inset: -8px -4px; }
+/* Our community + Meet the pack (16 Nov 2026, owner): HoR's channel numbers, always dated and never added
+   together, and the founding families; a family's numbers show only with its OK (app/lib/mediaReach.mjs). */
+.media-reach { grid-column: 1 / -1; display: grid; gap: var(--media-gap); }
+.media-reach-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; margin-top: 36px; }
+.media-reach-head h3 { margin: 0; color: white; font: 400 clamp(26px, 2.6vw, 34px)/1.1 'DM Serif Display', serif; }
+.media-reach-head p { max-width: 520px; margin: 0; color: rgba(255,255,255,.62); font-size: 14px; line-height: 1.55; }
+.media-reach-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--media-gap); }
+.media-reach-channel { display: grid; gap: 4px; padding: 22px; border-radius: var(--media-radius); background: var(--media-tile-dark); color: white; text-decoration: none; }
+.media-reach-channel > span { color: var(--media-gold); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.media-reach-channel strong { font: 400 clamp(44px, 5vw, 64px)/1 'DM Serif Display', serif; }
+.media-reach-channel small { color: rgba(255,255,255,.7); font-size: 14px; }
+.media-reach-channel em { margin-top: 10px; color: rgba(255,255,255,.85); font-size: 14px; font-style: normal; }
+a.media-reach-channel:hover em, a.media-reach-channel:focus-visible em { text-decoration: underline; text-decoration-color: var(--media-gold); }
+.media-pack { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--media-gap); margin: 0; padding: 0; list-style: none; }
+.media-pack a { display: grid; justify-items: center; gap: 14px; height: 100%; padding: 22px 16px; border-radius: var(--media-radius); background: var(--media-tile-dark); color: white; text-align: center; text-decoration: none; }
+.media-pack img { width: 96px; height: 96px; border: 2px solid var(--media-gold); border-radius: 50%; object-fit: cover; }
+.media-pack span { display: grid; gap: 3px; }
+.media-pack strong { font-size: 16px; }
+.media-pack small { color: rgba(255,255,255,.62); font-size: 13px; }
+.media-pack em { color: var(--media-gold); font-size: 13px; font-style: normal; overflow-wrap: anywhere; }
+.media-pack a:hover em, .media-pack a:focus-visible em { text-decoration: underline; }
+.media-pack b { margin-top: 8px; color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; line-height: 1.5; }
+@media (max-width: 1100px) { .media-pack { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .media-pack { grid-template-columns: 1fr; } .media-pack a { grid-template-columns: 72px minmax(0, 1fr); align-items: center; justify-items: start; padding: 16px; text-align: left; } .media-pack img { width: 72px; height: 72px; } }

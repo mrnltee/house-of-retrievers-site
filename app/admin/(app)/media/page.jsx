@@ -3,6 +3,7 @@ import { sql } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed } from "../ui";
 import MediaEditor from "./MediaEditor";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE } from "../../../lib/mediaHub.mjs";
+import { DEFAULT_COMMUNITY, DEFAULT_PACK } from "../../../lib/mediaReach.mjs";
 import { DEFAULT_BOILERPLATE_LONG, DEFAULT_BOILERPLATE_SHORT, DEFAULT_FACT_SHEET, DEFAULT_STORY_ANGLES, factSheetText } from "../../../lib/mediaPressKit.mjs";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,8 @@ const DEFAULTS = {
   boilerplateLong: DEFAULT_BOILERPLATE_LONG,
   boilerplatesApproved: false,
   storyAngles: DEFAULT_STORY_ANGLES,
+  community: DEFAULT_COMMUNITY,
+  pack: DEFAULT_PACK,
   timelineOrientation: "vertical",
   timeline: DEFAULT_MEDIA_TIMELINE,
   profile: DEFAULT_MEDIA_PROFILE,

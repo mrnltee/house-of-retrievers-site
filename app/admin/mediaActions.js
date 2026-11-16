@@ -7,6 +7,7 @@ import { logActivity } from "../lib/admin/log";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 import { cleanStoryAngles, factSheetText, parseFactSheet, plainText } from "../lib/mediaPressKit.mjs";
+import { cleanCommunity, cleanPack } from "../lib/mediaReach.mjs";
 
 const MAX_HTML = 12000;
 
@@ -34,6 +35,8 @@ export async function saveMediaHub(data) {
     boilerplateLong: String(data.get("boilerplateLong") || "").split(/\n{2,}/).map(plainText).filter(Boolean).join("\n\n").slice(0, 4000),
     boilerplatesApproved: data.get("boilerplatesApproved") === "on",
     storyAngles: cleanStoryAngles(data.get("storyAngles")),
+    community: cleanCommunity(data.get("community")),
+    pack: cleanPack(data.get("pack")),
     timelineOrientation: cleanTimelineOrientation(data.get("timelineOrientation")),
     timeline: cleanMediaTimeline(data.get("timeline")),
     profile: cleanMediaProfile(data.get("profile")),

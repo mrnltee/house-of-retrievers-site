@@ -3,6 +3,7 @@
  * Shared by the public page, the PDF and Admin → Media hub. Pure, so it is tested.
  */
 import { MEDIA_THUMBNAILS } from "./mediaHub.mjs";
+import { communityLine, reachFrom } from "./mediaReach.mjs";
 export const DEFAULT_MISSION = "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.";
 
 /** @type {[string, string][]} */
@@ -93,8 +94,11 @@ export function plainText(value) {
 /** The press kit shown publicly: saved wording where there is any, the built-in wording otherwise. */
 export function pressKitFrom(content = {}) {
   const rows = parseFactSheet(content?.factSheet);
+  const facts = rows.length ? rows : DEFAULT_FACT_SHEET;
+  // The audience line follows Admin → Media hub's channel numbers, unless HoR wrote its own row.
+  const audience = communityLine(reachFrom(content).community);
   return {
-    factSheet: rows.length ? rows : DEFAULT_FACT_SHEET,
+    factSheet: audience && !facts.some(([label]) => /^online audience$/i.test(label)) ? [...facts, ["Online audience", audience]] : facts,
     boilerplateShort: plainText(content?.boilerplateShort) || DEFAULT_BOILERPLATE_SHORT,
     boilerplateLong: String(content?.boilerplateLong || "").split(/\n{2,}/).map(plainText).filter(Boolean).join("\n\n") || DEFAULT_BOILERPLATE_LONG,
     boilerplatesApproved: content?.boilerplatesApproved === true,
