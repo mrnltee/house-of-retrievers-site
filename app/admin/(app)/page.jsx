@@ -6,6 +6,8 @@ import { METHODS } from "../../lib/admin/payments.mjs";
 import { actionLabel } from "../../lib/admin/activity.mjs";
 import { CAPACITY_USED_AGGREGATE_SQL } from "../../lib/eventCapacity.mjs";
 import { DateBox, Flash, NotAllowed, PageHead, formatWhen, manilaToday } from "./ui";
+import { staleCounts } from "../../lib/mediaReach.mjs";
+import { loadInstagramCounts } from "../../lib/instagramCounts";
 
 export default async function Dashboard({ searchParams }) {
   const params = await searchParams;
@@ -19,6 +21,11 @@ export default async function Dashboard({ searchParams }) {
   }
 
   const today = manilaToday();
+  // Monthly reminder: follower counts typed in Admin → Media hub that are over a month old.
+  const staleReach = can(admin, "media:edit")
+    ? await Promise.all([sql("SELECT content FROM media_hub_documents WHERE id=true").catch(() => []), loadInstagramCounts()])
+      .then(([[doc], instagram]) => staleCounts(doc?.content || {}, { instagram }))
+    : [];
   const [pending, newPeople, upcoming, waitlists, log] = await Promise.all([
     can(admin, "payments:view")
       ? sql("SELECT id, method_key, requested_by, requested_at FROM payment_change_requests WHERE status='pending' ORDER BY requested_at")
@@ -77,7 +84,14 @@ export default async function Dashboard({ searchParams }) {
       <div className="cols">
         <section className="card" aria-labelledby="needs-you">
           <div><h2 id="needs-you">Needs you</h2><p className="small muted">Each item opens the record it is about.</p></div>
-          {newPeople.length === 0 && waitlists.length === 0 && pending.length === 0 && <p className="muted">Nothing waiting. Nice.</p>}
+          {newPeople.length === 0 && waitlists.length === 0 && pending.length === 0 && staleReach.length === 0 && <p className="muted">Nothing waiting. Nice.</p>}
+          {staleReach.length > 0 && (
+            <div className="task">
+              <div><strong>Update follower counts on the media hub</strong><span className="small muted">Over a month old: {staleReach.map((row) => row.what).join(", ")}. Check their Instagram profiles, then update the numbers and dates.</span></div>
+              <span className="chip warn">Monthly</span>
+              <a className="btn ghost small" href={`${base}/media`}>Open Media hub</a>
+            </div>
+          )}
           {newPeople.map((row) => (
             <div className="task" key={row.kind}>
               <div><strong>{row.count} new {row.kind.toLowerCase()}{row.count === 1 ? "" : "s"}</strong><span className="small muted">Follow up, then set their status.</span></div>

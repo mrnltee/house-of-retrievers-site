@@ -9,7 +9,7 @@
  */
 import { families } from "../content/families.js";
 
-/** @typedef {{name: string, handle: string, url: string, followers: string, posts: string}} Channel */
+/** @typedef {{name: string, handle: string, url: string, followers: string, posts: string, live?: boolean, asOf?: string}} Channel */
 
 /** @type {{asOf: string, channels: Channel[]}} */
 export const DEFAULT_COMMUNITY = {
@@ -131,9 +131,82 @@ export function reachFrom(content = {}) {
   return { community, pack };
 }
 
-/** One line for the fact sheet: "Instagram 1,408 followers · Facebook 2.5K followers (as of 16 November 2026)". */
+/** A date as the hub writes it, in Manila: "16 November 2026". */
+export function manilaDate(date = new Date()) {
+  return new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Manila" });
+}
+
+/** 1408 → "1,408". */
+export function formatCount(value) {
+  return Number.isFinite(value) ? Math.round(value).toLocaleString("en-US") : "";
+}
+
+/**
+ * Puts HoR's live Instagram counts (app/lib/instagramCounts.js) on its Instagram channel, matched by the
+ * username in its link or handle, dated today. Other channels keep the counts and date typed in the admin.
+ * No live counts, or no matching channel: the community is returned as it was.
+ */
+export function withLiveInstagram(community, live, now = new Date()) {
+  if (!live?.username || !Number.isFinite(live.followers) || !community?.channels?.length) return community;
+  const name = live.username.toLowerCase();
+  let matched = false;
+  const channels = community.channels.map((channel) => {
+    const where = `${channel.url} ${channel.handle}`.toLowerCase();
+    const isInstagram = where.includes("instagram") || /^instagram$/i.test(channel.name);
+    if (matched || !isInstagram || !where.includes(name)) return channel;
+    matched = true;
+    return { ...channel, followers: formatCount(live.followers), posts: live.posts == null ? channel.posts : formatCount(live.posts), live: true, asOf: manilaDate(now) };
+  });
+  return matched ? { ...community, channels } : community;
+}
+
+/**
+ * One line for the fact sheet, never a total. One date at the end when every channel shares it:
+ * "Instagram 1,408 followers · Facebook 2.5K followers (as of 16 November 2026)"; else a date per channel.
+ */
 export function communityLine(community) {
   if (!community?.channels?.length) return "";
-  const list = community.channels.map((channel) => `${channel.name} ${channel.followers} followers`).join(" · ");
-  return community.asOf ? `${list} (as of ${community.asOf})` : list;
+  const dated = community.channels.map((channel) => ({ ...channel, asOf: channel.asOf || community.asOf || "" }));
+  const dates = new Set(dated.map((channel) => channel.asOf));
+  if (dates.size <= 1) {
+    const list = dated.map((channel) => `${channel.name} ${channel.followers} followers`).join(" · ");
+    const [only] = dates;
+    return only ? `${list} (as of ${only})` : list;
+  }
+  return dated.map((channel) => `${channel.name} ${channel.followers} followers${channel.asOf ? ` (as of ${channel.asOf})` : ""}`).join(" · ");
+}
+
+export const STALE_AFTER_DAYS = 31;
+
+/** Whole calendar days in Manila between a date written like "16 November 2026" and today; null when unreadable. */
+export function daysSince(asOf, now = new Date()) {
+  const when = Date.parse(`${asOf} 00:00 UTC`);
+  const today = Date.parse(`${manilaDate(now)} 00:00 UTC`);
+  return Number.isFinite(when) && Number.isFinite(today) ? Math.round((today - when) / 86400000) : null;
+}
+
+/**
+ * The monthly reminder: typed counts whose date is over a month old (or missing), for the admin.
+ * Live channels (pass `instagram` from loadInstagramCounts) are never stale; families switched off are left out.
+ * @returns {{what: string, asOf: string, days: number|null}[]}
+ */
+export function staleCounts(content = {}, { now = new Date(), instagram = null } = {}) {
+  const reach = reachFrom(content);
+  const community = withLiveInstagram(reach.community, instagram, now);
+  const { pack } = reach;
+  const settings = Array.isArray(content?.pack) ? cleanPack(content.pack) : DEFAULT_PACK;
+  const old = (asOf) => { const days = daysSince(asOf, now); return days == null || days > STALE_AFTER_DAYS ? days : false; };
+  const rows = [];
+  for (const channel of community.channels) {
+    if (channel.live) continue;
+    const days = old(channel.asOf || community.asOf);
+    if (days !== false) rows.push({ what: `${channel.name} (HoR)`, asOf: channel.asOf || community.asOf || "", days });
+  }
+  for (const family of pack) {
+    const setting = settings.find((row) => row.handle === family.handle);
+    if (!setting?.statsOn) continue;
+    const days = old(setting.asOf);
+    if (days !== false) rows.push({ what: `${family.names} (${family.handle})`, asOf: setting.asOf, days });
+  }
+  return rows;
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_COMMUNITY, DEFAULT_PACK, MAX_RATES, PACK_FAMILIES, cleanCommunity, cleanContact, cleanCount, cleanPack, cleanRates, communityLine, reachFrom } from "./mediaReach.mjs";
+import { DEFAULT_COMMUNITY, DEFAULT_PACK, MAX_RATES, PACK_FAMILIES, STALE_AFTER_DAYS, cleanCommunity, cleanContact, cleanCount, cleanPack, cleanRates, communityLine, daysSince, formatCount, manilaDate, reachFrom, staleCounts, withLiveInstagram } from "./mediaReach.mjs";
 import { pressKitFrom } from "./mediaPressKit.mjs";
 
 test("counts are kept only as people write them", () => {
@@ -69,4 +69,37 @@ test("rate cards: rates need both parts, contacts are an email or an https link,
   const shown = reachFrom({ pack: [{ ...row, statsOn: true, followers: "" }] }).pack.find((f) => f.handle === row.handle).stats;
   assert.deepEqual(shown.rates, [{ label: "Feed post", amount: "₱5,000" }]);
   assert.equal(shown.contact, "a@b.co");
+});
+
+const NOW = new Date("2026-11-20T04:00:00Z");
+const LIVE = { username: "houseofretrieversph", followers: 1412, posts: 281 };
+
+test("live Instagram counts go on HoR's own Instagram tile only, dated today in Manila", () => {
+  const community = withLiveInstagram(DEFAULT_COMMUNITY, LIVE, NOW);
+  assert.deepEqual(community.channels[0], { ...DEFAULT_COMMUNITY.channels[0], followers: "1,412", posts: "281", live: true, asOf: "20 November 2026" });
+  assert.deepEqual(community.channels[1], DEFAULT_COMMUNITY.channels[1], "Facebook keeps its typed numbers");
+  assert.equal(withLiveInstagram(DEFAULT_COMMUNITY, null, NOW), DEFAULT_COMMUNITY, "no live counts: unchanged");
+  assert.equal(withLiveInstagram(DEFAULT_COMMUNITY, { ...LIVE, username: "someoneelse" }, NOW), DEFAULT_COMMUNITY, "another account never overwrites ours");
+  assert.equal(formatCount(1408), "1,408");
+  assert.equal(manilaDate(new Date("2026-11-16T20:00:00Z")), "17 November 2026", "Manila is UTC+8");
+});
+
+test("the fact sheet line dates each channel when the dates differ, and never adds them up", () => {
+  const line = communityLine(withLiveInstagram(DEFAULT_COMMUNITY, LIVE, NOW));
+  assert.equal(line, "Instagram 1,412 followers (as of 20 November 2026) · Facebook 2.5K followers (as of 16 November 2026)");
+  assert.equal(communityLine(DEFAULT_COMMUNITY), "Instagram 1,408 followers · Facebook 2.5K followers (as of 16 November 2026)");
+});
+
+test("monthly reminder: typed counts over a month old, never the live tile", () => {
+  assert.equal(daysSince("16 November 2026", NOW), 4);
+  assert.equal(daysSince("someday", NOW), null);
+  assert.deepEqual(staleCounts({}, { now: NOW }), []);
+  const later = new Date("2026-12-20T04:00:00Z");
+  assert.ok(daysSince("16 November 2026", later) > STALE_AFTER_DAYS);
+  const all = staleCounts({}, { now: later }).map((row) => row.what);
+  assert.ok(all.includes("Instagram (HoR)") && all.includes("Facebook (HoR)") && all.length === 7, all.join(", "));
+  const withLive = staleCounts({}, { now: later, instagram: LIVE }).map((row) => row.what);
+  assert.ok(!withLive.includes("Instagram (HoR)") && withLive.includes("Facebook (HoR)"));
+  const off = staleCounts({ pack: [{ handle: "@thegolden.nuggets", statsOn: false, asOf: "1 January 2026" }] }, { now: later }).map((row) => row.what);
+  assert.ok(!off.some((what) => what.includes("@thegolden.nuggets")), "families switched off are not nagged about");
 });

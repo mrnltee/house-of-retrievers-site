@@ -8,6 +8,7 @@ import { LETTER_LOGO_PNG } from "../../lib/letters/logo.mjs";
 import { pdfSafe } from "../../lib/letterPdf.mjs";
 import { loadPublishedMediaContent } from "../../lib/mediaHubStore";
 import { pressKitFrom } from "../../lib/mediaPressKit.mjs";
+import { loadInstagramCounts } from "../../lib/instagramCounts";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,8 @@ function buildPdf(kit) {
 }
 
 export async function GET() {
-  const kit = pressKitFrom(await loadPublishedMediaContent());
+  const [content, instagram] = await Promise.all([loadPublishedMediaContent(), loadInstagramCounts()]);
+  const kit = pressKitFrom(content, { instagram });
   const pdf = await buildPdf(kit);
   return new Response(pdf, {
     headers: {

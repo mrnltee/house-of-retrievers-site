@@ -3,7 +3,8 @@ import { sql } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed } from "../ui";
 import MediaEditor from "./MediaEditor";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE } from "../../../lib/mediaHub.mjs";
-import { DEFAULT_COMMUNITY, DEFAULT_PACK } from "../../../lib/mediaReach.mjs";
+import { DEFAULT_COMMUNITY, DEFAULT_PACK, staleCounts } from "../../../lib/mediaReach.mjs";
+import { loadInstagramCounts } from "../../../lib/instagramCounts";
 import { DEFAULT_BOILERPLATE_LONG, DEFAULT_BOILERPLATE_SHORT, DEFAULT_FACT_SHEET, DEFAULT_STORY_ANGLES, factSheetText } from "../../../lib/mediaPressKit.mjs";
 
 export const dynamic = "force-dynamic";
@@ -35,11 +36,13 @@ export default async function MediaAdminPage({ searchParams }) {
   if (!allowed) return <NotAllowed />;
   const [document] = await sql("SELECT content, status, updated_at, updated_by FROM media_hub_documents WHERE id=true");
   const content = { ...DEFAULTS, ...(document?.content || {}) };
+  const instagram = await loadInstagramCounts();
+  const stale = staleCounts(document?.content || {}, { instagram });
   return (
     <>
       <PageHead title="Media hub" lead="Edit the public PR, press, and partnership resource hub. Draft changes stay private until you publish them." />
       <Flash params={searchParams} />
-      <MediaEditor content={content} status={document?.status || "draft"} updatedAt={document?.updated_at} updatedBy={document?.updated_by} />
+      <MediaEditor content={content} stale={stale} liveInstagram={Boolean(instagram)} status={document?.status || "draft"} updatedAt={document?.updated_at} updatedBy={document?.updated_by} />
     </>
   );
 }

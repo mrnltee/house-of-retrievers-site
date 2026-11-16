@@ -1910,9 +1910,10 @@ html.lenis, html.lenis body { height: auto; }
 .media-reach-head p { max-width: 520px; margin: 0; color: rgba(255,255,255,.62); font-size: 14px; line-height: 1.55; }
 .media-reach-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--media-gap); }
 .media-reach-channel { display: grid; gap: 4px; padding: 22px; border-radius: var(--media-radius); background: var(--media-tile-dark); color: white; text-decoration: none; }
-.media-reach-channel > span { color: var(--media-gold); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.media-reach-channel > span:first-child { color: var(--media-gold); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .media-reach-channel strong { font: 400 clamp(44px, 5vw, 64px)/1 'DM Serif Display', serif; }
 .media-reach-channel small { color: rgba(255,255,255,.7); font-size: 14px; }
+.media-reach-asof { margin-top: 4px; color: rgba(255,255,255,.6); font-size: 12px; }
 .media-reach-channel em { margin-top: 10px; color: rgba(255,255,255,.85); font-size: 14px; font-style: normal; }
 a.media-reach-channel:hover em, a.media-reach-channel:focus-visible em { text-decoration: underline; text-decoration-color: var(--media-gold); }
 .media-pack { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--media-gap); margin: 0; padding: 0; list-style: none; }

@@ -6,7 +6,8 @@ import MessageForm from "./MessageForm";
 import PackCards from "./PackCards";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
-import { reachFrom } from "../lib/mediaReach.mjs";
+import { reachFrom, withLiveInstagram } from "../lib/mediaReach.mjs";
+import { loadInstagramCounts } from "../lib/instagramCounts";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
@@ -94,8 +95,11 @@ function rich(value) {
 export default async function MediaPage() {
   const published = await loadPublishedMediaContent();
   const content = { ...FALLBACK_CONTENT, ...published };
-  const kit = pressKitFrom(published);
-  const reach = reachFrom(published);
+  // HoR's own Instagram counts are live (hourly); everything else is as typed in Admin → Media hub.
+  const instagram = await loadInstagramCounts();
+  const kit = pressKitFrom(published, { instagram });
+  const base = reachFrom(published);
+  const reach = { ...base, community: withLiveInstagram(base.community, instagram) };
   // One story per line: the editor saves single line breaks, so splitting only on blank lines ran all three together.
   const storyParts = String(content.stories || "").split(/\n+/).map((line) => line.trim()).filter(Boolean).slice(0, 6);
   const albums = await loadMediaAlbums();
@@ -173,8 +177,8 @@ export default async function MediaPage() {
           <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry" data-message="partnership">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
         <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br />Serve generously.</p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
         <div className="media-reach">
-          <div className="media-reach-head"><h3>Our community</h3><p>{reach.community.asOf ? `Followers as of ${reach.community.asOf}, per channel.` : "Followers per channel."} Many people follow more than one, so we don’t add them up.</p></div>
-          <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <span aria-hidden="true"> ↗</span> : null}</em></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
+          <div className="media-reach-head"><h3>Our community</h3><p>Followers per channel. Many people follow more than one, so we don’t add them up.</p></div>
+          <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <span aria-hidden="true"> ↗</span> : null}</em><span className="media-reach-asof">{channel.live ? "Live · updated hourly" : `As of ${channel.asOf || reach.community.asOf}`}</span></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
           <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Tap a card for their rate card; each family runs its own collaborations.</p></div>
           <PackCards pack={reach.pack} />
         </div>
