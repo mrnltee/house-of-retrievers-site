@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_COMMUNITY, DEFAULT_PACK, PACK_FAMILIES, cleanCommunity, cleanCount, cleanPack, communityLine, reachFrom } from "./mediaReach.mjs";
+import { DEFAULT_COMMUNITY, DEFAULT_PACK, MAX_RATES, PACK_FAMILIES, cleanCommunity, cleanContact, cleanCount, cleanPack, cleanRates, communityLine, reachFrom } from "./mediaReach.mjs";
 import { pressKitFrom } from "./mediaPressKit.mjs";
 
 test("counts are kept only as people write them", () => {
   for (const ok of ["1,408", "2.5K", "165k", "1.2M", "280"]) assert.equal(cleanCount(ok), ok);
-  for (const bad of ["", "lots", "1,408 followers", "<b>1</b>", "-5"]) assert.equal(cleanCount(bad), "");
+  for (const bad of ["", "lots", "1,408 followers", "1 000", "-5"]) assert.equal(cleanCount(bad), "");
 });
 
 test("channels need a name and a count, links must be https", () => {
@@ -29,7 +29,7 @@ test("every default pack row matches a founding family", () => {
 test("a family's numbers show only when switched on with a count and a date", () => {
   assert.ok(reachFrom({}).pack.every((family) => family.stats === null));
   const on = reachFrom({ pack: [{ handle: "@thegolden.nuggets", show: true, statsOn: true, followers: "1,778", posts: "965", asOf: "16 November 2026" }] });
-  assert.deepEqual(on.pack.find((family) => family.handle === "@thegolden.nuggets").stats, { followers: "1,778", posts: "965", asOf: "16 November 2026" });
+  assert.deepEqual(on.pack.find((family) => family.handle === "@thegolden.nuggets").stats, { followers: "1,778", posts: "965", asOf: "16 November 2026", rates: [], contact: "" });
   const undated = reachFrom({ pack: [{ handle: "@thegolden.nuggets", statsOn: true, followers: "1,778", asOf: "" }] });
   assert.equal(undated.pack.find((family) => family.handle === "@thegolden.nuggets").stats, null);
   const hidden = reachFrom({ pack: [{ handle: "@thegolden.nuggets", show: false }] });
@@ -49,4 +49,17 @@ test("the fact sheet gets one dated audience line, never a total", () => {
   assert.deepEqual(rows.at(-1), ["Online audience", communityLine(DEFAULT_COMMUNITY)]);
   const own = pressKitFrom({ factSheet: "Legal name: HoR\nOnline audience: our own words" }).factSheet;
   assert.equal(own.filter(([label]) => label === "Online audience").length, 1);
+});
+
+test("rate cards: rates need both parts, contacts are an email or an https link, all hidden without consent", () => {
+  assert.deepEqual(cleanRates([{ label: "Feed post", amount: "₱5,000" }, { label: "Reel", amount: "" }, { label: "<b>Story</b>", amount: "On request" }]), [{ label: "Feed post", amount: "₱5,000" }, { label: "Story", amount: "On request" }]);
+  assert.equal(cleanRates(Array.from({ length: 10 }, () => ({ label: "a", amount: "b" }))).length, MAX_RATES);
+  assert.equal(cleanContact("mollythebear.collab@gmail.com"), "mollythebear.collab@gmail.com");
+  assert.equal(cleanContact("https://linktr.ee/molly"), "https://linktr.ee/molly");
+  assert.equal(cleanContact("javascript:alert(1)"), "");
+  const row = { handle: "@molly.maverickthebears", statsOn: false, followers: "1,368", asOf: "16 November 2026", rates: [{ label: "Feed post", amount: "₱5,000" }], contact: "a@b.co" };
+  assert.equal(reachFrom({ pack: [row] }).pack.find((f) => f.handle === row.handle).stats, null);
+  const shown = reachFrom({ pack: [{ ...row, statsOn: true, followers: "" }] }).pack.find((f) => f.handle === row.handle).stats;
+  assert.deepEqual(shown.rates, [{ label: "Feed post", amount: "₱5,000" }]);
+  assert.equal(shown.contact, "a@b.co");
 });

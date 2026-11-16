@@ -3,6 +3,7 @@ import LogoMoments from "../components/LogoMoments";
 import CopyButton from "./CopyButton";
 import PhotoLightbox from "./PhotoLightbox";
 import MessageForm from "./MessageForm";
+import PackCards from "./PackCards";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { reachFrom } from "../lib/mediaReach.mjs";
@@ -174,8 +175,8 @@ export default async function MediaPage() {
         <div className="media-reach">
           <div className="media-reach-head"><h3>Our community</h3><p>{reach.community.asOf ? `Followers as of ${reach.community.asOf}, per channel.` : "Followers per channel."} Many people follow more than one, so we don’t add them up.</p></div>
           <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <span aria-hidden="true"> ↗</span> : null}</em></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
-          <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Each runs its own page; for collaborations, contact the family directly.</p></div>
-          <ul className="media-pack">{reach.pack.map((family) => <li key={family.handle}><a href={family.url} target="_blank" rel="noopener noreferrer"><img src={family.photo} alt="" loading="lazy" /><span><strong>{family.names}</strong><small>{family.group}</small><em>{family.handle}</em>{family.stats ? <b>{family.stats.followers} followers{family.stats.posts ? ` · ${family.stats.posts} posts` : ""}<br />as of {family.stats.asOf}</b> : null}</span></a></li>)}</ul>
+          <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Tap a card for their rate card; each family runs its own collaborations.</p></div>
+          <PackCards pack={reach.pack} />
         </div>
       </section>
 
