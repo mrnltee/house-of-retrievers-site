@@ -1627,7 +1627,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .media-press-angles { margin-top: 70px; }
 .media-angle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 28px; }
 .media-angle-grid article { padding: 22px 0 26px; border-top: 1px solid rgba(13,13,13,.16); }
-.media-angle-grid span { color: #7a5a1c; font-size: 11px; font-weight: 800; letter-spacing: .15em; }
+.media-angle-grid span { color: #7a5a1c; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .media-angle-grid h4 { margin: 12px 0 7px; font-size: 17px; line-height: 1.2; }
 .media-angle-grid p { margin: 0; color: var(--media-muted); font-size: 14px; line-height: 1.55; }
 .media-download-links { display: grid; gap: 7px; margin-top: 18px; font-size: 13px; line-height: 1.4; }
@@ -1849,3 +1849,80 @@ html.lenis, html.lenis body { height: auto; }
 .photo-credits .event-supporter-logo img { object-fit: cover; }
 .photographer-photo { width: 116px; height: 116px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; justify-self: center; background: var(--paper); border: 1px solid var(--line); font: 400 40px "DM Serif Display", serif; }
 .photographer-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Press kit bento (16 Nov 2026, owner): the launch is a wide feature tile first; story angles are tiles of
+   different sizes, three with a timeline photo. Fact sheet and boilerplates stay plain reading columns. */
+.media-press .media-launch-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 48px; align-items: end; margin-top: 56px; padding: clamp(24px, 4vw, 44px); border-radius: var(--media-radius); background: radial-gradient(120% 140% at 100% 0%, #2a2316 0%, var(--media-black) 60%); }
+.media-press .media-launch-card span:first-child { color: var(--media-gold); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.media-press .media-launch-card h3 { margin: 16px 0 0; font-size: clamp(34px, 4.4vw, 60px); }
+.media-press .media-launch-card p { margin-bottom: 20px; }
+.media-press .media-press-grid { margin-top: var(--media-gap); padding-top: 44px; }
+.media-angle-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; }
+.media-angle-grid article { display: flex; flex-direction: column; overflow: hidden; }
+.media-angle-grid article.has-photo { padding: 0; }
+.media-angle-grid article.has-photo > div { padding: 20px 22px 22px; }
+.media-angle-grid article img { display: block; width: 100%; height: 220px; object-fit: cover; }
+.media-angle-grid h4 { margin-top: 10px; }
+/* 1: wide, photo beside the text. 2: tall, photo on top. 6: wide, gold-tinted. */
+.media-angle-grid article:nth-child(1) { grid-column: span 2; flex-direction: row; }
+.media-angle-grid article:nth-child(1) img { width: 46%; height: auto; min-height: 260px; }
+.media-angle-grid article:nth-child(1) > div { align-self: center; }
+.media-angle-grid article:nth-child(1) h4 { font-size: 22px; }
+.media-angle-grid article:nth-child(2) { grid-row: span 2; }
+.media-angle-grid article:nth-child(2) img { height: auto; flex: 1; min-height: 260px; }
+.media-angle-grid article:nth-child(6) { grid-column: span 2; justify-content: center; background: linear-gradient(150deg, #f3e7cc, #fff 70%); }
+@media (max-width: 800px) {
+  .media-press .media-launch-card { grid-template-columns: 1fr; }
+  .media-angle-grid { grid-template-columns: 1fr; }
+  .media-angle-grid article:nth-child(n) { grid-column: auto; grid-row: auto; flex-direction: column; }
+  .media-angle-grid article:nth-child(n) img { width: 100%; height: 200px; min-height: 0; flex: none; }
+}
+@media (max-width: 480px) { .media-press .media-launch-card .media-actions { flex-direction: column; align-items: stretch; } .media-press .media-launch-card .media-button { justify-content: center; } }
+.media-angle-grid article:nth-child(6) > div { max-width: 560px; }
+.media-angle-grid article:nth-child(6) h4 { font-size: 24px; }
+.media-angle-grid article:nth-child(6) p { font-size: 16px; }
+/* Review fixes (16 Nov 2026): links at least 44 px tall and labels at least 12 px, as the hub's rules say;
+   resource library cards are real downloads with one button each. */
+.media-download-links a, .media-fact-list dd a { display: inline-flex; align-items: center; min-height: 44px; }
+.media-download-links { gap: 0 18px; }
+.media-draft-tag { font-size: 12px; letter-spacing: .08em; }
+.media-fact-list dt { font-size: 12px; letter-spacing: .1em; }
+.media-updated { margin: -4px 0 14px; color: var(--media-muted); font-size: 13px; }
+.media-download-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.media-download-grid article { min-height: 0; gap: 10px; }
+.media-download-grid h3 { margin: 0; }
+.media-download-meta { align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: #f3e7cc; color: #7a5a1c; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.media-download-grid .media-button { align-self: flex-start; margin-top: auto; }
+.media-download-grid p { margin-bottom: 12px; }
+@media (max-width: 800px) { .media-download-grid { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .media-boilerplate header strong { flex-basis: 100%; } .media-boilerplate header .media-copy-button { margin-left: auto; } }
+.media-album header a, .media-photo-links a { display: inline-flex; align-items: center; min-height: 44px; }
+.media-photo-links { gap: 0 26px; }
+.media-copy-button { position: relative; }
+.media-copy-button span { font-size: 12px; }
+/* The pill stays compact; its tap area reaches 44 px. */
+.media-copy-button::after { content: ""; position: absolute; inset: -8px -4px; }
+/* Our community + Meet the pack (16 Nov 2026, owner): HoR's channel numbers, always dated and never added
+   together, and the founding families; a family's numbers show only with its OK (app/lib/mediaReach.mjs). */
+.media-reach { grid-column: 1 / -1; display: grid; gap: var(--media-gap); }
+.media-reach-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; margin-top: 36px; }
+.media-reach-head h3 { margin: 0; color: white; font: 400 clamp(26px, 2.6vw, 34px)/1.1 'DM Serif Display', serif; }
+.media-reach-head p { max-width: 520px; margin: 0; color: rgba(255,255,255,.62); font-size: 14px; line-height: 1.55; }
+.media-reach-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--media-gap); }
+.media-reach-channel { display: grid; gap: 4px; padding: 22px; border-radius: var(--media-radius); background: var(--media-tile-dark); color: white; text-decoration: none; }
+.media-reach-channel > span { color: var(--media-gold); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.media-reach-channel strong { font: 400 clamp(44px, 5vw, 64px)/1 'DM Serif Display', serif; }
+.media-reach-channel small { color: rgba(255,255,255,.7); font-size: 14px; }
+.media-reach-channel em { margin-top: 10px; color: rgba(255,255,255,.85); font-size: 14px; font-style: normal; }
+a.media-reach-channel:hover em, a.media-reach-channel:focus-visible em { text-decoration: underline; text-decoration-color: var(--media-gold); }
+.media-pack { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--media-gap); margin: 0; padding: 0; list-style: none; }
+.media-pack a { display: grid; justify-items: center; gap: 14px; height: 100%; padding: 22px 16px; border-radius: var(--media-radius); background: var(--media-tile-dark); color: white; text-align: center; text-decoration: none; }
+.media-pack img { width: 96px; height: 96px; border: 2px solid var(--media-gold); border-radius: 50%; object-fit: cover; }
+.media-pack span { display: grid; gap: 3px; }
+.media-pack strong { font-size: 16px; }
+.media-pack small { color: rgba(255,255,255,.62); font-size: 13px; }
+.media-pack em { color: var(--media-gold); font-size: 13px; font-style: normal; overflow-wrap: anywhere; }
+.media-pack a:hover em, .media-pack a:focus-visible em { text-decoration: underline; }
+.media-pack b { margin-top: 8px; color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; line-height: 1.5; }
+@media (max-width: 1100px) { .media-pack { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .media-pack { grid-template-columns: 1fr; } .media-pack a { grid-template-columns: 72px minmax(0, 1fr); align-items: center; justify-items: start; padding: 16px; text-align: left; } .media-pack img { width: 72px; height: 72px; } }

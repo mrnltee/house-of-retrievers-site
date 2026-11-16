@@ -4,7 +4,8 @@ import CopyButton from "./CopyButton";
 import PhotoLightbox from "./PhotoLightbox";
 import MessageForm from "./MessageForm";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
-import { pressKitFrom } from "../lib/mediaPressKit.mjs";
+import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
+import { reachFrom } from "../lib/mediaReach.mjs";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 
@@ -31,18 +32,18 @@ const purposes = [
   ["05", "Purpose to Connect", "Friendships across dog communities."],
 ];
 
+// Real files only: the sections below are already linked from the press essentials row, so no card here just jumps down the page.
 const downloads = [
-  { title: "Organization fact sheet", body: "A concise reference for reporters, producers, and partners.", links: [["Download the PDF", "/media/fact-sheet"], ["Read it on this page ↑", "#press-kit"]] },
-  { title: "Short and long boilerplates", body: "Descriptions for listings, articles, and introductions, ready to copy.", links: [["Copy them on this page ↑", "#press-kit"]] },
-  { title: "Logo and brand assets", body: "The supplied artwork for light and dark backgrounds, with colours and usage rules.", links: [["See the logo files below ↓", "#brand-assets"]] },
-  { title: "Photo and video library", body: "Credited photos from past events, with links to our social channels.", links: [["Browse the photos below ↓", "#photo-library"]] },
+  { title: "Organization fact sheet", body: "Facts, mission and both boilerplates on one A4 page.", meta: "PDF", href: "/media/fact-sheet", label: "Download the fact sheet" },
+  { title: "Logo pack", body: "Horizontal and stacked logos for light and dark backgrounds, as SVG and transparent PNG, with the usage rules.", meta: "ZIP · 0.9 MB", href: "/press/house-of-retrievers-logos.zip", label: "Download the logo pack", file: "house-of-retrievers-logos.zip" },
+  { title: "Boilerplates", body: "The short and long descriptions as plain text, for listings, articles and introductions.", meta: "TXT", href: "/media/boilerplates", label: "Download the boilerplates" },
 ];
 
 const logoLockups = [
   { title: "Horizontal · on light", note: "Primary lockup. Use for headers, letterheads, press materials and partner decks.", tone: "light", src: "/press/house-of-retrievers-logo-horizontal-light.svg", png: "/house-of-retrievers-logo-original.png" },
   { title: "Horizontal · on dark", note: "Use on black backgrounds. The black retriever and wordmark turn white.", tone: "dark", src: "/press/house-of-retrievers-logo-horizontal-dark.svg", png: "/house-of-retrievers-logo-reverse.png" },
-  { title: "Stacked · on light", note: "Use where width is limited: posters, social tiles, signage, merchandise.", tone: "light", src: "/press/house-of-retrievers-logo-stacked-light.svg" },
-  { title: "Stacked · on dark", note: "Stacked lockup for black backgrounds.", tone: "dark", src: "/press/house-of-retrievers-logo-stacked-dark.svg" },
+  { title: "Stacked · on light", note: "Use where width is limited: posters, social tiles, signage, merchandise.", tone: "light", src: "/press/house-of-retrievers-logo-stacked-light.svg", png: "/press/house-of-retrievers-logo-stacked-light.png" },
+  { title: "Stacked · on dark", note: "Stacked lockup for black backgrounds.", tone: "dark", src: "/press/house-of-retrievers-logo-stacked-dark.svg", png: "/press/house-of-retrievers-logo-stacked-dark.png" },
 ];
 
 const brandColors = [
@@ -65,14 +66,6 @@ const logoDonts = [
   "Rearrange or crop the elements, retype the wordmark, or swap the tagline for other text.",
 ];
 
-const storyAngles = [
-  ["From group chat to nonprofit", "How retriever families went from a first fundraiser in May to a registered society in September 2026."],
-  ["Name it first", "A volunteer pet community that names its beneficiary before each event and publishes what was turned over."],
-  ["Comfort, not therapy", "What happens when well-raised dogs visit elderly residents, planned with care staff."],
-  ["No dog needed", "Why people without pets are joining a dog community."],
-  ["Two communities, one pack", "Dog groups working together instead of competing, as in the pack walk with Beagle Buddies PH."],
-  ["Pet parenting as civic duty", "Responsible ownership and community service in the same sentence."],
-];
 
 const partnershipPathways = [
   ["Event partnerships", "Create a gathering with a clear community purpose."],
@@ -89,7 +82,7 @@ const FALLBACK_CONTENT = {
   heroLead: "The media hub for The House of Retrievers’ Society, Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
   about: "We&apos;re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.",
   mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
-  stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park · Beneficiary: MBY Pet Rescue and Sanctuary\n\nPurpose to Care visit · Milagros Elderly Home Care and Services\n\nHoR × Beagle Buddies PH Community Pack Walk · 23 August 2026 · Ayala Triangle, Makati",
+  stories: "17 May 2026 · Parklinks Pet Park, Pasig · Beneficiary: MBY Pet Rescue and Sanctuary\n\nVisit to Milagros Elderly Shelter · August 2026 · Milagros Elderly Home Care and Services\n\nPack walk with Beagle Buddies PH · 23 August 2026 · Ayala Triangle, Makati",
   partnerships: "Partnerships are shaped around shared objectives—not a fixed price list. Possibilities include an event partnership, a Purpose program partnership, responsible-pet-ownership advocacy, product or in-kind support, educational sessions, venue collaboration, content, and CSR volunteering.",
 };
 
@@ -101,6 +94,7 @@ export default async function MediaPage() {
   const published = await loadPublishedMediaContent();
   const content = { ...FALLBACK_CONTENT, ...published };
   const kit = pressKitFrom(published);
+  const reach = reachFrom(published);
   // One story per line: the editor saves single line breaks, so splitting only on blank lines ran all three together.
   const storyParts = String(content.stories || "").split(/\n+/).map((line) => line.trim()).filter(Boolean).slice(0, 6);
   const albums = await loadMediaAlbums();
@@ -126,7 +120,7 @@ export default async function MediaPage() {
       </section>
 
       <nav className="media-essentials" aria-label="Press essentials">
-        <a href="#launch"><span>Launch · 30 November</span><strong>Golden Beginning</strong><small>Novotel Manila Araneta City</small></a>
+        <a href="#launch"><span>Launch · 30 November</span><strong>A Golden Beginning</strong><small>Novotel Manila Araneta City</small></a>
         <a href="/media/fact-sheet"><span>Fact sheet</span><strong>Download the PDF</strong><small>Facts, mission, boilerplates</small></a>
         <a href="#brand-assets"><span>Logos</span><strong>Brand assets</strong><small>SVG and PNG, light and dark</small></a>
         <a href="#photo-library"><span>Photos</span><strong>Credited photos</strong><small>From past events</small></a>
@@ -177,14 +171,34 @@ export default async function MediaPage() {
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
           <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry" data-message="partnership">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
         <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br />Serve generously.</p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
+        <div className="media-reach">
+          <div className="media-reach-head"><h3>Our community</h3><p>{reach.community.asOf ? `Followers as of ${reach.community.asOf}, per channel.` : "Followers per channel."} Many people follow more than one, so we don’t add them up.</p></div>
+          <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <span aria-hidden="true"> ↗</span> : null}</em></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url}>{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
+          <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Each runs its own page; for collaborations, contact the family directly.</p></div>
+          <ul className="media-pack">{reach.pack.map((family) => <li key={family.handle}><a href={family.url}><img src={family.photo} alt="" loading="lazy" /><span><strong>{family.names}</strong><small>{family.group}</small><em>{family.handle}</em>{family.stats ? <b>{family.stats.followers} followers{family.stats.posts ? ` · ${family.stats.posts} posts` : ""}<br />as of {family.stats.asOf}</b> : null}</span></a></li>)}</ul>
+        </div>
       </section>
 
       <section className="media-section media-press media-chapter" id="press-kit" aria-labelledby="press-title">
         <div className="media-section-label">06 / Press kit</div>
-        <div className="media-download-head"><h2 id="press-title">The facts,<br /><em>ready to use.</em></h2><p>Confirmed details for reporters, producers, and partners. Wording marked as a draft is awaiting HOR approval.</p></div>
+        <div className="media-download-head"><h2 id="press-title">The facts,<br /><em>ready to use.</em></h2><p>Confirmed details for reporters, producers, and partners.{kit.boilerplatesApproved ? "" : " Wording marked as a draft is still being approved."}</p></div>
+        <article className="media-launch-card" id="launch">
+          <div>
+            <span>Official launch · 30 November 2026</span>
+            <h3>A Golden Beginning:<br /><em>Paws &amp; Purpose</em></h3>
+          </div>
+          <div>
+            <p>Monday, 30 November, from 3:00 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly – Sta. Teresa Jornet Home.</p>
+            <div className="media-actions">
+              <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <span aria-hidden="true">↗</span></a>
+              <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11">Event details <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+        </article>
         <div className="media-press-grid">
           <div>
             <h3 className="media-press-title">Fact sheet</h3>
+            {published.publishedAt ? <p className="media-updated">Last updated {albumDate(published.publishedAt)}</p> : null}
             <dl className="media-fact-list">
               {kit.factSheet.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}
               <div><dt>Mission</dt><dd dangerouslySetInnerHTML={rich(content.mission)} /></div>
@@ -194,26 +208,18 @@ export default async function MediaPage() {
           <div>
             <h3 className="media-press-title">About House of Retrievers</h3>
             {[["Short, about 50 words", kit.boilerplateShort], ["Long, about 150 words", kit.boilerplateLong]].map(([label, text]) => <article className="media-boilerplate" key={label}><header><strong>{label}</strong>{kit.boilerplatesApproved ? null : <span className="media-draft-tag">Draft for approval</span>}<CopyButton text={text} label="Copy text" /></header>{text.split("\n\n").map((paragraph) => <p key={paragraph.slice(0, 24)}>{paragraph}</p>)}</article>)}
-            <article className="media-launch-card" id="launch">
-              <span>Official launch · 30 November 2026</span>
-              <h3>Golden Beginning:<br /><em>Paws and Purpose</em></h3>
-              <p>Monday, 2:30 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly.</p>
-              <div className="media-actions">
-                <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <span aria-hidden="true">↗</span></a>
-                <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11">Event details <span aria-hidden="true">↗</span></a>
-              </div>
-            </article>
           </div>
         </div>
         <div className="media-press-angles">
           <h3 className="media-press-title">Story angles</h3>
-          <div className="media-angle-grid">{storyAngles.map(([title, body], index) => <article key={title}><h4>{title}</h4><p>{body}</p></article>)}</div>
+          <p className="media-brand-intro">Each one is a real activity from our timeline, with the date and place to start from.</p>
+          <div className="media-angle-grid">{kit.storyAngles.map(({ title, meta, body, photo }) => <article key={title} className={photo ? "has-photo" : undefined}>{photo ? <img src={photo} alt={photoAlt(photo)} loading="lazy" /> : null}<div>{meta ? <span>{meta}</span> : null}<h4>{title}</h4><p>{body}</p></div></article>)}</div>
         </div>
       </section>
 
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
-        <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>The fact sheet, logo files, and credited event photos, ready for editors, producers, and partners.</p></div>
-        <div className="media-download-grid">{downloads.map(({ title, body, status, links }) => <article key={title}><h3>{title}</h3><p>{body}</p>{links ? <div className="media-download-links">{links.map(([label, href, file]) => <a key={href + label} href={href} download={file ? true : undefined}>{label}</a>)}</div> : <span className="media-download-status">{status}</span>}</article>)}</div>
+        <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Files to download, the logo guidelines and credited event photos, ready for editors, producers, and partners.</p></div>
+        <div className="media-download-grid">{downloads.map(({ title, body, meta, href, label, file }) => <article key={title}><span className="media-download-meta">{meta}</span><h3>{title}</h3><p>{body}</p><a className="media-button media-button-dark" href={href} download={file || undefined}>{label} <span aria-hidden="true">↓</span></a></article>)}</div>
         <div className="media-brand-assets" id="brand-assets">
           <h3 className="media-press-title">Logo</h3>
           <p className="media-brand-intro">A gold and a black retriever sitting back to back, the wordmark, the “Society Inc.” line, a paw rule and the tagline. Always use the supplied artwork; never retype or redraw it.</p>
@@ -233,7 +239,7 @@ export default async function MediaPage() {
           </section>) : <p className="media-photo-empty">Credited event photos will appear here as albums are added to past events and their photographers are recorded.</p>}
           <div className="media-photo-links"><strong>More photos and video</strong><a href="https://www.instagram.com/houseofretrieversph/">Instagram @houseofretrieversph <span aria-hidden="true">↗</span></a><a href="https://www.facebook.com/houseofretrieversph">Facebook /houseofretrieversph <span aria-hidden="true">↗</span></a><a href="mailto:houseofretrieversph@gmail.com?subject=Photo%20request">Request photos or permission <span aria-hidden="true">↗</span></a></div>
         </div>
-        <div className="media-editorial-note"><strong>For editors and producers</strong><p>HOR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
+        <div className="media-editorial-note"><strong>For editors and producers</strong><p>HoR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>
 
       <PhotoLightbox />
