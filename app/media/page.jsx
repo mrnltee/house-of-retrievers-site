@@ -65,13 +65,14 @@ const logoDonts = [
   "Rearrange or crop the elements, retype the wordmark, or swap the tagline for other text.",
 ];
 
-// Each angle is a real stop on the home page's "Our journey" timeline (app/content/journey.js): [title, when · where, summary].
+// Each angle is a real stop on the home page's "Our journey" timeline (app/content/journey.js): [title, when · where, summary, photo?].
+// Laid out as a bento (globals.css "Press kit bento"): the order sets each tile's size, so keep the three photo tiles where they are.
 const storyAngles = [
-  ["From a doggie run to a registered society", "17 May 2026 · Parklinks Pet Park, Pasig", "Retriever families met in a group chat to plan a doggie run. It became Pawres de Mayo, a first fundraiser for MBY Pet Rescue and Sanctuary, and by September 2026 the group was registered with the SEC."],
-  ["Free hugs, now every month", "July 2026 onward · BGC, Taguig", "International Free Hugs Day put the furbabies front and centre and began Purpose to Care. FreeHugs now returns to BGC on the last Sunday of each month."],
+  ["From a doggie run to a registered society", "17 May 2026 · Parklinks Pet Park, Pasig", "Retriever families met in a group chat to plan a doggie run. It became Pawres de Mayo, a first fundraiser for MBY Pet Rescue and Sanctuary, and by September 2026 the group was registered with the SEC.", { src: "/journey/pawres-de-mayo/4.jpg", alt: "Two members lifting their golden retrievers up in front of the Parklinks fence" }],
+  ["Free hugs, now every month", "July 2026 onward · BGC, Taguig", "International Free Hugs Day put the furbabies front and centre and began Purpose to Care. FreeHugs now returns to BGC on the last Sunday of each month.", { src: "/journey/freehugs-bgc/5.jpg", alt: "A child reaching out to a happy golden retriever" }],
   ["Learning, with the dogs in mind", "August 2026 · Quezon City", "A basic embroidery class with partner Pawfect Blooms began Purpose to Learn: an afternoon of stitching together around one table."],
   ["Comfort, planned with care staff", "August 2026 · Milagros Elderly Home Care and Services", "A week after the class, members and their retrievers visited the residents of Milagros. The visit was shaped around care and companionship, not therapy."],
-  ["Two communities, one walk", "23 August 2026 · Ayala Triangle, Makati", "A pack walk with Beagle Buddies PH, the society’s first collaboration with another dog community: dog groups working together instead of competing."],
+  ["Two communities, one walk", "23 August 2026 · Ayala Triangle, Makati", "A pack walk with Beagle Buddies PH, the society’s first collaboration with another dog community: dog groups working together instead of competing.", { src: "/journey/beagle-buddies-pack-walk/5.jpg", alt: "Walkers carrying the Beagle Buddies PH flag with beagles on leash" }],
   ["A meet-up every few weeks", "October to November 2026 · Alabang, Pasay, Pasig", "A Weekend Social Run, the Bedazzle Barkdate and the Retriever Romp keep the pack together ahead of the public launch, A Golden Beginning, on 30 November."],
 ];
 
@@ -183,6 +184,19 @@ export default async function MediaPage() {
       <section className="media-section media-press media-chapter" id="press-kit" aria-labelledby="press-title">
         <div className="media-section-label">06 / Press kit</div>
         <div className="media-download-head"><h2 id="press-title">The facts,<br /><em>ready to use.</em></h2><p>Confirmed details for reporters, producers, and partners. Wording marked as a draft is awaiting HOR approval.</p></div>
+        <article className="media-launch-card" id="launch">
+          <div>
+            <span>Official launch · 30 November 2026</span>
+            <h3>A Golden Beginning:<br /><em>Paws &amp; Purpose</em></h3>
+          </div>
+          <div>
+            <p>Monday, 30 November, from 3:00 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly – Sta. Teresa Jornet Home.</p>
+            <div className="media-actions">
+              <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <span aria-hidden="true">↗</span></a>
+              <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11">Event details <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+        </article>
         <div className="media-press-grid">
           <div>
             <h3 className="media-press-title">Fact sheet</h3>
@@ -195,21 +209,12 @@ export default async function MediaPage() {
           <div>
             <h3 className="media-press-title">About House of Retrievers</h3>
             {[["Short, about 50 words", kit.boilerplateShort], ["Long, about 150 words", kit.boilerplateLong]].map(([label, text]) => <article className="media-boilerplate" key={label}><header><strong>{label}</strong>{kit.boilerplatesApproved ? null : <span className="media-draft-tag">Draft for approval</span>}<CopyButton text={text} label="Copy text" /></header>{text.split("\n\n").map((paragraph) => <p key={paragraph.slice(0, 24)}>{paragraph}</p>)}</article>)}
-            <article className="media-launch-card" id="launch">
-              <span>Official launch · 30 November 2026</span>
-              <h3>A Golden Beginning:<br /><em>Paws &amp; Purpose</em></h3>
-              <p>Monday, 2:30 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly – Sta. Teresa Jornet Home.</p>
-              <div className="media-actions">
-                <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <span aria-hidden="true">↗</span></a>
-                <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11">Event details <span aria-hidden="true">↗</span></a>
-              </div>
-            </article>
           </div>
         </div>
         <div className="media-press-angles">
           <h3 className="media-press-title">Story angles</h3>
           <p className="media-brand-intro">Each one is a real activity from our timeline, with the date and place to start from.</p>
-          <div className="media-angle-grid">{storyAngles.map(([title, meta, body]) => <article key={title}><span>{meta}</span><h4>{title}</h4><p>{body}</p></article>)}</div>
+          <div className="media-angle-grid">{storyAngles.map(([title, meta, body, photo]) => <article key={title} className={photo ? "has-photo" : undefined}>{photo ? <img src={photo.src} alt={photo.alt} loading="lazy" /> : null}<div><span>{meta}</span><h4>{title}</h4><p>{body}</p></div></article>)}</div>
         </div>
       </section>
 

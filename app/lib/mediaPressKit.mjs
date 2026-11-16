@@ -14,7 +14,7 @@ export const DEFAULT_FACT_SHEET = [
   ["Purpose areas", "Celebrate · Learn · Give Back · Care · Connect"],
   ["Who can join", "Pet parents of every breed, and volunteers with or without a dog."],
   ["First fundraiser", "Pawres de Mayo, 17 May 2026, at Parklinks Pet Park, Pasig, for MBY Pet Rescue and Sanctuary."],
-  ["Official launch", "A Golden Beginning: Paws & Purpose, 30 November 2026, Novotel Manila Araneta City, Quezon City."],
+  ["Official launch", "A Golden Beginning: Paws & Purpose, 30 November 2026, 3:00 PM, Novotel Manila Araneta City, Quezon City."],
   ["Online", "houseofretrieversph.org · Facebook and Instagram @houseofretrieversph"],
 ];
 
