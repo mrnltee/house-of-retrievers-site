@@ -104,7 +104,7 @@ export default function SupportModal({ onClose, onJoin }) {
       <section ref={dialog} className="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-title">
         <button className="modal-close" onClick={onClose} aria-label="Close support options"><Icon name="close" size={20} /></button>
         <div className="eyebrow">Support the pack</div>
-        <h2 id="support-title">Help us make<br /><em>more good.</em></h2>
+        <h2 id="support-title">Help us make<br />{" "}<em>more good.</em></h2>
         <p className="modal-lead">Every contribution helps us show up for dogs, people, and the communities we share.</p>
         {live === null ? <div className="support-method-detail" aria-busy="true"><p className="support-method-copy">Loading donation details…</p></div> : live.configured ? <LiveDetails methods={live.methods || []} /> : <>
         <div className="support-switch" role="group" aria-label="Donation methods">

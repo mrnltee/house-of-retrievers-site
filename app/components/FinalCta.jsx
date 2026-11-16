@@ -18,8 +18,8 @@ export default function FinalCta({ onJoin }) {
     <section className="final-cta" id="finalCTA" aria-label="Join the House of Retrievers community">
       <BackgroundVideo className="final-cta-video" src={SITE_VIDEOS.joinUs} poster="/cta-join-us-poster.jpg" aria-hidden="true" controlLabel="background video" />
       <div className="final-cta-shade" />
-      <div><FamilyDogMark /><p>There’s always room<br />{" "}for one more pawsome pawmily.</p></div>
-      <button className="button cream" onClick={() => onJoin()}>COME JOIN US <Icon name="paw" size={18} /></button>
+      <div><FamilyDogMark /><p>There’s always room for one more pawsome pawmily.</p></div>
+      <button className="button cream" onClick={() => onJoin()}>Come join us <Icon name="paw" size={18} /></button>
     </section>
   );
 }

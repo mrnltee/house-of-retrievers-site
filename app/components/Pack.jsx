@@ -26,7 +26,7 @@ export default function Pack({ packView, setPackView, onSupport }) {
         <div className="pack-heading">
           <div>
             <div className="eyebrow light">Meet the heart of House of Retrievers</div>
-            <h2>Every good story<br />starts with a <em>pack.</em></h2>
+            <h2>Every good story<br />{" "}starts with a <em>pack.</em></h2>
           </div>
           <div className="view-switch" role="tablist" aria-label="Pack content">
             <button

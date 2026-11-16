@@ -124,7 +124,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
         {!sent ? (
           <>
             <div className="eyebrow">Your first step</div>
-            <h2 id="join-title">How would you like<br />to join the pack?</h2>
+            <h2 id="join-title">How would you like<br />{" "}to join the pack?</h2>
             <p className="modal-lead">Pick whatever fits you today — you can always join the rest later.</p>
             <div className="interest-grid">
               {interests.map((item) => (

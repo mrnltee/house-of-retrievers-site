@@ -89,7 +89,7 @@ export default function PurposeStories() {
     <section className="mission section-shell" id="mission">
       <div className="section-intro">
         <div className="eyebrow">What moves us</div>
-        <h2>More than a breed.<br /><em>A way to give back.</em></h2>
+        <h2>More than a breed.<br />{" "}<em>A way to give back.</em></h2>
         <p>We bring furparents and their furbabies together to serve our communities, grow alongside each other, and turn a gathering into something that gives back.</p>
       </div>
 

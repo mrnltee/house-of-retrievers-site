@@ -2007,3 +2007,26 @@ a.media-reach-channel:hover em, a.media-reach-channel:focus-visible em { text-de
 /* Flex links drop the space between text and icon, so they get a gap instead (icon migration, 16 Nov 2026). */
 .media-text-link { display: inline-flex; align-items: center; gap: .35em; }
 .media-download-links a, .media-fact-list dd a, .media-album header a, .media-photo-links a { gap: .35em; }
+
+/* Main site design review pass (16 Nov 2026, owner). Measured with the same last-line orphan check as the
+   media hub (home page, 1440 / 768 / 375 px: 7 / 8 / 10 before). */
+main :is(h1, h2, h3, h4) { text-wrap: balance; }
+main :is(p, li, dd, blockquote) { text-wrap: pretty; }
+/* Short card copy (two to four lines): pretty barely acts on text that short. */
+main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .pack-support-banner p) { text-wrap: balance; }
+/* Story pillars: "01" sat 62–108 px above its label, reading as a stray mark rather than the pillar's number. */
+.pillar-number { margin-bottom: clamp(18px, 2.4vw, 32px); }
+@media (max-width: 900px) { .pillar-number { margin-bottom: 18px; } }
+/* Pack cards: the number was pinned left while the icon, title and text are centred. */
+.join-number { align-self: center; }
+/* Journey cards: the story column was 176 px wide on desktop (4–5 short lines a card). */
+@media (min-width: 981px) {
+  .journey-card { grid-template-columns: 40% 1fr; }
+  .journey-body { padding: 22px 22px; }
+}
+/* Final call to action: the section's one message was 22 px over a full-screen video. */
+.final-cta p { font-size: clamp(26px, 3.2vw, 44px); line-height: 1.12; text-wrap: balance; }
+/* Mission heading: in a half-width column "A way to give back." couldn't fit at 84 px and left "back." alone. */
+@media (min-width: 901px) { .mission .section-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); } }
+/* On phones a heading's fixed line break forces the split ("…a / pack."); let balance place it instead. */
+@media (max-width: 560px) { main h2 br { display: none; } }
