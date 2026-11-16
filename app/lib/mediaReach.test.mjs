@@ -23,11 +23,13 @@ test("every default pack row matches a founding family", () => {
   const handles = PACK_FAMILIES.map((family) => family.handle);
   assert.equal(PACK_FAMILIES.length, 5);
   for (const row of DEFAULT_PACK) assert.ok(handles.includes(row.handle), row.handle);
-  assert.ok(DEFAULT_PACK.every((row) => row.statsOn === false), "numbers stay hidden until a family agrees");
+  // Only families that agreed are switched on by default (owner, 16 Nov 2026: Molly & Maverick, counts only).
+  assert.deepEqual(DEFAULT_PACK.filter((row) => row.statsOn).map((row) => row.handle), ["@molly.maverickthebears"]);
+  assert.ok(DEFAULT_PACK.every((row) => row.rates.length === 0), "no rates are prefilled");
 });
 
 test("a family's numbers show only when switched on with a count and a date", () => {
-  assert.ok(reachFrom({}).pack.every((family) => family.stats === null));
+  assert.deepEqual(reachFrom({}).pack.filter((family) => family.stats).map((family) => [family.handle, family.stats.followers, family.stats.posts, family.stats.rates.length]), [["@molly.maverickthebears", "1,368", "1,102", 0]]);
   const on = reachFrom({ pack: [{ handle: "@thegolden.nuggets", show: true, statsOn: true, followers: "1,778", posts: "965", asOf: "16 November 2026" }] });
   assert.deepEqual(on.pack.find((family) => family.handle === "@thegolden.nuggets").stats, { followers: "1,778", posts: "965", asOf: "16 November 2026", rates: [], contact: "" });
   const undated = reachFrom({ pack: [{ handle: "@thegolden.nuggets", statsOn: true, followers: "1,778", asOf: "" }] });

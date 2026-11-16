@@ -33,8 +33,8 @@ export default function PackCards({ pack }) {
                   <span className="media-pack-label">Rate card · Instagram</span>
                   <strong>{family.names}</strong>
                   {card ? <>
-                    {card.followers ? <span className="media-pack-stats"><b>{card.followers}</b> followers{card.posts ? <> · <b>{card.posts}</b> posts</> : null}</span> : null}
-                    {card.rates.length ? <span className="media-pack-rates" role="list">{card.rates.map((rate) => <span role="listitem" key={rate.label}><span>{rate.label}</span><b>{rate.amount}</b></span>)}</span> : <span className="media-pack-note">Rates on request.</span>}
+                    {card.followers ? <span className="media-pack-stats"><span><b>{card.followers}</b>followers</span>{card.posts ? <span><b>{card.posts}</b>posts</span> : null}</span> : null}
+                    {card.rates.length ? <span className="media-pack-rates" role="list">{card.rates.map((rate) => <span role="listitem" key={rate.label}><span>{rate.label}</span><b>{rate.amount}</b></span>)}</span> : null}
                     <small className="media-pack-asof">As of {card.asOf}</small>
                   </> : <span className="media-pack-note">Rate card available on request. Contact the family through their profile.</span>}
                 </span>

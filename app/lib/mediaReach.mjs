@@ -34,7 +34,7 @@ export const PACK_FAMILIES = families.filter((family) => family.socialUrl && fam
 
 /**
  * Per-family settings, keyed by handle. Counts are prefilled from the profiles as seen on 16 Nov 2026,
- * but stay hidden (statsOn false) until the family agrees.
+ * but stay hidden (statsOn false) until the family agrees. Molly & Maverick: counts only, no rates (owner, 16 Nov 2026).
  * @type {{handle: string, show: boolean, statsOn: boolean, followers: string, posts: string, asOf: string, rates: {label: string, amount: string}[], contact: string}[]}
  */
 export const DEFAULT_PACK = [
@@ -42,7 +42,7 @@ export const DEFAULT_PACK = [
   { handle: "@dailydoseofmacchiato_", show: true, statsOn: false, followers: "1,456", posts: "223", asOf: "16 November 2026", rates: [], contact: "" },
   { handle: "@itsmefayethepancakee", show: true, statsOn: false, followers: "2,103", posts: "535", asOf: "16 November 2026", rates: [], contact: "" },
   { handle: "@lukaxluji_goldenbros", show: true, statsOn: false, followers: "1,025", posts: "117", asOf: "16 November 2026", rates: [], contact: "" },
-  { handle: "@molly.maverickthebears", show: true, statsOn: false, followers: "1,368", posts: "1,102", asOf: "16 November 2026", rates: [], contact: "" },
+  { handle: "@molly.maverickthebears", show: true, statsOn: true, followers: "1,368", posts: "1,102", asOf: "16 November 2026", rates: [], contact: "" },
 ];
 
 function text(value, max) {
