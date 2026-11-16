@@ -6,7 +6,7 @@ import { actionAdmin, backWith } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
-import { factSheetText, parseFactSheet, plainText } from "../lib/mediaPressKit.mjs";
+import { cleanStoryAngles, factSheetText, parseFactSheet, plainText } from "../lib/mediaPressKit.mjs";
 
 const MAX_HTML = 12000;
 
@@ -33,6 +33,7 @@ export async function saveMediaHub(data) {
     boilerplateShort: plainText(data.get("boilerplateShort")).slice(0, 1200),
     boilerplateLong: String(data.get("boilerplateLong") || "").split(/\n{2,}/).map(plainText).filter(Boolean).join("\n\n").slice(0, 4000),
     boilerplatesApproved: data.get("boilerplatesApproved") === "on",
+    storyAngles: cleanStoryAngles(data.get("storyAngles")),
     timelineOrientation: cleanTimelineOrientation(data.get("timelineOrientation")),
     timeline: cleanMediaTimeline(data.get("timeline")),
     profile: cleanMediaProfile(data.get("profile")),

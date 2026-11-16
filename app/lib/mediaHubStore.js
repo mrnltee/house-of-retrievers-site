@@ -2,12 +2,13 @@ import { hasDatabase, sql } from "./db";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
 
-/** The published media hub wording, or {} when there is none (no database, or still a draft). */
+/** The published media hub wording plus `publishedAt`, or {} when there is none (no database, or still a draft). */
 export async function loadPublishedMediaContent() {
   if (!hasDatabase()) return {};
   try {
-    const [document] = await sql("SELECT content FROM media_hub_documents WHERE id=true AND status='published'");
-    return document?.content && typeof document.content === "object" ? document.content : {};
+    const [document] = await sql("SELECT content, updated_at FROM media_hub_documents WHERE id=true AND status='published'");
+    // publishedAt is when the published copy was saved; the press kit shows it as "Last updated".
+    return document?.content && typeof document.content === "object" ? { ...document.content, publishedAt: document.updated_at } : {};
   } catch {
     return {};
   }

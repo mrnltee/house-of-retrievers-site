@@ -3,7 +3,7 @@ import { sql } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed } from "../ui";
 import MediaEditor from "./MediaEditor";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE } from "../../../lib/mediaHub.mjs";
-import { DEFAULT_BOILERPLATE_LONG, DEFAULT_BOILERPLATE_SHORT, DEFAULT_FACT_SHEET, factSheetText } from "../../../lib/mediaPressKit.mjs";
+import { DEFAULT_BOILERPLATE_LONG, DEFAULT_BOILERPLATE_SHORT, DEFAULT_FACT_SHEET, DEFAULT_STORY_ANGLES, factSheetText } from "../../../lib/mediaPressKit.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +12,13 @@ const DEFAULTS = {
   heroLead: "The media hub for The House of Retrievers’ Society, Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
   about: "We’re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.\n\nThe House of Retrievers’ Society, Inc., formerly known as House of Retrievers PH, is a Philippine SEC-registered nonprofit organization built around the relationship between dogs and the people who love them.",
   mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
-  stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park · Beneficiary: MBY Pet Rescue and Sanctuary\n\nPurpose to Care visit · Milagros Elderly Home Care and Services\n\nHoR × Beagle Buddies PH Community Pack Walk · 23 August 2026 · Ayala Triangle, Makati",
+  stories: "17 May 2026 · Parklinks Pet Park, Pasig · Beneficiary: MBY Pet Rescue and Sanctuary\n\nVisit to Milagros Elderly Shelter · August 2026 · Milagros Elderly Home Care and Services\n\nPack walk with Beagle Buddies PH · 23 August 2026 · Ayala Triangle, Makati",
   partnerships: "Event partnerships, Purpose program partnerships, advocacy campaigns, product and in-kind support, educational sessions, venue collaborations, content partnerships, and CSR volunteering.",
   factSheet: factSheetText(DEFAULT_FACT_SHEET),
   boilerplateShort: DEFAULT_BOILERPLATE_SHORT,
   boilerplateLong: DEFAULT_BOILERPLATE_LONG,
   boilerplatesApproved: false,
+  storyAngles: DEFAULT_STORY_ANGLES,
   timelineOrientation: "vertical",
   timeline: DEFAULT_MEDIA_TIMELINE,
   profile: DEFAULT_MEDIA_PROFILE,

@@ -1,23 +1,27 @@
 /** @type {{path: string, label: string}[]} */
+/** Approved photos for the hub's pickers. `alt` describes the frame; story angle photos use it as their alt text. */
 export const MEDIA_THUMBNAILS = [
   // Photos the home page doesn't lead with, so the hub doesn't look like a copy of the main site.
-  { path: "/journey/pawres-de-mayo/2.jpg", label: "Pawres de Mayo — two retrievers in party dresses" },
-  { path: "/journey/pawres-de-mayo/3.jpg", label: "Pawres de Mayo — group photo on the lawn" },
-  { path: "/journey/international-free-hugs-day/5.jpg", label: "Free Hugs Day — a woman cupping a retriever's face" },
-  { path: "/journey/milagros-elderly-shelter/4.jpg", label: "Milagros visit — a resident petting a retriever" },
-  { path: "/journey/beagle-buddies-pack-walk/3.jpg", label: "Pack walk — Beagle Buddies PH leading the walk" },
-  { path: "/journey/freehugs-bgc/3.jpg", label: "FreeHugs BGC — a boy petting a retriever on a bench" },
-  { path: "/1-purpaws/purpaw8.jpg", label: "Care visit — a resident reaching out to the retrievers" },
-  { path: "/1-purpaws/purpaw10.jpg", label: "Care visit — hands resting on a retriever's head" },
-  { path: "/2-better/better2.jpg", label: "Surf day — six retrievers lined up at the surf shop" },
-  { path: "/2-better/better3.jpg", label: "Embroidery class — the retriever place card" },
-  { path: "/2-better/better8.jpg", label: "Embroidery class — the group photo" },
+  { path: "/journey/pawres-de-mayo/2.jpg", label: "Pawres de Mayo — two retrievers in party dresses", alt: "Two golden retrievers in party dresses grinning at the camera" },
+  { path: "/journey/pawres-de-mayo/3.jpg", label: "Pawres de Mayo — group photo on the lawn", alt: "Members and their golden retrievers gathered on the lawn for a group photo" },
+  { path: "/journey/pawres-de-mayo/4.jpg", label: "Pawres de Mayo — members lifting their retrievers", alt: "Two members lifting their golden retrievers up in front of the Parklinks fence" },
+  { path: "/journey/international-free-hugs-day/5.jpg", label: "Free Hugs Day — a woman cupping a retriever's face", alt: "A woman cupping a smiling golden retriever's face in her hands" },
+  { path: "/journey/milagros-elderly-shelter/4.jpg", label: "Milagros visit — a resident petting a retriever", alt: "A resident in a wheelchair reaching down to pet a golden retriever" },
+  { path: "/journey/beagle-buddies-pack-walk/3.jpg", label: "Pack walk — Beagle Buddies PH leading the walk", alt: "Beagles and their owners in matching shirts leading part of the walk" },
+  { path: "/journey/beagle-buddies-pack-walk/5.jpg", label: "Pack walk — the Beagle Buddies PH flag", alt: "Walkers carrying the Beagle Buddies PH flag with beagles on leash" },
+  { path: "/journey/freehugs-bgc/3.jpg", label: "FreeHugs BGC — a boy petting a retriever on a bench", alt: "A golden retriever with a Free Hugs sign resting on a bench as a boy pets it" },
+  { path: "/journey/freehugs-bgc/5.jpg", label: "FreeHugs BGC — a child reaching out to a retriever", alt: "A child reaching out to a happy golden retriever" },
+  { path: "/1-purpaws/purpaw8.jpg", label: "Care visit — a resident reaching out to the retrievers", alt: "A resident in a wheelchair reaching out to the golden retrievers gathered around him" },
+  { path: "/1-purpaws/purpaw10.jpg", label: "Care visit — hands resting on a retriever's head", alt: "A resident's hand and a volunteer's hand resting together on a golden retriever's head" },
+  { path: "/2-better/better2.jpg", label: "Surf day — six retrievers lined up at the surf shop", alt: "Six golden retrievers in bandanas lined up together at the San Juan surf shop" },
+  { path: "/2-better/better3.jpg", label: "Embroidery class — the retriever place card", alt: "A place setting for the embroidery class, marked with a golden retriever place card" },
+  { path: "/2-better/better8.jpg", label: "Embroidery class — the group photo", alt: "The group gathered for a photo at the end of the embroidery class" },
   // The home page's own cover images, kept so content saved with them still shows.
-  { path: "/house-of-retrievers-hero-poster.jpg", label: "Home page hero — families and furbabies" },
-  { path: "/1-purpaws/purpaw1.jpg", label: "Home page — Purpose cover" },
-  { path: "/2-better/better1.jpg", label: "Home page — Better cover" },
-  { path: "/3-giveback/mby-give-back-poster.jpg", label: "Home page — Give back cover" },
-  { path: "/cta-join-us-poster.jpg", label: "Home page — Join cover" },
+  { path: "/house-of-retrievers-hero-poster.jpg", label: "Home page hero — families and furbabies", alt: "House of Retrievers families and furbabies together" },
+  { path: "/1-purpaws/purpaw1.jpg", label: "Home page — Purpose cover", alt: "A volunteer kneeling to greet a golden retriever in an orange bandana during a care home visit" },
+  { path: "/2-better/better1.jpg", label: "Home page — Better cover", alt: "Members and their golden retrievers sharing paddleboards out in the surf" },
+  { path: "/3-giveback/mby-give-back-poster.jpg", label: "Home page — Give back cover", alt: "Two golden retrievers beside a car boot loaded with donated dog food" },
+  { path: "/cta-join-us-poster.jpg", label: "Home page — Join cover", alt: "House of Retrievers members and their dogs at a community gathering" },
 ];
 
 export const DEFAULT_MEDIA_TIMELINE = [

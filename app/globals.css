@@ -1881,3 +1881,24 @@ html.lenis, html.lenis body { height: auto; }
 .media-angle-grid article:nth-child(6) > div { max-width: 560px; }
 .media-angle-grid article:nth-child(6) h4 { font-size: 24px; }
 .media-angle-grid article:nth-child(6) p { font-size: 16px; }
+/* Review fixes (16 Nov 2026): links at least 44 px tall and labels at least 12 px, as the hub's rules say;
+   resource library cards are real downloads with one button each. */
+.media-download-links a, .media-fact-list dd a { display: inline-flex; align-items: center; min-height: 44px; }
+.media-download-links { gap: 0 18px; }
+.media-draft-tag { font-size: 12px; letter-spacing: .08em; }
+.media-fact-list dt { font-size: 12px; letter-spacing: .1em; }
+.media-updated { margin: -4px 0 14px; color: var(--media-muted); font-size: 13px; }
+.media-download-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.media-download-grid article { min-height: 0; gap: 10px; }
+.media-download-grid h3 { margin: 0; }
+.media-download-meta { align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: #f3e7cc; color: #7a5a1c; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.media-download-grid .media-button { align-self: flex-start; margin-top: auto; }
+.media-download-grid p { margin-bottom: 12px; }
+@media (max-width: 800px) { .media-download-grid { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .media-boilerplate header strong { flex-basis: 100%; } .media-boilerplate header .media-copy-button { margin-left: auto; } }
+.media-album header a, .media-photo-links a { display: inline-flex; align-items: center; min-height: 44px; }
+.media-photo-links { gap: 0 26px; }
+.media-copy-button { position: relative; }
+.media-copy-button span { font-size: 12px; }
+/* The pill stays compact; its tap area reaches 44 px. */
+.media-copy-button::after { content: ""; position: absolute; inset: -8px -4px; }
