@@ -23,13 +23,18 @@ test("every default pack row matches a founding family", () => {
   const handles = PACK_FAMILIES.map((family) => family.handle);
   assert.equal(PACK_FAMILIES.length, 5);
   for (const row of DEFAULT_PACK) assert.ok(handles.includes(row.handle), row.handle);
-  // Only families that agreed are switched on by default (owner, 16 Nov 2026: Molly & Maverick, counts only).
-  assert.deepEqual(DEFAULT_PACK.filter((row) => row.statsOn).map((row) => row.handle), ["@molly.maverickthebears"]);
+  // Owner, 16 Nov 2026: every family's counts are shown, counts only.
+  assert.ok(DEFAULT_PACK.every((row) => row.statsOn && row.followers && row.asOf), "each family has dated counts");
   assert.ok(DEFAULT_PACK.every((row) => row.rates.length === 0), "no rates are prefilled");
 });
 
 test("a family's numbers show only when switched on with a count and a date", () => {
-  assert.deepEqual(reachFrom({}).pack.filter((family) => family.stats).map((family) => [family.handle, family.stats.followers, family.stats.posts, family.stats.rates.length]), [["@molly.maverickthebears", "1,368", "1,102", 0]]);
+  assert.deepEqual(reachFrom({}).pack.map((family) => [family.handle, family.stats.followers, family.stats.posts, family.stats.rates.length]), [
+    ["@thegolden.nuggets", "1,778", "965", 0], ["@dailydoseofmacchiato_", "1,456", "223", 0], ["@itsmefayethepancakee", "2,103", "535", 0],
+    ["@lukaxluji_goldenbros", "1,025", "117", 0], ["@molly.maverickthebears", "1,368", "1,102", 0],
+  ]);
+  // A family switched off in the admin goes back to "available on request".
+  assert.equal(reachFrom({ pack: [{ handle: "@thegolden.nuggets", statsOn: false, followers: "1,778", asOf: "16 November 2026" }] }).pack[0].stats, null);
   const on = reachFrom({ pack: [{ handle: "@thegolden.nuggets", show: true, statsOn: true, followers: "1,778", posts: "965", asOf: "16 November 2026" }] });
   assert.deepEqual(on.pack.find((family) => family.handle === "@thegolden.nuggets").stats, { followers: "1,778", posts: "965", asOf: "16 November 2026", rates: [], contact: "" });
   const undated = reachFrom({ pack: [{ handle: "@thegolden.nuggets", statsOn: true, followers: "1,778", asOf: "" }] });
