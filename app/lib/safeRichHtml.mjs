@@ -70,8 +70,9 @@ function rebuildTag(tag) {
   if (name === "a") {
     if (closing) return "</a>";
     const href = safeHref(hrefOf(match[3]));
+    // Links to other websites open in a new tab (owner, 16 Nov 2026).
     const external = href && /^https?:/i.test(href);
-    return href ? `<a href="${escapeAttr(href)}"${external ? ' rel="noopener noreferrer"' : ""}>` : "<a>";
+    return href ? `<a href="${escapeAttr(href)}"${external ? ' target="_blank" rel="noopener noreferrer"' : ""}>` : "<a>";
   }
   return "";
 }

@@ -9,7 +9,7 @@ test("keeps the allowed formatting as it was", () => {
   assert.equal(safeRichHtml("Ayala & Makati"), "Ayala &amp; Makati");
   assert.equal(
     safeRichHtml('<a href="https://example.org/x?a=1&amp;b=2">site</a>'),
-    '<a href="https://example.org/x?a=1&amp;b=2" rel="noopener noreferrer">site</a>',
+    '<a href="https://example.org/x?a=1&amp;b=2" target="_blank" rel="noopener noreferrer">site</a>',
   );
   assert.equal(safeRichHtml('<a href="mailto:houseofretrieversph@gmail.com">mail</a>'), '<a href="mailto:houseofretrieversph@gmail.com">mail</a>');
   assert.equal(safeRichHtml("<a href='/events'>events</a>"), '<a href="/events">events</a>');
