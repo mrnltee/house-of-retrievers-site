@@ -17,8 +17,8 @@ export default function Hero({ onJoin }) {
         <h1>Good dogs.<br />Good people.<br /><em>Greater Good.</em></h1>
         <p>We’re furparents who raise our retrievers well and bring them along to do some good<br className="desktop-break" /><br className="mobile-break" />{" "}one paw, one person, and one community at a time.</p>
         <div className="hero-actions">
-          <button className="button primary" onClick={() => onJoin()}>Join the pack <Icon name="arrow" /></button>
-          <a className="text-link" href="#mission">Discover our purpose <span>↓</span></a>
+          <button className="button primary" onClick={() => onJoin()}>Join the pack <Icon name="arrow" size={20} /></button>
+          <a className="text-link" href="#mission">Discover our purpose <span><Icon name="arrowDown" /></span></a>
         </div>
       </div>
       <div className="hero-card">

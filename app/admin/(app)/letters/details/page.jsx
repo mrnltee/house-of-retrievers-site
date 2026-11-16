@@ -8,6 +8,7 @@ import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import HowTo from "../../HowTo";
 import { LETTER_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
+import Icon from "../../../../components/Icon";
 
 /**
  * Letters → Standard details: every blank the letters ask for, with HOR's usual
@@ -34,7 +35,7 @@ export default async function StandardDetailsPage({ searchParams }) {
 
   return (
     <>
-      <p className="small"><a href={`${base}/letters`}>← Letters</a></p>
+      <p className="small"><a href={`${base}/letters`}><Icon name="arrowLeft" /> Letters</a></p>
       <PageHead title="Standard details" lead="HOR's usual answers for the blanks in your letters: who to contact, who signs, bank details. Tick “Fill in by itself” and that blank is filled for every letter and not asked when sending. Unticked answers are offered as a starting point you can change.">
         <HowTo guide="standard-details" guides={LETTER_GUIDES} className="btn ghost" />
       </PageHead>

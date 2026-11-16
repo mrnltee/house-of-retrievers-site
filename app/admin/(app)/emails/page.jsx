@@ -7,6 +7,7 @@ import { listCustomTemplates, loadEmailFrame } from "../../../lib/emailSettings"
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import HowTo from "../HowTo";
 import { LETTER_GUIDES } from "../../../lib/admin/howToGuides.mjs";
+import Icon from "../../../components/Icon";
 
 /** The emails HOR can reword, and the ones HOR has written itself. */
 export default async function EmailsPage({ searchParams }) {
@@ -29,7 +30,7 @@ export default async function EmailsPage({ searchParams }) {
       <Flash params={params} />
       <FrameEditor saved={await loadEmailFrame({ fresh: true })} canEdit={can(admin, "emails:edit")} />
       <a className="card supporter-card" href={`${base}/emails/designs`} style={{ marginBottom: 16 }}>
-        <strong>Brand email designs →</strong>
+        <strong>Brand email designs <Icon name="arrow" /></strong>
         <span className="small">Designed emails for brand outreach: invites with or without the PDF letter, follow-ups and thank-yous, with HOR&apos;s shared header and footer.</span>
       </a>
 

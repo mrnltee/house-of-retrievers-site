@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Icon from "../components/Icon";
 
 /**
  * Meet the pack on /media: each founding family's card flips to show their rate card.
@@ -27,7 +28,7 @@ export default function PackCards({ pack }) {
                   <img src={family.photo} alt="" loading="lazy" />
                   <strong>{family.names}</strong>
                   <small>{family.group}</small>
-                  <span className="media-pack-hint">Rate card <span aria-hidden="true">↻</span></span>
+                  <span className="media-pack-hint">Rate card <Icon name="flip" /></span>
                 </span>
                 <span className="media-pack-face media-pack-back" id={`rate-${family.handle.slice(1).replace(/[^a-z0-9]+/gi, "-")}`} aria-hidden={!isFlipped}>
                   <span className="media-pack-label">Rate card · Instagram</span>

@@ -5,6 +5,7 @@ import { listDesigns } from "../../../../lib/emailDesignStore";
 import { createDesign, deleteDesign } from "../../../emailDesignActions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../../ui";
 import ConfirmButton from "../../ConfirmButton";
+import Icon from "../../../../components/Icon";
 
 /** Email designs (owner, 2026-11-04): the library of block-built brand emails, by kind, and HOR's shared header and footer. */
 export default async function DesignsPage({ searchParams }) {
@@ -16,7 +17,7 @@ export default async function DesignsPage({ searchParams }) {
   const designs = await listDesigns();
   return (
     <>
-      <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
+      <p className="small"><a href={`${base}/emails`}><Icon name="arrowLeft" /> Email templates</a></p>
       <PageHead title="Brand email designs" lead="Designed emails for brand outreach: invites with or without the PDF letter, follow-ups and thank-yous. Pick one on the send page. Events can make their own copy.">
         {canEdit && <a className="btn ghost" href={`${base}/emails/designs/house`}>HOR header &amp; footer</a>}
       </PageHead>

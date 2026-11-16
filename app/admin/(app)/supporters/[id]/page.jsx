@@ -14,6 +14,7 @@ import SupporterForm from "../SupporterForm";
 import RecordNav from "./RecordNav";
 import ConfirmButton from "../../ConfirmButton";
 import { deleteSupporter } from "../../../supporterActions";
+import Icon from "../../../../components/Icon";
 
 /** One sponsor or partner: the record, the events they backed, and its history. */
 export default async function SupporterPage({ params, searchParams }) {
@@ -52,7 +53,7 @@ export default async function SupporterPage({ params, searchParams }) {
         here={here && { n: here.n, total: here.total }}
       />
       <PageHead title={row.name} lead={[`Usually ${row.kind}`, row.category_label, supporterNumber(row), joined ? `Joined ${joined} event${joined === 1 ? "" : "s"}` : "", shown ? "On the website" : "Not on the website"].filter(Boolean).join(" · ")}>
-        {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website ↗</a>}
+        {shown && <a className="btn ghost" href={`${HOME_URL}/?supporter=${row.slug}#partners`} target="_blank" rel="noreferrer">View on website <Icon name="external" /></a>}
       </PageHead>
       <Flash params={query} />
       <div className="grid-2 supporter-grid">
@@ -105,7 +106,7 @@ export default async function SupporterPage({ params, searchParams }) {
             </section>
           )}
           {row.person_id && (
-            <section className="card"><h2>From the Join form</h2><p className="small"><a href={`${base}/people/${row.person_id}`}>Open their People record →</a></p></section>
+            <section className="card"><h2>From the Join form</h2><p className="small"><a href={`${base}/people/${row.person_id}`}>Open their People record <Icon name="arrow" /></a></p></section>
           )}
           <section className="card">
             <h2>History</h2>

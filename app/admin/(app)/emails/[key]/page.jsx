@@ -7,6 +7,7 @@ import { Flash, NotAllowed, PageHead } from "../../ui";
 import HowTo from "../../HowTo";
 import { LETTER_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import TemplateEditor from "./TemplateEditor";
+import Icon from "../../../../components/Icon";
 
 export default async function EmailTemplatePage({ params, searchParams }) {
   const { key } = await params;
@@ -19,7 +20,7 @@ export default async function EmailTemplatePage({ params, searchParams }) {
   const saved = await loadTemplate(key);
   return (
     <>
-      <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
+      <p className="small"><a href={`${base}/emails`}><Icon name="arrowLeft" /> Email templates</a></p>
       <PageHead title={t.title} lead={t.when}>
         <HowTo guide="new-template" guides={LETTER_GUIDES} className="btn ghost" />
       </PageHead>

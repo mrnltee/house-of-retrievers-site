@@ -12,6 +12,7 @@ import { listLetters } from "../../../../lib/letterStore";
 import { refreshSends, sendsFor } from "../../../../lib/letterSendsStore";
 import { statusHint, statusLabel as sendLabel, statusTone } from "../../../../lib/letterSends.mjs";
 import BeneficiaryForm from "../BeneficiaryForm";
+import Icon from "../../../../components/Icon";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 
@@ -38,7 +39,7 @@ export default async function BeneficiaryPage({ params, searchParams }) {
   const mySends = sends[ref] || [];
   return (
     <>
-      <p className="small"><a href={`${base}/beneficiaries`}>← Beneficiaries</a></p>
+      <p className="small"><a href={`${base}/beneficiaries`}><Icon name="arrowLeft" /> Beneficiaries</a></p>
       <PageHead title={row.name} lead={`${kindLabel(row.kind)} · ${statusLabel(row.status)}${row.location ? ` · ${row.location}` : ""}`}>
         {can(admin, "letters:edit") && <a className="btn ghost" href={`${base}/letters/send?letter=${letterFor("beneficiary", await groupLetters())}&to=beneficiary:${row.id}`}>✉ Send a letter</a>}
       </PageHead>

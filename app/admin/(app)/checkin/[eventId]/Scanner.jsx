@@ -6,6 +6,7 @@ import { checkInByCode, checkInByName, checkedInList } from "../../../actions";
 import { WELCOME_COUNTDOWN_SECONDS } from "../../../../lib/manualCheckIn.mjs";
 import { welcomeMessageLine } from "../../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../../ConfirmButton";
+import Icon from "../../../../components/Icon";
 
 const MESSAGES = {
   ok: ["Checked in", "good"],
@@ -250,7 +251,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
         <span className="tag">CHECK-IN</span>
         <h1 style={{ color: "white" }}>{title}</h1>
         <span className="muted" aria-live="polite">{checked} of {confirmed} checked in</span>
-        <a className="btn ghost small checkin-display-link" href={`${base}/checkin/${eventId}/display`} target="_blank" rel="noreferrer" title="For a laptop or TV: welcomes every guest checked in by any phone">Open display screen ↗</a>
+        <a className="btn ghost small checkin-display-link" href={`${base}/checkin/${eventId}/display`} target="_blank" rel="noreferrer" title="For a laptop or TV: welcomes every guest checked in by any phone">Open display screen <Icon name="external" /></a>
       </div>
       <div className="checkin-body">
         {successOpen && result?.outcome === "ok" && (

@@ -201,7 +201,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   return (
     <div className={preview ? "rsvp-preview" : "modal-backdrop"} role="presentation" onMouseDown={(e) => !preview && e.target === e.currentTarget && onClose()}>
       <section ref={dialog} className={`join-modal rsvp-modal${preview ? " is-preview" : ""}`} role={preview ? "region" : "dialog"} aria-modal={preview ? undefined : "true"} aria-labelledby="rsvp-title">
-        {!preview && <button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close" /></button>}
+        {!preview && <button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close" size={20} /></button>}
         {done && done.feeDue && done.code ? (
           proofSent ? (
             <div className="success-state" role="status">

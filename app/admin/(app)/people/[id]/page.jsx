@@ -21,6 +21,7 @@ import { livingFurbabyNames, splitFurbabyNames } from "../../../../lib/attendeeN
 import { agesToday } from "../../../../lib/furbabyAge.mjs";
 import BreedFields from "../../registrations/BreedFields";
 import { updatePersonDetails } from "../../../actions";
+import Icon from "../../../../components/Icon";
 
 const REG_STATUS = { confirmed: "Going", waitlist: "Waitlist", cancelled: "Cancelled" };
 
@@ -64,7 +65,7 @@ export default async function PersonPage({ params, searchParams }) {
 
   return (
     <>
-      <p className="small"><a href={`${base}/people?kind=${person.kind}`}>← {person.kind}s</a></p>
+      <p className="small"><a href={`${base}/people?kind=${person.kind}`}><Icon name="arrowLeft" /> {person.kind}s</a></p>
       <div className="person-head">
         <PersonAvatar person={person} base={base} size={96} />
         <div>
@@ -177,7 +178,7 @@ export default async function PersonPage({ params, searchParams }) {
               {supporter ? (
                 <>
                   {number ? <dl className="facts"><div><dt>Number</dt><dd>{number}</dd></div></dl> : <p className="small muted">Gets a number (HOR-{supporter.code || "XXXX"}-YY-NNNN) once the record is Confirmed.</p>}
-                  <p><a href={`${base}/supporters/${supporter.id}`}>Open “{supporter.name}” →</a></p>
+                  <p><a href={`${base}/supporters/${supporter.id}`}>Open “{supporter.name}” <Icon name="arrow" /></a></p>
                 </>
               ) : canEdit ? (
                 <form action={supporterFromPerson}>

@@ -102,7 +102,7 @@ export default function SupportModal({ onClose, onJoin }) {
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section ref={dialog} className="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-title">
-        <button className="modal-close" onClick={onClose} aria-label="Close support options"><Icon name="close" /></button>
+        <button className="modal-close" onClick={onClose} aria-label="Close support options"><Icon name="close" size={20} /></button>
         <div className="eyebrow">Support the pack</div>
         <h2 id="support-title">Help us make<br /><em>more good.</em></h2>
         <p className="modal-lead">Every contribution helps us show up for dogs, people, and the communities we share.</p>

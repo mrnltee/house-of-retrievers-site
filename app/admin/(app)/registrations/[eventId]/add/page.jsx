@@ -15,6 +15,7 @@ import { addRegistration } from "../../../../registrationActions";
 import ConfirmButton from "../../../ConfirmButton";
 import ReceiptField from "../../ReceiptField";
 import { Flash, NotAllowed, PageHead } from "../../../ui";
+import Icon from "../../../../../components/Icon";
 
 /**
  * Add someone by hand (Figma R3): people who paid before the system, at the
@@ -41,7 +42,7 @@ export default async function AddRegistration({ params, searchParams }) {
 
   return (
     <>
-      <p className="small"><a href={`${base}/registrations/${eventId}`}>← {event.title} registrations</a></p>
+      <p className="small"><a href={`${base}/registrations/${eventId}`}><Icon name="arrowLeft" /> {event.title} registrations</a></p>
       <PageHead title="Add a registration" lead={`For people who already paid, paid at the door, or guests. Capacity: ${capacityUsed} ${capacityUnitLabel(event.capacity_basis)} of ${event.capacity ?? "no limit"} used${full ? ", so adding goes over" : ""}.`} />
       <Flash params={query} />
       <form action={addRegistration} className="card form" style={{ maxWidth: 720, gap: 16 }}>

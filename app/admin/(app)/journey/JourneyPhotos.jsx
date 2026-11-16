@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { mb, shrinkPhoto } from "../../../lib/shrinkPhoto";
 import { MAX_JOURNEY_PHOTOS } from "../../../lib/journeyEntries.mjs";
+import Icon from "../../../components/Icon";
 import {
   addJourneyPhoto, borrowEventPhotos, describeJourneyPhoto, eventAlbumForJourney,
   moveJourneyPhoto, removeJourneyPhoto, signJourneyPhotoUpload,
@@ -232,8 +233,8 @@ export default function JourneyPhotos({ entryId, hasEvent, initialPhotos, connec
               </label>
               <div className="album-photo-actions">
                 <span className="small muted">{photo.source === "album" ? "From the event's album" : photo.source === "file" ? "Built in" : ""}</span>
-                <button type="button" className="btn ghost small" onClick={() => move(photo, -1)} disabled={i === 0} aria-label="Move earlier">↑</button>
-                <button type="button" className="btn ghost small" onClick={() => move(photo, 1)} disabled={i === photos.length - 1} aria-label="Move later">↓</button>
+                <button type="button" className="btn ghost small" onClick={() => move(photo, -1)} disabled={i === 0} aria-label="Move earlier"><Icon name="arrowUp" /></button>
+                <button type="button" className="btn ghost small" onClick={() => move(photo, 1)} disabled={i === photos.length - 1} aria-label="Move later"><Icon name="arrowDown" /></button>
                 {confirming === photo.id ? (
                   <>
                     <button type="button" className="btn danger small" onClick={() => remove(photo)}>Yes, remove</button>

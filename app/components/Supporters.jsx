@@ -67,7 +67,7 @@ function SupporterDialog({ supporter, onClose }) {
             <p className="supporter-chips">
               <span className="supporter-chip">{supporter.kind}</span>
               {supporter.label && <span className="supporter-chip">{supporter.label}</span>}
-              {supporter.tierLabel && <span className={`supporter-chip tier-${supporter.tier}`}>★ {supporter.tierLabel}</span>}
+              {supporter.tierLabel && <span className={`supporter-chip tier-${supporter.tier}`}><Icon name="star" /> {supporter.tierLabel}</span>}
             </p>
             <h3 id="supporter-title">{supporter.name}</h3>
           </div>

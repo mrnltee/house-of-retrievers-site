@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IMPORT_TARGETS, MAX_IMPORT_ROWS, autoMatch, mapRows } from "../../lib/admin/sheetImport.mjs";
 import { parseCsv } from "../../lib/admin/peopleImport.mjs";
 import { importSheet } from "../importActions";
+import Icon from "../../components/Icon";
 
 const STATUS_LABEL = { add: "Will be added", skip: "Skipped", error: "Needs fixing" };
 
@@ -118,7 +119,7 @@ export default function SheetImport({ target, eventId, backHref }) {
               <span className="small muted">Rows that need fixing or are already here are left out. No emails are sent.</span>
             </div>
           ) : (
-            <p className="small"><a href={backHref}>Back to {title} →</a> {counts[2] > 0 ? "Fix the rows above in the sheet and import it again — rows already added will be skipped." : ""}</p>
+            <p className="small"><a href={backHref}>Back to {title} <Icon name="arrow" /></a> {counts[2] > 0 ? "Fix the rows above in the sheet and import it again — rows already added will be skipped." : ""}</p>
           )}
         </section>
       )}

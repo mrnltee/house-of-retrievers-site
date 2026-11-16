@@ -3,6 +3,7 @@ import { importPeople } from "../../../actions";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import ConfirmButton from "../../ConfirmButton";
 import SheetImport from "../../SheetImport";
+import Icon from "../../../../components/Icon";
 
 /** Brings everyone from the Join sheet into People, once (re-running is safe). */
 export default async function ImportPeoplePage({ searchParams }) {
@@ -12,7 +13,7 @@ export default async function ImportPeoplePage({ searchParams }) {
   const base = await adminBase();
   return (
     <>
-      <p className="small"><a href={`${base}/people`}>← People</a></p>
+      <p className="small"><a href={`${base}/people`}><Icon name="arrowLeft" /> People</a></p>
       <PageHead title="Import people" lead="Add many people at once from Excel or a CSV, or bring in the Join sheet." />
       <Flash params={params} />
       <h2>From Excel or a CSV</h2>

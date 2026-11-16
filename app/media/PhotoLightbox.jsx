@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Icon from "../components/Icon";
 
 /**
  * Opens media-hub photos in a modal viewer instead of a new page.
@@ -59,8 +60,8 @@ export default function PhotoLightbox() {
       <p className="event-lightbox-count" aria-live="polite">{photos.length ? `${index + 1} / ${photos.length}` : ""}</p>
       {photos.length > 1 && (
         <>
-          <button type="button" className="event-lightbox-prev" onClick={() => step(-1)} aria-label="Previous photo">‹</button>
-          <button type="button" className="event-lightbox-next" onClick={() => step(1)} aria-label="Next photo">›</button>
+          <button type="button" className="event-lightbox-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="chevronLeft" size={20} /></button>
+          <button type="button" className="event-lightbox-next" onClick={() => step(1)} aria-label="Next photo"><Icon name="chevronRight" size={20} /></button>
         </>
       )}
       <button type="button" className="event-lightbox-close" onClick={() => dialog.current.close()} aria-label="Close photos">

@@ -7,6 +7,7 @@ import { removePhotographer } from "../../../photographerActions";
 import { Flash, NotAllowed, PageHead, isoDate } from "../../ui";
 import ConfirmButton from "../../ConfirmButton";
 import PhotographerForm from "../PhotographerForm";
+import Icon from "../../../../components/Icon";
 
 /** One photographer: their record and the events they're credited on. */
 export default async function PhotographerPage({ params, searchParams }) {
@@ -21,7 +22,7 @@ export default async function PhotographerPage({ params, searchParams }) {
   const events = await sql("SELECT e.id, e.title, e.date FROM event_photographers ep JOIN events e ON e.id = ep.event_id WHERE ep.photographer_id = $1 ORDER BY e.date DESC", [row.id]);
   return (
     <>
-      <p className="small"><a href={`${base}/photographers`}>← Photographers</a></p>
+      <p className="small"><a href={`${base}/photographers`}><Icon name="arrowLeft" /> Photographers</a></p>
       <PageHead title={row.name} lead={row.show_on_site ? "Shown on the website under “Photos by”." : "Not on the website yet."} />
       <Flash params={query} />
       <div className="grid-2 supporter-grid">

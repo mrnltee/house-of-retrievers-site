@@ -120,7 +120,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section ref={dialog} className="join-modal" role="dialog" aria-modal="true" aria-labelledby="join-title">
-        <button className="modal-close" onClick={onClose} aria-label="Close form"><Icon name="close" /></button>
+        <button className="modal-close" onClick={onClose} aria-label="Close form"><Icon name="close" size={20} /></button>
         {!sent ? (
           <>
             <div className="eyebrow">Your first step</div>
@@ -232,7 +232,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
               </div> : null}
               <label>{interest === "Sponsor" ? "Sponsorship details" : "Message"}<textarea name="message" placeholder={interest === "Sponsor" ? "Tell us about your sponsorship goals or activity interest" : "A short hello is perfect"} rows="3" /></label>
               <button className="button dark" type="submit" disabled={submitting}>
-                {submitting ? "Sending…" : <>Continue as {interest} <Icon name="arrow" /></>}
+                {submitting ? "Sending…" : <>Continue as {interest} <Icon name="arrow" size={20} /></>}
               </button>
               {submitError ? <p className="form-error" role="alert">{submitError}</p> : null}
               <small className="form-note">
@@ -246,7 +246,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
             <div className="eyebrow">Got it</div>
             <h2>Welcome to the pack.</h2>
             <p>Thanks for reaching out as a {interest.toLowerCase()}. We’ve got your details, and someone from the pack will be in touch soon.</p>
-            <button className="button dark" onClick={onClose}>Back to the site <Icon name="arrow" /></button>
+            <button className="button dark" onClick={onClose}>Back to the site <Icon name="arrow" size={20} /></button>
           </div>
         )}
       </section>

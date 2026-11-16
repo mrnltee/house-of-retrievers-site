@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { resizeImage } from "../lib/resizeImage";
 import { PAY_METHODS, READABLE, parsePeso, ticketLine } from "../lib/eventPayments.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
+import Icon from "./Icon";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 
@@ -142,7 +143,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
         </label>
         <label className="pay-upload">{replacing ? "New confirmation screenshot" : "Confirmation screenshot"}
           <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} required={!file} />
-          {file && <span className="pay-file">✓ {file.name}</span>}
+          {file && <span className="pay-file"><Icon name="check" /> {file.name}</span>}
         </label>
         <p className="pay-tip">{READABLE}</p>
         <p className="pay-norefund">{paymentNotice}</p>
@@ -161,7 +162,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
               <div><dt>Paid with</dt><dd>{PAY_METHODS[pending.method]}</dd></div>
               <div><dt>Reference</dt><dd>{pending.reference.toUpperCase()}</dd></div>
               {pending.amount && <div><dt>Amount</dt><dd>{parsePeso(pending.amount) != null ? peso(parsePeso(pending.amount)) : `₱${pending.amount}`}</dd></div>}
-              <div><dt>Screenshot</dt><dd>{file?.name} ✓</dd></div>
+              <div><dt>Screenshot</dt><dd>{file?.name} <Icon name="check" /></dd></div>
             </dl>
             <p>The team matches the reference with HOR&apos;s payment history, then emails your QR pass. {paymentNotice}</p>
             <div className="pay-confirm-actions">

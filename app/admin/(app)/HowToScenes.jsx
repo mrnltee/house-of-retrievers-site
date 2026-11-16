@@ -1,3 +1,4 @@
+import Icon from "../../components/Icon";
 /**
  * The simplified screens the How it works guides play on (owner, 2026-11-15).
  * Pictures only: they're hidden from screen readers (the steps are read as a
@@ -6,7 +7,7 @@
  */
 
 const T = (name) => ({ "data-t": name });
-const Box = ({ on }) => <span className={`ht-box${on ? " is-on" : ""}`}>{on ? "✓" : ""}</span>;
+const Box = ({ on }) => <span className={`ht-box${on ? " is-on" : ""}`}>{on ? <Icon name="check" /> : null}</span>;
 const Btn = ({ t, tone = "", children }) => <span className={`ht-btn ${tone}`.trim()} {...T(t)}>{children}</span>;
 
 function Tracker({ state = {} }) {
@@ -92,7 +93,7 @@ function Send({ state = {}, typed }) {
   return (
     <div className="ht-screen ht-dim">
       <div className="ht-dialog is-wide">
-        <div className="ht-head"><strong className="ht-title">Send a letter</strong><span className="ht-btn">✕ Close</span></div>
+        <div className="ht-head"><strong className="ht-title">Send a letter</strong><span className="ht-btn"><Icon name="close" /> Close</span></div>
         <div className="ht-cols">
           <div className="ht-col">
             <span className="ht-field" {...T("letter")}><small>Letter</small><span className="ht-input">{state.own ? "Your own email" : state.letter || "Sponsorship letter — Golden Beginning"} ▾</span></span>
@@ -106,7 +107,7 @@ function Send({ state = {}, typed }) {
             <small>Preview for</small>
             <span className="ht-tabs">{shown.map((p, i) => <span key={p.tab} className={`ht-tab${i === 0 ? " is-on" : ""}`} {...T(p.tab)}>{p.name}</span>)}</span>
             {people.filter((p) => !to.includes(p.t)).map((p) => <span key={p.tab} {...T(p.tab)} />)}
-            <Btn t="write">{state.own ? "✎ Write your email" : "✎ Edit wording for this send"}</Btn>
+            <Btn t="write"><><Icon name="edit" /> {state.own ? "Write your email" : "Edit wording for this send"}</></Btn>
             <span className="ht-mail">
               <strong>Dear {shown[0]?.name || "…"} Team,</strong>
               {state.own ? <span>It was lovely meeting your team today.</span> : <><span className="ht-line" /><span className="ht-line" /><span className="ht-line is-short" /></>}
@@ -149,7 +150,7 @@ function BrandForm() {
   return (
     <div className="ht-screen ht-dim">
       <div className="ht-dialog">
-        <div className="ht-head"><strong className="ht-title">Add a brand</strong><span className="ht-btn">✕ Close</span></div>
+        <div className="ht-head"><strong className="ht-title">Add a brand</strong><span className="ht-btn"><Icon name="close" /> Close</span></div>
         <Field t="name" label="Name" value="Pawsome Treats" />
         <span className="ht-field-row">
           <span className="ht-field" {...T("kind")}><small>Type</small><span className="ht-seg"><span className="is-on">Sponsor</span><span>Partner</span></span></span>

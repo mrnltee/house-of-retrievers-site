@@ -28,6 +28,7 @@ import { Flash, NotAllowed, PageHead, formatWhen } from "../../../../ui";
 import { EVENTS_URL } from "../../../../../../lib/eventsHost.mjs";
 import { compLine, compValue } from "../../../../../../lib/compTickets.mjs";
 import CompOptions from "../../../CompOptions";
+import Icon from "../../../../../../components/Icon";
 
 const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
 
@@ -94,12 +95,12 @@ export default async function RegistrationDetail({ params, searchParams }) {
     <>
       <ImageLightbox />
       <nav className="reg-pager" aria-label="Registrations">
-        <a className="small" href={back}>← {reg.title} registrations</a>
+        <a className="small" href={back}><Icon name="arrowLeft" /> {reg.title} registrations</a>
         {at >= 0 && siblings.length > 1 && (
           <span className="reg-pager-steps">
-            {prev ? <a className="btn ghost small" href={regHref(prev)} rel="prev" title={prev.name}><span className="reg-pager-label">← Previous<span className="reg-pager-name">: {prev.name}</span></span></a> : <span className="btn ghost small" aria-disabled="true">← Previous</span>}
+            {prev ? <a className="btn ghost small" href={regHref(prev)} rel="prev" title={prev.name}><span className="reg-pager-label"><Icon name="arrowLeft" /> Previous<span className="reg-pager-name">: {prev.name}</span></span></a> : <span className="btn ghost small" aria-disabled="true"><Icon name="arrowLeft" /> Previous</span>}
             <span className="small muted">{at + 1} of {siblings.length}</span>
-            {next ? <a className="btn ghost small" href={regHref(next)} rel="next" title={next.name}><span className="reg-pager-label">Next<span className="reg-pager-name">: {next.name}</span> →</span></a> : <span className="btn ghost small" aria-disabled="true">Next →</span>}
+            {next ? <a className="btn ghost small" href={regHref(next)} rel="next" title={next.name}><span className="reg-pager-label">Next<span className="reg-pager-name">: {next.name}</span> <Icon name="arrow" /></span></a> : <span className="btn ghost small" aria-disabled="true">Next <Icon name="arrow" /></span>}
           </span>
         )}
       </nav>
@@ -151,9 +152,9 @@ export default async function RegistrationDetail({ params, searchParams }) {
             {holdExpired && <p className="banner alert small" style={{ margin: 0 }}><span>This payment hold expired, so the slot no longer counts toward capacity. Approving or marking it paid will recheck that there's still room.</span></p>}
             {reg.fee_status === "rejected" && reg.fee_note && <p className="banner note small" style={{ margin: 0 }}><span>Asked for a new receipt: “{reg.fee_note}”</span></p>}
             {reg.fee_reference && (twins.length ? (
-              <p className="banner alert small" style={{ margin: 0 }}><span>⚠ Same reference as {twins.map((t, i) => <span key={t.id}>{i ? ", " : ""}<a href={`${base}/registrations/${eventId}/r/${t.id}`}>{t.name}</a></span>)}. One payment may have been sent twice.</span></p>
+              <p className="banner alert small" style={{ margin: 0 }}><span><Icon name="warning" /> Same reference as {twins.map((t, i) => <span key={t.id}>{i ? ", " : ""}<a href={`${base}/registrations/${eventId}/r/${t.id}`}>{t.name}</a></span>)}. One payment may have been sent twice.</span></p>
             ) : (
-              <p className="banner ok small" style={{ margin: 0 }}>✓ No other registration for this event uses this reference.</p>
+              <p className="banner ok small" style={{ margin: 0 }}><Icon name="check" /> No other registration for this event uses this reference.</p>
             ))}
           </section>
 

@@ -6,6 +6,7 @@ import { listCustomTemplates, loadEmailFrame, loadTemplate } from "../../../../.
 import { MAX_REMINDERS_PER_SEND, REMINDER_TEST_TO, reminderEligibility } from "../../../../../lib/eventReminders.mjs";
 import { Flash, NotAllowed, PageHead } from "../../../ui";
 import ReminderComposer from "./ReminderComposer";
+import Icon from "../../../../../components/Icon";
 
 // One email each, with a short pause between, so a big list needs room to finish.
 export const maxDuration = 120;
@@ -43,7 +44,7 @@ export default async function EventReminderPage({ params, searchParams }) {
   const mine = (await listCustomTemplates("reminder")).map((m) => ({ id: m.id, name: m.name, subject: m.subject, greeting: m.greeting, heading: m.heading, message: m.message, details: m.details }));
   return (
     <>
-      <p className="small"><a href={`${base}/registrations/${event.id}`}>← {event.title} registrations</a></p>
+      <p className="small"><a href={`${base}/registrations/${event.id}`}><Icon name="arrowLeft" /> {event.title} registrations</a></p>
       <PageHead title="Email participants" lead={`A reminder or guidelines for ${event.title}. Each person gets their own copy with their pass. Test sends go to ${REMINDER_TEST_TO}.`} />
       <Flash params={query} />
       <ReminderComposer

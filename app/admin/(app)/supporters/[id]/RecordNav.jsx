@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Icon from "../../../../components/Icon";
 
 /**
  * Back link and Previous / Next for a brand page. When the brand form has unsaved
@@ -54,11 +55,11 @@ export default function RecordNav({ backHref, prev, next, here }) {
 
   return (
     <nav className="record-nav small" aria-label="Brands">
-      <a href={backHref} onClick={guard}>← Brands & Partners</a>
+      <a href={backHref} onClick={guard}><Icon name="arrowLeft" /> Brands & Partners</a>
       <span className="record-nav-step">
-        {step(prev, "‹ Previous")}
+        {step(prev, <><Icon name="chevronLeft" /> Previous</>)}
         {here && <span className="muted">{here.n} of {here.total}</span>}
-        {step(next, "Next ›")}
+        {step(next, <>Next <Icon name="chevronRight" /></>)}
       </span>
       <dialog ref={dialog} className="confirm-dialog" aria-labelledby="record-nav-title">
         <div className="confirm-body">

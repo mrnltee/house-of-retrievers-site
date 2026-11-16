@@ -22,6 +22,7 @@ import { participantInvitation } from "../../../../lib/invitationCard.mjs";
 import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 import { compLabel, compLine } from "../../../../lib/compTickets.mjs";
+import Icon from "../../../../components/Icon";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -127,7 +128,7 @@ export default async function EventRegistrations({ params, searchParams }) {
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}
-        {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length ? `${inviteTodo.length} confirmed participant${inviteTodo.length === 1 ? "" : "s"} haven't had the invitation card yet${inviteTodo.length > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{inviteTodo.length ? `Send invitation cards · ${inviteTodo.length}` : "Invitation cards sent ✓"}</a>}
+        {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length ? `${inviteTodo.length} confirmed participant${inviteTodo.length === 1 ? "" : "s"} haven't had the invitation card yet${inviteTodo.length > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{inviteTodo.length ? `Send invitation cards · ${inviteTodo.length}` : <>Invitation cards sent <Icon name="check" /></>}</a>}
         {inviteLetter && !inviteTodo.length && <span className="small muted" style={{ alignSelf: "center" }}>Invitation cards sent to everyone confirmed</span>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
         {can(admin, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
@@ -197,7 +198,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                         {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
                         {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span>{r.hold_reminders ? <span className="small muted"> · reminded {r.hold_reminders}×</span> : null}</>)}
-                        {twins.length > 0 && <><br /><span className="small danger-text">⚠ Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
+                        {twins.length > 0 && <><br /><span className="small danger-text"><Icon name="warning" /> Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
                       </td>
                     </>
                   )}

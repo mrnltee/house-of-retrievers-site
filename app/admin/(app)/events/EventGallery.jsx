@@ -5,6 +5,7 @@ import { encodeJpegWithin, loadBitmap } from "../../../lib/resizeImage";
 import { MAX_GALLERY } from "../../../lib/admin/events.mjs";
 import { describePhoto, uploadEventPhoto } from "../../eventTools";
 import FitPicker from "./FitPicker";
+import Icon from "../../../components/Icon";
 
 /** Longest side kept. The event page shows these whole, at most about 900 px wide. */
 const EDGE = 1600;
@@ -105,8 +106,8 @@ export default function EventGallery({ initial = [], autoDescribe = false }) {
             <FitPicker value={item.fit || "fit"} onChange={(fit) => update(item.key, { fit })} label="Shown as" />
             {items.length > 1 && (
               <div className="gallery-order">
-                <button type="button" className="linkish" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move photo ${i + 2} earlier`}>←</button>
-                <button type="button" className="linkish" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={`Move photo ${i + 2} later`}>→</button>
+                <button type="button" className="linkish" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move photo ${i + 2} earlier`}><Icon name="arrowLeft" /></button>
+                <button type="button" className="linkish" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={`Move photo ${i + 2} later`}><Icon name="arrow" /></button>
               </div>
             )}
           </li>

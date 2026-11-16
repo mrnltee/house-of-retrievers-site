@@ -7,6 +7,7 @@ import { saveDesign, resetHouse, sendDesignTest, uploadDesignImage } from "../..
 import ConfirmButton from "../../../ConfirmButton";
 import RichText from "./RichText";
 import StyleFields, { BoxField, ColorField } from "./StyleFields";
+import Icon from "../../../../../components/Icon";
 
 const NEW = {
   text: () => ({ type: "text", html: "<p>New text</p>", size: 16, style: {} }),
@@ -125,9 +126,9 @@ export default function DesignEditor({ id, isHouse, initial, name: startName, su
       </button>
       {canEdit && (
         <span className="design-block-tools">
-          <button type="button" className="rt-tool" data-confirm="not-needed-read-only" aria-label="Move up" onClick={() => move(s, -1)}>↑</button>
-          <button type="button" className="rt-tool" data-confirm="not-needed-read-only" aria-label="Move down" onClick={() => move(s, 1)}>↓</button>
-          <button type="button" className="rt-tool" data-confirm="not-needed-read-only" aria-label={`Delete this ${LABEL[b.type].toLowerCase()}`} onClick={() => remove(s)}>✕</button>
+          <button type="button" className="rt-tool" data-confirm="not-needed-read-only" aria-label="Move up" onClick={() => move(s, -1)}><Icon name="arrowUp" /></button>
+          <button type="button" className="rt-tool" data-confirm="not-needed-read-only" aria-label="Move down" onClick={() => move(s, 1)}><Icon name="arrowDown" /></button>
+          <button type="button" className="rt-tool" data-confirm="not-needed-read-only" aria-label={`Delete this ${LABEL[b.type].toLowerCase()}`} onClick={() => remove(s)}><Icon name="close" /></button>
         </span>
       )}
       {b.type === "columns" && (

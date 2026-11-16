@@ -1,51 +1,53 @@
-const paths = {
-  arrow: <path d="M5 12h14M14 6l6 6-6 6" />,
-  calendar: (
-    <>
-      <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
-      <path d="M3.5 10h17M8 3v4M16 3v4" />
-    </>
-  ),
-  heart: <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5a5.5 5.5 0 0 0 1-8.9Z" />,
-  paw: (
-    <>
-      <ellipse cx="12" cy="15.8" rx="5.2" ry="4.2" />
-      <ellipse cx="5.8" cy="10" rx="2.2" ry="2.8" />
-      <ellipse cx="10" cy="6.5" rx="2.2" ry="2.8" />
-      <ellipse cx="14.8" cy="6.5" rx="2.2" ry="2.8" />
-      <ellipse cx="18.5" cy="10.5" rx="2.2" ry="2.8" />
-    </>
-  ),
-  close: <path d="M6 6l12 12M18 6 6 18" />,
-  external: <path d="M7 17 17 7M9 7h8v8" />,
-  check: <path d="m5 12 4 4L19 6" />,
-  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
-  share: (
-    <>
-      <circle cx="18" cy="5" r="2.6" />
-      <circle cx="6" cy="12" r="2.6" />
-      <circle cx="18" cy="19" r="2.6" />
-      <path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4" />
-    </>
-  ),
-  pin: (
-    <>
-      <path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z" />
-      <circle cx="12" cy="9.5" r="2.5" />
-    </>
-  ),
-  parking: (
-    <>
-      <rect x="4" y="4" width="16" height="16" rx="3.5" />
-      <path d="M10 16.5v-9h3a2.8 2.8 0 0 1 0 5.6h-3" />
-    </>
-  ),
+import {
+  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight,
+  ChevronUp, Download, Heart, MapPin, Menu, PawPrint, PenLine, Play, RefreshCw, Share2, Sparkle, SquareParking, Star,
+  TriangleAlert, X,
+} from "lucide-react";
+
+/**
+ * The site's one icon set: lucide (owner, 16 Nov 2026), by name, so every surface (public site, events,
+ * media hub, admin) draws the same strokes. Use this instead of text arrows and symbols (↗ ← ‹ ✕ ✓ ✎ …).
+ * Arrows that are prose ("File → Download", "Inquiry → Talking") stay text: there the arrow means "then".
+ *
+ * Decorative by default (aria-hidden), since the text beside it carries the meaning. Pass `label` when the
+ * icon is the only signal (an "edited" or "no email" marker): it becomes role="img" with that name.
+ * `size` defaults to 1em so an inline icon follows the text it sits in.
+ */
+const ICONS = {
+  arrow: ArrowRight,
+  arrowLeft: ArrowLeft,
+  arrowUp: ArrowUp,
+  arrowDown: ArrowDown,
+  external: ArrowUpRight,
+  chevronLeft: ChevronLeft,
+  chevronRight: ChevronRight,
+  chevronUp: ChevronUp,
+  chevronDown: ChevronDown,
+  calendar: Calendar,
+  check: Check,
+  close: X,
+  download: Download,
+  edit: PenLine,
+  flip: RefreshCw,
+  heart: Heart,
+  menu: Menu,
+  parking: SquareParking,
+  paw: PawPrint,
+  pin: MapPin,
+  play: Play,
+  share: Share2,
+  sparkle: Sparkle,
+  star: Star,
+  warning: TriangleAlert,
 };
 
-export const Icon = ({ name, size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {paths[name]}
-  </svg>
-);
+export const ICON_NAMES = Object.keys(ICONS);
+
+export const Icon = ({ name, size = "1em", label, className }) => {
+  const Glyph = ICONS[name];
+  if (!Glyph) return null;
+  const a11y = label ? { role: "img", "aria-label": label } : { "aria-hidden": "true", focusable: "false" };
+  return <Glyph size={size} strokeWidth={1.9} className={["icon", className].filter(Boolean).join(" ")} {...a11y} />;
+};
 
 export default Icon;

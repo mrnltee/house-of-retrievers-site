@@ -4,6 +4,7 @@ import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { eventTiers } from "../../../../../lib/admin/events.mjs";
 import { NotAllowed, PageHead } from "../../../ui";
 import SheetImport from "../../../SheetImport";
+import Icon from "../../../../../components/Icon";
 
 /** Adds many registrations to one event from an Excel or CSV sheet. */
 export default async function ImportRegistrationsPage({ params }) {
@@ -17,7 +18,7 @@ export default async function ImportRegistrationsPage({ params }) {
   const tickets = event.fee_required ? eventTiers(event).map((t) => t.label).filter(Boolean) : [];
   return (
     <>
-      <p className="small"><a href={`${base}/registrations/${event.id}`}>← {event.title}</a></p>
+      <p className="small"><a href={`${base}/registrations/${event.id}`}><Icon name="arrowLeft" /> {event.title}</a></p>
       <PageHead
         title="Import registrations"
         lead={`Add many registrants to ${event.title} from Excel or a CSV. Someone already registered (same name and email) is skipped, and no emails or passes are sent — send passes from the list when you're ready.${tickets.length ? ` Ticket names: ${tickets.join(", ")}.` : ""}`}

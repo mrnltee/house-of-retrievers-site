@@ -13,6 +13,7 @@ import ConfirmButton from "../../ConfirmButton";
 import { MAX_COPIES, copiesFor, parseCopies } from "../../../../lib/letterCopies.mjs";
 import { SEND_TO_NAME_MAX, readSendTo, withSendTo } from "../../../../lib/letterSendTo.mjs";
 import LetterView from "../LetterView";
+import Icon from "../../../../components/Icon";
 
 /** Shown in place of a guest's card while it's being drawn (4:5, HOR black and gold). */
 const CARD_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="600" viewBox="0 0 480 600"><rect width="480" height="600" fill="#0D0D0D"/><rect x="12" y="12" width="456" height="576" fill="none" stroke="#C9A04E" stroke-opacity="0.5"/><text x="240" y="300" fill="#C9A04E" font-family="Georgia, serif" font-size="22" font-style="italic" text-anchor="middle">Drawing this guest\u2019s card\u2026</text></svg>')}`;
@@ -300,12 +301,12 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         {!invite && (
           <label className="check attach-choice">
             <input type="checkbox" checked={own} onChange={(e) => writeOwn(e.target.checked)} />
-            <span><strong>Write my own email (email only)</strong><br /><span className="small muted">{own ? <>No letter and no PDF: just the email you write{ownTemplate ? <>, starting from “{ownTemplate.name}”</> : null}. Each recipient is still greeted by name. <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}>✎ Write it</button></> : "Skip the letter and write the message yourself, for this send only."}</span></span>
+            <span><strong>Write my own email (email only)</strong><br /><span className="small muted">{own ? <>No letter and no PDF: just the email you write{ownTemplate ? <>, starting from “{ownTemplate.name}”</> : null}. Each recipient is still greeted by name. <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}><Icon name="edit" /> Write it</button></> : "Skip the letter and write the message yourself, for this send only."}</span></span>
           </label>
         )}
         {own && (
           <label className="field">
-            <span>Start from <small>{ownTemplates.length ? <>One of your Own email templates, or a blank message. You can still change the wording for this send.</> : <>No Own email templates yet{emailsHref && <>: <a href={`${emailsHref}/new?kind=own`} target="_blank" rel="noreferrer">write one in Email templates ↗</a></>}.</>}</small></span>
+            <span>Start from <small>{ownTemplates.length ? <>One of your Own email templates, or a blank message. You can still change the wording for this send.</> : <>No Own email templates yet{emailsHref && <>: <a href={`${emailsHref}/new?kind=own`} target="_blank" rel="noreferrer">write one in Email templates <Icon name="external" /></a></>}.</>}</small></span>
             {ownTemplates.length > 0 && (
               <select value={ownFrom} onChange={(e) => startOwnFrom(e.target.value)}>
                 <option value="">Blank message (write it now)</option>
@@ -345,7 +346,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         </div>
         {!ready && <p className="small muted">Sending switches on once the Resend key is in Vercel.</p>}
         {missing.length > 0 && <p className="small muted">Still to fill: {missing.join(", ")}.</p>}
-        {ownLeft && <p className="small muted">Write your subject and message first: <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}>✎ Write your email</button>.</p>}
+        {ownLeft && <p className="small muted">Write your subject and message first: <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}><Icon name="edit" /> Write your email</button>.</p>}
         {sendToCheck.error && <p className="small error-text" role="alert">{sendToCheck.error}</p>}
       </form>
 
@@ -398,9 +399,9 @@ function RecipientTabs({ recipients, current, onPick, edited = () => false }) {
         <span className="small muted">Preview for</span>
         {recipients.length > 1 && (
           <span className="recipient-tabs-step">
-            <button type="button" className="btn small ghost" onClick={() => go(at - 1)} aria-label="Previous person" data-confirm="not-needed-read-only">‹</button>
+            <button type="button" className="btn small ghost" onClick={() => go(at - 1)} aria-label="Previous person" data-confirm="not-needed-read-only"><Icon name="chevronLeft" size={20} /></button>
             <span className="small">{at + 1} of {recipients.length}</span>
-            <button type="button" className="btn small ghost" onClick={() => go(at + 1)} aria-label="Next person" data-confirm="not-needed-read-only">›</button>
+            <button type="button" className="btn small ghost" onClick={() => go(at + 1)} aria-label="Next person" data-confirm="not-needed-read-only"><Icon name="chevronRight" size={20} /></button>
           </span>
         )}
       </div>
@@ -419,7 +420,7 @@ function RecipientTabs({ recipients, current, onPick, edited = () => false }) {
               onClick={() => onPick(r.ref)}
               data-confirm="not-needed-read-only"
             >
-              {r.name}{!r.email ? " ⚠" : ""}{edited(r.ref) ? " ✎" : ""}
+              {r.name}{!r.email ? <> <Icon name="warning" label="No email address" /></> : null}{edited(r.ref) ? <> <Icon name="edit" label="Wording edited for this send" /></> : null}
             </button>
           );
         })}
@@ -434,6 +435,6 @@ function RecipientTabs({ recipients, current, onPick, edited = () => false }) {
  */
 function SignatureStatus({ check, editHref }) {
   if (!check) return null;
-  if (check.ok) return <p className="small sig-status is-on" style={{ margin: 0 }}>✓ {check.text}</p>;
+  if (check.ok) return <p className="small sig-status is-on" style={{ margin: 0 }}><Icon name="check" /> {check.text}</p>;
   return <p className="small sig-status is-warn" style={{ margin: 0 }}>{check.text}{editHref && <> <a href={editHref}>Open the letter</a> (step 5), then press Save there.</>}</p>;
 }

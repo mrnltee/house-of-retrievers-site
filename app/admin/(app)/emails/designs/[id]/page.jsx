@@ -7,6 +7,7 @@ import { emailReady } from "../../../../../lib/email";
 import { sql } from "../../../../../lib/db";
 import { Flash, NotAllowed, PageHead } from "../../../ui";
 import DesignEditor from "./DesignEditor";
+import Icon from "../../../../../components/Icon";
 
 /** One email design in the block editor; "house" edits HOR's shared header and footer. */
 export default async function DesignPage({ params, searchParams }) {
@@ -23,7 +24,7 @@ export default async function DesignPage({ params, searchParams }) {
   const back = event ? { href: `${base}/events/${event.id}/letters`, label: `${event.title} letters` } : { href: `${base}/emails/designs`, label: "Brand email designs" };
   return (
     <>
-      <p className="small"><a href={back.href}>← {back.label}</a></p>
+      <p className="small"><a href={back.href}><Icon name="arrowLeft" /> {back.label}</a></p>
       <PageHead title={isHouse ? "HOR header & footer" : design.name} lead={isHouse ? "Shared by every design that doesn't use its own header or footer. Changes show on all of them." : `${kindLabel(design.kind)}${event ? ` · for ${event.title}` : " · library"}. Fill-ins like [Salutation] and [Event Name] fill in per brand when sent.`} />
       <Flash params={query} />
       <DesignEditor

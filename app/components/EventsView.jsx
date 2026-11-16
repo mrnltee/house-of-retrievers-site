@@ -235,7 +235,7 @@ export function EventCard({ event: given, past = false, onRsvp, base }) {
           <li><Icon name="pin" size={14} /> <span>{[event.venue, event.city].filter(Boolean).join(", ")}</span></li>
         </ul>
         {past ? (
-          <a className="event-more" href={href}>See the recap<span className="visually-hidden"> of {event.title}</span> →</a>
+          <a className="event-more" href={href}>See the recap<span className="visually-hidden"> of {event.title}</span> <Icon name="arrow" /></a>
         ) : (
           <div className="event-card-footer">
             <Price event={event} past={past} />
@@ -342,8 +342,8 @@ function EventAlbum({ photos, title, base = "" }) {
         <p className="event-lightbox-count" aria-live="polite">{grouped && photo?.date ? `${dayLabel(photo.date)} · ` : ""}{index + 1} / {photos.length}</p>
         {photos.length > 1 && (
           <>
-            <button type="button" className="event-lightbox-prev" onClick={() => step(-1)} aria-label="Previous photo">‹</button>
-            <button type="button" className="event-lightbox-next" onClick={() => step(1)} aria-label="Next photo">›</button>
+            <button type="button" className="event-lightbox-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="chevronLeft" size={20} /></button>
+            <button type="button" className="event-lightbox-next" onClick={() => step(1)} aria-label="Next photo"><Icon name="chevronRight" size={20} /></button>
           </>
         )}
         <button type="button" className="event-lightbox-close" onClick={() => dialog.current.close()} aria-label="Close photos"><Icon name="close" size={20} /></button>
@@ -567,7 +567,7 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
   const labels = [event.category, event.purpose].filter(Boolean).join("  ·  ");
   return (
     <article className="event-detail" aria-labelledby="event-title">
-      <a className="event-back" href={base ? `${base}` : "/"}>← All events</a>
+      <a className="event-back" href={base ? `${base}` : "/"}><Icon name="arrowLeft" /> All events</a>
       <div className="event-detail-grid">
         <div className="event-detail-media">
           {media.length > 0 && <EventMedia media={media} title={event.title} />}

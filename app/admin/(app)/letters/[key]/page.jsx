@@ -9,6 +9,7 @@ import { Flash, NotAllowed, PageHead } from "../../ui";
 import HowTo from "../../HowTo";
 import { LETTER_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import LetterEditor from "./LetterEditor";
+import Icon from "../../../../components/Icon";
 
 /** One letter's wording: name, email subject, covering email and the letter itself. */
 export default async function LetterPage({ params, searchParams }) {
@@ -35,9 +36,9 @@ export default async function LetterPage({ params, searchParams }) {
       <PageHead title={letter.name} lead="Edit in four steps. The preview on the right shows it addressed to a sample company; blanks you type when sending stay highlighted.">
         <HowTo guide="edit-letter" guides={LETTER_GUIDES} className="btn ghost" />
         <nav className="letter-nav" aria-label="Letters">
-          {event ? <a className="btn small ghost" href={`${base}/events/${event.id}/letters`}>← {event.title}: letters</a> : <a className="btn small ghost" href={`${base}/letters`}>← Back to Letters</a>}
-          {prev ? <a className="btn small" href={`${base}/letters/${prev.key}`} title={prev.name} rel="prev">‹ Previous</a> : <span className="btn small" aria-disabled="true">‹ Previous</span>}
-          {next ? <a className="btn small" href={`${base}/letters/${next.key}`} title={next.name} rel="next">Next ›</a> : <span className="btn small" aria-disabled="true">Next ›</span>}
+          {event ? <a className="btn small ghost" href={`${base}/events/${event.id}/letters`}><Icon name="arrowLeft" /> {event.title}: letters</a> : <a className="btn small ghost" href={`${base}/letters`}><Icon name="arrowLeft" /> Back to Letters</a>}
+          {prev ? <a className="btn small" href={`${base}/letters/${prev.key}`} title={prev.name} rel="prev"><Icon name="chevronLeft" /> Previous</a> : <span className="btn small" aria-disabled="true"><Icon name="chevronLeft" /> Previous</span>}
+          {next ? <a className="btn small" href={`${base}/letters/${next.key}`} title={next.name} rel="next">Next <Icon name="chevronRight" /></a> : <span className="btn small" aria-disabled="true">Next <Icon name="chevronRight" /></span>}
           {at >= 0 && <span className="small muted">{at + 1} of {all.length}</span>}
         </nav>
       </PageHead>

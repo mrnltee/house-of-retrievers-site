@@ -7,6 +7,7 @@ import { isPublic, supporterNumber, brandNameFrom, newBrandHref } from "../../..
 import { joinedCounts } from "../../../lib/eventBrandsStore";
 import { Flash, NotAllowed, PageHead } from "../ui";
 import HowTo from "../HowTo";
+import Icon from "../../../components/Icon";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
@@ -119,7 +120,7 @@ export default async function SupportersPage({ searchParams }) {
                     <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
                     <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}</span></td>
                     <td>{joinedOf(row) ? `${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : "—"}</td>
-                    <td>{row.website ? <a href={row.website} target="_blank" rel="noreferrer">Open ↗</a> : "—"}</td>
+                    <td>{row.website ? <a href={row.website} target="_blank" rel="noreferrer">Open <Icon name="external" /></a> : "—"}</td>
                   </tr>
                 );
               })}

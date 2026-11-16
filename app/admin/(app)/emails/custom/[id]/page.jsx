@@ -7,6 +7,7 @@ import { Flash, NotAllowed, PageHead } from "../../../ui";
 import HowTo from "../../../HowTo";
 import { LETTER_GUIDES } from "../../../../../lib/admin/howToGuides.mjs";
 import TemplateEditor from "../../[key]/TemplateEditor";
+import Icon from "../../../../../components/Icon";
 
 /** One of HOR's own templates. */
 export default async function CustomEmailTemplatePage({ params, searchParams }) {
@@ -20,7 +21,7 @@ export default async function CustomEmailTemplatePage({ params, searchParams }) 
   const base = await adminBase();
   return (
     <>
-      <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
+      <p className="small"><a href={`${base}/emails`}><Icon name="arrowLeft" /> Email templates</a></p>
       <PageHead title={row.name} lead={`${k.title} template. ${k.when}`}>
         <HowTo guide="new-template" guides={LETTER_GUIDES} className="btn ghost" />
       </PageHead>

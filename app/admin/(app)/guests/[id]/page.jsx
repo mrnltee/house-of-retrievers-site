@@ -6,6 +6,7 @@ import { removeContact, saveContact } from "../../../contactActions";
 import ConfirmButton from "../../ConfirmButton";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import ContactFields from "../ContactFields";
+import Icon from "../../../../components/Icon";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 
@@ -22,7 +23,7 @@ export default async function ContactPage({ params, searchParams }) {
   return (
     <>
       {/* Opened from an event's guest list: go back there (and saving returns there too). */}
-      {eventId ? <p className="small"><a href={`${base}/events/${eventId}/guests`}>← Event guest list</a></p> : <p className="small"><a href={`${base}/events`}>← Events</a></p>}
+      {eventId ? <p className="small"><a href={`${base}/events/${eventId}/guests`}><Icon name="arrowLeft" /> Event guest list</a></p> : <p className="small"><a href={`${base}/events`}><Icon name="arrowLeft" /> Events</a></p>}
       <PageHead title={row.name} lead={cat ? `${cat.label}. Gets the letter set for this category.` : ""} />
       <Flash params={query} />
       <form action={saveContact} className="card form">

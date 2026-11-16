@@ -21,6 +21,7 @@ import TrackerTools from "./TrackerTools";
 import SelectAll from "./SelectAll";
 import InviteDialog from "./InviteDialog";
 import HowTo from "../../../HowTo";
+import Icon from "../../../../../components/Icon";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
@@ -72,7 +73,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
 
   return (
     <>
-      <p className="small"><a href={`${base}/events/${event.id}`}>← {event.title}</a></p>
+      <p className="small"><a href={`${base}/events/${event.id}`}><Icon name="arrowLeft" /> {event.title}</a></p>
       <PageHead title="Brand tracker" lead={`${event.date ? formatDay(event.date) : "Date to be set"} · who you invited, their reply and what they're giving.`}>
         <HowTo guide="send-one" className="btn ghost" />
         <a className="btn ghost" href={`${base}/supporters`}>Brand directory</a>

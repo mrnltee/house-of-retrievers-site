@@ -5,6 +5,7 @@ import { openLetterSend } from "../letterActions";
 import LetterSend from "./letters/send/LetterSend";
 import { SendIntro } from "./letters/send/SendIntro";
 import HowTo from "./HowTo";
+import Icon from "../../components/Icon";
 
 /**
  * The send window (owner, 2026-11-12). Every "send a letter" link or form in
@@ -79,8 +80,8 @@ export default function SendLetterModal({ base = "" }) {
         <h2 id="send-modal-title">Send a letter</h2>
         {/* Brand sends get the brand guides; other lists get sending a letter and writing your own email. */}
         {state?.data && <HowTo guide={state.data.listName === "brands" ? "send-one" : "send-letter"} guides={state.data.listName === "brands" ? undefined : ["send-letter", "own-email"]} />}
-        {state?.query && <a className="small" href={`${sendPath}${String(state.query).startsWith("?") ? state.query : `?${state.query}`}`} target="_blank" rel="noreferrer">Open as a page ↗</a>}
-        <button type="button" className="btn ghost small" onClick={close} aria-label="Close the send window" data-confirm="not-needed-read-only">✕ Close</button>
+        {state?.query && <a className="small" href={`${sendPath}${String(state.query).startsWith("?") ? state.query : `?${state.query}`}`} target="_blank" rel="noreferrer">Open as a page <Icon name="external" /></a>}
+        <button type="button" className="btn ghost small" onClick={close} aria-label="Close the send window" data-confirm="not-needed-read-only"><Icon name="close" /> Close</button>
       </div>
       <div className="send-modal-body">
         {state?.loading && <p className="muted" role="status">Loading the letter and recipients…</p>}

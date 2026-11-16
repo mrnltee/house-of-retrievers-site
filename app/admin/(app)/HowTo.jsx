@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BRAND_GUIDES, GUIDES, stepDuration } from "../../lib/admin/howToGuides.mjs";
 import HowToScene from "./HowToScenes";
+import Icon from "../../components/Icon";
 
 /** Plays stop after this many loops, so nothing keeps moving unattended (WCAG 2.2.2). */
 const MAX_LOOPS = 3;
@@ -99,11 +100,11 @@ export default function HowTo({ guide = BRAND_GUIDES[0], guides = BRAND_GUIDES, 
 
   return (
     <>
-      <button type="button" className={className} data-confirm="not-needed-read-only" aria-haspopup="dialog" onClick={open}><span aria-hidden="true">▶</span> {label}</button>
+      <button type="button" className={className} data-confirm="not-needed-read-only" aria-haspopup="dialog" onClick={open}><Icon name="play" /> {label}</button>
       <dialog ref={dialog} className="howto-dialog" aria-labelledby={titleId} onKeyDown={onKey} onClose={() => setPlaying(false)} onClick={(e) => { if (e.target === dialog.current) dialog.current.close(); }}>
         <div className="howto-head">
           <h2 id={titleId}>How it works</h2>
-          <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => dialog.current?.close()}>✕ Close</button>
+          <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => dialog.current?.close()}><Icon name="close" /> Close</button>
         </div>
         <div className="howto-body">
           {guides.length > 1 && (
@@ -123,9 +124,9 @@ export default function HowTo({ guide = BRAND_GUIDES[0], guides = BRAND_GUIDES, 
               </span>
             </div>
             <div className="howto-controls">
-              <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" aria-label="Previous step" onClick={() => { setPlaying(false); go(at - 1); }}>‹</button>
+              <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" aria-label="Previous step" onClick={() => { setPlaying(false); go(at - 1); }}><Icon name="chevronLeft" size={20} /></button>
               <button type="button" className="btn dark small" data-confirm="not-needed-read-only" onClick={() => { if (!playing) setLoops(0); setPlaying(!playing); }}>{playing ? "Pause" : "Play"}</button>
-              <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" aria-label="Next step" onClick={() => { setPlaying(false); go(at + 1); }}>›</button>
+              <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" aria-label="Next step" onClick={() => { setPlaying(false); go(at + 1); }}><Icon name="chevronRight" size={20} /></button>
               <span className="small muted">Step {at + 1} of {current.steps.length}</span>
             </div>
             <ol className="howto-steps">

@@ -10,6 +10,7 @@ import { reachFrom, withLiveInstagram } from "../lib/mediaReach.mjs";
 import { loadInstagramCounts } from "../lib/instagramCounts";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation, thumbnailFit } from "../lib/mediaHub.mjs";
+import Icon from "../components/Icon";
 
 // Re-rendered hourly so new event albums and photographer credits reach the photo library; a publish in Admin → Media hub refreshes it at once.
 export const revalidate = 3600;
@@ -118,8 +119,8 @@ export default async function MediaPage() {
           <h1 id="media-title" dangerouslySetInnerHTML={rich(content.heroTitle)} />
           <p className="media-lead" dangerouslySetInnerHTML={rich(content.heroLead)} />
           <div className="media-actions">
-            <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry">Make a media inquiry <span aria-hidden="true">↗</span></a>
-            <a className="media-text-link" href="#downloads">Explore resources <span aria-hidden="true">↓</span></a>
+            <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry">Make a media inquiry <Icon name="external" /></a>
+            <a className="media-text-link" href="#downloads">Explore resources <Icon name="arrowDown" /></a>
           </div>
         </div>
       </section>
@@ -164,21 +165,21 @@ export default async function MediaPage() {
       <section className="media-section media-stories media-chapter" id="stories" aria-labelledby="stories-title">
         <div className="media-section-label">04 / For the media</div>
         <div className="media-stories-grid">
-          <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers" data-message="story">Share a story idea <span aria-hidden="true">↗</span></a></div>
+          <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers" data-message="story">Share a story idea <Icon name="external" /></a></div>
           <div className="media-angle-list">{storyParts.map((text, index) => <article key={text.slice(0, 32)}>{STORY_TITLES[index] ? <h3>{STORY_TITLES[index]}</h3> : null}<p dangerouslySetInnerHTML={rich(text)} /></article>)}</div>
         </div>
         <div className={`media-timeline media-timeline-${timelineOrientation}`} aria-label="Documented activity timeline">
           <div className="media-timeline-heading"><span>Activity history</span></div>
-          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} className={thumbnailFit(item.thumbnail) === "contain" ? "is-poster" : undefined} /> : <span aria-hidden="true">✦</span>}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
+          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} className={thumbnailFit(item.thumbnail) === "contain" ? "is-poster" : undefined} /> : <Icon name="sparkle" />}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
         </div>
       </section>
 
       <section className="media-partnerships media-chapter" id="partnerships" aria-labelledby="partnerships-title">
-          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry" data-message="partnership">Start a partnership conversation <span aria-hidden="true">↗</span></a></div>
+          <div className="media-partnerships-copy"><div className="media-section-label media-section-label-light">05 / For partners</div><h2 id="partnerships-title">Build something<br /><em>good with us.</em></h2><p dangerouslySetInnerHTML={rich(content.partnerships)} /><a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Partnership%20inquiry" data-message="partnership">Start a partnership conversation <Icon name="external" /></a></div>
         <div className="media-pathways">{partnershipPathways.map(([title, body], index) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}<figure className="media-quote"><span aria-hidden="true">“</span><blockquote><p>Raise responsibly.<br /><em>Serve generously.</em></p></blockquote><figcaption>House of Retrievers</figcaption></figure></div>
         <div className="media-reach">
           <div className="media-reach-head"><h3>Our community</h3><p>Followers per channel. Many people follow more than one, so we don’t add them up.</p></div>
-          <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <span aria-hidden="true"> ↗</span> : null}</em><span className="media-reach-asof">{channel.live ? "Live · updated hourly" : `As of ${channel.asOf || reach.community.asOf}`}</span></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
+          <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <> <Icon name="external" /></> : null}</em><span className="media-reach-asof">{channel.live ? "Live · updated hourly" : `As of ${channel.asOf || reach.community.asOf}`}</span></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
           <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Tap a card for their rate card; each family runs its own collaborations.</p></div>
           <PackCards pack={reach.pack} />
         </div>
@@ -195,8 +196,8 @@ export default async function MediaPage() {
           <div>
             <p>Monday, 30 November, from 3:00 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly – Sta. Teresa Jornet Home.</p>
             <div className="media-actions">
-              <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <span aria-hidden="true">↗</span></a>
-              <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11" target="_blank" rel="noopener noreferrer">Event details <span aria-hidden="true">↗</span></a>
+              <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <Icon name="external" /></a>
+              <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11" target="_blank" rel="noopener noreferrer">Event details <Icon name="external" /></a>
             </div>
           </div>
         </article>
@@ -224,7 +225,7 @@ export default async function MediaPage() {
 
       <section className="media-section media-downloads media-chapter" id="downloads" aria-labelledby="downloads-title">
         <div className="media-section-label">07 / Resource library</div><div className="media-download-head"><h2 id="downloads-title">Useful things,<br /><em>in one place.</em></h2><p>Files to download, the logo guidelines and credited event photos, ready for editors, producers, and partners.</p></div>
-        <div className="media-download-grid">{downloads.map(({ title, body, meta, href, label, file }) => <article key={title}><span className="media-download-meta">{meta}</span><h3>{title}</h3><p>{body}</p><a className="media-button media-button-dark" href={href} download={file || undefined} target={file ? undefined : "_blank"} rel={file ? undefined : "noopener noreferrer"}>{label} <span aria-hidden="true">↓</span></a></article>)}</div>
+        <div className="media-download-grid">{downloads.map(({ title, body, meta, href, label, file }) => <article key={title}><span className="media-download-meta">{meta}</span><h3>{title}</h3><p>{body}</p><a className="media-button media-button-dark" href={href} download={file || undefined} target={file ? undefined : "_blank"} rel={file ? undefined : "noopener noreferrer"}>{label} <Icon name="download" /></a></article>)}</div>
         <div className="media-brand-assets" id="brand-assets">
           <h3 className="media-press-title">Logo</h3>
           <p className="media-brand-intro">A gold and a black retriever sitting back to back, the wordmark, the “Society Inc.” line, a paw rule and the tagline. Always use the supplied artwork; never retype or redraw it.</p>
@@ -239,17 +240,17 @@ export default async function MediaPage() {
           <h3 className="media-press-title">Photo and video library</h3>
           <p className="media-brand-intro">Photos from past House of Retrievers activities, credited to the photographers who took them. They are shown here for reference: please email us for high-resolution files and permission before publishing, and keep the photographer’s credit with every photo.</p>
           {albums.length ? albums.map((album) => <section className="media-album" key={album.url} aria-label={`${album.title} photos`}>
-            <header><div><h4>{album.title}</h4><p>{albumDate(album.date)}{album.photographers ? ` · Photos by ${album.photographers}` : ""}</p></div><a href={album.url} target="_blank" rel="noopener noreferrer">See all {album.total} photos <span aria-hidden="true">↗</span></a></header>
+            <header><div><h4>{album.title}</h4><p>{albumDate(album.date)}{album.photographers ? ` · Photos by ${album.photographers}` : ""}</p></div><a href={album.url} target="_blank" rel="noopener noreferrer">See all {album.total} photos <Icon name="external" /></a></header>
             <div className="media-album-grid">{album.photos.map((photo) => <figure key={photo.thumb}><a href={photo.full} target="_blank" rel="noopener noreferrer" data-lightbox={album.url} data-album={album.title} data-caption={`Photo: ${photo.credit}`}><img src={photo.thumb} alt={photo.alt || `${album.title}, House of Retrievers`} loading="lazy" /></a><figcaption>Photo: {photo.credit}</figcaption></figure>)}</div>
           </section>) : <p className="media-photo-empty">Credited event photos will appear here as albums are added to past events and their photographers are recorded.</p>}
-          <div className="media-photo-links"><strong>More photos and video</strong><a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noopener noreferrer">Instagram @houseofretrieversph <span aria-hidden="true">↗</span></a><a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noopener noreferrer">Facebook /houseofretrieversph <span aria-hidden="true">↗</span></a><a href="mailto:houseofretrieversph@gmail.com?subject=Photo%20request">Request photos or permission <span aria-hidden="true">↗</span></a></div>
+          <div className="media-photo-links"><strong>More photos and video</strong><a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noopener noreferrer">Instagram @houseofretrieversph <Icon name="external" /></a><a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noopener noreferrer">Facebook /houseofretrieversph <Icon name="external" /></a><a href="mailto:houseofretrieversph@gmail.com?subject=Photo%20request">Request photos or permission <Icon name="external" /></a></div>
         </div>
         <div className="media-editorial-note"><strong>For editors and producers</strong><p>HoR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
       </section>
 
       <PhotoLightbox />
       <MessageForm />
-      <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers’ Society, Inc.</span><a href="https://www.houseofretrieversph.org/" target="_blank" rel="noopener noreferrer">Visit the main site ↗</a></div></footer>
+      <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers’ Society, Inc.</span><a href="https://www.houseofretrieversph.org/" target="_blank" rel="noopener noreferrer">Visit the main site <Icon name="external" /></a></div></footer>
     </main>
   );
 }

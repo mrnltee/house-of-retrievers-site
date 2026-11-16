@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { openNewBrand } from "../supporterActions";
 import SupporterForm from "./supporters/SupporterForm";
 import HowTo from "./HowTo";
+import Icon from "../../components/Icon";
 
 /**
  * The Add brand window (owner, 2026-11-15). Links to /supporters/new anywhere
@@ -62,8 +63,8 @@ export default function AddBrandModal({ base = "" }) {
       <div className="send-modal-head">
         <h2 id="brand-modal-title">Add a brand</h2>
         <HowTo guide="add-brand" />
-        {state?.query !== undefined && <a className="small" href={`${newPath}${state.query || ""}`} target="_blank" rel="noreferrer">Open as a page ↗</a>}
-        <button type="button" className="btn ghost small" onClick={close} aria-label="Close the Add brand window" data-confirm="not-needed-read-only">✕ Close</button>
+        {state?.query !== undefined && <a className="small" href={`${newPath}${state.query || ""}`} target="_blank" rel="noreferrer">Open as a page <Icon name="external" /></a>}
+        <button type="button" className="btn ghost small" onClick={close} aria-label="Close the Add brand window" data-confirm="not-needed-read-only"><Icon name="close" /> Close</button>
       </div>
       <div className="send-modal-body">
         {state?.loading && <p className="muted" role="status">Opening the form…</p>}

@@ -3,6 +3,7 @@ import { PageHead } from "../ui";
 import { yahooReady } from "../../../lib/admin/auth";
 import { StartGuideButton } from "../GuideTour";
 import { HOW, guidePages } from "../../../lib/admin/guide.mjs";
+import Icon from "../../../components/Icon";
 
 /**
  * Getting started (owner, 2026-10-27): a short guide for first-time admins,
@@ -53,7 +54,7 @@ export default async function GettingStarted() {
           <li>Emails and letters go to real people. Send yourself a test first when you can.</li>
           <li>Never share your sign-in, and don't copy people's details out of the admin.</li>
         </ul>
-        <p><a className="btn gold" href={mine[0] ? (mine[0].path === "/" ? base || "/" : `${base}${mine[0].path}`) : base || "/"}>Start with {mine[0]?.label || "the admin"} →</a></p>
+        <p><a className="btn gold" href={mine[0] ? (mine[0].path === "/" ? base || "/" : `${base}${mine[0].path}`) : base || "/"}>Start with {mine[0]?.label || "the admin"} <Icon name="arrow" /></a></p>
       </section>
     </>
   );

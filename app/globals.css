@@ -32,6 +32,13 @@
   --line: rgba(17, 17, 17, .14);
 }
 
+/* Icons (16 Nov 2026, owner): every icon is lucide through app/components/Icon.jsx. Inline icons are 1em
+   and sit on the text baseline, so "Open ↗"-style links keep their old rhythm without text glyphs. */
+.icon { display: inline-block; flex-shrink: 0; vertical-align: -0.125em; }
+button > .icon:only-child, a > .icon:only-child { vertical-align: middle; }
+/* A text glyph carried its own side bearing; lucide's box doesn't, so give inline icons a hair of room. */
+.icon:not(:only-child) { margin-inline: 0.12em; }
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", sans-serif; }
@@ -1996,3 +2003,7 @@ a.media-reach-channel:hover em, a.media-reach-channel:focus-visible em { text-de
   .media-timeline-list article, .media-timeline-horizontal .media-timeline-list article { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .media-timeline-thumb, .media-timeline-horizontal .media-timeline-thumb { width: 100%; height: 170px; }
 }
+
+/* Flex links drop the space between text and icon, so they get a gap instead (icon migration, 16 Nov 2026). */
+.media-text-link { display: inline-flex; align-items: center; gap: .35em; }
+.media-download-links a, .media-fact-list dd a, .media-album header a, .media-photo-links a { gap: .35em; }

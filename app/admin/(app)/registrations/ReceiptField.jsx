@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { resizeImage } from "../../../lib/resizeImage";
+import Icon from "../../../components/Icon";
 
 /**
  * A receipt picture, resized in the browser (longest side 1600) and sent as
@@ -24,7 +25,7 @@ export default function ReceiptField({ label = "Receipt picture", hint = "", req
       <span>{label} {hint && <small>{hint}</small>}</span>
       <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} required={required} />
       <input type="hidden" name="receipt" value={state.dataUrl} />
-      {state.name && <small className="muted">✓ {state.name}, ready</small>}
+      {state.name && <small className="muted"><Icon name="check" /> {state.name}, ready</small>}
       {state.error && <small className="danger-text">{state.error}</small>}
     </label>
   );

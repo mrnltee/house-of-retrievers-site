@@ -6,6 +6,7 @@ import { Flash, NotAllowed, PageHead } from "../../ui";
 import HowTo from "../../HowTo";
 import { LETTER_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import TemplateEditor from "../[key]/TemplateEditor";
+import Icon from "../../../../components/Icon";
 
 /** A new template of HOR's own: ?kind=acceptance or ?kind=event. */
 export default async function NewEmailTemplatePage({ searchParams }) {
@@ -18,7 +19,7 @@ export default async function NewEmailTemplatePage({ searchParams }) {
   const base = await adminBase();
   return (
     <>
-      <p className="small"><a href={`${base}/emails`}>← Email templates</a></p>
+      <p className="small"><a href={`${base}/emails`}><Icon name="arrowLeft" /> Email templates</a></p>
       <PageHead title={`New ${k.title.toLowerCase()} template`} lead={k.when}>
         <HowTo guide="new-template" guides={LETTER_GUIDES} className="btn ghost" />
       </PageHead>

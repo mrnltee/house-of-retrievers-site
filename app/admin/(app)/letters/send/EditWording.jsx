@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { LETTER_LIMITS, hasOwnEmailPlaceholder } from "../../../../lib/letters.mjs";
+import Icon from "../../../../components/Icon";
 
 /**
  * "Edit wording" on the send page (owner, 2026-11-06): change the subject, email and
@@ -28,7 +29,7 @@ export default function EditWording({ wording, showBody, name, count, mine, forA
   return (
     <>
       <div className="edit-wording-row">
-        <button type="button" className={`btn small ${own && hasOwnEmailPlaceholder(wording) ? "dark" : "ghost"}`} data-confirm="not-needed-read-only" onClick={open}>{own ? "✎ Write your email" : "✎ Edit wording for this send"}</button>
+        <button type="button" className={`btn small ${own && hasOwnEmailPlaceholder(wording) ? "dark" : "ghost"}`} data-confirm="not-needed-read-only" onClick={open}><Icon name="edit" /> {own ? "Write your email" : "Edit wording for this send"}</button>
         {mine && <span className="small"><strong>Edited for {name}</strong> · <button type="button" className="linkish" data-confirm="not-needed-read-only" onClick={() => onReset("one")}>undo</button></span>}
         {!mine && forAll && <span className="small"><strong>Edited for all brands in this send</strong> · <button type="button" className="linkish" data-confirm="not-needed-read-only" onClick={() => onReset("all")}>undo</button></span>}
       </div>
