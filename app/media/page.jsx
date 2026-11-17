@@ -180,7 +180,7 @@ export default async function MediaPage() {
         <div className="media-reach">
           <div className="media-reach-head"><h3>Our community</h3><p>Followers per channel. Many people follow more than one, so we don’t add them up.</p></div>
           <div className="media-reach-channels">{reach.community.channels.map((channel) => { const body = <><span>{channel.name}</span><strong>{channel.followers}</strong><small>followers{channel.posts ? ` · ${channel.posts} posts` : ""}</small><em>{channel.handle}{channel.url ? <> <Icon name="external" /></> : null}</em><span className="media-reach-asof">{channel.live ? "Live · updated hourly" : `As of ${channel.asOf || reach.community.asOf}`}</span></>; return channel.url ? <a key={channel.name} className="media-reach-channel" href={channel.url} target="_blank" rel="noopener noreferrer">{body}</a> : <div key={channel.name} className="media-reach-channel">{body}</div>; })}</div>
-          <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Tap a card for their rate card; each family runs its own collaborations.</p></div>
+          <div className="media-reach-head"><h3>Meet the pack</h3><p>Our founding families. Tap a card for their Insta stats; each family runs its own collaborations.</p></div>
           <PackCards pack={reach.pack} />
         </div>
       </section>
