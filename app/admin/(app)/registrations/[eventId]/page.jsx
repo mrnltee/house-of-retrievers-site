@@ -17,6 +17,8 @@ import FurbabyList from "../FurbabyList";
 import ConfirmButton from "../../ConfirmButton";
 import { isActivityCategory } from "../../../../lib/eventCategories.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
+import HowTo from "../../HowTo";
+import { REGISTRATION_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import { eventLetters } from "../../../../lib/letterStore";
 import { participantInvitation } from "../../../../lib/invitationCard.mjs";
 import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
@@ -127,6 +129,7 @@ export default async function EventRegistrations({ params, searchParams }) {
   return (
     <>
       <PageHead title={event.title} lead={`${isActivityCategory(event.category) ? "Participants" : "Registrations"} · ${formatDay(event.date)}${paidEvent ? " · paid event · payments checked by hand" : ""}`}>
+        <HowTo guide={paidEvent ? "reg-check-payment" : "reg-add"} guides={paidEvent ? REGISTRATION_GUIDES : REGISTRATION_GUIDES.filter((k) => !["reg-check-payment", "reg-new-receipt", "reg-remind-expired"].includes(k))} className="btn ghost" />
         <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}

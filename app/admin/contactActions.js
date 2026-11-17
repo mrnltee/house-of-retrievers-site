@@ -139,6 +139,29 @@ export async function saveEventGuest(data) {
   });
 }
 
+/**
+ * Guest tracker quick reply (owner, 17 Nov 2026): set only this guest's reply from the row, without opening Edit.
+ * Notes and "On the event page" are left as they are.
+ */
+export async function setEventGuestReply(data) {
+  const eventId = form(data, "event");
+  const back = isUuid(eventId) ? `/events/${eventId}/guests` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("guests:edit");
+    const contactId = form(data, "contact");
+    const reply = ["waiting", "yes", "no"].includes(form(data, "reply")) ? form(data, "reply") : "waiting";
+    const [row] = isUuid(eventId) && isUuid(contactId)
+      ? await sql("UPDATE event_guests SET reply=$3, updated_at=now() WHERE event_id=$1 AND contact_id=$2 RETURNING show_on_site", [eventId, contactId, reply])
+      : [];
+    if (!row) await backWith(back, "error", "That guest isn't on this event's list.");
+    const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
+    await logActivity(admin.email, "event.guest.reply", c?.name || "", { eventId, contactId, reply });
+    const label = reply === "yes" ? "Coming" : reply === "no" ? "Can't make it" : "No reply yet";
+    const note = row.show_on_site ? (reply === "yes" ? " They now show on the event page." : " They're off the event page until they're Coming.") : "";
+    await backWith(back, "ok", `${c?.name}: ${label}.${note}`);
+  });
+}
+
 /** An event's guest list: take someone off this event (they stay available for other events). */
 export async function removeEventGuest(data) {
   const eventId = form(data, "event");

@@ -140,6 +140,147 @@ function BrandEdit({ state = {}, typed }) {
   );
 }
 
+/** An event's Registrations list (owner, 2026-11-17): tabs, payments to check, waitlist, check-in by hand. */
+function RegList({ state = {} }) {
+  const tab = state.tab || "all";
+  const Tab = ({ k, t, children }) => <span className={`ht-filter${tab === k ? " is-on" : ""}`} {...(t ? T(t) : {})}>{children}</span>;
+  const rows = [
+    { id: "r1", name: "Maria Santos", sub: "Early Bird · ₱1,750", chip: state.paid ? "Paid" : "To check", tone: state.paid ? " is-good" : " is-warn", btn: state.paid ? <Btn>View</Btn> : <Btn t="r1Check" tone="gold">Check</Btn>, tabs: ["all", "check"] },
+    { id: "r2", name: "Leo Cruz", sub: "Waitlist · 2 furbabies", chip: state.confirmed ? "Payment pending" : "Waitlist", tone: "", btn: state.confirmed ? <Btn>Add receipt</Btn> : <Btn t="r2Confirm">Confirm</Btn>, tabs: ["all", "waitlist"] },
+    { id: "r3", name: "Ana Reyes", sub: "Regular · Paid", chip: state.checkedIn ? "Checked in · 3:12 PM" : "Paid", tone: " is-good", btn: state.checkedIn ? <Btn>Undo check-in</Btn> : <Btn t="r3Checkin">Check in</Btn>, tabs: ["all", "notchecked"] },
+    { id: "r4", name: "Jojo Lim", sub: "Early Bird · hold ran out", chip: "Hold expired", tone: " is-alert", btn: <Btn>Add receipt</Btn>, tabs: ["all", "expired"] },
+  ].filter((r) => r.tabs.includes(tab));
+  return (
+    <div className="ht-screen">
+      <div className="ht-head">
+        <strong className="ht-title">A Golden Beginning</strong>
+        <span className="ht-actions"><Btn t="emailAll">Email participants</Btn><Btn t="add">+ Add registration</Btn><Btn tone="gold">Open check-in</Btn></span>
+      </div>
+      <span className="ht-actions">
+        <Tab k="all">All 4</Tab><Tab k="check" t="tabCheck">To check 1</Tab><Tab k="expired" t="tabExpired">Hold expired 1</Tab>
+        <Tab k="waitlist" t="tabWaitlist">Waitlist 1</Tab><Tab k="notchecked" t="tabNotChecked">Not checked in 2</Tab>
+      </span>
+      {tab === "expired" ? (
+        <div className="ht-card">
+          <small><strong>Their payment time ran out.</strong> A reminder holds each spot again and emails their payment link.</small>
+          <span className="ht-field-row is-end">
+            <span className="ht-field" {...T("holdLength")}><small>Hold their spot again for</small><span className="ht-input">2 hours ▾</span></span>
+            <Btn t="remindAll" tone="gold">Remind all · 1</Btn>
+          </span>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("holdLength")} /><span {...T("remindAll")} /></span>}
+      <div className="ht-table">
+        {rows.map((r) => (
+          <div className="ht-row" key={r.id}>
+            <span className="ht-avatar">{r.name.split(" ").map((w) => w[0]).join("")}</span>
+            <span className="ht-name"><strong>{r.name}</strong><small>{r.sub}</small></span>
+            <span className="ht-cell"><span className={`ht-chip${r.tone}`}>{r.chip}</span></span>
+            <span className="ht-actions">{r.btn}</span>
+          </div>
+        ))}
+      </div>
+      {state.checkin ? (
+        <div className="ht-card">
+          <small>Check in Ana Reyes by hand: when did they arrive?</small>
+          <span className="ht-field-row is-end"><Field t="checkinTime" label="Arrived (Manila time)" value="Dec 12, 3:12 PM" /><Btn t="checkinYes" tone="gold">Check in</Btn></span>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("checkinTime")} /><span {...T("checkinYes")} /></span>}
+      {state.confirm ? (
+        <div className="ht-screen ht-dim">
+          <div className="ht-dialog ht-small">
+            <strong>{state.confirm}</strong>
+            <small>{state.confirmNote || "You can undo this later."}</small>
+            <Btn t="confirm" tone="dark">Yes</Btn>
+          </div>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("confirm")} /></span>}
+    </div>
+  );
+}
+
+/** One registration's page: the receipt and the Check it card. */
+function RegPayment({ state = {} }) {
+  return (
+    <div className="ht-screen">
+      <div className="ht-head"><strong className="ht-title">Maria Santos</strong><span className="ht-chip is-warn">To check</span></div>
+      <div className="ht-cols">
+        <div className="ht-col">
+          <span className="ht-receipt" {...T("receipt")}><small>GCash receipt</small><span className="ht-line" /><span className="ht-line is-short" /><strong>Ref 4021 7731 · ₱1,750</strong></span>
+          <small className="ht-legend">They sent: GCash · Ref 4021 7731 · ₱1,750 (matches the ticket)</small>
+        </div>
+        <div className="ht-col">
+          <strong>Check it</strong>
+          <span className="ht-pick" {...T("found")}><Box on={state.found} /> I found reference 4021 7731 and ₱1,750 in HOR&apos;s GCash history.</span>
+          <span className="ht-actions"><Btn t="approve" tone="dark">Approve and email QR pass</Btn></span>
+          <span className="ht-field" {...T("reason")}><small>Or ask for a new receipt · reason</small><span className="ht-input">{state.reason || "We can't read the reference number…"} ▾</span></span>
+          <span className="ht-actions"><Btn t="reject">Ask for a new receipt</Btn></span>
+        </div>
+      </div>
+      {state.confirm ? (
+        <div className="ht-screen ht-dim">
+          <div className="ht-dialog ht-small">
+            <strong>{state.confirm}</strong>
+            <small>{state.confirmNote}</small>
+            <Btn t="confirm" tone="dark">Yes</Btn>
+          </div>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("confirm")} /></span>}
+    </div>
+  );
+}
+
+/** + Add registration: someone who paid before the system, a VIP or an organizer. */
+function RegAdd({ state = {}, typed }) {
+  const val = (k) => (typed?.target === k ? typed.text : state[k]);
+  return (
+    <div className="ht-screen">
+      <strong className="ht-title">Add a registration</strong>
+      <span className="ht-field-row"><Field t="name" label="Name" value={val("name")} placeholder="Their full name" /><Field t="email" label="Email" value={val("email")} placeholder="Where their QR pass goes" /></span>
+      <span className="ht-field-row" {...T("counts")}>
+        <span className="ht-field"><small>People attending</small><span className="ht-input">1</span></span>
+        <span className="ht-field"><small>Furbabies attending</small><span className="ht-input">1</span></span>
+      </span>
+      <span className="ht-field" {...T("ticket")}><small>Ticket</small><span className="ht-input">{state.ticket || "Early Bird · ₱1,750"} ▾</span></span>
+      <span className="ht-field" {...T("payment")}><small>Payment</small><span className="ht-seg">{["Paid", "Pending", "No fee"].map((k) => <span key={k} className={(state.payment || (String(state.ticket).includes("Complimentary") ? "No fee" : "Paid")) === k ? "is-on" : ""}>{k}</span>)}</span></span>
+      <span className="ht-actions"><Btn t="addBtn" tone="dark">Add registration</Btn></span>
+      {state.confirm ? (
+        <div className="ht-screen ht-dim">
+          <div className="ht-dialog ht-small"><strong>Add {val("name") || "them"}?</strong><small>Their QR pass is emailed when their spot is confirmed and paid.</small><Btn t="confirm" tone="dark">Yes, add them</Btn></div>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("confirm")} /></span>}
+    </div>
+  );
+}
+
+/** Email participants: the event reminder / guidelines composer. */
+function Reminder({ state = {} }) {
+  const to = state.to || ["p1", "p2"];
+  const people = [{ t: "p1", name: "Maria Santos", note: "" }, { t: "p2", name: "Ana Reyes", note: "Reminded Dec 1" }, { t: "p3", name: "Leo Cruz", note: "Waitlist · can't be ticked" }];
+  return (
+    <div className="ht-screen">
+      <div className="ht-cols">
+        <div className="ht-col">
+          <span className="ht-field" {...T("startFrom")}><small>Start from</small><span className="ht-input">{state.template || "Standard wording"} ▾</span></span>
+          <span className="ht-field" {...T("wording")}><small>Message</small><span className="ht-input is-tall">Hi [first name], we can&apos;t wait to see you and your furbaby! Doors open at 3:00 PM…</span></span>
+          <small className="ht-legend">Who gets it · {to.length} ticked</small>
+          <span className="ht-actions"><Btn>Everyone</Btn><Btn t="notReminded">Not reminded yet</Btn><Btn>None</Btn></span>
+          {people.map((p) => <span key={p.t} className="ht-pick" {...T(p.t)}><Box on={to.includes(p.t)} /> {p.name} {p.note && <small>· {p.note}</small>}</span>)}
+          <span className="ht-actions"><Btn t="test">Send a test</Btn><Btn t="send" tone="gold">Send to {to.length} {to.length === 1 ? "person" : "people"}</Btn></span>
+        </div>
+        <div className="ht-col ht-preview">
+          <small>Preview</small>
+          <span className="ht-mail"><strong>Hi Maria,</strong><span className="ht-line" /><span className="ht-line is-short" /><span className="ht-qr" /><small>With love and purpose</small></span>
+        </div>
+      </div>
+      {state.confirm ? (
+        <div className="ht-screen ht-dim">
+          <div className="ht-dialog ht-small"><strong>Send the reminder to {to.length}?</strong><small>One email each, with their own QR pass.</small><Btn t="confirm" tone="dark">Yes, send</Btn></div>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("confirm")} /></span>}
+    </div>
+  );
+}
+
 function Field({ t, label, value, placeholder, multiline = false }) {
   return (
     <span className="ht-field" {...T(t)}>
@@ -386,7 +527,7 @@ function TemplateEditor({ state = {}, typed }) {
   );
 }
 
-const SCENES = { tracker: Tracker, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
+const SCENES = { tracker: Tracker, regList: RegList, regPayment: RegPayment, regAdd: RegAdd, reminder: Reminder, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
 
 /** One guide step's screen. `typed` is the text typed so far on a typing step. */
 export default function HowToScene({ scene, state, typed }) {
