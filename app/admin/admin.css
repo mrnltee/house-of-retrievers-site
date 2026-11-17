@@ -1400,3 +1400,26 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 @media (max-width: 720px) {
   .reg-index .stack-table.admin-events tr > td.st-4 { grid-column: 1 / -1; }
 }
+
+/* Check-in index review (17 Nov 2026, design review): one card per event for the door, poster at 4:5, when and
+   where, arrivals with a meter, full-size buttons; today's event gets a gold border. */
+.ci-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; }
+.ci-card { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 18px; padding: 20px; background: #fff; border: 1px solid var(--a-line); border-radius: 16px; }
+.ci-card.is-today { border: 2px solid var(--a-gold); padding: 19px; }
+.ci-poster { width: 112px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 10px; background: var(--a-sand); }
+.ci-poster-empty { display: block; border: 1px dashed var(--a-line); }
+.ci-body { display: grid; gap: 6px; align-content: start; justify-items: start; min-width: 0; }
+.ci-title { margin: 2px 0 0; font-size: 22px; line-height: 1.2; text-wrap: balance; }
+.ci-meta { margin: 0; text-wrap: pretty; }
+.ci-count { margin: 4px 0 0; width: 100%; }
+.ci-count .reg-meter { width: 100%; max-width: 220px; }
+.ci-poster { grid-row: 1 / span 2; }
+.ci-actions { grid-column: 2; gap: 8px; }
+@media (max-width: 520px) {
+  .ci-card { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; padding: 16px; }
+  .ci-card.is-today { padding: 15px; }
+  .ci-poster { width: 72px; grid-row: auto; }
+  .ci-title { font-size: 19px; }
+  .ci-actions { grid-column: 1 / -1; width: 100%; }
+  .ci-actions .btn { flex: 1; }
+}
