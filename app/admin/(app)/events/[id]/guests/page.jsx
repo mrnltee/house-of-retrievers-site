@@ -117,14 +117,14 @@ export default async function EventGuestsPage({ params, searchParams }) {
               {canSend && <TickedSubmit />}
             </div>
           </form>
-          <div className="table-wrap" style={{ marginTop: 10 }}>
-            <table>
+          <div className="table-wrap guest-table-wrap" style={{ marginTop: 10 }}>
+            <table className="guest-table">
               <thead><tr>{canSend && <th><span className="sr-only">Pick</span></th>}<th>Name</th><th>Email</th><th>Greeting</th><th>Email status</th><th>Reply</th></tr></thead>
               <tbody>
                 {g.rows.map((r) => (
                   <tr key={r.id}>
-                    {canSend && <td><input type="checkbox" form={`send-${g.key}`} name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
-                    <td className="strong">
+                    {canSend && <td className="gt-pick"><input type="checkbox" form={`send-${g.key}`} name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
+                    <td className="strong gt-name">
                       <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}</span></span>
                       {canEdit && (
                         <details className="tracker-edit">
@@ -134,7 +134,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                             <input type="hidden" name="contact" value={r.id} />
                             <label className="field"><span>Their reply</span><select name="reply" defaultValue={r.reply}>{REPLIES.map(([k, l]) => <option key={k} value={k}>{k === "yes" ? "Coming" : k === "no" ? "Can't make it" : l}</option>)}</select></label>
                             <label className="field"><span>Notes for this event <small>Only admins see these</small></span><textarea name="notes" rows={2} maxLength={1000} defaultValue={r.event_notes || ""} /></label>
-                            <fieldset className="field guest-public">
+                            <fieldset className="plain guest-public">
                               <legend className="strong">On the event page</legend>
                               <input type="hidden" name="publicSent" value="1" />
                               <label className="check"><input type="checkbox" name="showOnSite" value="1" defaultChecked={r.show_on_site} /> <span>Show {r.name} under Speakers &amp; special guests <small className="muted">(only once their reply is Coming, and only with their OK)</small></span></label>
@@ -152,10 +152,10 @@ export default async function EventGuestsPage({ params, searchParams }) {
                         </details>
                       )}
                     </td>
-                    <td>{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}</td>
-                    <td className="small">Dear {greetingOf(recipientFields({ contact: r }))},</td>
-                    <td className="small"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} name={r.name} /></td>
-                    <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span>{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
+                    <td className="gt-email" data-label="Email">{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}</td>
+                    <td className="small gt-greeting" data-label="Greeting">Dear {greetingOf(recipientFields({ contact: r }))},</td>
+                    <td className="small gt-status" data-label="Email status"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} name={r.name} /></td>
+                    <td className="gt-reply" data-label="Reply"><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span>{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
                   </tr>
                 ))}
               </tbody>

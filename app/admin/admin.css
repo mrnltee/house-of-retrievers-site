@@ -1208,3 +1208,32 @@ html.send-modal-open { overflow: hidden; }
 .ht-page { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--a-line); border-radius: 4px; background: #fff; min-height: 110px; align-content: start; }
 .ht-page .ht-line { background: var(--a-sand); }
 .ht-group .ht-head { flex-wrap: wrap; }
+
+/* Event guest list review (17 Nov 2026, owner). Rows align to the top, so a guest whose panel is open no longer
+   leaves the other cells floating half way down; the "On the event page" box reads as one block; and on phones
+   each guest is a card (name and reply first, then email, greeting and email status) instead of a table that
+   scrolled sideways and hid the reply. */
+.guest-table td { vertical-align: top; }
+.guest-table .gt-pick { padding-top: 18px; }
+.guest-table .gt-reply .chip { white-space: nowrap; }
+fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12px; background: var(--a-sand); }
+.guest-public legend { float: left; width: 100%; margin-bottom: 8px; }
+.guest-public > :not(legend) { clear: both; }
+@media (max-width: 720px) {
+  .guest-table-wrap { overflow-x: visible; border: 0; background: transparent; }
+  .guest-table thead { display: none; }
+  .guest-table, .guest-table tbody { display: block; }
+  .guest-table tr { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; padding: 14px; margin-bottom: 10px; background: #fff; border: 1px solid var(--a-line); border-radius: 14px; }
+  .guest-table td { display: block; padding: 4px 0; border: 0; }
+  .guest-table .gt-pick { grid-row: 1 / span 5; padding-top: 6px; }
+  .guest-table .gt-name, .guest-table .gt-reply, .guest-table .gt-email, .guest-table .gt-greeting, .guest-table .gt-status { grid-column: 2; }
+  .guest-table tr:not(:has(.gt-pick)) > td { grid-column: 1 / -1; }
+  .guest-table .gt-name { order: 1; }
+  .guest-table .gt-reply { order: 2; }
+  .guest-table .gt-email { order: 3; }
+  .guest-table .gt-greeting { order: 4; }
+  .guest-table .gt-status { order: 5; }
+  .guest-table .gt-pick { order: 0; }
+  .guest-table [data-label]:not(.gt-reply)::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 700; color: var(--a-muted); }
+  .guest-table .tracker-edit .form { min-width: 0; }
+}
