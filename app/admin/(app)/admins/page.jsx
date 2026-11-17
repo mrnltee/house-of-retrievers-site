@@ -168,7 +168,7 @@ export default async function AdminsPage({ searchParams }) {
         </table>
       </div>
 
-      <h2>Activity log</h2>
+      <h2 id="activity-log">Activity log</h2>
       <p className="muted">Every change, by whom and when. Nobody can edit or delete it. Latest 100 shown.</p>
       <div className="table-wrap">
         <table>
