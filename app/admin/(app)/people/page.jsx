@@ -4,7 +4,10 @@ import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { updatePerson } from "../../actions";
 import { MEMBERSHIP, PEOPLE_KINDS, PEOPLE_STATUSES, hasMembership, memberNumber, membershipLabel } from "../../../lib/admin/people.mjs";
-import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
+import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
+import ListSearch from "../ListSearch";
+import StatusSelect from "./StatusSelect";
+import { RegSelectAll, RegSelectionBar } from "../registrations/[eventId]/RegTools";
 import PersonAvatar from "./PersonAvatar";
 import ConfirmButton from "../ConfirmButton";
 import { agesToday } from "../../../lib/furbabyAge.mjs";
@@ -26,6 +29,9 @@ export default async function PeoplePage({ searchParams }) {
   const q = typeof params?.q === "string" ? params.q.trim().slice(0, 80) : "";
   const filter = MEMBERSHIP.some(([k]) => k === params?.m) ? params.m : "";
   const noPhoto = params?.photo === "none";
+  // Tiles open what they count (design review, 17 Nov 2026): waiting over 7 days, new this month.
+  const waitingOnly = params?.waiting === "1";
+  const monthOnly = params?.since === "month";
   const [counts, rows, [stats]] = await Promise.all([
     sql("SELECT kind, count(*)::int AS count FROM people GROUP BY kind"),
     sql(
@@ -34,8 +40,10 @@ export default async function PeoplePage({ searchParams }) {
          AND ($2 = '' OR name ILIKE '%' || $2 || '%' OR email ILIKE '%' || $2 || '%' OR social_profile ILIKE '%' || $2 || '%' OR furbaby_name ILIKE '%' || $2 || '%')
          AND ($3 = '' OR membership = $3)
          AND (NOT $4 OR photo_id IS NULL)
+         AND (NOT $5 OR (status = 'New' AND created_at < now() - interval '7 days'))
+         AND (NOT $6 OR created_at >= date_trunc('month', now() AT TIME ZONE 'Asia/Manila') AT TIME ZONE 'Asia/Manila')
        ORDER BY (status = 'New') DESC, created_at DESC LIMIT 300`,
-      [kind, q, filter, noPhoto],
+      [kind, q, filter, noPhoto, waitingOnly, monthOnly],
     ),
     sql(
       `SELECT count(*) FILTER (WHERE membership = 'active')::int AS active,
@@ -51,6 +59,9 @@ export default async function PeoplePage({ searchParams }) {
   const canEdit = can(admin, "people:edit");
   const members = hasMembership(kind);
   const link = (extra) => `${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(noPhoto ? { photo: "none" } : {}), ...extra })}`;
+  const tileHref = (extra) => `${base}/people?${new URLSearchParams({ kind, ...extra })}`;
+  const canSend = can(admin, "letters:edit");
+  const findOf = (p) => [p.name, p.email, p.social_profile, p.furbaby_name, p.organization, p.status, membershipLabel(p.membership), memberNumber(p)].filter(Boolean).join(" ").toLowerCase();
 
   return (
     <>
@@ -65,20 +76,15 @@ export default async function PeoplePage({ searchParams }) {
             <a key={k} href={`${base}/people?kind=${k}`} aria-current={kind === k ? "page" : undefined}>{k}s · {count(k)}</a>
           ))}
         </nav>
-        <form role="search" className="actions">
-          <input type="hidden" name="kind" value={kind} />
-          {filter && <input type="hidden" name="m" value={filter} />}
-          <label className="visually-hidden" htmlFor="people-q">Search</label>
-          <input id="people-q" type="search" name="q" defaultValue={q} placeholder="Search people" title="Searches name, email, handle and furbaby" style={{ width: 280 }} />
-        </form>
       </div>
 
-      <dl className="people-stats">
-        {members && <div><dt>Active {kind === "Volunteer" ? "volunteers" : "members"}</dt><dd>{stats.active}</dd></div>}
-        {members && <div><dt>Applicants</dt><dd>{stats.applicants}</dd></div>}
-        <div><dt>New this month</dt><dd>{stats.this_month}</dd></div>
-        <div className={stats.waiting ? "is-warn" : undefined}><dt>Waiting over 7 days</dt><dd>{stats.waiting}</dd></div>
-      </dl>
+      <ListSearch q={q} action={`${base}/people`} hidden={{ kind, m: filter }} placeholder="Find someone by name, email, handle, furbaby or number…" />
+      <div className="people-stats">
+        {members && <a href={tileHref({ m: "active" })}><span className="ps-label">Active {kind === "Volunteer" ? "volunteers" : "members"}</span><span className="ps-value">{stats.active}</span></a>}
+        {members && <a href={tileHref({ m: "applicant" })}><span className="ps-label">Applicants</span><span className="ps-value">{stats.applicants}</span></a>}
+        <a href={tileHref({ since: "month" })} aria-current={monthOnly ? "page" : undefined}><span className="ps-label">New this month</span><span className="ps-value">{stats.this_month}</span></a>
+        <a href={tileHref({ waiting: "1" })} className={stats.waiting ? "is-warn" : undefined} aria-current={waitingOnly ? "page" : undefined}><span className="ps-label">Waiting over 7 days</span><span className="ps-value">{stats.waiting}</span></a>
+      </div>
 
       {(members || stats.no_photo > 0 || noPhoto) && (
         <nav className="tabs small-tabs" aria-label="Show">
@@ -89,11 +95,17 @@ export default async function PeoplePage({ searchParams }) {
             : <a className="tab-aside" href={link({ ...(filter ? { m: filter } : {}), photo: "none" })}>No photo yet · {stats.no_photo}</a>)}
         </nav>
       )}
+      {(waitingOnly || monthOnly) && <p className="small">{waitingOnly ? "Showing people still on New after 7 days." : "Showing people who joined this month."} <a href={tileHref({})}>Show everyone</a></p>}
       <p className="small muted">{HELP[kind]}</p>
+      {canSend && rows.length > 0 && (
+        <RegSelectionBar hint="Tick people to email several at once." refPrefix="person:" messageLabel="Email them"
+          messageBase={`${base}/letters/send?${new URLSearchParams([["letter", "guest-follow-up"], ["own", "1"]]).toString()}`} />
+      )}
       <div className="table-wrap">
         <table className="people-table stack-table">
           <thead>
             <tr>
+              {canSend && <th className="st-pick">{rows.length > 0 ? <RegSelectAll /> : <span className="sr-only">Pick</span>}</th>}
               <th>Person</th>
               <th>Contact</th>
               <th>{members ? "Furbaby" : "Organization"}</th>
@@ -102,10 +114,11 @@ export default async function PeoplePage({ searchParams }) {
               <th>Follow-up</th>
             </tr>
           </thead>
-          <tbody>
-            {rows.length === 0 && <tr><td colSpan={members ? 6 : 5} className="empty">{q || filter || noPhoto ? "No one matches." : "Nobody here yet."}</td></tr>}
+          <tbody id="reg-rows">
+            {rows.length === 0 && <tr><td colSpan={(members ? 6 : 5) + (canSend ? 1 : 0)} className="empty">{q || filter || noPhoto ? "No one matches." : "Nobody here yet."}</td></tr>}
             {rows.map((p) => (
-              <tr key={p.id}>
+              <tr key={p.id} data-row="" data-find={findOf(p)}>
+                {canSend && <td className="st-pick"><input type="checkbox" name="reg" value={p.id} data-reg-pick="" aria-label={`Pick ${p.name}`} /></td>}
                 <td className="st-1">
                   <a className="person-cell" href={`${base}/people/${p.id}`}>
                     <PersonAvatar person={p} base={base} />
@@ -127,17 +140,14 @@ export default async function PeoplePage({ searchParams }) {
                     {p.member_no && <><br /><span className="small muted">{memberNumber(p)}</span></>}
                   </td>
                 )}
-                <td className="st-5" data-label="Joined">{formatWhen(p.created_at)}</td>
+                <td className="st-5" data-label="Joined">{formatDay(new Date(p.created_at).toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }))}</td>
                 <td className="st-6" data-label="Follow-up">
                   {canEdit ? (
                     <form action={updatePerson} className="person-quick">
                       <input type="hidden" name="id" value={p.id} />
                       <input type="hidden" name="kind" value={kind} />
                       <input type="hidden" name="notes" value={p.notes || ""} />
-                      <label className="visually-hidden" htmlFor={`st-${p.id}`}>Follow-up for {p.name}</label>
-                      <select id={`st-${p.id}`} name="status" defaultValue={p.status}>
-                        {STATUSES[kind].map((s) => <option key={s}>{s}</option>)}
-                      </select>
+                      <StatusSelect id={`st-${p.id}`} name={p.name} value={p.status} options={STATUSES[kind]}>
                       <ConfirmButton
                         className="btn small ghost"
                         title={`Save ${p.name}'s follow-up status?`}
@@ -146,6 +156,7 @@ export default async function PeoplePage({ searchParams }) {
                         yes="Yes, save status"
                         tone="ghost"
                       >Save</ConfirmButton>
+                      </StatusSelect>
                     </form>
                   ) : (
                     <span className={`chip ${p.status === "New" ? "warn" : ""}`}>{p.status}</span>

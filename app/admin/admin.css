@@ -1572,3 +1572,14 @@ details.sd-fold { display: block; }
 @media (max-width: 720px) {
   .standard-details .sd-blank, .standard-details .sd-answer { width: auto; }
 }
+
+/* People review, second pass (17 Nov 2026, design review): live search, tiles that open what they count, ticks
+   to email several people, and a row's Save only once its follow-up status changes. */
+.people-stats > a { display: grid; gap: 4px; min-width: 0; padding: 14px 18px; border-radius: 14px; background: #fff; border: 1px solid var(--a-line); color: var(--a-ink); text-decoration: none; }
+.people-stats > a:hover, .people-stats > a:focus-visible { border-color: var(--a-ink); }
+.people-stats > a[aria-current="page"] { border-color: var(--a-ink); box-shadow: inset 0 0 0 1px var(--a-ink); }
+.people-stats .ps-label { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--a-muted); }
+.people-stats .ps-value { font: 400 30px/1 "DM Serif Display", serif; }
+.person-quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.person-quick-save { display: inline-flex; gap: 8px; align-items: center; }
+.people-table td.st-5 { white-space: nowrap; }
