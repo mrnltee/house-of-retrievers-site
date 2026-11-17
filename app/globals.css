@@ -2030,3 +2030,17 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 @media (min-width: 901px) { .mission .section-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); } }
 /* On phones a heading's fixed line break forces the split ("…a / pack."); let balance place it instead. */
 @media (max-width: 560px) { main h2 br { display: none; } }
+
+/* Media hub: For editors and producers (17 Nov 2026, owner said it looked awkward). It was a label in a narrow
+   left column and one paragraph stopping at 600px, leaving the right of the tile empty and its last line an
+   internal note. Now a heading, the status promise and an interview button on the left, the topics as a
+   scannable list on the right; the label uses the readable gold. */
+.media-hub .media-editorial-note { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(24px, 4vw, 56px); align-items: center; padding: clamp(24px, 3.5vw, 44px); }
+.media-editorial-copy { display: grid; justify-items: start; gap: 12px; }
+.media-editorial-label { color: var(--media-gold-text); font-size: 12px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.media-editorial-copy h3 { margin: 0; font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(26px, 2.6vw, 36px); line-height: 1.1; text-wrap: balance; }
+.media-hub .media-editorial-copy p { max-width: 440px; margin: 0 0 6px; text-wrap: pretty; }
+.media-editorial-topics { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.media-editorial-topics li { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 12px; background: var(--media-ivory); font-size: 16px; font-weight: 600; }
+.media-editorial-topics .icon { flex: none; color: var(--media-gold-text); }
+@media (max-width: 800px) { .media-hub .media-editorial-note { grid-template-columns: 1fr; } }

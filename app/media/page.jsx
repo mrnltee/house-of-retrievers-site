@@ -13,6 +13,9 @@ import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, clean
 import Icon from "../components/Icon";
 
 // Re-rendered hourly so new event albums and photographer credits reach the photo library; a publish in Admin → Media hub refreshes it at once.
+
+// Topics HoR can speak to (the old "For editors and producers" note, as a list a producer can scan).
+const EDITOR_TOPICS = ["Responsible pet ownership", "Animal welfare", "Community care", "Meaningful time with dogs", "Partnerships with a clear purpose"];
 export const revalidate = 3600;
 
 export const metadata = {
@@ -245,7 +248,15 @@ export default async function MediaPage() {
           </section>) : <p className="media-photo-empty">Credited event photos will appear here as albums are added to past events and their photographers are recorded.</p>}
           <div className="media-photo-links"><strong>More photos and video</strong><a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noopener noreferrer">Instagram @houseofretrieversph <Icon name="external" /></a><a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noopener noreferrer">Facebook /houseofretrieversph <Icon name="external" /></a><a href="mailto:houseofretrieversph@gmail.com?subject=Photo%20request">Request photos or permission <Icon name="external" /></a></div>
         </div>
-        <div className="media-editorial-note"><strong>For editors and producers</strong><p>HoR can speak to responsible pet ownership, animal welfare, community care, meaningful interaction with dogs, and partnerships that give community activities a clear purpose. Completed, current, upcoming, and proposed work will always be labelled separately.</p></div>
+        <aside className="media-editorial-note" aria-labelledby="editors-title">
+          <div className="media-editorial-copy">
+            <span className="media-editorial-label">For editors and producers</span>
+            <h3 id="editors-title">What we can talk about</h3>
+            <p>We always say whether an activity has happened, is under way, is coming up or is still a proposal.</p>
+            <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Interview%20request" data-message="interview">Request an interview <Icon name="arrow" /></a>
+          </div>
+          <ul className="media-editorial-topics">{EDITOR_TOPICS.map((topic) => <li key={topic}><Icon name="paw" />{topic}</li>)}</ul>
+        </aside>
       </section>
 
       <PhotoLightbox />
