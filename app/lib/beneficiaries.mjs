@@ -106,6 +106,16 @@ export function cleanBeneficiary(input = {}) {
 export const PUBLIC_STATUSES = ["partnered", "ended", "helped"];
 export const isPublicBeneficiary = (row) => Boolean(row?.show_on_site && PUBLIC_STATUSES.includes(row.status) && String(row.blurb || "").trim());
 
+/** Why a beneficiary isn't on the website (design review, 17 Nov 2026): [] when it is. */
+export function beneficiaryWebsiteGaps(row = {}) {
+  if (isPublicBeneficiary(row)) return [];
+  return [
+    PUBLIC_STATUSES.includes(row.status) ? "" : "Partnered, Ended or Helped status",
+    String(row.blurb || "").trim() ? "" : "a blurb",
+    row.show_on_site ? "" : "switching on",
+  ].filter(Boolean);
+}
+
 /** Events that name this beneficiary in "Supports" (either name may be the shorter one). */
 export function eventsFor(name, events = []) {
   const n = String(name || "").toLowerCase().trim();

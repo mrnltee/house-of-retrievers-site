@@ -91,3 +91,10 @@ test("helped before we registered: a status of its own, shown in its own group",
   assert.equal(publicBeneficiary({ ...row, status: "ended" }).group, "past");
   assert.equal(yearsLine(pub), "");
 });
+
+test("a beneficiary that isn't on the website says what it still needs", async () => {
+  const { beneficiaryWebsiteGaps } = await import("./beneficiaries.mjs");
+  assert.deepEqual(beneficiaryWebsiteGaps({ status: "partnered", show_on_site: true, blurb: "Hi" }), []);
+  assert.deepEqual(beneficiaryWebsiteGaps({ status: "prospect", show_on_site: false, blurb: "" }), ["Partnered, Ended or Helped status", "a blurb", "switching on"]);
+  assert.deepEqual(beneficiaryWebsiteGaps({ status: "helped", show_on_site: false, blurb: "Hi" }), ["switching on"]);
+});

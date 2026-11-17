@@ -1515,3 +1515,10 @@ button.reply-opt:hover, button.reply-opt:focus-visible { border-color: var(--a-i
 .supporter-list-wrap td { vertical-align: middle; }
 .supporter-list-wrap td:nth-last-child(2) { white-space: nowrap; }
 .supporter-id-cell .id-pending { font-family: "DM Sans", system-ui, sans-serif; font-weight: 400; font-size: 13px; color: var(--a-muted); white-space: nowrap; }
+
+/* Beneficiaries review (17 Nov 2026, design review): status tabs, search as you type and a type filter like the
+   trackers; the tick-and-send bar; cards on phones; the website line says what's missing. */
+.tracker-list { gap: 12px; }
+.site-on { color: var(--a-success); font-weight: 600; }
+.tracker-list .stack-table td { vertical-align: top; }
+.tracker-list > form#tracker-send { display: none; }

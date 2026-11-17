@@ -9,7 +9,7 @@ const ticked = () => [...document.querySelectorAll("input[name='to'][form='track
  * "N selected · Review & send · Clear". The letter used is named here because
  * it only matters when sending (it can be switched in the send window).
  */
-export default function SelectionBar({ letterHref, letterName, ownLetterHref, hint = "Tick brands to send one letter to several at once.", letterNote = "", messageBase = "" }) {
+export default function SelectionBar({ letterHref, letterName, ownLetterHref, hint = "Tick brands to send one letter to several at once.", letterNote = "", messageBase = "", ownLetterLabel = "make one for this event" }) {
   const [count, setCount] = useState(0);
   useEffect(() => {
     const update = () => setCount(ticked().length);
@@ -45,7 +45,7 @@ export default function SelectionBar({ letterHref, letterName, ownLetterHref, hi
       ) : (
         <span className="muted">{hint}</span>
       )}
-      <span className="selection-letter small muted">{letterNote ? <>{letterNote} · </> : null}Letter: <a href={letterHref}>{letterName}</a> · switch it in the send window or <a href={ownLetterHref}>make one for this event</a></span>
+      <span className="selection-letter small muted">{letterNote ? <>{letterNote} · </> : null}Letter: <a href={letterHref}>{letterName}</a> · switch it in the send window or <a href={ownLetterHref}>{ownLetterLabel}</a></span>
     </div>
   );
 }
