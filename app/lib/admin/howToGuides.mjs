@@ -124,8 +124,8 @@ Object.assign(GUIDES, {
   "new-letter": {
     title: "Make a new letter",
     steps: [
-      { scene: "letters", target: "newName", act: "type", text: "Thank-you letter (sponsors)", caption: "On Letters, scroll to New letter and type a name. Only admins see it." },
-      { scene: "letters", state: { newName: "Thank-you letter (sponsors)" }, target: "newLetter", act: "click", caption: "Press + New letter." },
+      { scene: "letters", target: "newName", act: "type", text: "Thank-you letter (sponsors)", caption: "On Letters, press + New letter at the top. In the window, type a name; only admins see it." },
+      { scene: "letters", state: { newName: "Thank-you letter (sponsors)" }, target: "newLetter", act: "click", caption: "Press Make the letter." },
       { scene: "letters", state: { newName: "Thank-you letter (sponsors)", confirm: "Make a new letter?" }, target: "confirm", act: "click", caption: "Confirm. Nothing is sent: it only makes the letter." },
       { scene: "letterEditor", target: "subject", act: "type", text: "Thank you for joining A Golden Beginning", caption: "The editor opens. Step 1: the subject people see in their inbox." },
       { scene: "letterEditor", state: { subject: "Thank you for joining A Golden Beginning" }, target: "body", caption: "It already has the address block, greeting and signature. Write your letter in step 3; the preview beside it updates as you type." },
