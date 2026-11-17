@@ -22,6 +22,7 @@ export default function FooterLegal() {
       )}
       <nav className="footer-links" aria-label="More from House of Retrievers">
         <a className="footer-privacy" href={PRIVACY_URL}>Privacy notice</a>
+        <span className="footer-links-dot" aria-hidden="true">·</span>
         <a className="footer-privacy" href={MEDIA_URL}>Media kit</a>
       </nav>
       <p suppressHydrationWarning>© {new Date().getFullYear()} All rights reserved.</p>

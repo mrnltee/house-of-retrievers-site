@@ -2049,7 +2049,7 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
    44px tall so it is easy to tap. */
 .footer-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 6px; }
 .footer-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
-.footer-links a + a::before { content: "·"; margin-right: 10px; opacity: .55; text-decoration: none; display: inline-block; }
+.footer-links-dot { opacity: .55; }
 
 /* Media hub footer review (17 Nov 2026, owner). It had only the logo and the email, left the middle empty,
    no privacy notice (the hub's message form collects names and emails), and on phones squeezed the copyright
@@ -2072,4 +2072,14 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
   .media-hub .media-footer { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 56px; }
   .media-hub .media-footer-bottom { flex-direction: column; align-items: flex-start; }
   .media-hub .media-footer p { text-align: left; }
+}
+
+/* Main and events footer review (17 Nov 2026, owner). The social buttons had a typed "f" and "IG" standing in
+   for brand logos; they are now the network's name with the external-link icon, like the media hub footer.
+   On phones they sit side by side at their own width instead of two full-width bars that outweighed the
+   society's name. */
+.social-button { padding: 10px 18px; min-height: 44px; }
+@media (max-width: 680px) {
+  .social-links { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .social-button { width: auto; }
 }
