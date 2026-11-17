@@ -87,7 +87,8 @@ export async function updateJourneyEntry(data) {
     story: field(data, "story"), tag: field(data, "tag"), mark: field(data, "mark"), date: field(data, "date"),
   });
   if (error) await backWith(entryPage(id), "error", error);
-  const dateSent = data.has("date") && !current.event_id;
+  // A blank date keeps a month-only date ("May 2026") instead of wiping it (design review, 17 Nov 2026).
+  const dateSent = data.has("date") && !current.event_id && Boolean(value.date || !current.month);
   await sql(
     `UPDATE journey_entries SET title=$1, theme=$2, place=$3, story=$4, tag=$5, mark=$6,
        happened_on = CASE WHEN $7 THEN $8::date ELSE happened_on END,
