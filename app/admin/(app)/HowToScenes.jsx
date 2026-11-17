@@ -48,6 +48,49 @@ function Tracker({ state = {} }) {
   );
 }
 
+/** An event's Guest tracker (owner, 2026-11-17): Invite / Follow up / Message per guest, ticks for several. */
+function GuestTracker({ state = {} }) {
+  const ticked = state.ticked || [];
+  const sent = (row) => (state.sent || []).includes(row);
+  const rows = [
+    { id: "g1", name: "Ms. Malou Perez", role: "VIP furparents", invited: true },
+    { id: "g2", name: "Ramon Bautista", role: "Media & press", invited: false },
+  ];
+  return (
+    <div className="ht-screen">
+      <div className="ht-head">
+        <strong className="ht-title">Guest tracker</strong>
+        <span className="ht-actions"><Btn t="followAll">Follow up · 1</Btn><Btn t="add" tone="gold">+ Add a guest</Btn></span>
+      </div>
+      <div className={`ht-bar${ticked.length ? " is-on" : ""}`}>
+        {ticked.length
+          ? <><strong>{ticked.length} selected</strong><span className="ht-actions"><Btn t="review" tone="dark">Review &amp; send</Btn><Btn t="messageMany">Send a message</Btn></span></>
+          : <span>Tick guests to send one letter or message to several at once.<span {...T("review")} /><span {...T("messageMany")} /></span>}
+      </div>
+      <div className="ht-table">
+        {rows.map((r) => {
+          const invited = r.invited || sent(r.id);
+          return (
+            <div className="ht-row" key={r.id}>
+              <span {...T(`${r.id}Tick`)}><Box on={ticked.includes(r.id)} /></span>
+              <span className="ht-name"><strong>{r.name}</strong><small>{r.role}</small></span>
+              <span className="ht-cell" {...T(`${r.id}Status`)}>
+                {invited ? <><span className="ht-chip">Sent</span><small>{sent(r.id) ? "Sent just now" : "Sent Nov 10"}</small></> : <small>No invite sent yet</small>}
+                <span className="ht-actions">
+                  {r.invited && <Btn t={`${r.id}Follow`} tone="dark">Follow up</Btn>}
+                  <Btn t={`${r.id}Invite`} tone={invited ? "" : "dark"}>{invited ? "Invite again" : "Invite"}</Btn>
+                  <Btn t={`${r.id}Message`}>Message</Btn>
+                </span>
+              </span>
+              <span className="ht-chip">No reply yet</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Field({ t, label, value, placeholder, multiline = false }) {
   return (
     <span className="ht-field" {...T(t)}>
@@ -88,7 +131,9 @@ function Invite({ state = {}, typed }) {
 function Send({ state = {}, typed }) {
   const blank = typed?.target === "blank" ? typed.text : state.typedBlank;
   const to = state.to || [];
-  const people = [{ t: "to1", tab: "tab1", name: "Acuaverde" }, { t: "to2", tab: "tab2", name: "Aeternal Paws" }];
+  const people = state.guests
+    ? [{ t: "to1", tab: "tab1", name: "Ms. Malou Perez", dear: "Ms. Perez" }, { t: "to2", tab: "tab2", name: "Ramon Bautista", dear: "Mr. Bautista" }]
+    : [{ t: "to1", tab: "tab1", name: "Acuaverde" }, { t: "to2", tab: "tab2", name: "Aeternal Paws" }];
   const shown = people.filter((p) => to.includes(p.t));
   return (
     <div className="ht-screen ht-dim">
@@ -109,8 +154,8 @@ function Send({ state = {}, typed }) {
             {people.filter((p) => !to.includes(p.t)).map((p) => <span key={p.tab} {...T(p.tab)} />)}
             <Btn t="write"><><Icon name="edit" /> {state.own ? "Write your email" : "Edit wording for this send"}</></Btn>
             <span className="ht-mail">
-              <strong>Dear {shown[0]?.name || "…"} Team,</strong>
-              {state.own ? <span>It was lovely meeting your team today.</span> : <><span className="ht-line" /><span className="ht-line" /><span className="ht-line is-short" /></>}
+              <strong>Dear {shown[0] ? (shown[0].dear || `${shown[0].name} Team`) : "…"},</strong>
+              {state.own ? <span>{state.ownText || "It was lovely meeting your team today."}</span> : <><span className="ht-line" /><span className="ht-line" /><span className="ht-line is-short" /></>}
               <small>With love and purpose</small>
             </span>
           </div>
@@ -292,7 +337,7 @@ function TemplateEditor({ state = {}, typed }) {
   );
 }
 
-const SCENES = { tracker: Tracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
+const SCENES = { tracker: Tracker, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
 
 /** One guide step's screen. `typed` is the text typed so far on a typing step. */
 export default function HowToScene({ scene, state, typed }) {

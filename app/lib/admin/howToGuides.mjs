@@ -9,6 +9,7 @@
 
 /** Every pointer target each mock draws (a step's target must be one of its scene's). */
 export const SCENE_TARGETS = {
+  guestTracker: ["add", "followAll", "review", "messageMany", "g1Tick", "g2Tick", "g1Status", "g2Status", "g1Follow", "g1Invite", "g2Invite", "g1Message", "g2Message"],
   tracker: ["invite", "followAll", "row1Tick", "row2Tick", "row1Follow", "row1Send", "row2Send", "review", "newRow"],
   invite: ["search", "pick1", "pick2", "add", "addNew"],
   send: ["letter", "to1", "to2", "tab1", "tab2", "own", "write", "send", "confirm", "blank"],
@@ -142,6 +143,53 @@ Object.assign(GUIDES, {
       { scene: "send", state: { to: ["to1", "to2"], blank: true, typedBlank: "December 5" }, target: "send", act: "click", caption: "Press Send and confirm. Each person gets their own email, and the list shows its delivery status." },
     ],
   },
+  // Guest tracker (owner, 2026-11-17): how its emails work — invites, follow-ups and your own messages.
+  "guest-invite": {
+    title: "Send a guest their invitation",
+    steps: [
+      { scene: "guestTracker", target: "g2Status", caption: "Letters says who has had an invite. Ramon has none yet, so his row says No invite sent yet." },
+      { scene: "guestTracker", target: "g2Invite", act: "click", caption: "Press Invite on his row. It opens his letter: this event's own, or else the one for his group (Media & press)." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Invitation: media — Golden Beginning" }, target: "letter", caption: "The send window opens over the tracker with him ticked and his letter chosen. Pick another letter here if you need to." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Invitation: media — Golden Beginning" }, target: "tab1", caption: "The preview is the email as he'll get it: addressed to him, with the letter attached as a PDF." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Invitation: media — Golden Beginning" }, target: "send", act: "click", caption: "Press Send to 1." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Invitation: media — Golden Beginning", confirm: true }, target: "confirm", act: "click", caption: "Check the summary, then Yes, send letters." },
+      { scene: "guestTracker", state: { sent: ["g2"] }, target: "g2Status", caption: "Back on the tracker, Letters shows Sent, then Delivered or Opened as the email travels. His button now reads Invite again." },
+    ],
+  },
+  "guest-invite-many": {
+    title: "Invite several guests at once",
+    steps: [
+      { scene: "guestTracker", target: "g1Tick", act: "tick", caption: "Tick the guests who should get the same invitation." },
+      { scene: "guestTracker", state: { ticked: ["g1"] }, target: "g2Tick", act: "tick", caption: "Tick as many as you need, up to 25 a send. Filter No invite sent first to find who still needs one." },
+      { scene: "guestTracker", state: { ticked: ["g1", "g2"] }, target: "review", act: "click", caption: "Press Review & send. It uses this event's own letter, or else the special guests invitation." },
+      { scene: "send", state: { guests: true, to: ["to1", "to2"], letter: "Invitation: special guests — Golden Beginning" }, target: "tab2", act: "click", caption: "Each ticked guest gets a preview tab. Check each one: every email is addressed to that person." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Invitation: special guests — Golden Beginning" }, target: "to2", act: "tick", caption: "Untick anyone who shouldn't get it. Only ticked people are sent to and previewed." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Invitation: special guests — Golden Beginning" }, target: "send", act: "click", caption: "Press Send and confirm. Each guest gets their own email, never a group email." },
+    ],
+  },
+  "guest-follow-up": {
+    title: "Follow up guests with no reply",
+    steps: [
+      { scene: "guestTracker", target: "g1Follow", act: "click", caption: "Follow up appears on a guest who has had an invite and is still on No reply yet. Press it." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Follow-up: guests with no reply yet (email only)" }, target: "letter", caption: "The follow-up is a short email, no PDF, already filled in with the event's name, date and place." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Follow-up: guests with no reply yet (email only)" }, target: "write", act: "click", caption: "Want a personal line? Edit wording for this send changes it for this send only; the saved letter stays as it is." },
+      { scene: "send", state: { guests: true, to: ["to1"], letter: "Follow-up: guests with no reply yet (email only)" }, target: "send", act: "click", caption: "Press Send to 1, then confirm." },
+      { scene: "guestTracker", target: "followAll", act: "click", caption: "To follow up everyone still waiting at once, press Follow up · N at the top. Untick anyone you've already spoken to." },
+      { scene: "guestTracker", target: "g1Status", caption: "Their reply stays No reply yet until you change it in Edit. When they answer, set Coming or Can't make it there." },
+    ],
+  },
+  "guest-message": {
+    title: "Write your own email to a guest",
+    steps: [
+      { scene: "guestTracker", target: "g1Message", act: "click", caption: "For anything that isn't a letter, such as parking details or a thank-you, press Message on the guest's row." },
+      { scene: "guestTracker", state: { ticked: ["g1", "g2"] }, target: "messageMany", act: "click", caption: "Or tick several guests and press Send a message in the bar." },
+      { scene: "send", state: { guests: true, to: ["to1"], own: true }, target: "own", caption: "The send window opens with Write my own email ticked: email only, no letter and no PDF." },
+      { scene: "editor", target: "subject", act: "type", text: "Parking at Novotel", caption: "Write the subject…" },
+      { scene: "editor", state: { subject: "Parking at Novotel" }, target: "message", act: "type", text: "Guest parking is on B2; show this email at the gate.", caption: "…and the message. Keep Dear [Salutation]: it becomes each guest's own greeting." },
+      { scene: "editor", state: { subject: "Parking at Novotel", message: "Guest parking is on B2; show this email at the gate." }, target: "use", act: "click", caption: "Press Use this wording. HOR's sign-off and footer are added below it." },
+      { scene: "send", state: { guests: true, to: ["to1"], own: true, ownText: "Guest parking is on B2; show this email at the gate." }, target: "send", act: "click", caption: "Check the preview, then Send and confirm. It's logged under Letters like any email." },
+    ],
+  },
   "new-template": {
     title: "Make an email template",
     steps: [
@@ -158,6 +206,8 @@ Object.assign(GUIDES, {
 
 /** The brand guides, in the order the guide list shows them. */
 export const BRAND_GUIDES = ["send-one", "follow-up", "send-many", "own-email", "invite", "add-brand"];
+/** An event's Guest tracker: invites, follow-ups and your own emails (owner, 2026-11-17). */
+export const GUEST_GUIDES = ["guest-invite", "guest-invite-many", "guest-follow-up", "guest-message"];
 /** Letters and email templates (owner, 2026-11-15). */
 export const LETTER_GUIDES = ["new-letter", "duplicate-letter", "edit-letter", "standard-details", "send-letter", "own-email", "new-template"];
 
