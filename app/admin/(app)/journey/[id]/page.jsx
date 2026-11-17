@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
-import { pageAdmin } from "../../../../lib/admin/guard";
+import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { Flash, NotAllowed, PageHead, formatDay, isoDate } from "../../ui";
 import { cloudinaryConfig, photoUrl } from "../../../../lib/cloudinary.mjs";
 import { JOURNEY_LIMITS } from "../../../../lib/journeyEntries.mjs";
@@ -8,6 +8,7 @@ import { monthLabel } from "../../../../lib/journeyStatus.mjs";
 import ConfirmButton from "../../ConfirmButton";
 import { deleteJourneyEntry, setJourneyEntryStatus, updateJourneyEntry } from "../../../journeyEntryActions";
 import JourneyPhotos from "../JourneyPhotos";
+import Icon from "../../../../components/Icon";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 
@@ -24,6 +25,7 @@ export default async function JourneyEntryPage({ params, searchParams }) {
     [id],
   );
   if (!entry) notFound();
+  const base = await adminBase();
 
   const config = cloudinaryConfig();
   const photoRows = await sql(
@@ -45,7 +47,11 @@ export default async function JourneyEntryPage({ params, searchParams }) {
 
   return (
     <>
-      <PageHead title={entry.title} lead={`Status: ${entry.status === "published" ? "Published" : "Draft"}`} />
+      <p className="small jt-back"><a href={`${base}/journey`}><Icon name="arrowLeft" /> Journey timeline</a></p>
+      <PageHead
+        title={entry.title}
+        lead={<><span className={`chip ${entry.status === "published" ? "good" : ""}`}>{entry.status === "published" ? "On the website" : "Draft"}</span> {entry.event_title ? `Linked to the event ${entry.event_title}` : ""}</>}
+      />
       <Flash params={query} />
       <EntryForm entry={entry} />
       <JourneyPhotos entryId={entry.id} hasEvent={Boolean(entry.event_id)} initialPhotos={photos} connected={Boolean(config)} />
@@ -59,33 +65,40 @@ function EntryForm({ entry }) {
   return (
     <section className="card">
       <h2>Details</h2>
-      <form action={updateJourneyEntry} className="form">
+      <form action={updateJourneyEntry} className="form jt-form">
         <input type="hidden" name="id" value={entry.id} />
         <input type="hidden" name="status" value={entry.status === "published" ? "draft" : "published"} />
-        <label className="field"><span>Title</span><input type="text" name="title" maxLength={JOURNEY_LIMITS.title} required defaultValue={entry.title} /></label>
-        <label className="field"><span>Theme (optional)</span><input type="text" name="theme" maxLength={JOURNEY_LIMITS.theme} defaultValue={entry.theme || ""} placeholder="A subtitle shown in italics" /></label>
-        <label className="field"><span>Place (optional)</span><input type="text" name="place" maxLength={JOURNEY_LIMITS.place} defaultValue={entry.place || ""} placeholder="Venue and city" /></label>
-        <label className="field"><span>Story (optional)</span><textarea name="story" maxLength={JOURNEY_LIMITS.story} rows={3} defaultValue={entry.story || ""} placeholder="One plain sentence: what happened, or why it matters" /></label>
-        <label className="field"><span>Tag (optional)</span><input type="text" name="tag" maxLength={JOURNEY_LIMITS.tag} defaultValue={entry.tag || ""} placeholder="e.g. Milestone" /></label>
-        <label className="field">
-          <span>Gold marker (optional)</span>
-          <select name="mark" defaultValue={entry.mark || ""}>
-            <option value="">None</option>
-            <option value="first">First</option>
-            <option value="milestone">Milestone</option>
-          </select>
-        </label>
-        {linked ? (
-          <p className="small muted">
-            Date: {entry.event_date ? formatDay(entry.event_date) : "—"} — follows the linked event ({entry.event_title}). Change the event's date to move this stop.
-          </p>
-        ) : (
+        <div className="row-2">
+          <label className="field"><span>Title</span><input type="text" name="title" maxLength={JOURNEY_LIMITS.title} required defaultValue={entry.title} /></label>
+          <label className="field"><span>Theme <small>Optional; a subtitle shown in italics</small></span><input type="text" name="theme" maxLength={JOURNEY_LIMITS.theme} defaultValue={entry.theme || ""} /></label>
+        </div>
+        <label className="field"><span>Story <small>Optional; one plain sentence: what happened, or why it matters</small></span><textarea name="story" maxLength={JOURNEY_LIMITS.story} rows={3} defaultValue={entry.story || ""} /></label>
+        <div className="row-2">
+          <label className="field"><span>Place <small>Optional; venue and city</small></span><input type="text" name="place" maxLength={JOURNEY_LIMITS.place} defaultValue={entry.place || ""} /></label>
+          {linked ? (
+            <div className="field">
+              <span>Date</span>
+              <p className="jt-date-note">{entry.event_date ? formatDay(entry.event_date) : "No date yet"}<br /><small className="muted">Follows the event. Change the event's date to move this stop.</small></p>
+            </div>
+          ) : (
+            <label className="field">
+              <span>Date <small>Optional</small></span>
+              <input type="date" name="date" defaultValue={entry.happened_on ? isoDate(entry.happened_on) : ""} />
+              {entry.month && !entry.happened_on && <small className="muted">Shows as {monthLabel(entry.month)}. Leave blank to keep that; pick a day to set an exact date.</small>}
+            </label>
+          )}
+        </div>
+        <div className="row-2">
+          <label className="field"><span>Tag <small>Optional; e.g. Milestone</small></span><input type="text" name="tag" maxLength={JOURNEY_LIMITS.tag} defaultValue={entry.tag || ""} /></label>
           <label className="field">
-            <span>Date (optional)</span>
-            <input type="date" name="date" defaultValue={entry.happened_on ? isoDate(entry.happened_on) : ""} />
-            {entry.month && !entry.happened_on && <small className="muted">Currently shows as {monthLabel(entry.month)} (no exact day). Saving with this blank will clear that and show "No date yet" — type a day only if you want to set one.</small>}
+            <span>Gold marker <small>Optional</small></span>
+            <select name="mark" defaultValue={entry.mark || ""}>
+              <option value="">None</option>
+              <option value="first">First</option>
+              <option value="milestone">Milestone</option>
+            </select>
           </label>
-        )}
+        </div>
         <div className="actions">
           <ConfirmButton
             className="btn gold"
@@ -119,15 +132,15 @@ function PublishButton({ entry }) {
   );
 }
 
-/** Delete for good, set apart from the editor, same pattern as events. */
+/** Delete for good, folded at the bottom (design review, 17 Nov 2026: a full red card outweighed the editor). */
 function DeleteEntryCard({ entry }) {
   return (
-    <section className="card danger-zone">
-      <h2>Delete this stop</h2>
+    <details className="card jt-delete">
+      <summary>Delete this stop</summary>
       <form action={deleteJourneyEntry} className="form">
         <input type="hidden" name="id" value={entry.id} />
-        <p className="small">Removes the stop from the timeline for good. Uploaded photos are removed too; photos borrowed from an event's album, or files in <code>public/</code>, are left alone. This can't be undone.</p>
-        <label className="check"><input type="checkbox" name="confirm" required /> I want to delete "{entry.title}" for good</label>
+        <p className="small muted">Removes the stop from the timeline for good. Uploaded photos are removed too; photos borrowed from an event's album, or the site's own files, are left alone. To take it off the home page for now, use Unpublish instead.</p>
+        <label className="check"><input type="checkbox" name="confirm" required /> I want to delete “{entry.title}” for good</label>
         <div className="actions">
           <ConfirmButton
             className="btn danger"
@@ -141,6 +154,6 @@ function DeleteEntryCard({ entry }) {
           </ConfirmButton>
         </div>
       </form>
-    </section>
+    </details>
   );
 }
