@@ -122,7 +122,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
             noun="guests"
             placeholder="Search guests…"
             searchTitle="Searches name, organization, group, email, role and letter"
-            publicNote={`${onPage} on the event page. A guest shows there only when switched on in Edit and Coming.`}
+            publicNote={`${onPage} shown on the event page. Guests appear there once they're Coming and switched on in Edit.`}
           />
         )}
         {canSend && guests.length > 0 && (

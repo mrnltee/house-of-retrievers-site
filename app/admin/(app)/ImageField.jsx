@@ -75,6 +75,7 @@ export default function ImageField({ name, label, hint, current = "", round = fa
 /** The tiny round picture in a table row: photo, else logo, else initials. */
 export function Avatar({ photo, logo, name }) {
   const src = photo || logo;
-  const initials = String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  // Initials from words that start with a letter or digit, so "Luka & Luji" is "LL", not "L&".
+  const initials = String(name || "?").split(/\s+/).filter((w) => /^[\p{L}\p{N}]/u.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
   return <span className={`row-avatar${!photo && logo ? " is-logo" : ""}`} aria-hidden="true">{src ? <img src={src} alt="" /> : initials}</span>;
 }

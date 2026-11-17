@@ -1234,8 +1234,10 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 /* Brand tracker review (17 Nov 2026, owner). The header area took almost half the screen, leaving room for about
    three brands: the sort now shares the search row, and the row's own Send letter / Follow up buttons stay on one
    line instead of breaking into tall two-line pills. */
-.tracker-search { flex: 1 1 180px; }
-.tracker-sort select { min-width: 160px; }
+.tracker-search { flex: 1 1 150px; min-width: 150px; }
+.tracker-sort select { min-width: 150px; }
+/* Guest tracker review (17 Nov 2026): its longer filter names pushed the sort onto its own row. */
+.tracker-filter { padding: 0 12px; }
 .tracker-row-actions .btn { white-space: nowrap; }
 /* Row edit window (17 Nov 2026, owner): the Brand tracker's Edit opens here instead of inside the table cell. */
 .edit-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
