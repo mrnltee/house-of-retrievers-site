@@ -10,7 +10,7 @@ import { guestFollowUpLink, guestInviteLetter, guestMessageBase, guestRowLinks }
 import { INTRO_MAX, ROLE_MAX, SPEAKER_ROLES } from "../../../../../lib/eventSpeakers.mjs";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
-import { addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, setEventGuestReply } from "../../../../contactActions";
+import { addComingGuestsToRsvps, addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, setEventGuestReply } from "../../../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import ImageField, { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
@@ -21,12 +21,21 @@ import TrackerTools from "../brands/TrackerTools";
 import SelectionBar from "../brands/SelectionBar";
 import SelectAll from "../brands/SelectAll";
 import Icon from "../../../../../components/Icon";
+import { compLabel } from "../../../../../lib/compTickets.mjs";
+import { compTypeForGuest } from "../../../../../lib/guestRsvp.mjs";
 import HowTo from "../../../HowTo";
 import { GUEST_GUIDES } from "../../../../../lib/admin/howToGuides.mjs";
 
 const greetingOf = (f) => f.salutation || f.contact || f.name;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
 const guestReply = (reply) => (reply === "yes" ? "Coming" : reply === "no" ? "Can't make it" : replyLabel(reply));
+/** What a reply change does to the RSVP list, for the confirm dialog. */
+function rsvpNote(r, to) {
+  if (to === "yes") return r.on_rsvps ? ["They're already on the RSVP list"] : [`They're added to the RSVP list as a complimentary ${compLabel(compTypeForGuest(r))} (no fee, outside capacity), unless someone with the same name is already on it`];
+  if (r.reply === "yes" && r.on_rsvps) return [r.rsvp_checked_in ? "Their RSVP stays: they've checked in" : "If the tracker added their RSVP, it's cancelled; an RSVP they made themselves stays"];
+  return [];
+}
+
 const GUEST_LABELS = { yes: "Coming", no: "Can't make it", waiting: "No reply yet", unsent: "No invite sent" };
 
 /**
@@ -48,7 +57,10 @@ export default async function EventGuestsPage({ params, searchParams }) {
   const canEdit = can(admin, "guests:edit");
   const canSend = canEdit && can(admin, "letters:edit");
   const [guests, others, letters, chosen] = await Promise.all([
-    sql(`SELECT c.*, eg.reply, eg.notes AS event_notes, eg.show_on_site, eg.public_role, eg.public_intro, eg.public_photo, eg.public_link FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
+    sql(`SELECT c.*, eg.reply, eg.notes AS event_notes, eg.show_on_site, eg.public_role, eg.public_intro, eg.public_photo, eg.public_link,
+           reg.id AS rsvp_id, reg.comp_type AS rsvp_comp, reg.checked_in_at AS rsvp_checked_in,
+           (reg.id IS NOT NULL AND reg.deleted_at IS NULL AND reg.status <> 'cancelled') AS on_rsvps
+          FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id LEFT JOIN registrations reg ON reg.id = eg.registration_id
           WHERE eg.event_id = $1 AND c.deleted_at IS NULL ORDER BY lower(c.name)`, [event.id]),
     sql(`SELECT id, name, organization, specification, category, email FROM letter_contacts c WHERE deleted_at IS NULL
           AND NOT EXISTS (SELECT 1 FROM event_guests eg WHERE eg.event_id = $1 AND eg.contact_id = c.id) ORDER BY lower(name)`, [event.id]),
@@ -68,6 +80,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
   const lastSent = (r) => sendsOf(r).reduce((max, x) => (!max || new Date(x.sent_at) > new Date(max) ? x.sent_at : max), null);
   const counts = trackerCounts(guests);
   const onPage = guests.filter((g) => g.show_on_site && g.reply === "yes").length;
+  const notOnRsvps = guests.filter((g) => g.reply === "yes" && !g.on_rsvps);
   const followUp = guestFollowUpLink(base, event.id, guests, wasSent);
   const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value);
   const sorted = sortTracker(guests, sort, lastSent);
@@ -110,6 +123,13 @@ export default async function EventGuestsPage({ params, searchParams }) {
         )}
       </PageHead>
       <Flash params={query} />
+      {canEdit && notOnRsvps.length > 0 && (
+        <form action={addComingGuestsToRsvps} className="banner rsvp-banner">
+          <input type="hidden" name="event" value={event.id} />
+          <div><strong>{notOnRsvps.length} Coming {notOnRsvps.length === 1 ? "guest isn't" : "guests aren't"} on the RSVP list yet</strong><p className="small">{notOnRsvps.map((g) => g.name).join(", ")}. From now on, marking someone Coming adds them by itself.</p></div>
+          <ConfirmButton className="btn gold" title={`Add ${notOnRsvps.length} Coming ${notOnRsvps.length === 1 ? "guest" : "guests"} to the RSVP list?`} items={["Each is added once as a complimentary Guest or VIP: no fee, outside capacity", "Anyone already on the RSVP list with the same name is linked, not added twice", "Nothing is emailed"]} yes="Yes, add them">Add to the RSVP list · {notOnRsvps.length}</ConfirmButton>
+        </form>
+      )}
 
       <section className="card tracker-page">
         <form id="tracker-send" method="get" action={`${base}/letters/send`}>
@@ -168,7 +188,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                             </fieldset>
                             </details>
                             <div className="actions">
-                              <ConfirmButton className="btn dark" title={`Save ${r.name} for this event?`} items={["Their reply and notes, for this event only.", "If “Show on the event page” is ticked and they're Coming, their name, role, intro, picture and link appear on the public event page."]}>Save</ConfirmButton>
+                              <ConfirmButton className="btn dark" title={`Save ${r.name} for this event?`} items={["Their reply and notes, for this event only.", "Coming puts them on the RSVP list once, as a complimentary guest; a changed reply takes off only the RSVP the tracker added (never after check-in).", "If “Show on the event page” is ticked and they're Coming, their name, role, intro, picture and link appear on the public event page."]}>Save</ConfirmButton>
                               <ConfirmButton className="btn ghost" formAction={removeEventGuest} tone="alert" title={`Take ${r.name} off this event?`} items={["They stay in your guests for other events.", "Letters already sent stay in the log."]}>Remove from this event</ConfirmButton>
                             </div>
                           </form>
@@ -197,11 +217,11 @@ export default async function EventGuestsPage({ params, searchParams }) {
                                 <input type="hidden" name="contact" value={r.id} />
                                 <input type="hidden" name="reply" value={k} />
                                 <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, ${guestReply(k)}`} title={`${r.name}: ${guestReply(k)}?`}
-                                  items={[`Their reply for ${event.title}: ${guestReply(r.reply)} → ${guestReply(k)}`, ...(r.show_on_site ? [k === "yes" ? "They'll show on the event page" : "They'll be taken off the event page until they're Coming"] : []), "Nothing is emailed"]}>{guestReply(k)}</ConfirmButton>
+                                  items={[`Their reply for ${event.title}: ${guestReply(r.reply)} → ${guestReply(k)}`, ...rsvpNote(r, k), ...(r.show_on_site ? [k === "yes" ? "They'll show on the event page" : "They'll be taken off the event page until they're Coming"] : []), "Nothing is emailed"]}>{guestReply(k)}</ConfirmButton>
                               </form>
                             )))}
                         </span>
-                      ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>}{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
+                      ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>}{r.on_rsvps && <><br /><a className="small" href={`${base}/registrations/${event.id}/r/${r.rsvp_id}`}>{r.rsvp_checked_in ? "Checked in" : "On the RSVP list"}{r.rsvp_comp ? ` · ${compLabel(r.rsvp_comp)}` : ""}</a></>}{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
                   </tr>
                 );
               })}

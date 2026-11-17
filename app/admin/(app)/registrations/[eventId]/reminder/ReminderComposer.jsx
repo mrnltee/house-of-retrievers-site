@@ -17,7 +17,7 @@ export default function ReminderComposer({ eventId, event, recipients, preselect
   const [fields, setFields] = useState(() => startFields(initial));
   const richRefs = { message: useRef(null), details: useRef(null) };
   const eligible = recipients.filter((r) => r.eligible);
-  const [ticked, setTicked] = useState(() => new Set(preselected ? [preselected] : eligible.map((r) => r.id)));
+  const [ticked, setTicked] = useState(() => new Set(Array.isArray(preselected) ? preselected : eligible.map((r) => r.id)));
   const [width, setWidth] = useState("phone");
   const last = useRef({ name: "message", el: null });
 

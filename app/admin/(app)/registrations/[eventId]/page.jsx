@@ -1,4 +1,5 @@
 import { answerText, cleanCustomQuestions } from "../../../../lib/customQuestions.mjs";
+import { categoryOf } from "../../../../lib/contacts.mjs";
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
@@ -18,6 +19,7 @@ import ConfirmButton from "../../ConfirmButton";
 import { isActivityCategory } from "../../../../lib/eventCategories.mjs";
 import { Flash, NotAllowed, PageHead, formatDay, formatWhen } from "../../ui";
 import HowTo from "../../HowTo";
+import { RegSearch, RegSelectAll, RegSelectionBar } from "./RegTools";
 import { REGISTRATION_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import { eventLetters } from "../../../../lib/letterStore";
 import { participantInvitation } from "../../../../lib/invitationCard.mjs";
@@ -47,6 +49,11 @@ export default async function EventRegistrations({ params, searchParams }) {
   if (!event) notFound();
   const base = await adminBase();
   const all = await sql("SELECT * FROM registrations WHERE event_id=$1 ORDER BY created_at", [eventId]);
+  // Guests marked Coming on the Guest tracker (owner, 2026-11-17): which RSVPs are theirs, and their group.
+  const fromTracker = new Map((await sql(
+    `SELECT eg.registration_id, c.category FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
+      WHERE eg.event_id = $1 AND eg.registration_id IS NOT NULL`, [eventId],
+  ).catch(() => [])).map((g) => [g.registration_id, categoryOf(g.category)?.label || "Guest"]));
   const paidEvent = event.fee_required;
   // Invitation cards (owner, 2026-11-11): the event's invitation letter for participants (else any invitation), sent to confirmed participants
   // who haven't had it yet (a failed or bounced email counts as not sent), up to a send's limit at a time.
@@ -110,6 +117,11 @@ export default async function EventRegistrations({ params, searchParams }) {
             : filter === "paid" ? r.status === "confirmed" && r.fee_status === "paid"
               : r.status === filter,
   );
+  // Sort (design review, 17 Nov 2026): oldest first (sign-up order, the default), newest first or by name.
+  const sort = ["old", "new", "name"].includes(query?.sort) ? query.sort : "old";
+  if (sort === "new") shown.reverse();
+  if (sort === "name") shown.sort((a, b) => String(a.name).localeCompare(String(b.name), "en", { sensitivity: "base" }));
+  const listHref = (show, s = sort) => `${base}/registrations/${event.id}?show=${show}${s !== "old" ? `&sort=${s}` : ""}`;
   // The same reference on two registrations of this event usually means one screenshot shared by two people.
   const byRef = new Map();
   for (const r of live) if (r.fee_reference) byRef.set(referenceKey(r.fee_reference), [...(byRef.get(referenceKey(r.fee_reference)) || []), r]);
@@ -117,6 +129,8 @@ export default async function EventRegistrations({ params, searchParams }) {
 
   const canEdit = can(admin, "registrations:edit");
   const canFees = can(admin, "registrations:fees");
+  // Ticks for sending to several people at once, like the Guest and Brand trackers.
+  const pickable = (canEdit || can(admin, "letters:edit")) && filter !== "deleted";
   const counts = {
     all: live.length, confirmed: confirmed.length, waitlist: waitlist.length, checked: checked.length, notchecked: confirmed.length - checked.length, novax: current.filter(lacksCard).length, cancelled: current.filter((r) => r.status === "cancelled").length, deleted: deleted.length,
     check: toCheck.length, pending: pending.length, paid: paid.length, expired: current.filter((r) => isExpiredHold(r)).length,
@@ -130,12 +144,17 @@ export default async function EventRegistrations({ params, searchParams }) {
     <>
       <PageHead title={event.title} lead={`${isActivityCategory(event.category) ? "Participants" : "Registrations"} · ${formatDay(event.date)}${paidEvent ? " · paid event · payments checked by hand" : ""}`}>
         <HowTo guide={paidEvent ? "reg-check-payment" : "reg-add"} guides={paidEvent ? REGISTRATION_GUIDES : REGISTRATION_GUIDES.filter((k) => !["reg-check-payment", "reg-new-receipt", "reg-remind-expired"].includes(k))} className="btn ghost" />
-        <a className="btn ghost" href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
-        {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}
         {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length ? `${inviteTodo.length} confirmed participant${inviteTodo.length === 1 ? "" : "s"} haven't had the invitation card yet${inviteTodo.length > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{inviteTodo.length ? `Send invitation cards · ${inviteTodo.length}` : <>Invitation cards sent <Icon name="check" /></>}</a>}
-        {inviteLetter && !inviteTodo.length && <span className="small muted" style={{ alignSelf: "center" }}>Invitation cards sent to everyone confirmed</span>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
+        <details className="head-more">
+          <summary className="btn ghost">More <Icon name="chevronDown" /></summary>
+          <div className="head-more-menu">
+            <a href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
+            {canEdit && <a href={`${base}/registrations/${event.id}/import`}>Import from Excel</a>}
+            {deleted.length > 0 && <a href={listHref("deleted")}>Recently deleted · {deleted.length}</a>}
+          </div>
+        </details>
         {can(admin, "checkin") && <a className="btn gold" href={`${base}/checkin/${event.id}`}>Open check-in</a>}
       </PageHead>
       <Flash params={query} />
@@ -161,8 +180,9 @@ export default async function EventRegistrations({ params, searchParams }) {
       </section>
 
       <nav className="tabs" aria-label="Filter">
-        {FILTERS.map(([key, label]) => (
-          <a key={key} href={`${base}/registrations/${event.id}?show=${key}`} aria-current={filter === key ? "page" : undefined}>{label} · {counts[key]}</a>
+        {/* Only filters with someone in them (and the one you're on), so the row stays short. */}
+        {FILTERS.filter(([key]) => key === "all" || key === filter || counts[key] > 0).filter(([key]) => key !== "deleted" || filter === "deleted").map(([key, label]) => (
+          <a key={key} href={listHref(key)} aria-current={filter === key ? "page" : undefined}>{label} · {counts[key]}</a>
         ))}
       </nav>
 
@@ -178,27 +198,44 @@ export default async function EventRegistrations({ params, searchParams }) {
         </form>
       )}
 
+      <section className="card reg-tracker">
+      {shown.length > 0 && <RegSearch total={shown.length} sort={sort} sortBase={listHref(filter, "old")} />}
+      {pickable && shown.length > 0 && (
+        <RegSelectionBar
+          hint="Tick people to email a reminder, send a message or an invitation card to several at once."
+          reminderBase={canEdit ? `${base}/registrations/${event.id}/reminder` : ""}
+          messageBase={can(admin, "letters:edit") ? `${base}/letters/send?${new URLSearchParams([["letter", inviteLetter?.key || "guest-follow-up"], ["event", eventId], ["list", "registrations"], ["own", "1"]]).toString()}` : ""}
+          inviteBase={inviteLetter ? `${base}/letters/send?${new URLSearchParams([["letter", inviteLetter.key], ["event", eventId], ["list", "registrations"]]).toString()}` : ""}
+        />
+      )}
       <div className="table-wrap">
         <table className="registrations-table stack-table">
           <thead>
-            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}{tableQuestions.map((q) => <th key={q.id} title={q.label}>{q.label.length > 28 ? `${q.label.slice(0, 27)}…` : q.label}</th>)}<th>Notes</th>{showVax && <th>Vaccination</th>}{acknowledgementEnabled && <th>Acknowledged</th>}<th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
+            <tr>{pickable && <th className="st-pick">{shown.length > 0 ? <RegSelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Name</th><th>Status</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}{tableQuestions.map((q) => <th key={q.id} className="reg-question">{q.label}</th>)}{showVax && <th>Vaccination</th>}{acknowledgementEnabled && <th>Acknowledged</th>}<th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
-          <tbody>
-            {shown.length === 0 && <tr><td colSpan={(paidEvent ? 7 : 5) + tableQuestions.length + (showVax ? 1 : 0) + (acknowledgementEnabled ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
+          <tbody id="reg-rows">
+            {shown.length === 0 && <tr><td colSpan={(pickable ? 1 : 0) + (paidEvent ? 6 : 4) + tableQuestions.length + (showVax ? 1 : 0) + (acknowledgementEnabled ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
             {shown.map((r) => {
               const fee = FEE_STATUS[r.fee_status] || FEE_STATUS.not_due;
               const twins = sameRef(r);
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
-                <tr key={r.id}>
-                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span><br /><a className="small reg-email" href={`mailto:${r.email}`}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                <tr key={r.id} data-row="" data-search={[r.name, r.email, r.furbaby_name, ...(r.guest_names || []), r.fee_reference, r.ticket_label, compLabel(r.comp_type), fromTracker.get(r.id)].filter(Boolean).join(" ").toLowerCase()}>
+                  {pickable && <td className="st-pick">{!r.deleted_at && r.status !== "cancelled" && <input type="checkbox" name="reg" value={r.id} data-reg-pick="" aria-label={`Pick ${r.name}`} />}</td>}
+                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span><br /><a className="small reg-email" href={`mailto:${r.email}`} title={r.email}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}{(!r.photo_consent || r.under_18) && <span className="reg-flags-line">{!r.photo_consent && <span className="chip">No photos</span>}{r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}</span>}</td>
+                  <td className="st-2">
+                    {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? `Checked in · ${new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}` : "Confirmed"}</span>}
+                    {r.checked_in_source === "manual" && r.checked_in_at && <><br /><span className="small muted">Checked in by hand</span></>}
+                    {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
+                    {r.deleted_at ? <span className="chip alert">Deleted · recoverable</span> : r.status === "cancelled" && <span className="chip alert">Cancelled</span>}
+                  </td>
                   <td className="st-5" data-label="Furbaby"><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
                   {paidEvent && (
                     <>
                       <td className="st-4" data-label="Ticket">{r.comp_type ? compLine(r.comp_type) : ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
                       <td className="st-3" data-label="Payment">
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
-                        {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}
+                        {r.fee_reference && <><br /><span className="small muted" title={`Reference ${r.fee_reference}`}>{[payMethodLabel(r.pay_method), r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}<br />Ref …{String(r.fee_reference).replace(/\s+/g, "").slice(-6)}</span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
                         {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span>{r.hold_reminders ? <span className="small muted"> · reminded {r.hold_reminders}×</span> : null}</>)}
                         {twins.length > 0 && <><br /><span className="small danger-text"><Icon name="warning" /> Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
@@ -206,9 +243,6 @@ export default async function EventRegistrations({ params, searchParams }) {
                     </>
                   )}
                   {tableQuestions.map((q) => <td key={q.id} className="st-9" data-label={q.label}>{answerText(r.custom_answers?.[q.id]) || <span className="muted">—</span>}</td>)}
-                  <td className="small st-6" data-label="Notes">
-                    {!r.photo_consent && <span className="chip">No photos</span>} {r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}
-                  </td>
                   {showVax && (
                     <td className="st-8" data-label="Vaccination">
                       {(() => {
@@ -223,12 +257,6 @@ export default async function EventRegistrations({ params, searchParams }) {
                     {r.consent_completed_at ? <span className="chip good" title={new Date(r.consent_completed_at).toLocaleString("en-PH")}>Yes</span>
                         : <span className="chip warn">Needed</span>}
                   </td>}
-                  <td className="st-2">
-                    {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? `Checked in · ${new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}` : "Confirmed"}</span>}
-                    {r.checked_in_source === "manual" && r.checked_in_at && <><br /><span className="small muted">Checked in by hand</span></>}
-                    {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
-                    {r.deleted_at ? <span className="chip alert">Deleted · recoverable</span> : r.status === "cancelled" && <span className="chip alert">Cancelled</span>}
-                  </td>
                   <td className="st-10">
                     <div className="actions reg-actions">
                       {paidEvent && r.status === "confirmed" && canFees && r.fee_status === "review" && <a className="btn small gold" href={detail}>Check</a>}
@@ -246,23 +274,6 @@ export default async function EventRegistrations({ params, searchParams }) {
                             ]}
                             yes="Yes, confirm them"
                           >Confirm</ConfirmButton>
-                        </form>
-                      )}
-                      {canEdit && !r.deleted_at && r.status !== "cancelled" && (
-                        <form action={changeRegistration}>
-                          <input type="hidden" name="id" value={r.id} /><input type="hidden" name="op" value="cancel" />
-                          <ConfirmButton
-                            className="linkish danger-text"
-                            title={`Cancel ${r.name}'s registration?`}
-                            items={[
-                              r.status === "confirmed" ? "Their slot is freed for the next person on the waitlist" : "They're taken off the waitlist",
-                              "Their pass stops working at the door",
-                              ...(paidEvent && r.fee_status === "paid" ? ["No refund is issued (charity event)"] : []),
-                              "They aren't emailed; let them know yourself",
-                            ]}
-                            yes="Yes, cancel it"
-                            tone="danger"
-                          >Cancel</ConfirmButton>
                         </form>
                       )}
                       {canEdit && !r.deleted_at && r.status === "confirmed" && !r.checked_in_at && (
@@ -283,6 +294,28 @@ export default async function EventRegistrations({ params, searchParams }) {
                           </form>
                         </details>
                       )}
+                      {/* Less-used actions in a small menu (design review, 17 Nov 2026), so each row shows only its next step. */}
+                      {canEdit && !r.deleted_at && (r.status !== "cancelled" || r.checked_in_at || (r.fee_status !== "paid" && !r.checked_in_at)) && (
+                        <details className="row-more">
+                          <summary className="linkish">More</summary>
+                          <div className="row-more-menu">
+                      {canEdit && !r.deleted_at && r.status !== "cancelled" && (
+                        <form action={changeRegistration}>
+                          <input type="hidden" name="id" value={r.id} /><input type="hidden" name="op" value="cancel" />
+                          <ConfirmButton
+                            className="linkish danger-text"
+                            title={`Cancel ${r.name}'s registration?`}
+                            items={[
+                              r.status === "confirmed" ? "Their slot is freed for the next person on the waitlist" : "They're taken off the waitlist",
+                              "Their pass stops working at the door",
+                              ...(paidEvent && r.fee_status === "paid" ? ["No refund is issued (charity event)"] : []),
+                              "They aren't emailed; let them know yourself",
+                            ]}
+                            yes="Yes, cancel it"
+                            tone="danger"
+                          >Cancel</ConfirmButton>
+                        </form>
+                      )}
                       {canEdit && !r.deleted_at && r.checked_in_at && (
                         <form action={undoCheckIn}>
                           <input type="hidden" name="id" value={r.id} />
@@ -294,6 +327,9 @@ export default async function EventRegistrations({ params, searchParams }) {
                           <input type="hidden" name="id" value={r.id} />
                           <ConfirmButton className="linkish danger-text" title={`Delete ${r.name}'s registration?`} items={["It moves to Recently deleted for 30 days", "Its slot is freed and its QR pass stops working", "It can be restored during those 30 days", "After that, the registration and receipts are permanently removed"]} yes="Yes, move it" tone="danger">Delete</ConfirmButton>
                         </form>
+                      )}
+                          </div>
+                        </details>
                       )}
                       {canEdit && r.deleted_at && (
                         <form action={restoreRegistration}>
@@ -309,6 +345,7 @@ export default async function EventRegistrations({ params, searchParams }) {
           </tbody>
         </table>
       </div>
+      </section>
       <div className="banner note small">
         {paidEvent ? (
           <span>
