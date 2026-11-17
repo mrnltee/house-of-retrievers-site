@@ -2086,8 +2086,8 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 
 /* Event page: Speakers & special guests (17 Nov 2026, owner). Guests switched on from the event's Guest list,
    replied Coming. Round picture with a gold ring (initials when there's none), role over the name, a short intro
-   and one link. Two per row when the content column is wide enough; a container query, like the rest of the
-   event page, so the admin preview shows the phone layout too. */
+   and one link, one per row like the beneficiary cards below (owner review, 17 Nov 2026: two side by side squeezed
+   the intro into a narrow strip and left blank space under the shorter card). */
 .event-speakers { display: grid; gap: 12px; }
 .event-speakers ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .event-speaker { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 16px; align-items: start; padding: 16px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
@@ -2098,6 +2098,9 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .event-speaker-body strong { font-size: 17px; text-wrap: balance; }
 .event-speaker-intro { font-size: 14px; line-height: 1.55; text-wrap: pretty; }
 .event-speaker-link { justify-self: start; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; font-size: 14px; font-weight: 700; color: var(--ink); text-underline-offset: 3px; }
-@container eventpage (min-width: 1100px) {
-  .event-speakers ul:has(> li + li) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
+
+/* Event page review (17 Nov 2026, owner): every section heading in the event body uses the same serif as
+   "What's included" and "With thanks to"; Speakers and Where your support goes had the browser's bold sans. */
+.event-speakers h3, .event-beneficiaries h3 { font: 400 22px/1.2 "DM Serif Display", serif; margin: 0; }
+.event-speaker { grid-template-columns: 64px minmax(0, 1fr); padding: 14px; }
+.event-speaker-photo { width: 64px; height: 64px; font-size: 22px; }

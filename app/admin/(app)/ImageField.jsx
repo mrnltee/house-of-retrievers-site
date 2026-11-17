@@ -51,7 +51,7 @@ export default function ImageField({ name, label, hint, current = "", round = fa
   }
 
   return (
-    <div className="logo-field">
+    <div className="logo-field image-field">
       <div className={`logo-preview${round ? " round" : ""}`}>{preview ? <img src={preview} alt={`${label} preview`} /> : <span className="muted small">No {label.toLowerCase()} yet</span>}</div>
       <div className="form" style={{ gap: 8 }}>
         <span className="field-head">{label} {hint && <small>{hint}</small>}</span>

@@ -1250,3 +1250,11 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .edit-dialog .confirm-body > form > .actions { position: sticky; bottom: 0; margin: 4px -28px -28px; padding: 14px 28px 18px; background: #fff; border-top: 1px solid var(--a-line); }
 .edit-dialog-open { display: inline-flex; align-items: center; min-height: 32px; margin-top: 4px; }
 @media (max-width: 560px) { .edit-dialog .row-3 { grid-template-columns: 1fr; } }
+
+/* Picture field (ImageField, 17 Nov 2026, owner): the picture sits beside its label and buttons instead of above
+   them with a wide gap, at a size that fits a half-width column in a form or window. */
+.image-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; flex-wrap: nowrap; }
+.image-field .logo-preview { width: 140px; padding: 10px; }
+.image-field .logo-preview.round { width: 88px; padding: 0; }
+.image-field .actions { gap: 8px; }
+.image-field .actions .btn { white-space: nowrap; }
