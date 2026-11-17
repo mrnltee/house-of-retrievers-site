@@ -10,7 +10,8 @@
 /** Every pointer target each mock draws (a step's target must be one of its scene's). */
 export const SCENE_TARGETS = {
   guestTracker: ["add", "followAll", "review", "messageMany", "g1Tick", "g2Tick", "g1Status", "g2Status", "g1Follow", "g1Invite", "g2Invite", "g1Message", "g2Message"],
-  tracker: ["invite", "followAll", "row1Tick", "row2Tick", "row1Follow", "row1Send", "row2Send", "review", "newRow"],
+  tracker: ["invite", "followAll", "row1Tick", "row2Tick", "row1Follow", "row1Send", "row2Send", "review", "newRow", "row1Edit", "row1Reply", "search", "filterYes", "filterWaiting", "filterUnsent", "sort"],
+  brandEdit: ["reply", "gives", "items", "coming", "save", "confirm"],
   invite: ["search", "pick1", "pick2", "add", "addNew"],
   send: ["letter", "to1", "to2", "tab1", "tab2", "own", "write", "send", "confirm", "blank"],
   editor: ["subject", "message", "use"],
@@ -64,6 +65,31 @@ export const GUIDES = {
       { scene: "editor", state: { subject: "Thank you for your time" }, target: "message", act: "type", text: "It was lovely meeting your team today.", caption: "…and your message. Keep Dear [Salutation]: it becomes each brand's name." },
       { scene: "editor", state: { subject: "Thank you for your time", message: "It was lovely meeting your team today." }, target: "use", act: "click", caption: "Press Use this wording. HOR's sign-off and footer are added below it." },
       { scene: "send", state: { to: ["to1"], own: true }, target: "send", act: "click", caption: "Send stays off until the placeholder is replaced. Then send and confirm." },
+    ],
+  },
+  // Brand tracker beyond email (owner, 2026-11-17): recording replies and giving, and finding brands.
+  "brand-reply": {
+    title: "Record a brand's reply and what they're giving",
+    steps: [
+      { scene: "tracker", target: "row1Reply", caption: "A brand's reply only changes when you record it. Acuaverde said yes by email, so the tracker still says No reply yet." },
+      { scene: "tracker", target: "row1Edit", act: "click", caption: "Press Edit under their name. It opens in a window over the tracker." },
+      { scene: "brandEdit", target: "reply", act: "click", state: { reply: "Yes" }, caption: "Set Their reply to Yes (or No)." },
+      { scene: "brandEdit", state: { reply: "Yes", gives: ["In-kind", "Booth"] }, target: "gives", act: "tick", caption: "Tick what they're giving at this event: cash, in-kind, services, venue or a booth." },
+      { scene: "brandEdit", state: { reply: "Yes", gives: ["In-kind", "Booth"] }, target: "items", act: "type", text: "Treats ×20", caption: "Add the amounts or items. Amounts show on the website only if you tick OK to show these amounts." },
+      { scene: "brandEdit", state: { reply: "Yes", gives: ["In-kind", "Booth"], items: "Treats ×20", coming: true }, target: "coming", caption: "Note how many people and dogs they're bringing, and any booth needs, so the venue plan is ready." },
+      { scene: "brandEdit", state: { reply: "Yes", gives: ["In-kind", "Booth"], items: "Treats ×20", coming: true }, target: "save", act: "click", caption: "Press Save." },
+      { scene: "brandEdit", state: { reply: "Yes", gives: ["In-kind", "Booth"], items: "Treats ×20", coming: true, confirm: true }, target: "confirm", act: "click", caption: "Confirm. Nothing is emailed." },
+      { scene: "tracker", state: { replies: { row1: "Yes" } }, target: "row1Reply", caption: "They now show Yes. A brand's first Yes gives it its HOR number, and with a logo and blurb it appears on the event page and the home page." },
+    ],
+  },
+  "brand-find": {
+    title: "Find brands on the tracker",
+    steps: [
+      { scene: "tracker", state: { tools: true }, target: "search", act: "type", text: "paw", caption: "Type in the search box to find a brand by name, contact, email or letter." },
+      { scene: "tracker", state: { tools: true }, target: "filterWaiting", act: "click", caption: "Or use the filters: No reply yet shows who still needs a follow-up…" },
+      { scene: "tracker", state: { tools: true, filter: "waiting" }, target: "filterUnsent", act: "click", caption: "…No invite sent shows who hasn't had a letter for this event…" },
+      { scene: "tracker", state: { tools: true, filter: "unsent" }, target: "filterYes", act: "click", caption: "…and Said yes is everyone who will show on the event page." },
+      { scene: "tracker", state: { tools: true, filter: "yes" }, target: "sort", act: "click", caption: "Sort by name, by when the letter went out, or by reply. Your choice is remembered for both trackers." },
     ],
   },
   invite: {
@@ -205,7 +231,7 @@ Object.assign(GUIDES, {
 });
 
 /** The brand guides, in the order the guide list shows them. */
-export const BRAND_GUIDES = ["send-one", "follow-up", "send-many", "own-email", "invite", "add-brand"];
+export const BRAND_GUIDES = ["send-one", "follow-up", "send-many", "own-email", "brand-reply", "brand-find", "invite", "add-brand"];
 /** An event's Guest tracker: invites, follow-ups and your own emails (owner, 2026-11-17). */
 export const GUEST_GUIDES = ["guest-invite", "guest-invite-many", "guest-follow-up", "guest-message"];
 /** Letters and email templates (owner, 2026-11-15). */

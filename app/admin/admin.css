@@ -1423,3 +1423,12 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
   .ci-actions { grid-column: 1 / -1; width: 100%; }
   .ci-actions .btn { flex: 1; }
 }
+
+/* How it works mocks: the Brand tracker's search, filters and sort, and a Yes reply (owner, 17 Nov 2026). */
+.ht-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.ht-filter { display: inline-block; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--a-line); background: #fff; font-weight: 700; font-size: .85em; white-space: nowrap; }
+.ht-filter.is-on { background: var(--a-ink); color: #fff; border-color: var(--a-ink); }
+.ht-chip.is-good { background: var(--a-success); color: #fff; }
+.ht-name .ht-actions { margin-top: 4px; }
+@media (max-width: 720px) { .ht-tools { grid-template-columns: 1fr; } }
+.ht-offstage { position: absolute; width: 0; height: 0; overflow: hidden; }

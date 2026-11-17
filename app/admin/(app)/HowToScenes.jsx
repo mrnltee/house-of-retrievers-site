@@ -10,8 +10,10 @@ const T = (name) => ({ "data-t": name });
 const Box = ({ on }) => <span className={`ht-box${on ? " is-on" : ""}`}>{on ? <Icon name="check" /> : null}</span>;
 const Btn = ({ t, tone = "", children }) => <span className={`ht-btn ${tone}`.trim()} {...T(t)}>{children}</span>;
 
-function Tracker({ state = {} }) {
+function Tracker({ state = {}, typed }) {
   const ticked = state.ticked || [];
+  const query = typed?.target === "search" ? typed.text : state.query;
+  const reply = (row) => (state.replies || {})[row] || "No reply yet";
   const sent = (row) => (state.sent || []).includes(row);
   const rows = [
     { id: "row1", name: "Acuaverde", contact: "Kristine", when: "Sent Nov 2" },
@@ -23,6 +25,21 @@ function Tracker({ state = {} }) {
         <strong className="ht-title">Brand tracker</strong>
         <span className="ht-actions"><Btn t="followAll">Follow up · 3</Btn><Btn t="invite" tone="gold">+ Invite brands</Btn></span>
       </div>
+      {state.tools ? (
+        <div className="ht-tools">
+          <span className={`ht-input${query ? "" : " is-empty"}`} {...T("search")}>{query || "Search brands…"}{query !== undefined && <span className="ht-caret" />}</span>
+          <span className="ht-actions">
+            <span className={`ht-filter${!state.filter ? " is-on" : ""}`}>All 3</span>
+            <span className={`ht-filter${state.filter === "yes" ? " is-on" : ""}`} {...T("filterYes")}>Said yes 1</span>
+            <span className={`ht-filter${state.filter === "waiting" ? " is-on" : ""}`} {...T("filterWaiting")}>No reply yet 2</span>
+            <span className={`ht-filter${state.filter === "unsent" ? " is-on" : ""}`} {...T("filterUnsent")}>No invite sent 0</span>
+          </span>
+          <span className="ht-input" {...T("sort")}>{state.sort || "Name A–Z"} ▾</span>
+        </div>
+      ) : (
+        // Off-screen stand-ins, so the other guides' screens keep their layout.
+        <span className="ht-offstage"><span {...T("search")} /><span {...T("filterYes")} /><span {...T("filterWaiting")} /><span {...T("filterUnsent")} /><span {...T("sort")} /></span>
+      )}
       <div className={`ht-bar${ticked.length ? " is-on" : ""}`}>
         {ticked.length ? <><strong>{ticked.length} selected</strong><Btn t="review" tone="dark">Review &amp; send</Btn></> : <span>Tick brands to send one letter to several at once.<span {...T("review")} /></span>}
       </div>
@@ -30,11 +47,11 @@ function Tracker({ state = {} }) {
         {rows.map((r) => (
           <div className="ht-row" key={r.id}>
             <span {...T(`${r.id}Tick`)}><Box on={ticked.includes(r.id)} /></span>
-            <span className="ht-name"><strong>{r.name}</strong><small>as Sponsor</small></span>
+            <span className="ht-name"><strong>{r.name}</strong><small>as Sponsor</small>{r.id === "row1" && <span className="ht-actions"><Btn t="row1Edit">Edit</Btn></span>}</span>
             <span className="ht-cell"><span className="ht-chip">Sent</span><small>{sent(r.id) ? "Sent just now" : r.when}</small>
-              <span className="ht-actions">{r.id === "row1" && <Btn t="row1Follow" tone="dark">Follow up</Btn>}<Btn t={`${r.id}Send`}>Send letter</Btn></span>
+              <span className="ht-actions">{r.id === "row1" && reply("row1") === "No reply yet" && <Btn t="row1Follow" tone="dark">Follow up</Btn>}<Btn t={`${r.id}Send`}>Send letter</Btn></span>
             </span>
-            <span className="ht-chip">No reply yet</span>
+            <span className={`ht-chip${reply(r.id) === "Yes" ? " is-good" : ""}`} {...T(`${r.id}Reply`)}>{reply(r.id)}</span>
           </div>
         ))}
         <div className={`ht-row${state.added ? " is-new" : " is-hidden"}`} {...T("newRow")}>
@@ -86,6 +103,38 @@ function GuestTracker({ state = {} }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/** A Brand tracker row's Edit window (their reply and what they give at this event). */
+function BrandEdit({ state = {}, typed }) {
+  const items = typed?.target === "items" ? typed.text : state.items;
+  const gives = state.gives || [];
+  return (
+    <div className="ht-screen ht-dim">
+      <div className="ht-dialog is-wide">
+        <div className="ht-head"><strong className="ht-title">Acuaverde</strong><span className="ht-btn"><Icon name="close" /> Close</span></div>
+        <span className="ht-field-row">
+          <span className="ht-field" {...T("reply")}><small>Their reply</small><span className="ht-input">{state.reply || "No reply yet"} ▾</span></span>
+          <span className="ht-field"><small>At this event as</small><span className="ht-input">Sponsor ▾</span></span>
+        </span>
+        <span className="ht-field" {...T("gives")}><small>Giving</small><span className="ht-actions">{["Cash", "In-kind", "Services", "Venue", "Booth"].map((g) => <span key={g} className="ht-pick"><Box on={gives.includes(g)} /> {g}</span>)}</span></span>
+        <Field t="items" label="In-kind items" value={items} placeholder="e.g. Treats ×20" />
+        <span className="ht-field-row" {...T("coming")}>
+          <span className="ht-field"><small>People coming</small><span className={`ht-input${state.coming ? "" : " is-empty"}`}>{state.coming ? "3" : "—"}</span></span>
+          <span className="ht-field"><small>Dogs coming</small><span className={`ht-input${state.coming ? "" : " is-empty"}`}>{state.coming ? "2" : "—"}</span></span>
+        </span>
+        <span className="ht-actions"><Btn t="save" tone="dark">Save</Btn><Btn>Remove from this event</Btn></span>
+        {state.confirm && (
+          <div className="ht-confirm">
+            <strong>Save Acuaverde for this event?</strong>
+            <small>A Yes shows them on this event&apos;s page and the home page.</small>
+            <Btn t="confirm" tone="dark">Yes, save</Btn>
+          </div>
+        )}
+        {!state.confirm && <span {...T("confirm")} />}
       </div>
     </div>
   );
@@ -337,7 +386,7 @@ function TemplateEditor({ state = {}, typed }) {
   );
 }
 
-const SCENES = { tracker: Tracker, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
+const SCENES = { tracker: Tracker, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
 
 /** One guide step's screen. `typed` is the text typed so far on a typing step. */
 export default function HowToScene({ scene, state, typed }) {
