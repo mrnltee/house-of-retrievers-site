@@ -327,7 +327,7 @@ export const CUSTOM_KINDS = {
   },
   event: {
     title: "Event confirmation",
-    when: "Pick it in an event's “Price and sign-ups” section. It's the pass everyone at that event gets (on a paid event, once their payment is approved). The event's details, the check-in QR and the pass button are added automatically.",
+    when: "Pick it in the event editor's Confirmation section. It's the pass everyone at that event gets (on a paid event, once their payment is approved). The event's details, the check-in QR and the pass button are added automatically.",
     variables: EVENT_VARIABLES,
     defaults: EVENT_DEFAULTS,
     event: true,

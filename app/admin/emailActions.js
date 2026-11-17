@@ -107,7 +107,7 @@ export async function saveEmailTemplate(data) {
         [name, t.kind, f.subject, f.greeting, f.heading, f.message, f.details ?? null, admin.email],
       );
       await logActivity(admin.email, "email.custom.new", name, { templateId: row.id, kind: t.kind });
-      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in an event's “Price and sign-ups” section." : t.kind === "reminder" ? "Template added. Pick it under “Email participants” on an event's registrations page." : t.kind === "own" ? "Template added. Pick it when you tick “Write my own email” in a send window." : "Template added. Send it from a person's profile.");
+      await backWith(`/emails/custom/${row.id}`, "ok", t.kind === "event" ? "Template added. Pick it in the event editor's Confirmation section." : t.kind === "reminder" ? "Template added. Pick it under “Email participants” on an event's registrations page." : t.kind === "own" ? "Template added. Pick it when you tick “Write my own email” in a send window." : "Template added. Send it from a person's profile.");
     }
   });
 }
