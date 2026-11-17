@@ -1,13 +1,13 @@
 import BatchBar from "./BatchBar";
+import BrandSearch from "./BrandSearch";
 import SelectAllBrands from "./SelectAllBrands";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
-import { isPublic, supporterNumber, brandNameFrom, newBrandHref } from "../../../lib/supporters.mjs";
+import { gapLine, supporterNumber, brandNameFrom, newBrandHref, websiteGaps } from "../../../lib/supporters.mjs";
 import { joinedCounts } from "../../../lib/eventBrandsStore";
 import { Flash, NotAllowed, PageHead } from "../ui";
 import HowTo from "../HowTo";
-import Icon from "../../../components/Icon";
 
 const cleanParam = (value, max = 80) => String(value || "").trim().slice(0, max);
 
@@ -54,10 +54,17 @@ export default async function SupportersPage({ searchParams }) {
     return `${base}/supporters${query ? `?${query}` : ""}`;
   };
   const filtered = Boolean(kind || status || label || q);
+  // What the live search looks through, per brand.
+  const searchOf = (row) => [row.name, row.code, supporterNumber(row), row.category_label, row.kind, row.contact_name, row.contact_email].filter(Boolean).join(" ").toLowerCase();
+  // On the website, or what it still needs to be.
+  const siteLine = (row) => {
+    const gaps = websiteGaps(row, { joined: joinedOf(row) });
+    return gaps.length ? <span className="supporter-card-site">Not on the website · needs {gapLine(gaps)}</span> : <span className="supporter-card-site is-on"><span aria-hidden="true">●</span> On the website</span>;
+  };
 
   return (
     <>
-      <PageHead title="Brands & Partners" lead="Who backs HOR and how. Add a clear relationship label, then use cards for a quick scan or the list when the records grow.">
+      <PageHead title="Brands & Partners" lead="Every brand HOR has worked with or invited. Invites, replies and letters happen on each event's Brand tracker.">
         <HowTo guide="add-brand" className="btn ghost" />
         {canEdit && <a className="btn ghost" href={`${base}/supporters/import`}>Import from Excel</a>}
         {canEdit && <a className="btn gold" href={`${base}/supporters/new`}>+ Add sponsor or partner</a>}
@@ -77,26 +84,8 @@ export default async function SupportersPage({ searchParams }) {
       </div>
 
 
-      <form method="get" action={`${base}/supporters`} className="card supporter-filters" role="search">
-        {kind && <input type="hidden" name="kind" value={kind} />}
-        {status && <input type="hidden" name="status" value={status} />}
-        {view === "list" && <input type="hidden" name="view" value="list" />}
-        <label className="field">
-          <span>Find a record</span>
-          <input type="search" name="q" defaultValue={q} maxLength={80} placeholder="Name, ID or relationship" />
-        </label>
-        <label className="field">
-          <span>Relationship label</span>
-          <select name="label" defaultValue={label}>
-            <option value="">All labels</option>
-            {labels.map((item) => <option key={item.category_label} value={item.category_label}>{item.category_label}</option>)}
-          </select>
-        </label>
-        <div className="actions supporter-filter-actions">
-          <button type="submit" className="btn dark" data-confirm="not-needed-read-only">Filter</button>
-          {filtered && <a className="btn ghost" href={href({ kind: null, status: null, label: null, q: null })}>Clear</a>}
-        </div>
-      </form>
+      <BrandSearch q={q} label={label} labels={labels.map((l) => l.category_label)} kind={kind} view={view} action={`${base}/supporters`} newHref={canEdit ? `${base}/supporters/new` : ""} />
+      {filtered && <p className="small" style={{ margin: "-4px 0 12px" }}><a href={href({ kind: null, status: null, label: null, q: null })}>Clear filters</a></p>}
 
       {rows.length === 0 ? (
         <div className="card empty-search">
@@ -106,21 +95,21 @@ export default async function SupportersPage({ searchParams }) {
         </div>
       ) : view === "list" ? (
         <>
-        <p className="small muted" style={{ margin: "0 0 8px" }}>Letters to brands are sent from each event: open the event, then <strong>Brands &amp; partnerships</strong>.</p>
         {canEdit && <BatchBar back={href().replace(base, "")} />}
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr>{canEdit && <th><SelectAllBrands /></th>}<th>Organization</th><th>ID</th><th>Usually</th><th>Joined</th><th>Website</th></tr></thead>
+            <thead><tr>{canEdit && <th><SelectAllBrands /></th>}<th>Organization</th><th>Contact</th><th>ID</th><th>Usually</th><th>Events</th><th>On our website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
                 return (
-                  <tr key={row.id}>
+                  <tr key={row.id} data-brand={searchOf(row)}>
                     {canEdit && <td><input type="checkbox" form="brand-batch" name="id" value={row.id} data-name={row.name} aria-label={`Select ${row.name}`} /></td>}
                     <td className="strong"><span className="supporter-list-name"><span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span><a href={`${base}/supporters/${row.id}`}>{row.name}</a></span></td>
-                    <td className="supporter-id-cell">{supporterNumber(row) || (row.code ? `HOR-${row.code}-YY-NNNN` : "—")}</td>
+                    <td className="small">{row.contact_name || <span className="muted">No contact yet</span>}{row.contact_email && <><br /><span className="muted">{row.contact_email}</span></>}</td>
+                    <td className="supporter-id-cell">{supporterNumber(row) || <span className="id-pending" title="Numbered at their first Yes on an event">Not yet{row.code ? ` · ${row.code}` : ""}</span>}</td>
                     <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}</span></td>
-                    <td>{joinedOf(row) ? `${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : "—"}</td>
-                    <td>{row.website ? <a href={row.website} target="_blank" rel="noreferrer">Open <Icon name="external" /></a> : "—"}</td>
+                    <td>{joinedOf(row) ? `${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : <span className="muted">None yet</span>}</td>
+                    <td className="small">{siteLine(row)}</td>
                   </tr>
                 );
               })}
@@ -130,11 +119,10 @@ export default async function SupportersPage({ searchParams }) {
         </>
       ) : (
         <>
-        <p className="small muted" style={{ margin: "0 0 8px" }}>Letters to brands are sent from each event: open the event, then <strong>Brands &amp; partnerships</strong>.</p>
         <ul className="supporter-cards">
           {rows.map((row) => {
             return (
-              <li key={row.id}>
+              <li key={row.id} data-brand={searchOf(row)}>
                 <a className="card supporter-card" href={`${base}/supporters/${row.id}`}>
                   <span className="supporter-card-top">
                     <span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span>
@@ -149,7 +137,7 @@ export default async function SupportersPage({ searchParams }) {
                   </span>
                   <span className="small">{row.contact_name || row.contact_email ? [row.contact_name, row.contact_email].filter(Boolean).join(" · ") : "No contact yet"}</span>
                   <span className="small muted">{joinedOf(row) ? `Joined ${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : "Hasn't joined an event yet"}</span>
-                  <span className={`supporter-card-site${isPublic(row, { joined: joinedOf(row) }) ? " is-on" : ""}`}>{isPublic(row, { joined: joinedOf(row) }) ? "● On the website" : "○ Not on the website"}</span>
+                  {siteLine(row)}
                 </a>
               </li>
             );
@@ -171,7 +159,7 @@ export default async function SupportersPage({ searchParams }) {
       )}
 
       <div className="banner note small">
-        Status goes Inquiry → Talking → Confirmed, or Ended when the support stops (it then leaves the website by itself). A record shows on the home page only when it's Confirmed, switched on, and has a logo and a blurb. Amounts are public once the sponsor has been told.
+        A brand shows on the home page and its events' pages once it said Yes at a published event, is switched on in its record, and has a logo and a blurb; ending the relationship takes it off by itself. Amounts show only once the brand knows they're public. Invite brands and record their replies on each event's Brand tracker.
       </div>
     </>
   );

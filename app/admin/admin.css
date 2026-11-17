@@ -1501,3 +1501,17 @@ button.reply-opt:hover, button.reply-opt:focus-visible { border-color: var(--a-i
   .reg-stats .stat { padding: 14px; }
   .reg-stats .stat .value { font-size: 28px; }
 }
+
+/* Brands & Partners review (17 Nov 2026, design review): search filters as you type in one slim row like the
+   trackers (the label applies at once), and "Not on the website" says what's missing. */
+.brand-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; margin: 4px 0 16px; }
+.brand-search .tracker-search input { width: 100%; }
+.brand-search-note { grid-column: 1 / -1; margin: 0; min-height: 0; }
+.brand-search-note:empty { display: none; }
+.supporter-card-site:not(.is-on) { font-weight: 500; }
+@media (max-width: 720px) { .brand-search { grid-template-columns: 1fr; } }
+.supporter-list-wrap .supporter-card-site { display: block; padding: 0; border: 0; font-size: 13px; min-width: 170px; }
+.supporter-id-cell .muted { font-family: inherit; font-weight: 400; letter-spacing: 0; }
+.supporter-list-wrap td { vertical-align: middle; }
+.supporter-list-wrap td:nth-last-child(2) { white-space: nowrap; }
+.supporter-id-cell .id-pending { font-family: "DM Sans", system-ui, sans-serif; font-weight: 400; font-size: 13px; color: var(--a-muted); white-space: nowrap; }

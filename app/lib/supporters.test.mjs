@@ -76,3 +76,14 @@ test("a search with no results becomes the new-brand form's address", async () =
   assert.equal(newBrandHref("", { name: "Pawsome", kind: "Partner", event: ev }), `/supporters/new?name=Pawsome&kind=Partner&event=${ev}`);
   assert.equal(newBrandHref("", { name: "", kind: "Nope", event: "x" }), "/supporters/new");
 });
+
+test("a brand that isn't on the website says what it still needs", async () => {
+  const { websiteGaps, gapLine } = await import("./supporters.mjs");
+  const full = { show_on_site: true, logo: "/x.png", blurb: "Hi" };
+  assert.deepEqual(websiteGaps(full, { joined: 1 }), []);
+  assert.deepEqual(websiteGaps(full, { joined: 0 }), ["a Yes at an event"]);
+  assert.deepEqual(websiteGaps({ show_on_site: false }, { joined: 2 }), ["a logo", "a blurb", "switching on"]);
+  assert.equal(gapLine(["a logo", "a blurb"]), "a logo and a blurb");
+  assert.equal(gapLine(["a Yes at an event", "a logo", "a blurb"]), "a Yes at an event, a logo and a blurb");
+  assert.equal(gapLine(["a logo"]), "a logo");
+});
