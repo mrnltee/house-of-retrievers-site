@@ -11,6 +11,10 @@
 export const SCENE_TARGETS = {
   guestTracker: ["add", "followAll", "review", "messageMany", "g1Tick", "g2Tick", "g1Status", "g2Status", "g1Follow", "g1Invite", "g2Invite", "g1Message", "g2Message"],
   tracker: ["invite", "followAll", "row1Tick", "row2Tick", "row1Follow", "row1Send", "row2Send", "review", "newRow", "row1Edit", "row1Reply", "search", "filterYes", "filterWaiting", "filterUnsent", "sort"],
+  regList: ["emailAll", "add", "tabCheck", "tabExpired", "tabWaitlist", "tabNotChecked", "r1Check", "r2Confirm", "r3Checkin", "holdLength", "remindAll", "checkinTime", "checkinYes", "confirm"],
+  regPayment: ["receipt", "found", "approve", "reason", "reject", "confirm"],
+  regAdd: ["name", "email", "counts", "ticket", "payment", "addBtn", "confirm"],
+  reminder: ["startFrom", "wording", "notReminded", "p1", "p2", "p3", "test", "send", "confirm"],
   brandEdit: ["reply", "gives", "items", "coming", "save", "confirm"],
   invite: ["search", "pick1", "pick2", "add", "addNew"],
   send: ["letter", "to1", "to2", "tab1", "tab2", "own", "write", "send", "confirm", "blank"],
@@ -216,6 +220,79 @@ Object.assign(GUIDES, {
       { scene: "send", state: { guests: true, to: ["to1"], own: true, ownText: "Guest parking is on B2; show this email at the gate." }, target: "send", act: "click", caption: "Check the preview, then Send and confirm. It's logged under Letters like any email." },
     ],
   },
+  // An event's Registrations page (owner, 2026-11-17).
+  "reg-check-payment": {
+    title: "Check a payment and send the QR pass",
+    steps: [
+      { scene: "regList", target: "tabCheck", act: "click", caption: "When someone sends their receipt, they land under To check. Open that tab." },
+      { scene: "regList", state: { tab: "check" }, target: "r1Check", act: "click", caption: "Press Check on their row." },
+      { scene: "regPayment", target: "receipt", caption: "Their receipt, method, reference number and amount are side by side. The page says whether the amount matches the ticket." },
+      { scene: "regPayment", target: "found", act: "tick", caption: "Look up that reference and amount in HOR's own GCash or bank history. Only when you find it, tick I found reference…" },
+      { scene: "regPayment", state: { found: true }, target: "approve", act: "click", caption: "Press Approve and email QR pass." },
+      { scene: "regPayment", state: { found: true, confirm: "Approve Maria Santos's payment?", confirmNote: "To check → Paid. Their QR pass is emailed, and you're recorded as the person who checked it." }, target: "confirm", act: "click", caption: "Confirm. Their payment shows Paid, and their QR pass is on its way." },
+      { scene: "regList", state: { paid: true }, target: "tabCheck", caption: "Back on the list they're Paid. Nobody gets a QR pass before their payment is approved." },
+    ],
+  },
+  "reg-new-receipt": {
+    title: "Ask for a new receipt",
+    steps: [
+      { scene: "regPayment", target: "receipt", caption: "Can't read the reference, wrong amount, or can't find it in HOR's history? Don't approve it." },
+      { scene: "regPayment", target: "reason", act: "click", state: { reason: "The amount doesn't match the ticket…" }, caption: "Pick the reason. It goes into the email, word for word, so they know what to fix." },
+      { scene: "regPayment", state: { reason: "The amount doesn't match the ticket…" }, target: "reject", act: "click", caption: "Press Ask for a new receipt." },
+      { scene: "regPayment", state: { reason: "The amount doesn't match the ticket…", confirm: "Ask Maria Santos for a new receipt?", confirmNote: "They're emailed the reason and can upload again from their pass page." }, target: "confirm", act: "click", caption: "Confirm. Their new receipt comes back under To check." },
+    ],
+  },
+  "reg-add": {
+    title: "Add someone by hand",
+    steps: [
+      { scene: "regList", target: "add", act: "click", caption: "For someone who paid before the system, a VIP or an organizer, press + Add registration." },
+      { scene: "regAdd", target: "name", act: "type", text: "Ms. Malou Perez", caption: "Type their name…" },
+      { scene: "regAdd", state: { name: "Ms. Malou Perez" }, target: "email", act: "type", text: "malou@example.com", caption: "…and the email their QR pass goes to." },
+      { scene: "regAdd", state: { name: "Ms. Malou Perez", email: "malou@example.com" }, target: "ticket", act: "click", caption: "Pick their ticket. Guests, VIPs and organizers can be Complimentary: no fee, and they don't use up capacity." },
+      { scene: "regAdd", state: { name: "Ms. Malou Perez", email: "malou@example.com", ticket: "VIP · Complimentary" }, target: "payment", act: "click", caption: "For a paid ticket, say whether they've paid already (Paid) or still owe (Pending). A complimentary ticket is No fee." },
+      { scene: "regAdd", state: { name: "Ms. Malou Perez", email: "malou@example.com", ticket: "VIP · Complimentary" }, target: "addBtn", act: "click", caption: "Press Add registration and confirm. You can add someone even when the event is full." },
+    ],
+  },
+  "reg-email": {
+    title: "Email participants a reminder",
+    steps: [
+      { scene: "regList", target: "emailAll", act: "click", caption: "Before the event, press Email participants to send the reminder and guidelines." },
+      { scene: "reminder", target: "startFrom", act: "click", caption: "Start from the standard wording, or one of your own reminder templates." },
+      { scene: "reminder", target: "wording", caption: "Change the wording here for this send only. Each email comes with that person's own QR pass." },
+      { scene: "reminder", target: "p3", caption: "Everyone with a confirmed spot is ticked. People on the waitlist, unpaid or cancelled are shown but can't be ticked." },
+      { scene: "reminder", state: { to: ["p1"] }, target: "notReminded", act: "click", caption: "Sent one already? Not reminded yet ticks only the people who haven't had it." },
+      { scene: "reminder", state: { to: ["p1"] }, target: "test", act: "click", caption: "Send a test first. It goes to HOR's own inbox, never to a participant." },
+      { scene: "reminder", state: { to: ["p1"] }, target: "send", act: "click", caption: "Press Send and confirm. The page notes when each person was reminded." },
+    ],
+  },
+  "reg-remind-expired": {
+    title: "Remind people whose payment time ran out",
+    steps: [
+      { scene: "regList", target: "tabExpired", act: "click", caption: "Someone who didn't send a receipt in time moves to Hold expired, and their spot is freed. Open that tab." },
+      { scene: "regList", state: { tab: "expired" }, target: "holdLength", act: "click", caption: "Choose how long to hold their spot again: 1 hour, 2 hours or 24 hours." },
+      { scene: "regList", state: { tab: "expired" }, target: "remindAll", act: "click", caption: "Press Remind all." },
+      { scene: "regList", state: { tab: "expired", confirm: "Remind all 1 with an expired hold?", confirmNote: "Each one that still fits gets their spot held again and an email with the new deadline. Anyone with no room left is skipped." }, target: "confirm", act: "click", caption: "Confirm. Anyone the event no longer has room for is skipped and named, with no email." },
+    ],
+  },
+  "reg-checkin": {
+    title: "Check someone in by hand",
+    steps: [
+      { scene: "regList", target: "tabNotChecked", act: "click", caption: "Someone came but wasn't scanned (no QR, or no internet at the door)? Open Not checked in." },
+      { scene: "regList", state: { tab: "notchecked" }, target: "r3Checkin", act: "click", caption: "Press Check in on their row." },
+      { scene: "regList", state: { tab: "notchecked", checkin: true }, target: "checkinTime", caption: "Set when they arrived. It starts at now; change it if you're catching up from a paper list." },
+      { scene: "regList", state: { tab: "notchecked", checkin: true }, target: "checkinYes", act: "click", caption: "Press Check in, then confirm. Payment isn't changed. Undo check-in clears it if you picked the wrong person." },
+      { scene: "regList", state: { tab: "notchecked", checkedIn: true }, target: "r3Checkin", caption: "Their status shows Checked in with the time, and Checked in by hand." },
+    ],
+  },
+  "reg-waitlist": {
+    title: "Give someone on the waitlist a spot",
+    steps: [
+      { scene: "regList", target: "tabWaitlist", act: "click", caption: "When someone cancels, open Waitlist." },
+      { scene: "regList", state: { tab: "waitlist" }, target: "r2Confirm", act: "click", caption: "Press Confirm on the person who's next." },
+      { scene: "regList", state: { tab: "waitlist", confirm: "Give Leo Cruz a spot?", confirmNote: "Waitlist → Confirmed. On a paid event they're emailed how to pay; on a free one, their QR pass." }, target: "confirm", act: "click", caption: "Confirm. On a paid event they're emailed how to pay; on a free event, their QR pass." },
+      { scene: "regList", state: { tab: "waitlist", confirmed: true }, target: "r2Confirm", caption: "They're confirmed with payment pending. Their receipt will come in under To check." },
+    ],
+  },
   "new-template": {
     title: "Make an email template",
     steps: [
@@ -232,6 +309,8 @@ Object.assign(GUIDES, {
 
 /** The brand guides, in the order the guide list shows them. */
 export const BRAND_GUIDES = ["send-one", "follow-up", "send-many", "own-email", "brand-reply", "brand-find", "invite", "add-brand"];
+/** An event's Registrations page: payments, adding people, reminders, check-in by hand (owner, 2026-11-17). */
+export const REGISTRATION_GUIDES = ["reg-check-payment", "reg-new-receipt", "reg-add", "reg-email", "reg-remind-expired", "reg-checkin", "reg-waitlist"];
 /** An event's Guest tracker: invites, follow-ups and your own emails (owner, 2026-11-17). */
 export const GUEST_GUIDES = ["guest-invite", "guest-invite-many", "guest-follow-up", "guest-message"];
 /** Letters and email templates (owner, 2026-11-15). */

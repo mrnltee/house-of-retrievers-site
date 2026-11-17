@@ -1432,3 +1432,9 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .ht-name .ht-actions { margin-top: 4px; }
 @media (max-width: 720px) { .ht-tools { grid-template-columns: 1fr; } }
 .ht-offstage { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* How it works mocks: the Registrations page (owner, 17 Nov 2026). */
+.ht-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--a-sand); display: grid; place-items: center; font-size: .7em; font-weight: 700; }
+.ht-chip.is-warn { background: var(--a-gold); color: var(--a-ink); }
+.ht-chip.is-alert { background: var(--a-alert); color: #fff; }
+.ht-receipt { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: #fff; border: 1px solid var(--a-line); min-height: 120px; align-content: start; }
+.ht-qr { display: block; width: 44px; height: 44px; margin: 4px 0; border-radius: 4px; background: repeating-conic-gradient(var(--a-ink) 0 25%, #fff 0 50%) 0 0 / 11px 11px; }
