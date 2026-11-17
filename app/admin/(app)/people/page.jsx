@@ -69,7 +69,7 @@ export default async function PeoplePage({ searchParams }) {
           <input type="hidden" name="kind" value={kind} />
           {filter && <input type="hidden" name="m" value={filter} />}
           <label className="visually-hidden" htmlFor="people-q">Search</label>
-          <input id="people-q" type="search" name="q" defaultValue={q} placeholder="Search name, email, handle or furbaby" style={{ width: 280 }} />
+          <input id="people-q" type="search" name="q" defaultValue={q} placeholder="Search people" title="Searches name, email, handle and furbaby" style={{ width: 280 }} />
         </form>
       </div>
 
@@ -80,20 +80,18 @@ export default async function PeoplePage({ searchParams }) {
         <div className={stats.waiting ? "is-warn" : undefined}><dt>Waiting over 7 days</dt><dd>{stats.waiting}</dd></div>
       </dl>
 
-      {members && (
-        <nav className="tabs small-tabs" aria-label="Membership">
-          <a href={link({})} aria-current={!filter ? "page" : undefined}>All</a>
-          {MEMBERSHIP.map(([k, label]) => <a key={k} href={link({ m: k })} aria-current={filter === k ? "page" : undefined}>{label}</a>)}
+      {(members || stats.no_photo > 0 || noPhoto) && (
+        <nav className="tabs small-tabs" aria-label="Show">
+          {members && <a href={link({})} aria-current={!filter && !noPhoto ? "page" : undefined}>All</a>}
+          {members && MEMBERSHIP.map(([k, label]) => <a key={k} href={link({ m: k })} aria-current={filter === k && !noPhoto ? "page" : undefined}>{label}</a>)}
+          {(stats.no_photo > 0 || noPhoto) && (noPhoto
+            ? <a className="tab-aside" aria-current="page" href={`${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(filter ? { m: filter } : {}) })}`}>No photo yet · {stats.no_photo} <span className="visually-hidden">(showing; press to show everyone)</span></a>
+            : <a className="tab-aside" href={link({ ...(filter ? { m: filter } : {}), photo: "none" })}>No photo yet · {stats.no_photo}</a>)}
         </nav>
       )}
-      <p className="small muted">
-        {HELP[kind]}{" "}
-        {stats.no_photo > 0 && (noPhoto
-          ? <a href={`${base}/people?${new URLSearchParams({ kind, ...(q ? { q } : {}), ...(filter ? { m: filter } : {}) })}`}>Show everyone</a>
-          : <a href={link({ ...(filter ? { m: filter } : {}), photo: "none" })}>No photo yet · {stats.no_photo}</a>)}
-      </p>
+      <p className="small muted">{HELP[kind]}</p>
       <div className="table-wrap">
-        <table className="people-table">
+        <table className="people-table stack-table">
           <thead>
             <tr>
               <th>Person</th>
@@ -108,29 +106,29 @@ export default async function PeoplePage({ searchParams }) {
             {rows.length === 0 && <tr><td colSpan={members ? 6 : 5} className="empty">{q || filter || noPhoto ? "No one matches." : "Nobody here yet."}</td></tr>}
             {rows.map((p) => (
               <tr key={p.id}>
-                <td>
+                <td className="st-1">
                   <a className="person-cell" href={`${base}/people/${p.id}`}>
                     <PersonAvatar person={p} base={base} />
                     <span>
                       <strong>{p.name}</strong>
                       {p.joined_count > 1 && <span className="chip" title="Sent the Join form more than once">Joined {p.joined_count}×</span>}
-                      {p.attended > 0 && <span className="small muted"> · {p.attended} event{p.attended === 1 ? "" : "s"}</span>}
+                      {p.attended > 0 && <><br /><span className="small muted">Came to {p.attended} event{p.attended === 1 ? "" : "s"}</span></>}
                     </span>
                   </a>
                 </td>
-                <td>
+                <td className="st-4" data-label="Contact">
                   <a href={`mailto:${p.email}`}>{p.email}</a>
                   {p.social_profile && <><br />{p.social_url ? <a href={p.social_url} target="_blank" rel="noreferrer">{p.social_profile}</a> : p.social_profile}</>}
                 </td>
-                <td>{members ? <FurbabyList names={p.furbaby_name} breeds={p.furbaby_breeds} rainbow={p.furbaby_rainbow} sexes={p.furbaby_sexes} ages={agesToday(p.furbaby_ages, p.furbaby_ages_on, { rainbow: p.furbaby_rainbow || [] })} /> : p.organization || "—"}</td>
+                <td className="st-3" data-label={members ? "Furbaby" : "Organization"}>{members ? <FurbabyList names={p.furbaby_name} breeds={p.furbaby_breeds} rainbow={p.furbaby_rainbow} sexes={p.furbaby_sexes} ages={agesToday(p.furbaby_ages, p.furbaby_ages_on, { rainbow: p.furbaby_rainbow || [] })} /> : p.organization || "—"}</td>
                 {members && (
-                  <td>
+                  <td className="st-2">
                     <span className={`chip membership-${p.membership}`}>{membershipLabel(p.membership) || "—"}</span>
                     {p.member_no && <><br /><span className="small muted">{memberNumber(p)}</span></>}
                   </td>
                 )}
-                <td>{formatWhen(p.created_at)}</td>
-                <td>
+                <td className="st-5" data-label="Joined">{formatWhen(p.created_at)}</td>
+                <td className="st-6" data-label="Follow-up">
                   {canEdit ? (
                     <form action={updatePerson} className="person-quick">
                       <input type="hidden" name="id" value={p.id} />

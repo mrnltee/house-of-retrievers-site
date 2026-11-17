@@ -11,7 +11,7 @@ import SendTemplate from "../SendTemplate";
 import { emailReady } from "../../../../lib/email";
 import { resendWelcome, sendTemplateToPerson, updateMembership, updatePerson } from "../../../actions";
 import { supporterFromPerson } from "../../../supporterActions";
-import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
+import { Flash, NotAllowed, PageHead, formatDay, formatWhen, isoDate } from "../../ui";
 import PersonAvatar from "../PersonAvatar";
 import PersonPhotoField from "../PersonPhotoField";
 import ConfirmMembership from "../ConfirmMembership";
@@ -76,6 +76,7 @@ export default async function PersonPage({ params, searchParams }) {
       <Flash params={query} />
 
       <div className="grid-2 person-grid">
+        <div className="form" style={{ gap: 20 }}>
         <section className="card">
           <h2>Contact</h2>
           <dl className="facts">
@@ -115,6 +116,37 @@ export default async function PersonPage({ params, searchParams }) {
             </>
           )}
         </section>
+        <section className="card">
+          <h2>Follow-up</h2>
+          {canEdit ? (
+            <form action={updatePerson} className="form" style={{ gap: 12 }}>
+              <input type="hidden" name="id" value={person.id} />
+              <input type="hidden" name="kind" value={person.kind} />
+              <input type="hidden" name="back" value="profile" />
+              <label className="field"><span>Status</span>
+                <select name="status" defaultValue={person.status}>
+                  {PEOPLE_STATUSES[person.kind].map((s) => <option key={s}>{s}</option>)}
+                </select>
+              </label>
+              <label className="field"><span>Notes <small>Only admins see these</small></span>
+                <textarea name="notes" rows={4} maxLength={2000} defaultValue={person.notes || ""} />
+              </label>
+              <div className="actions">
+                <ConfirmButton
+                  className="btn ghost"
+                  title={`Save follow-up changes for ${person.name}?`}
+                  echo={[{ name: "status", label: "Status" }, { name: "notes", label: "Notes" }]}
+                  items={["Their People record is updated", "The activity log records the change"]}
+                  yes="Yes, save follow-up"
+                  tone="ghost"
+                >Save follow-up</ConfirmButton>
+              </div>
+            </form>
+          ) : (
+            <p><span className="chip">{person.status}</span> {person.notes}</p>
+          )}
+        </section>
+        </div>
 
         <div className="form" style={{ gap: 20 }}>
           {member && (
@@ -123,7 +155,7 @@ export default async function PersonPage({ params, searchParams }) {
               <dl className="facts">
                 <div><dt>Status</dt><dd><span className={`chip membership-${person.membership}`}>{membershipLabel(person.membership)}</span></dd></div>
                 {person.member_no && <div><dt>Number</dt><dd>{memberNumber(person)}</dd></div>}
-                {person.member_since && <div><dt>Since</dt><dd>{isoDate(person.member_since)}</dd></div>}
+                {person.member_since && <div><dt>Since</dt><dd>{formatDay(person.member_since)}</dd></div>}
               </dl>
               {canEdit && (
                 <form action={updateMembership} className="form" style={{ gap: 12 }}>
@@ -224,43 +256,13 @@ export default async function PersonPage({ params, searchParams }) {
             </section>
           )}
 
-          <section className="card">
-            <h2>Follow-up</h2>
-            {canEdit ? (
-              <form action={updatePerson} className="form" style={{ gap: 12 }}>
-                <input type="hidden" name="id" value={person.id} />
-                <input type="hidden" name="kind" value={person.kind} />
-                <input type="hidden" name="back" value="profile" />
-                <label className="field"><span>Status</span>
-                  <select name="status" defaultValue={person.status}>
-                    {PEOPLE_STATUSES[person.kind].map((s) => <option key={s}>{s}</option>)}
-                  </select>
-                </label>
-                <label className="field"><span>Notes <small>Only admins see these</small></span>
-                  <textarea name="notes" rows={4} maxLength={2000} defaultValue={person.notes || ""} />
-                </label>
-                <div className="actions">
-                  <ConfirmButton
-                    className="btn ghost"
-                    title={`Save follow-up changes for ${person.name}?`}
-                    echo={[{ name: "status", label: "Status" }, { name: "notes", label: "Notes" }]}
-                    items={["Their People record is updated", "The activity log records the change"]}
-                    yes="Yes, save follow-up"
-                    tone="ghost"
-                  >Save follow-up</ConfirmButton>
-                </div>
-              </form>
-            ) : (
-              <p><span className="chip">{person.status}</span> {person.notes}</p>
-            )}
-          </section>
         </div>
       </div>
 
       <section className="card">
         <div className="page-head" style={{ alignItems: "baseline" }}>
           <h2>Events</h2>
-          <span className="small muted">{events.length ? `${events.length} signed up · ${attended} attended${lastSeen ? ` · last seen ${isoDate(lastSeen.date)}` : ""}` : "None yet"}</span>
+          <span className="small muted">{events.length ? `${events.length} signed up · ${attended} attended${lastSeen ? ` · last seen ${formatDay(lastSeen.date)}` : ""}` : "None yet"}</span>
         </div>
         {events.length > 0 ? (
           <div className="table-wrap">
@@ -270,7 +272,7 @@ export default async function PersonPage({ params, searchParams }) {
                 {events.map((e) => (
                   <tr key={`${e.event_id}-${e.created_at}`}>
                     <td><a href={`${base}/registrations/${e.event_id}`}>{e.title}</a></td>
-                    <td>{isoDate(e.date)}</td>
+                    <td>{formatDay(e.date)}</td>
                     <td>{REG_STATUS[e.status] || e.status}{e.fee_status && e.fee_status !== "not_due" ? ` · ${FEE_STATUS[e.fee_status]?.label.toLowerCase() || e.fee_status}` : ""}</td>
                     <td>{e.checked_in_at ? formatWhen(e.checked_in_at) : "—"}</td>
                   </tr>

@@ -1315,3 +1315,12 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 @media (prefers-reduced-motion: no-preference) { html:has(.editor-nav) { scroll-behavior: smooth; } }
 .editor-nav { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; }
 @media (max-width: 860px) { .event-form > section.card, .event-form > details.card, .editor-anchor, #ev-share { scroll-margin-top: 140px; } }
+/* People review (17 Nov 2026, owner). The summary cards fill the row; "No photo yet" is its own filter at the
+   end of the tabs instead of a link glued onto the help sentence; on phones each person is a card. */
+.people-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.people-stats > div { min-width: 0; }
+.tabs .tab-aside { margin-left: auto; }
+.people-table td { vertical-align: top; }
+.people-table .person-cell { align-items: flex-start; }
+@media (max-width: 720px) { .tabs .tab-aside { margin-left: 0; } .people-table .person-quick { flex-wrap: wrap; } }
+.people-table td.st-2 .small { white-space: nowrap; }
