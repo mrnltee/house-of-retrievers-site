@@ -1273,3 +1273,10 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 }
 @media (min-width: 721px) { .registrations-table td.st-10 { min-width: 160px; } .reg-actions { flex-wrap: wrap; } }
 @media (max-width: 720px) { .stack-table td.st-6:not(:has(*)) { display: none; } }
+/* Check-in review (17 Nov 2026, owner). The black header lines up with the camera box and list below it and has
+   the same rounded corners (it was edge to edge with square corners); every button and tab is at least 44 px
+   tall, since this is tapped standing at the door; a guest's furbaby sits on its own line in the lists. */
+.checkin-top { margin: 20px 20px 0; border-radius: 20px; padding: 20px 22px; }
+.checkin .btn.small, .checkin-list .tabs button { min-height: 44px; }
+.checkin-noqr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
+.checkin-list li { align-items: center; padding: 4px 0; }

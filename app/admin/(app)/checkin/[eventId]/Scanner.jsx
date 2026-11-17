@@ -306,7 +306,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             tone="ghost"
           >Check in</ConfirmButton>
         </form>
-        <p className="small">No QR with them? <button type="button" className="btn ghost small" onClick={findByName}>Find them by name</button></p>
+        <p className="small checkin-noqr">No QR with them? <button type="button" className="btn ghost small" onClick={findByName}>Find them by name</button></p>
         <p className="small muted">Someone who said no to photos shows a “No photos” flag here. Let the photographers know.</p>
 
         <section className="card checkin-list" aria-label="Guests">
@@ -327,7 +327,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                     {row.photo.source !== "initials"
                       ? <img className="person-avatar" src={`${base}/checkin/photo/${eventId}/${row.id}?v=${encodeURIComponent(row.photo.version)}`} alt="" width={36} height={36} style={{ width: 36, height: 36 }} loading="lazy" />
                       : <span className="person-avatar is-empty" style={{ width: 36, height: 36, fontSize: 13 }} aria-hidden="true">{row.initials}</span>}
-                    <span><strong>{row.name}</strong>{row.furbaby && <span className="small muted"> · {row.furbaby}</span>}{row.manual && <><br /><span className="small muted">Added by hand</span></>}</span>
+                    <span><strong>{row.name}</strong>{row.furbaby && <><br /><span className="small muted">with {row.furbaby}</span></>}{row.manual && <><br /><span className="small muted">Added by hand</span></>}</span>
                     {view === "waiting" && (confirmingId === row.id ? (
                       <span className="checkin-list-act is-confirming">
                         <button type="button" className="btn gold small" onClick={() => { setConfirmingId(null); record(() => checkInByName(eventId, row.id), true); }}>Yes, check in</button>
