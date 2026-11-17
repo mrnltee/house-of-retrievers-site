@@ -1242,8 +1242,10 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 /* Row edit window (17 Nov 2026, owner): the Brand tracker's Edit opens here instead of inside the table cell. */
 .edit-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
 .edit-dialog .invite-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.edit-dialog .invite-head h2:focus { outline: none; }
 .edit-dialog .invite-head h2 { margin: 0; font-size: clamp(22px, 4vw, 28px); line-height: 1.15; text-wrap: balance; }
 .edit-dialog .form { gap: 14px; }
-.edit-dialog .actions { position: sticky; bottom: 0; margin: 4px -28px -28px; padding: 14px 28px 18px; background: #fff; border-top: 1px solid var(--a-line); }
+/* Only the form's own Save row: a picture field's button row inside the form is also .actions. */
+.edit-dialog .confirm-body > form > .actions { position: sticky; bottom: 0; margin: 4px -28px -28px; padding: 14px 28px 18px; background: #fff; border-top: 1px solid var(--a-line); }
 .edit-dialog-open { display: inline-flex; align-items: center; min-height: 32px; margin-top: 4px; }
 @media (max-width: 560px) { .edit-dialog .row-3 { grid-template-columns: 1fr; } }

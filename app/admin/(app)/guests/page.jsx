@@ -13,6 +13,7 @@ import SendStatus from "../SendStatus";
 import { refreshSends, sendsFor } from "../../../lib/letterSendsStore";
 import ContactFields from "./ContactFields";
 import ConfirmButton from "../ConfirmButton";
+import EditDialog from "../EditDialog";
 import { Avatar } from "../ImageField";
 import TickedSubmit from "../TickedSubmit";
 
@@ -55,7 +56,16 @@ export default async function GuestsPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Guest list" lead="Everyone HOR sends letters to, grouped by category. Each category gets its own letter; tick people in a group and send it. You check the letter before anything goes out." />
+      <PageHead title="Guest list" lead="Everyone HOR sends letters to, grouped by category. Each category gets its own letter; tick people in a group and send it. You check the letter before anything goes out.">
+        {canEdit && (
+          <EditDialog label="+ Add someone" buttonClass="btn gold" title="Add someone to the guest list" lead="They show in their category, ready for that category's letter. Nothing is emailed." defaultOpen={params?.add === "1"}>
+            <form action={saveContact} className="form">
+              <ContactFields category={only} />
+              <div className="actions"><ConfirmButton className="btn dark" title="Add to the guest list?" items={["They show in their category, ready for that category's letter."]}>Add to the guest list</ConfirmButton></div>
+            </form>
+          </EditDialog>
+        )}
+      </PageHead>
       <Flash params={params} />
       <form method="get" action={`${base}/guests`} className="card actions" role="search" style={{ flexWrap: "wrap", gap: 10 }}>
         <select name="category" defaultValue={only} aria-label="Category">
@@ -66,16 +76,6 @@ export default async function GuestsPage({ searchParams }) {
         <button className="btn ghost" type="submit" data-confirm="not-needed-read-only">Filter</button>
         {(only || q) && <a className="small" href={`${base}/guests`}>Clear</a>}
       </form>
-
-      {canEdit && (
-        <details className="card" id="add" open={params?.add === "1"}>
-          <summary className="strong">+ Add someone</summary>
-          <form action={saveContact} className="form" style={{ marginTop: 12 }}>
-            <ContactFields category={only} />
-            <div className="actions"><ConfirmButton className="btn dark" title="Add to the guest list?" items={["They show in their category, ready for that category's letter."]}>Add to the guest list</ConfirmButton></div>
-          </form>
-        </details>
-      )}
 
       {groups.map((g) => (
         <section key={g.key} className="card" style={{ marginTop: 16 }}>
@@ -107,8 +107,17 @@ export default async function GuestsPage({ searchParams }) {
                 </tbody>
               </table>
             </div>
-            {canEdit && <p className="small" style={{ margin: "8px 0 0" }}><a href={`${base}/guests?category=${g.key}&add=1#add`}>+ Add to {g.label}</a></p>}
           </form>
+          {canEdit && (
+              <div className="small" style={{ margin: "8px 0 0" }}>
+                <EditDialog label={`+ Add to ${g.label}`} title={`Add to ${g.label}`} lead="They show in this group, ready for its letter. Nothing is emailed.">
+                  <form action={saveContact} className="form">
+                    <ContactFields category={g.key} />
+                    <div className="actions"><ConfirmButton className="btn dark" title={`Add to ${g.label}?`} items={["They show in this group, ready for its letter."]}>Add to the guest list</ConfirmButton></div>
+                  </form>
+                </EditDialog>
+              </div>
+            )}
         </section>
       ))}
     </>

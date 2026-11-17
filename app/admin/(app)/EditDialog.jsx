@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Icon from "../../components/Icon";
 
 /**
@@ -9,16 +9,23 @@ import Icon from "../../components/Icon";
  * actions and ConfirmButtons are unchanged. Esc or Close shuts it without saving; clicking outside does not,
  * so a half-typed form isn't lost by a stray click.
  */
-export default function EditDialog({ label = "Edit", title, lead, buttonClass = "linkish small", children }) {
+export default function EditDialog({ label = "Edit", title, lead, buttonClass = "linkish small", defaultOpen = false, children }) {
   const dialog = useRef(null);
+  // Opened by a link (e.g. ?add=1): show the window as soon as the page loads.
+  // Focus goes to the heading, not the first button: opening shouldn't make Close look selected.
+  function open() {
+    dialog.current?.showModal();
+    dialog.current?.querySelector("h2")?.focus();
+  }
+  useEffect(() => { if (defaultOpen && !dialog.current?.open) open(); }, [defaultOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <>
-      <button type="button" className={`${buttonClass} edit-dialog-open`} data-confirm="not-needed-read-only" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>{label}</button>
+      <button type="button" className={`${buttonClass} edit-dialog-open`} data-confirm="not-needed-read-only" aria-haspopup="dialog" onClick={open}>{label}</button>
       <dialog ref={dialog} className="confirm-dialog edit-dialog" aria-label={title}>
         <div className="confirm-body">
           <div className="invite-head">
             <div>
-              <h2>{title}</h2>
+              <h2 tabIndex={-1}>{title}</h2>
               {lead && <p className="small muted" style={{ margin: "4px 0 0" }}>{lead}</p>}
             </div>
             <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => dialog.current?.close()} aria-label="Close without saving"><Icon name="close" /> Close</button>
