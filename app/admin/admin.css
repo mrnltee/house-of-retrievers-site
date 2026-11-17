@@ -95,7 +95,8 @@ p.card { display: block; }
 .field { display: grid; gap: 6px; }
 .field > span { font-size: 13px; font-weight: 700; }
 .field small { color: var(--a-muted); font-size: 12px; }
-.admin input[type="text"], .admin input[type="email"], .admin input[type="date"], .admin input[type="time"], .admin input[type="number"], .admin input[type="search"], .admin select, .admin textarea {
+/* Every typed field looks the same: phone, link, password and fields without a type used to fall back to plain white. */
+.admin input[type="text"], .admin input[type="email"], .admin input[type="date"], .admin input[type="time"], .admin input[type="number"], .admin input[type="search"], .admin input[type="tel"], .admin input[type="url"], .admin input[type="password"], .admin input[type="datetime-local"], .admin input:not([type]), .admin select, .admin textarea {
   width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--a-field); border-radius: 8px; background: var(--a-ivory); color: var(--a-ink); font: inherit; font-size: 15px;
 }
 .admin textarea { min-height: 96px; resize: vertical; }
