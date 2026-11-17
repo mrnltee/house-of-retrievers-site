@@ -1583,3 +1583,19 @@ details.sd-fold { display: block; }
 .person-quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .person-quick-save { display: inline-flex; gap: 8px; align-items: center; }
 .people-table td.st-5 { white-space: nowrap; }
+
+/* Payment settings review (17 Nov 2026, design review): each method is a summary of what's live (details, what
+   the public sees when masked, the QR) with Edit opening the request form in a window. */
+.pay-methods { align-items: start; }
+.pay-card { display: grid; gap: 14px; }
+.pay-card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pay-card-head h2 { margin: 0; }
+.pay-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; }
+.pay-details { margin: 0; display: grid; gap: 8px; }
+.pay-details div { display: grid; gap: 2px; }
+.pay-details dt { font-size: 12px; font-weight: 700; color: var(--a-muted); }
+.pay-details dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.pay-qr { width: 110px; }
+.pay-card-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--a-sand); }
+.pay-form .row-2 { align-items: start; }
+@media (max-width: 520px) { .pay-card-body { grid-template-columns: 1fr; } }
