@@ -33,6 +33,8 @@ const peso = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;
  * the waitlist, and on a paid event the payments to check. Every action asks
  * first (ConfirmButton).
  */
+const countOf = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
 export default async function EventRegistrations({ params, searchParams }) {
   const { eventId } = await params;
   const query = await searchParams;
@@ -135,11 +137,9 @@ export default async function EventRegistrations({ params, searchParams }) {
       </PageHead>
       <Flash params={query} />
 
-      <section className="grid-4" aria-label="Who's coming">
+      <section className="grid-4 reg-stats" aria-label="Who's coming and where things stand">
         <div className="stat"><span className="label">Hoomans registered</span><span className="value">{heads.humans}</span><span className="small muted">{paidEvent ? headLine(heads.humans, heads.paidHumans, heads.compHumans) : heads.compHumans ? `On confirmed spots · ${heads.compHumans} complimentary` : "On confirmed spots"}</span></div>
         <div className="stat"><span className="label">Furbabies registered</span><span className="value">{heads.furbabies}</span><span className="small muted">{paidEvent ? headLine(heads.furbabies, heads.paidFurbabies, heads.compFurbabies) : "On confirmed spots"}</span></div>
-      </section>
-      <section className="grid-4" aria-label="Counts">
         {paidEvent ? (
           <>
             <div className="stat"><span className="label">Capacity used</span><span className="value">{event.capacity ? `${capacityUsed} / ${event.capacity}` : capacityUsed}</span><span className="small muted">{capacityNote}</span>{humansNote}</div>
@@ -176,24 +176,24 @@ export default async function EventRegistrations({ params, searchParams }) {
       )}
 
       <div className="table-wrap">
-        <table className="registrations-table">
+        <table className="registrations-table stack-table">
           <thead>
-            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}<th>Email</th>{tableQuestions.map((q) => <th key={q.id} title={q.label}>{q.label.length > 28 ? `${q.label.slice(0, 27)}…` : q.label}</th>)}<th>Notes</th>{showVax && <th>Vaccination</th>}<th>Acknowledged</th><th>Checked in</th><th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
+            <tr><th>Name</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}{tableQuestions.map((q) => <th key={q.id} title={q.label}>{q.label.length > 28 ? `${q.label.slice(0, 27)}…` : q.label}</th>)}<th>Notes</th>{showVax && <th>Vaccination</th>}{acknowledgementEnabled && <th>Acknowledged</th>}<th>Status</th><th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
           <tbody>
-            {shown.length === 0 && <tr><td colSpan={(paidEvent ? 10 : 8) + tableQuestions.length + (showVax ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={(paidEvent ? 7 : 5) + tableQuestions.length + (showVax ? 1 : 0) + (acknowledgementEnabled ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
             {shown.map((r) => {
               const fee = FEE_STATUS[r.fee_status] || FEE_STATUS.not_due;
               const twins = sameRef(r);
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
                 <tr key={r.id}>
-                  <td><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span>{paidEvent && <><br /><span className="small muted">{r.human_count ?? 1} people · {r.furbaby_count ?? 0} furbabies</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
-                  <td><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
+                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span><br /><a className="small reg-email" href={`mailto:${r.email}`}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                  <td className="st-5" data-label="Furbaby"><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
                   {paidEvent && (
                     <>
-                      <td>{r.comp_type ? compLine(r.comp_type) : ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
-                      <td>
+                      <td className="st-4" data-label="Ticket">{r.comp_type ? compLine(r.comp_type) : ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
+                      <td className="st-3" data-label="Payment">
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
                         {r.fee_reference && <><br /><span className="small muted">{[payMethodLabel(r.pay_method), `Ref ${r.fee_reference}`, r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}</span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
@@ -202,13 +202,12 @@ export default async function EventRegistrations({ params, searchParams }) {
                       </td>
                     </>
                   )}
-                  <td><a href={`mailto:${r.email}`}>{r.email}</a></td>
-                  {tableQuestions.map((q) => <td key={q.id}>{answerText(r.custom_answers?.[q.id]) || <span className="muted">—</span>}</td>)}
-                  <td className="small">
+                  {tableQuestions.map((q) => <td key={q.id} className="st-9" data-label={q.label}>{answerText(r.custom_answers?.[q.id]) || <span className="muted">—</span>}</td>)}
+                  <td className="small st-6" data-label="Notes">
                     {!r.photo_consent && <span className="chip">No photos</span>} {r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}
                   </td>
                   {showVax && (
-                    <td>
+                    <td className="st-8" data-label="Vaccination">
                       {(() => {
                         const dogs = Math.min(10, r.furbaby_count ?? 0);
                         if (!dogs) return <span className="muted">N/A</span>;
@@ -217,19 +216,18 @@ export default async function EventRegistrations({ params, searchParams }) {
                       })()}
                     </td>
                   )}
-                  <td>
-                    {!acknowledgementEnabled ? <span className="small muted">Not required</span>
-                      : r.consent_completed_at ? <span className="chip good" title={new Date(r.consent_completed_at).toLocaleString("en-PH")}>Yes</span>
+                  {acknowledgementEnabled && <td className="st-7" data-label="Acknowledged">
+                    {r.consent_completed_at ? <span className="chip good" title={new Date(r.consent_completed_at).toLocaleString("en-PH")}>Yes</span>
                         : <span className="chip warn">Needed</span>}
-                  </td>
-                  <td className="small">{r.checked_in_at ? <span className="chip good" title={formatWhen(r.checked_in_at)}>Yes · {new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}</span> : <span className="muted">Not yet</span>}{r.checked_in_source === "manual" && <><br /><span className="small muted">Added by hand</span></>}</td>
-                  <td>
-                    {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? "Checked in" : "Confirmed"}</span>}
+                  </td>}
+                  <td className="st-2">
+                    {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? `Checked in · ${new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}` : "Confirmed"}</span>}
+                    {r.checked_in_source === "manual" && r.checked_in_at && <><br /><span className="small muted">Checked in by hand</span></>}
                     {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
                     {r.deleted_at ? <span className="chip alert">Deleted · recoverable</span> : r.status === "cancelled" && <span className="chip alert">Cancelled</span>}
                   </td>
-                  <td>
-                    <div className="actions">
+                  <td className="st-10">
+                    <div className="actions reg-actions">
                       {paidEvent && r.status === "confirmed" && canFees && r.fee_status === "review" && <a className="btn small gold" href={detail}>Check</a>}
                       {paidEvent && r.status === "confirmed" && canFees && (r.fee_status === "waiting" || r.fee_status === "rejected") && <a className="btn small ghost" href={detail}>Add receipt</a>}
                       {(!paidEvent || r.fee_status === "paid" || r.fee_status === "not_due" || r.status !== "confirmed" || !canFees) && <a className="btn small ghost" href={detail}>View</a>}

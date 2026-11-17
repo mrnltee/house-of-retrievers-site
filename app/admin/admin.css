@@ -1258,3 +1258,18 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .image-field .logo-preview.round { width: 88px; padding: 0; }
 .image-field .actions { gap: 8px; }
 .image-field .actions .btn { white-space: nowrap; }
+/* Registrations review (17 Nov 2026, owner). The six summary cards sit in one grid, three a row (the first row
+   used to hold two cards and leave half the width empty); the email is under the name and check-in time is in
+   Status, so the table fits a laptop without hiding Status and the row buttons off to the right. */
+@media (min-width: 1000px) { .reg-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.reg-email { color: var(--a-muted); text-decoration: none; overflow-wrap: anywhere; }
+.reg-email:hover, .reg-email:focus-visible { color: var(--a-ink); text-decoration: underline; }
+.registrations-table td { vertical-align: top; }
+.reg-actions { gap: 6px 12px; }
+@media (max-width: 720px) {
+  .stack-table .st-6 { order: 6; } .stack-table .st-7 { order: 7; } .stack-table .st-8 { order: 8; } .stack-table .st-9 { order: 9; } .stack-table .st-10 { order: 10; margin-top: 6px; }
+  .registrations-table tr { grid-template-columns: minmax(0, 1fr); }
+  .registrations-table td { grid-column: 1; }
+}
+@media (min-width: 721px) { .registrations-table td.st-10 { min-width: 160px; } .reg-actions { flex-wrap: wrap; } }
+@media (max-width: 720px) { .stack-table td.st-6:not(:has(*)) { display: none; } }
