@@ -1464,3 +1464,5 @@ button.reply-opt:hover, button.reply-opt:focus-visible { border-color: var(--a-i
 .send-why { flex-basis: 100%; }
 .send-why p { margin: 2px 0 0; }
 @media (max-width: 720px) { .tracker-page .st-2 { min-width: 0; } .reply-quick { display: flex; width: 100%; } .reply-quick .reply-opt { flex: 1 1 0; min-width: 0; justify-content: center; text-align: center; white-space: normal; line-height: 1.15; min-height: 40px; padding: 4px 6px; font-size: 12.5px; } }
+.rsvp-banner { background: #fff; border: 1px solid var(--a-gold); margin-bottom: 16px; }
+.rsvp-banner p { margin: 2px 0 0; }

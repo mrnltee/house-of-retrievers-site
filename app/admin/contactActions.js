@@ -1,5 +1,6 @@
 "use server";
 
+import { syncGuestRsvp } from "../lib/guestRsvpStore";
 import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
@@ -135,7 +136,9 @@ export async function saveEventGuest(data) {
     const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
     await logActivity(admin.email, "event.guest.save", c?.name || "", { eventId, contactId, reply, ...(shown === null ? {} : { onEventPage: shown }) });
     const note = shown && reply !== "yes" ? " They'll appear on the event page once their reply is Coming." : "";
-    await backWith(back, "ok", `Saved ${c?.name}.${note}`);
+    const rsvp = await syncGuestRsvp({ eventId, contactId, reply, adminEmail: admin.email });
+    if (rsvp) await logActivity(admin.email, "event.guest.rsvp", c?.name || "", { eventId, contactId, reply });
+    await backWith(back, "ok", `Saved ${c?.name}.${note}${rsvp ? ` ${rsvp}` : ""}`);
   });
 }
 
@@ -156,9 +159,37 @@ export async function setEventGuestReply(data) {
     if (!row) await backWith(back, "error", "That guest isn't on this event's list.");
     const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
     await logActivity(admin.email, "event.guest.reply", c?.name || "", { eventId, contactId, reply });
+    const rsvp = await syncGuestRsvp({ eventId, contactId, reply, adminEmail: admin.email });
+    if (rsvp) await logActivity(admin.email, "event.guest.rsvp", c?.name || "", { eventId, contactId, reply });
     const label = reply === "yes" ? "Coming" : reply === "no" ? "Can't make it" : "No reply yet";
     const note = row.show_on_site ? (reply === "yes" ? " They now show on the event page." : " They're off the event page until they're Coming.") : "";
-    await backWith(back, "ok", `${c?.name}: ${label}.${note}`);
+    await backWith(back, "ok", `${c?.name}: ${label}.${note}${rsvp ? ` ${rsvp}` : ""}`);
+  });
+}
+
+/** Guest tracker: put every Coming guest who isn't on the RSVP list yet on it (once each, no duplicates by name). */
+export async function addComingGuestsToRsvps(data) {
+  const eventId = form(data, "event");
+  const back = isUuid(eventId) ? `/events/${eventId}/guests` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("guests:edit");
+    const coming = isUuid(eventId)
+      ? await sql(`SELECT eg.contact_id, c.name FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
+                   LEFT JOIN registrations reg ON reg.id = eg.registration_id
+                   WHERE eg.event_id = $1 AND eg.reply = 'yes' AND c.deleted_at IS NULL
+                     AND (reg.id IS NULL OR reg.deleted_at IS NOT NULL OR reg.status = 'cancelled') LIMIT 100`, [eventId])
+      : [];
+    let added = 0;
+    let linked = 0;
+    for (const g of coming) {
+      const note = await syncGuestRsvp({ eventId, contactId: g.contact_id, reply: "yes", adminEmail: admin.email });
+      if (/already on the RSVP list/.test(note)) linked += 1;
+      else if (note) added += 1;
+    }
+    if (added || linked) await logActivity(admin.email, "event.guest.rsvp", `${added + linked} guests`, { eventId, added, linked });
+    await backWith(back, "ok", coming.length
+      ? `${added} added to the RSVP list${linked ? `; ${linked} ${linked === 1 ? "was" : "were"} already on it and ${linked === 1 ? "is" : "are"} now linked` : ""}.`
+      : "Every Coming guest is already on the RSVP list.");
   });
 }
 

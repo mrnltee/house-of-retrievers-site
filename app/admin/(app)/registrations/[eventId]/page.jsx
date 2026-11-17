@@ -1,4 +1,5 @@
 import { answerText, cleanCustomQuestions } from "../../../../lib/customQuestions.mjs";
+import { categoryOf } from "../../../../lib/contacts.mjs";
 import { notFound } from "next/navigation";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
@@ -47,6 +48,11 @@ export default async function EventRegistrations({ params, searchParams }) {
   if (!event) notFound();
   const base = await adminBase();
   const all = await sql("SELECT * FROM registrations WHERE event_id=$1 ORDER BY created_at", [eventId]);
+  // Guests marked Coming on the Guest tracker (owner, 2026-11-17): which RSVPs are theirs, and their group.
+  const fromTracker = new Map((await sql(
+    `SELECT eg.registration_id, c.category FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
+      WHERE eg.event_id = $1 AND eg.registration_id IS NOT NULL`, [eventId],
+  ).catch(() => [])).map((g) => [g.registration_id, categoryOf(g.category)?.label || "Guest"]));
   const paidEvent = event.fee_required;
   // Invitation cards (owner, 2026-11-11): the event's invitation letter for participants (else any invitation), sent to confirmed participants
   // who haven't had it yet (a failed or bounced email counts as not sent), up to a send's limit at a time.
@@ -191,7 +197,7 @@ export default async function EventRegistrations({ params, searchParams }) {
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
                 <tr key={r.id}>
-                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span><br /><a className="small reg-email" href={`mailto:${r.email}`}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
+                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span><br /><a className="small reg-email" href={`mailto:${r.email}`}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}</td>
                   <td className="st-5" data-label="Furbaby"><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
                   {paidEvent && (
                     <>
