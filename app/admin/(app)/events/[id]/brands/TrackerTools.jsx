@@ -38,7 +38,7 @@ export default function TrackerTools({ counts, sort, publicNote = "" }) {
     <div className="tracker-tools">
       <label className="tracker-search">
         <span className="sr-only">Search the tracker</span>
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search brand, contact, email, letter…" autoComplete="off" />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search brands…" title="Searches brand, contact, email and letter" autoComplete="off" />
       </label>
       <div className="tracker-filters" role="group" aria-label="Show by reply or invite">
         {filters.map(([key, label, n, tone]) => (

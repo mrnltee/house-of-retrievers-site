@@ -1209,31 +1209,31 @@ html.send-modal-open { overflow: hidden; }
 .ht-page .ht-line { background: var(--a-sand); }
 .ht-group .ht-head { flex-wrap: wrap; }
 
-/* Event guest list review (17 Nov 2026, owner). Rows align to the top, so a guest whose panel is open no longer
-   leaves the other cells floating half way down; the "On the event page" box reads as one block; and on phones
-   each guest is a card (name and reply first, then email, greeting and email status) instead of a table that
-   scrolled sideways and hid the reply. */
-.guest-table td { vertical-align: top; }
-.guest-table .gt-pick { padding-top: 18px; }
-.guest-table .gt-reply .chip { white-space: nowrap; }
+/* Stacked tables (17 Nov 2026, owner design reviews: event Guest list, Brand tracker). Rows align to the top,
+   so a row whose edit panel is open doesn't leave the other cells floating; on phones each row is a card
+   (checkbox on the left; name, then the reply, then the rest, each cell labelled from data-label) instead of a
+   table that scrolled sideways and hid the reply. Cells set their place with st-1 … st-5. */
+.stack-table td { vertical-align: top; }
+.stack-table .st-pick { padding-top: 18px; }
+.stack-table .chip { white-space: nowrap; }
 fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12px; background: var(--a-sand); }
 .guest-public legend { float: left; width: 100%; margin-bottom: 8px; }
 .guest-public > :not(legend) { clear: both; }
 @media (max-width: 720px) {
-  .guest-table-wrap { overflow-x: visible; border: 0; background: transparent; }
-  .guest-table thead { display: none; }
-  .guest-table, .guest-table tbody { display: block; }
-  .guest-table tr { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; padding: 14px; margin-bottom: 10px; background: #fff; border: 1px solid var(--a-line); border-radius: 14px; }
-  .guest-table td { display: block; padding: 4px 0; border: 0; }
-  .guest-table .gt-pick { grid-row: 1 / span 5; padding-top: 6px; }
-  .guest-table .gt-name, .guest-table .gt-reply, .guest-table .gt-email, .guest-table .gt-greeting, .guest-table .gt-status { grid-column: 2; }
-  .guest-table tr:not(:has(.gt-pick)) > td { grid-column: 1 / -1; }
-  .guest-table .gt-name { order: 1; }
-  .guest-table .gt-reply { order: 2; }
-  .guest-table .gt-email { order: 3; }
-  .guest-table .gt-greeting { order: 4; }
-  .guest-table .gt-status { order: 5; }
-  .guest-table .gt-pick { order: 0; }
-  .guest-table [data-label]:not(.gt-reply)::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 700; color: var(--a-muted); }
-  .guest-table .tracker-edit .form { min-width: 0; }
+  .table-wrap:has(> .stack-table) { overflow: visible; border: 0; background: transparent; }
+  .stack-table thead { display: none; }
+  .stack-table, .stack-table tbody { display: block; }
+  .stack-table tr { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; padding: 14px; margin-bottom: 10px; background: #fff; border: 1px solid var(--a-line); border-radius: 14px; }
+  .stack-table td { display: block; grid-column: 2; padding: 4px 0; border: 0; }
+  .stack-table .st-pick { grid-column: 1; grid-row: 1 / span 5; order: 0; padding-top: 6px; }
+  .stack-table tr:not(:has(.st-pick)) > td { grid-column: 1 / -1; }
+  .stack-table .st-1 { order: 1; } .stack-table .st-2 { order: 2; } .stack-table .st-3 { order: 3; } .stack-table .st-4 { order: 4; } .stack-table .st-5 { order: 5; }
+  .stack-table [data-label]::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 700; color: var(--a-muted); }
+  .stack-table .tracker-edit .form { min-width: 0; }
 }
+/* Brand tracker review (17 Nov 2026, owner). The header area took almost half the screen, leaving room for about
+   three brands: the sort now shares the search row, and the row's own Send letter / Follow up buttons stay on one
+   line instead of breaking into tall two-line pills. */
+.tracker-search { flex: 1 1 180px; }
+.tracker-sort select { min-width: 160px; }
+.tracker-row-actions .btn { white-space: nowrap; }

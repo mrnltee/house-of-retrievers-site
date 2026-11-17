@@ -117,14 +117,14 @@ export default async function EventGuestsPage({ params, searchParams }) {
               {canSend && <TickedSubmit />}
             </div>
           </form>
-          <div className="table-wrap guest-table-wrap" style={{ marginTop: 10 }}>
-            <table className="guest-table">
+          <div className="table-wrap" style={{ marginTop: 10 }}>
+            <table className="stack-table">
               <thead><tr>{canSend && <th><span className="sr-only">Pick</span></th>}<th>Name</th><th>Email</th><th>Greeting</th><th>Email status</th><th>Reply</th></tr></thead>
               <tbody>
                 {g.rows.map((r) => (
                   <tr key={r.id}>
-                    {canSend && <td className="gt-pick"><input type="checkbox" form={`send-${g.key}`} name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
-                    <td className="strong gt-name">
+                    {canSend && <td className="st-pick"><input type="checkbox" form={`send-${g.key}`} name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
+                    <td className="strong st-1">
                       <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}</span></span>
                       {canEdit && (
                         <details className="tracker-edit">
@@ -152,10 +152,10 @@ export default async function EventGuestsPage({ params, searchParams }) {
                         </details>
                       )}
                     </td>
-                    <td className="gt-email" data-label="Email">{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}</td>
-                    <td className="small gt-greeting" data-label="Greeting">Dear {greetingOf(recipientFields({ contact: r }))},</td>
-                    <td className="small gt-status" data-label="Email status"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} name={r.name} /></td>
-                    <td className="gt-reply" data-label="Reply"><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span>{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
+                    <td className="st-3" data-label="Email">{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}</td>
+                    <td className="small st-4" data-label="Greeting">Dear {greetingOf(recipientFields({ contact: r }))},</td>
+                    <td className="small st-5" data-label="Email status"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} name={r.name} /></td>
+                    <td className="st-2"><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span>{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
                   </tr>
                 ))}
               </tbody>

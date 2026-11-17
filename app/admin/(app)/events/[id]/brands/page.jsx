@@ -108,13 +108,13 @@ export default async function BrandTrackerPage({ params, searchParams }) {
         {rows.length > 0 && <TrackerTools publicNote="Only brands that said Yes show on this event’s page and on the home page." counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} />}
         {canSend && rows.length > 0 && <SelectionBar letterHref={`${base}/letters/${letter}`} letterName={letterName(letter)} ownLetterHref={`${base}/events/${event.id}/letters`} />}
         <div className="table-wrap tracker-table">
-          <table>
+          <table className="stack-table">
             <thead><tr>{canSend && <th>{rows.length > 0 ? <SelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Brand</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
             <tbody id="tracker-rows">
               {sorted.map((r) => (
                 <tr key={r.supporter_id} data-row="" data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
-                  {canSend && <td><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
-                  <td className="strong">
+                  {canSend && <td className="st-pick"><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
+                  <td className="strong st-1">
                     <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}</span></span></span>
                     {canEdit && (
                       <details className="tracker-edit">
@@ -155,8 +155,8 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                       </details>
                     )}
                   </td>
-                  <td>{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
-                  <td className="small">
+                  <td className="st-4" data-label="Contact">{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
+                  <td className="small st-5" data-label="Invite letter">
                     <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} name={r.name} />
                     {canSend && (() => {
                       // One brand, no tick needed: the invite letter, or a follow-up once it went out unanswered.
@@ -169,8 +169,8 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                       );
                     })()}
                   </td>
-                  <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
-                  <td className="small">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} people`, r.dogs_attending && `${r.dogs_attending} dogs`].filter(Boolean).join(", ")} coming</span></> : null}</td>
+                  <td className="st-2"><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
+                  <td className="small st-3" data-label="Giving">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} ${r.reps_attending === 1 ? "person" : "people"}`, r.dogs_attending && `${r.dogs_attending} ${r.dogs_attending === 1 ? "dog" : "dogs"}`].filter(Boolean).join(", ")} coming</span></> : null}</td>
                 </tr>
               ))}
               {rows.length === 0 && <tr><td colSpan={canSend ? 6 : 5} className="muted">No brands invited yet.{canEdit && " Use + Invite brands at the top."}</td></tr>}
