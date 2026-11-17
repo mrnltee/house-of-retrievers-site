@@ -94,6 +94,24 @@ export const ACTION_LABELS = {
   "event.guest.save": "Saved a guest's reply",
   "event.guest.remove": "Took a guest off an event",
   "beneficiary.unevent": "Taken off an event",
+  "event.brand.invite": "Invited brands to an event",
+  "event.brand.save": "Updated a brand on an event's Brand tracker",
+  "event.brand.remove": "Took a brand off an event's Brand tracker",
+  "event.donor.save": "Updated a donor on an event",
+  "event.donor.remove": "Took a donor off an event",
+  "event.photographers": "Changed an event's photographers",
+  "photographer.add": "Added a photographer",
+  "photographer.update": "Updated a photographer",
+  "photographer.remove": "Removed a photographer",
+  "email.frame": "Changed the email sign-off and footer",
 };
 
-export const actionLabel = (action) => ACTION_LABELS[action] || action;
+/**
+ * A readable label for any action key, even one added without a label: "event.brand.save" → "Event brand save".
+ * The dashboard and history never show a raw dotted key.
+ */
+export const actionLabel = (action) => {
+  if (ACTION_LABELS[action]) return ACTION_LABELS[action];
+  const words = String(action || "").split(/[._-]+/).filter(Boolean).join(" ");
+  return words ? words[0].toUpperCase() + words.slice(1) : "";
+};
