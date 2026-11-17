@@ -1,5 +1,5 @@
 import BatchBar from "./BatchBar";
-import BrandSearch from "./BrandSearch";
+import ListSearch from "../ListSearch";
 import SelectAllBrands from "./SelectAllBrands";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
@@ -84,7 +84,9 @@ export default async function SupportersPage({ searchParams }) {
       </div>
 
 
-      <BrandSearch q={q} label={label} labels={labels.map((l) => l.category_label)} kind={kind} view={view} action={`${base}/supporters`} newHref={canEdit ? `${base}/supporters/new` : ""} />
+      <ListSearch q={q} action={`${base}/supporters`} hidden={{ kind, view: view === "list" ? "list" : "" }} placeholder="Find a brand by name, ID, label or contact…"
+        select={{ name: "label", label: "Relationship label", all: "All labels", value: label, options: labels.map((l) => [l.category_label, l.category_label]) }}
+        newHref={canEdit ? `${base}/supporters/new${kind ? `?kind=${kind}` : ""}` : ""} addNoun="new brand" />
       {filtered && <p className="small" style={{ margin: "-4px 0 12px" }}><a href={href({ kind: null, status: null, label: null, q: null })}>Clear filters</a></p>}
 
       {rows.length === 0 ? (
@@ -102,7 +104,7 @@ export default async function SupportersPage({ searchParams }) {
             <tbody>
               {rows.map((row) => {
                 return (
-                  <tr key={row.id} data-brand={searchOf(row)}>
+                  <tr key={row.id} data-find={searchOf(row)}>
                     {canEdit && <td><input type="checkbox" form="brand-batch" name="id" value={row.id} data-name={row.name} aria-label={`Select ${row.name}`} /></td>}
                     <td className="strong"><span className="supporter-list-name"><span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span><a href={`${base}/supporters/${row.id}`}>{row.name}</a></span></td>
                     <td className="small">{row.contact_name || <span className="muted">No contact yet</span>}{row.contact_email && <><br /><span className="muted">{row.contact_email}</span></>}</td>
@@ -122,7 +124,7 @@ export default async function SupportersPage({ searchParams }) {
         <ul className="supporter-cards">
           {rows.map((row) => {
             return (
-              <li key={row.id} data-brand={searchOf(row)}>
+              <li key={row.id} data-find={searchOf(row)}>
                 <a className="card supporter-card" href={`${base}/supporters/${row.id}`}>
                   <span className="supporter-card-top">
                     <span className="supporter-card-logo">{row.logo ? <img src={row.logo} alt="" /> : row.name.slice(0, 2).toUpperCase()}</span>

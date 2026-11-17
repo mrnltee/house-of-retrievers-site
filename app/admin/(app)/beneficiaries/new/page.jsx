@@ -13,7 +13,7 @@ export default async function NewBeneficiaryPage({ searchParams }) {
       <p className="small"><a href={`${base}/beneficiaries`}><Icon name="arrowLeft" /> Beneficiaries</a></p>
       <PageHead title="Add beneficiary" lead="Start with the name; the rest can wait. The contact, address and greeting are used in letters." />
       <Flash params={params} />
-      <BeneficiaryForm />
+      <BeneficiaryForm startName={String(params?.name || "").replace(/\s+/g, " ").trim().slice(0, 120)} />
     </>
   );
 }

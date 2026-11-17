@@ -6,8 +6,9 @@ import ImageField from "../ImageField";
 import LogoScaleField from "./LogoScaleField";
 
 /** Add or edit a beneficiary: who they are, what they need, and who letters go to. */
-export default function BeneficiaryForm({ row = null, canEdit = true }) {
-  const v = (key) => row?.[key] || "";
+export default function BeneficiaryForm({ row = null, canEdit = true, startName = "" }) {
+  // startName: a name carried from a search with no match (design review, 17 Nov 2026).
+  const v = (key) => row?.[key] || (key === "name" ? startName : "");
   return (
     <form action={saveBeneficiary} className="form" style={{ gap: 16 }}>
       {row && <input type="hidden" name="id" value={row.id} />}
