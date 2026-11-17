@@ -21,6 +21,7 @@ import TrackerTools from "./TrackerTools";
 import SelectAll from "./SelectAll";
 import InviteDialog from "./InviteDialog";
 import HowTo from "../../../HowTo";
+import EditDialog from "../../../EditDialog";
 import Icon from "../../../../../components/Icon";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
@@ -117,8 +118,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                   <td className="strong st-1">
                     <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}</span></span></span>
                     {canEdit && (
-                      <details className="tracker-edit">
-                        <summary className="small">Edit</summary>
+                      <EditDialog title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
                         <form action={saveTrackerEntry} className="form">
                           <input type="hidden" name="event" value={event.id} />
                           <input type="hidden" name="brand" value={r.supporter_id} />
@@ -152,7 +152,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                             <ConfirmButton className="btn ghost" formAction={removeTrackerEntry} tone="alert" title={`Take ${r.name} off this event?`} items={["They stay in the brand directory.", "Their letters for this event stay in the log."]}>Remove from this event</ConfirmButton>
                           </div>
                         </form>
-                      </details>
+                      </EditDialog>
                     )}
                   </td>
                   <td className="st-4" data-label="Contact">{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
