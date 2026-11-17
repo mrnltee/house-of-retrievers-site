@@ -10,17 +10,28 @@ import { useEffect, useState } from "react";
 export default function EditorNav({ sections }) {
   const [current, setCurrent] = useState(sections[0]?.id || "");
   useEffect(() => {
-    const els = sections.map((s) => document.getElementById(s.id)).filter(Boolean);
-    if (!els.length || !("IntersectionObserver" in window)) return undefined;
-    const seen = new Map();
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => seen.set(e.target.id, e.isIntersecting ? e.boundingClientRect.top : null));
-      const visible = [...seen.entries()].filter(([, top]) => top !== null).sort((a, b) => a[1] - b[1]);
-      if (visible.length) setCurrent(visible[0][0]);
-    }, { rootMargin: "-120px 0px -55% 0px" });
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    // The marked section is the last one whose top has reached the area just under the bar.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = (document.querySelector(".editor-nav")?.getBoundingClientRect().bottom || 0) + 48;
+      let here = sections[0]?.id || "";
+      for (const s of sections) {
+        const el = document.getElementById(s.id);
+        if (el && el.getBoundingClientRect().top <= line) here = s.id;
+      }
+      setCurrent(here);
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); if (frame) cancelAnimationFrame(frame); };
   }, [sections]);
+  // Keep the marked link in view inside the bar (it scrolls sideways on phones).
+  useEffect(() => {
+    document.querySelector(`.editor-nav a[href="#${current}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [current]);
 
   function jump(event, id) {
     const el = document.getElementById(id);
