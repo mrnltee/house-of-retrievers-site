@@ -9,11 +9,11 @@ import Icon from "../../components/Icon";
  * actions and ConfirmButtons are unchanged. Esc or Close shuts it without saving; clicking outside does not,
  * so a half-typed form isn't lost by a stray click.
  */
-export default function EditDialog({ label = "Edit", title, lead, children }) {
+export default function EditDialog({ label = "Edit", title, lead, buttonClass = "linkish small", children }) {
   const dialog = useRef(null);
   return (
     <>
-      <button type="button" className="linkish small edit-dialog-open" data-confirm="not-needed-read-only" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>{label}</button>
+      <button type="button" className={`${buttonClass} edit-dialog-open`} data-confirm="not-needed-read-only" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>{label}</button>
       <dialog ref={dialog} className="confirm-dialog edit-dialog" aria-label={title}>
         <div className="confirm-body">
           <div className="invite-head">

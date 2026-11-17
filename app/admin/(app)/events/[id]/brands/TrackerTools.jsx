@@ -11,7 +11,10 @@ const rowsOf = () => [...document.querySelectorAll("#tracker-rows > tr[data-row]
  * The Brand tracker's toolbar: forgiving search, reply filter (with counts) and sort.
  * Search and filter hide rows in place; sorting is done by the server and remembered.
  */
-export default function TrackerTools({ counts, sort, publicNote = "" }) {
+// Filter labels; the Guest tracker passes its own ("Coming", "Can't make it").
+const BRAND_LABELS = { yes: "Said yes", no: "Said no", waiting: "No reply yet", unsent: "No invite sent" };
+
+export default function TrackerTools({ counts, sort, publicNote = "", labels = BRAND_LABELS, placeholder = "Search brands…", searchTitle = "Searches brand, contact, email and letter", noun = "brands" }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [reply, setReply] = useState("");
@@ -33,12 +36,12 @@ export default function TrackerTools({ counts, sort, publicNote = "" }) {
     router.refresh();
   }
 
-  const filters = [["", "All", counts.invited, ""], ["yes", "Said yes", counts.yes, "good"], ["no", "Said no", counts.no, "alert"], ["waiting", "No reply yet", counts.waiting, ""], ["unsent", "No invite sent", counts.unsent, ""]];
+  const filters = [["", "All", counts.invited, ""], ["yes", labels.yes, counts.yes, "good"], ["no", labels.no, counts.no, "alert"], ["waiting", labels.waiting, counts.waiting, ""], ["unsent", labels.unsent, counts.unsent, ""]];
   return (
     <div className="tracker-tools">
       <label className="tracker-search">
         <span className="sr-only">Search the tracker</span>
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search brands…" title="Searches brand, contact, email and letter" autoComplete="off" />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} title={searchTitle} autoComplete="off" />
       </label>
       <div className="tracker-filters" role="group" aria-label="Show by reply or invite">
         {filters.map(([key, label, n, tone]) => (
@@ -53,7 +56,7 @@ export default function TrackerTools({ counts, sort, publicNote = "" }) {
           {TRACKER_SORTS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
         </select>
       </label>
-      <p className="small muted tracker-shown" aria-live="polite">{q || reply ? (shown ? `Showing ${shown} of ${counts.invited}. ` : "No brands match. Try fewer or different words. ") : ""}{publicNote}</p>
+      <p className="small muted tracker-shown" aria-live="polite">{q || reply ? (shown ? `Showing ${shown} of ${counts.invited}. ` : `No ${noun} match. Try fewer or different words. `) : ""}{publicNote}</p>
     </div>
   );
 }

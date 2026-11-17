@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { LETTER_STARTERS, blanksOf, fillLetter, letterBlocks, letterDate, letterWithOverride, missingBlanks, prepareLetter, recipientFields, recipientName } from "./letters.mjs";
 import { letterPdf, pdfSafe } from "./letterPdf.mjs";
 
-test("the eleven starter letters are there, each with a subject", () => {
-  assert.equal(LETTER_STARTERS.length, 11);
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 11);
+test("the twelve starter letters are there, each with a subject", () => {
+  assert.equal(LETTER_STARTERS.length, 12);
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.key)).size, 12);
   for (const l of LETTER_STARTERS) {
     assert.ok(l.subject, l.key);
     if (l.key === "open-donation-letter") continue; // no addressee: its own test below
@@ -24,7 +24,7 @@ test("covering emails (owner's brief, 2026-10-27): portfolio link, official name
     if (l.attachPdf !== false) assert.match(l.cover, /attached/i, `${l.key}: mentions the attachment`);
     assert.ok(l.cover.length <= 2000, l.key);
   }
-  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, 11, "each cover is its own");
+  assert.equal(new Set(LETTER_STARTERS.map((l) => l.cover)).size, LETTER_STARTERS.length, "each cover is its own");
   assert.deepEqual(blanksOf(`See our ${portfolio}.`).map((b) => b.label), []);
 });
 

@@ -112,6 +112,7 @@ export async function loadSendData(params, { admin, base }) {
   // Which event list the send started from (Brand tracker, Guest list or Donors), to go back there after.
   const listName = event && ["brands", "guests", "donors", "registrations"].includes(params?.list) ? params.list : "";
   if (listName) backQuery.set("list", listName);
+  if (params?.own === "1") backQuery.set("own", "1");
 
   return {
     event: event ? { id: event.id, title: event.title } : null,
@@ -140,6 +141,8 @@ export async function loadSendData(params, { admin, base }) {
       // HOR's saved Own email templates, offered under "Write my own email".
       ownTemplates: (await listCustomTemplates("own")).map((t) => ({ id: t.id, name: t.name, subject: t.subject, message: t.message })),
       emailsHref: `${base}/emails`,
+      // "Message" buttons (Guest tracker) open the window on Write my own email.
+      startOwn: params?.own === "1",
     },
   };
 }

@@ -23,7 +23,7 @@ const CARD_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xml
  * by themselves; last values are offered again), check each recipient's email
  * and attachment, then send.
  */
-export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, initialPicked = null, max, ready, pdfAction, back, returnTo = "", onSwitchLetter = null, eventId = "", designs = [], house = null, frame = null, ownTemplates = [], emailsHref = "" }) {
+export default function LetterSend({ letters, letter, blanks, saved, standard = [], from = "", detailsHref = "", editHref = "", signatureCheck = null, recipients: listed, initialPicked = null, max, ready, pdfAction, back, returnTo = "", onSwitchLetter = null, eventId = "", designs = [], house = null, frame = null, ownTemplates = [], emailsHref = "", startOwn = false }) {
   const isStandard = (label) => standard.includes(label);
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
@@ -139,6 +139,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
     // With templates to pick from, let them choose first; otherwise open the editor at once.
     setWantWording(on && !ownTemplates.length);
   }
+  // Opened from a "Message" button (?own=1, owner 2026-11-17): start on Write my own email, once.
+  useEffect(() => { if (startOwn && !invite) writeOwn(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   function startOwnFrom(id) {
     const t = ownTemplates.find((x) => x.id === id) || null;
     setOwnFrom(t ? t.id : "");

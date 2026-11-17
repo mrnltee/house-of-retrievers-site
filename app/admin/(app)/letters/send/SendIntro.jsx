@@ -2,7 +2,7 @@
 export function SendIntro({ data, base }) {
   const { event, listName, mismatched } = data;
   const listHref = event ? (listName === "registrations" ? `${base}/registrations/${event.id}` : `${base}/events/${event.id}/${["guests", "donors"].includes(listName) ? listName : "brands"}`) : "";
-  const listLabel = listName === "registrations" ? "Registrations" : listName === "guests" ? "Guest list" : listName === "donors" ? "Donors" : "Brand tracker";
+  const listLabel = listName === "registrations" ? "Registrations" : listName === "guests" ? "Guest tracker" : listName === "donors" ? "Donors" : "Brand tracker";
   return (
     <>
       {event && <p className="card small">For <strong>{event.title}</strong>: these letters are tracked on its <a href={listHref}>{listLabel}</a>, and its details fill in [Event Name], [Event Date], [Event Sponsors] and the other event fill-ins.</p>}

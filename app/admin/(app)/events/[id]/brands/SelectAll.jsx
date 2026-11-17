@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 const boxes = () => [...document.querySelectorAll("#tracker-rows > tr[data-row]:not([hidden]) input[name='to']")];
 
 /** Header box: ticks or clears every row that's showing (after search and filter). */
-export default function SelectAll() {
+export default function SelectAll({ label = "Pick every brand showing" }) {
   const box = useRef(null);
   useEffect(() => {
     const update = () => {
@@ -29,5 +29,5 @@ export default function SelectAll() {
     boxes().forEach((b) => { b.checked = on; });
     document.dispatchEvent(new Event("change"));
   }
-  return <input ref={box} type="checkbox" onChange={toggle} aria-label="Pick every brand showing" />;
+  return <input ref={box} type="checkbox" onChange={toggle} aria-label={label} />;
 }
