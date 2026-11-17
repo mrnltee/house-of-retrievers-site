@@ -11,6 +11,8 @@ import { loadInstagramCounts } from "../lib/instagramCounts";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation, thumbnailFit } from "../lib/mediaHub.mjs";
 import Icon from "../components/Icon";
+import { LEGAL } from "../lib/legal.mjs";
+import { HOME_URL, PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 // Re-rendered hourly so new event albums and photographer credits reach the photo library; a publish in Admin → Media hub refreshes it at once.
 
@@ -261,7 +263,30 @@ export default async function MediaPage() {
 
       <PhotoLightbox />
       <MessageForm />
-      <footer className="media-footer"><div><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div><div className="media-footer-contact"><span>Media and partnership inquiries</span><a href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a></div><div className="media-footer-bottom"><span>© The House of Retrievers’ Society, Inc.</span><a href="https://www.houseofretrieversph.org/" target="_blank" rel="noopener noreferrer">Visit the main site <Icon name="external" /></a></div></footer>
+      <footer className="media-footer">
+        <div className="media-footer-brand"><LogoMoments tone="dark" /><p>Good dogs. Good people. Greater Good.</p></div>
+        <nav className="media-footer-col" aria-label="Press kit">
+          <span>Press kit</span>
+          <a href="#press-kit">Boilerplates</a>
+          <a href="/media/fact-sheet" target="_blank" rel="noopener noreferrer">Fact sheet PDF <Icon name="download" /></a>
+          <a href="#brand-assets">Logos and brand</a>
+          <a href="#photo-library">Photos</a>
+        </nav>
+        <nav className="media-footer-col" aria-label="Follow House of Retrievers">
+          <span>Follow</span>
+          <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noopener noreferrer">Instagram <Icon name="external" /></a>
+          <a href="https://www.facebook.com/houseofretrieversph" target="_blank" rel="noopener noreferrer">Facebook <Icon name="external" /></a>
+        </nav>
+        <div className="media-footer-col media-footer-contact">
+          <span>Media and partnership inquiries</span>
+          <a className="media-footer-email" href="mailto:houseofretrieversph@gmail.com">houseofretrieversph@gmail.com</a>
+          <a href="mailto:houseofretrieversph@gmail.com?subject=Media%20inquiry" data-message="inquiry">Send us a message <Icon name="arrow" /></a>
+        </div>
+        <div className="media-footer-bottom">
+          <p>© {new Date().getFullYear()} {LEGAL.org} · SEC Registration No. {LEGAL.sec}</p>
+          <p className="media-footer-legal"><a href={PRIVACY_URL}>Privacy notice</a><a href={HOME_URL}>Main site <Icon name="arrow" /></a></p>
+        </div>
+      </footer>
     </main>
   );
 }

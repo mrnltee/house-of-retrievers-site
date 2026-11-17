@@ -2050,3 +2050,26 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .footer-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 6px; }
 .footer-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
 .footer-links a + a::before { content: "·"; margin-right: 10px; opacity: .55; text-decoration: none; display: inline-block; }
+
+/* Media hub footer review (17 Nov 2026, owner). It had only the logo and the email, left the middle empty,
+   no privacy notice (the hub's message form collects names and emails), and on phones squeezed the copyright
+   and main-site link into one wrapping row. Now: brand, press kit links, follow, contact; a bottom row with the
+   registered name, SEC number, Privacy notice and Main site (same tab: it is HoR's own site). */
+.media-hub .media-footer { grid-template-columns: minmax(200px, 1.3fr) repeat(2, minmax(0, .8fr)) minmax(0, 1.2fr); gap: 32px clamp(24px, 4vw, 56px); align-items: start; padding-top: 72px; }
+.media-hub .media-footer-brand { max-width: 250px; }
+.media-footer-col { display: grid; justify-items: start; align-content: start; gap: 0; }
+.media-hub .media-footer-col > span { margin-bottom: 6px; color: rgba(255,255,255,.62); font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
+.media-hub .media-footer-col a { gap: 6px; color: rgba(255,255,255,.88); font-size: 15px; font-weight: 500; }
+.media-hub .media-footer-col a:hover, .media-hub .media-footer-col a:focus-visible { color: var(--media-gold); }
+.media-hub .media-footer-contact { text-align: left; }
+.media-hub .media-footer-contact a.media-footer-email { color: var(--media-gold); font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+.media-hub .media-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; margin-top: 16px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.6); font-size: 13px; }
+.media-hub .media-footer-bottom p { margin: 0; }
+.media-footer-legal { display: flex; flex-wrap: wrap; gap: 0 20px; }
+.media-hub .media-footer-bottom a { gap: 6px; color: #fff; font-size: 13px; }
+@media (max-width: 1000px) { .media-hub .media-footer { grid-template-columns: repeat(2, minmax(0, 1fr)); } .media-hub .media-footer-brand { grid-column: 1 / -1; } }
+@media (max-width: 560px) {
+  .media-hub .media-footer { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 56px; }
+  .media-hub .media-footer-bottom { flex-direction: column; align-items: flex-start; }
+  .media-hub .media-footer p { text-align: left; }
+}
