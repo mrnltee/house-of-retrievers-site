@@ -34,6 +34,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   const extraCc = parseCopies(copyCc, "CC");
   const extraBcc = parseCopies(copyBcc, "BCC");
   const copyError = extraCc.error || extraBcc.error || "";
+  // A bad address unfolds Copy others in, so the reason Send is off is on screen.
+  const copiesOpen = Boolean(copyError);
   const design = designs.find((d) => d.id === designId) || null;
   // Another email (and name) for a recipient, for this send only: { ref: { email, contact } }.
   const [sendTo, setSendTo] = useState({});
@@ -273,8 +275,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </ul>
         </fieldset>
 
-        <fieldset className="field letter-copies">
-          <legend className="field-head">Copy others in <small>Optional. Added to every recipient&apos;s email in this send, up to {MAX_COPIES} each; separate addresses with commas.</small></legend>
+        {/* Folded until needed (Guest tracker UX review, 17 Nov 2026): most sends copy nobody in. */}
+        <details className="field letter-copies" open={copiesOpen || undefined}>
+          <summary className="field-head">Copy others in{extraCc.emails.length + extraBcc.emails.length ? ` · ${extraCc.emails.length + extraBcc.emails.length}` : ""} <small>Optional CC or BCC on every email in this send, up to {MAX_COPIES} each; separate addresses with commas.</small></summary>
           <label className="field">
             <span>CC <small>Everyone on the email can see these</small></span>
             <input type="text" name="copyCc" value={copyCc} onChange={(e) => setCopyCc(e.target.value)} placeholder="name@example.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraCc.error)} />
@@ -285,7 +288,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           </label>
           {copyError ? <p className="small error-text" role="alert">{copyError}</p>
             : count > 1 && (extraCc.emails.length || extraBcc.emails.length) ? <p className="small muted">Each recipient gets their own email, so these addresses get {count} copies.</p> : null}
-        </fieldset>
+        </details>
 
         {shownBlanks.some((b) => !isStandard(b.label)) && (
           <fieldset className="field">
@@ -332,7 +335,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
           <span><strong>Attach the letter as a PDF</strong><br /><span className="small muted">{design ? (attach ? "The design goes out with the letter attached as a PDF." : "The design is the whole email; the letter isn't sent.") : attach ? "A short cover email goes out with the letter attached." : "Email only for this send: just the email, no PDF."}</span></span>
         </label> : <p className="small muted" style={{ margin: 0 }}>This letter is set to <strong>email only</strong>: no PDF is attached. Change it in the letter editor.</p>}
 
-        <div className="actions">
+        <div className="actions send-actions">
           <ConfirmButton
             disabled={!ready || count === 0 || count > max || missing.length > 0 || ownLeft || Boolean(copyError) || Boolean(sendToCheck.error)}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
@@ -345,11 +348,16 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             Download {invite ? "invitation" : "PDF"} for {who?.name}
           </button>}
           <input type="hidden" name="previewTo" />
+          {/* Why Send is off, inside the bar that stays in view (Guest tracker UX review, 17 Nov 2026). */}
+          {(!ready || missing.length > 0 || ownLeft || sendToCheck.error) && (
+            <div className="send-why">
+              {!ready && <p className="small muted">Sending switches on once the Resend key is in Vercel.</p>}
+              {missing.length > 0 && <p className="small muted">Still to fill: {missing.join(", ")}.</p>}
+              {ownLeft && <p className="small muted">Write your subject and message first: <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}><Icon name="edit" /> Write your email</button>.</p>}
+              {sendToCheck.error && <p className="small error-text" role="alert">{sendToCheck.error}</p>}
+            </div>
+          )}
         </div>
-        {!ready && <p className="small muted">Sending switches on once the Resend key is in Vercel.</p>}
-        {missing.length > 0 && <p className="small muted">Still to fill: {missing.join(", ")}.</p>}
-        {ownLeft && <p className="small muted">Write your subject and message first: <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}><Icon name="edit" /> Write your email</button>.</p>}
-        {sendToCheck.error && <p className="small error-text" role="alert">{sendToCheck.error}</p>}
       </form>
 
       <section className="card template-preview">

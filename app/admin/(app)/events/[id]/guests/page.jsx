@@ -10,7 +10,7 @@ import { guestFollowUpLink, guestInviteLetter, guestMessageBase, guestRowLinks }
 import { INTRO_MAX, ROLE_MAX, SPEAKER_ROLES } from "../../../../../lib/eventSpeakers.mjs";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
-import { addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest } from "../../../../contactActions";
+import { addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, setEventGuestReply } from "../../../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import ImageField, { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
@@ -139,7 +139,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
         )}
         <div className="table-wrap tracker-table">
           <table className="stack-table">
-            <thead><tr>{canSend && <th>{guests.length > 0 ? <SelectAll label="Pick every guest showing" /> : <span className="sr-only">Pick</span>}</th>}<th>Guest</th><th>Contact</th><th>Letters</th><th>Their reply</th><th>Group</th></tr></thead>
+            <thead><tr>{canSend && <th>{guests.length > 0 ? <SelectAll label="Pick every guest showing" /> : <span className="sr-only">Pick</span>}</th>}<th>Guest</th><th>Contact</th><th>Letters</th><th>Their reply</th></tr></thead>
             <tbody id="tracker-rows">
               {sorted.map((r) => {
                 const links = guestRowLinks(base, event.id, r, inviteOf(r), { sent: wasSent(r) });
@@ -147,16 +147,17 @@ export default async function EventGuestsPage({ params, searchParams }) {
                   <tr key={r.id} data-row="" data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
                     {canSend && <td className="st-pick"><input type="checkbox" form="tracker-send" name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
                     <td className="strong st-1">
-                      <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}</span></span>
+                      <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}<br /><span className="small muted guest-group">{categoryLabel(r.category)}</span></span></span>
                       {canEdit && (
-                        <EditDialog title={r.name} lead={`At ${event.title}: their reply, your notes, and whether they show on the event page.`}>
+                        <EditDialog label="Edit details" buttonClass="btn small ghost" title={r.name} lead={`At ${event.title}: their reply, your notes, and whether they show on the event page.`}>
                           <form action={saveEventGuest} className="form">
                             <input type="hidden" name="event" value={event.id} />
                             <input type="hidden" name="contact" value={r.id} />
                             <label className="field"><span>Their reply</span><select name="reply" defaultValue={r.reply}>{REPLIES.map(([k]) => <option key={k} value={k}>{guestReply(k)}</option>)}</select></label>
                             <label className="field"><span>Notes for this event <small>Only admins see these</small></span><textarea name="notes" rows={2} maxLength={1000} defaultValue={r.event_notes || ""} /></label>
+                            <details className="guest-public-fold" open={r.show_on_site || undefined}>
+                            <summary className="strong">On the event page <span className="small muted">{r.show_on_site ? (r.reply === "yes" ? "· shown" : "· waiting for Coming") : "· not shown"}</span></summary>
                             <fieldset className="plain guest-public">
-                              <legend className="strong">On the event page</legend>
                               <input type="hidden" name="publicSent" value="1" />
                               <label className="check"><input type="checkbox" name="showOnSite" value="1" defaultChecked={r.show_on_site} /> <span>Show {r.name} under Speakers &amp; special guests <small className="muted">(only once their reply is Coming, and only with their OK)</small></span></label>
                               <p className="small muted" style={{ margin: 0 }}>The page shows only what you fill in here: their name, role, intro, this picture and one link. Never their email, phone, notes or the photo on their guest record.</p>
@@ -165,6 +166,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                               <ImageField name="publicPhoto" label="Picture for the event page" hint="A photo they're happy to have public. Square works best." current={r.public_photo || ""} round maxEdge={600} />
                               <label className="field"><span>Link <small>Their Instagram (@handle) or a https:// page</small></span><input name="publicLink" maxLength={300} defaultValue={r.public_link || ""} /></label>
                             </fieldset>
+                            </details>
                             <div className="actions">
                               <ConfirmButton className="btn dark" title={`Save ${r.name} for this event?`} items={["Their reply and notes, for this event only.", "If “Show on the event page” is ticked and they're Coming, their name, role, intro, picture and link appear on the public event page."]}>Save</ConfirmButton>
                               <ConfirmButton className="btn ghost" formAction={removeEventGuest} tone="alert" title={`Take ${r.name} off this event?`} items={["They stay in your guests for other events.", "Letters already sent stay in the log."]}>Remove from this event</ConfirmButton>
@@ -175,7 +177,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                     </td>
                     <td className="st-4" data-label="Contact">{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}<br /><span className="small muted">Dear {greetingOf(recipientFields({ contact: r }))},</span></td>
                     <td className="small st-5" data-label="Letters">
-                      <SendStatus sends={sendsOf(r)} letterName={letterName} usual={inviteOf(r)} name={r.name} />
+                      {sendsOf(r).length ? <SendStatus sends={sendsOf(r)} letterName={letterName} usual={inviteOf(r)} name={r.name} /> : <span className="small muted">Not invited yet</span>}
                       {canSend && (
                         <span className="tracker-row-actions">
                           {links.followUp && <a className="btn small dark" href={links.followUp} title={`Email ${r.name} the follow-up. You can edit the wording before it's sent.`}>Follow up</a>}
@@ -184,12 +186,26 @@ export default async function EventGuestsPage({ params, searchParams }) {
                         </span>
                       )}
                     </td>
-                    <td className="st-2"><span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
-                    <td className="small st-3" data-label="Group">{categoryLabel(r.category)}</td>
+                    <td className="st-2" data-label="Their reply">
+                      {canEdit ? (
+                        <span className="reply-quick" role="group" aria-label={`${r.name}'s reply`}>
+                          {REPLIES.map(([k]) => (k === r.reply
+                            ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true">{guestReply(k)}</span>
+                            : (
+                              <form key={k} action={setEventGuestReply}>
+                                <input type="hidden" name="event" value={event.id} />
+                                <input type="hidden" name="contact" value={r.id} />
+                                <input type="hidden" name="reply" value={k} />
+                                <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, ${guestReply(k)}`} title={`${r.name}: ${guestReply(k)}?`}
+                                  items={[`Their reply for ${event.title}: ${guestReply(r.reply)} → ${guestReply(k)}`, ...(r.show_on_site ? [k === "yes" ? "They'll show on the event page" : "They'll be taken off the event page until they're Coming"] : []), "Nothing is emailed"]}>{guestReply(k)}</ConfirmButton>
+                              </form>
+                            )))}
+                        </span>
+                      ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>}{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
                   </tr>
                 );
               })}
-              {guests.length === 0 && <tr><td colSpan={canSend ? 6 : 5} className="muted">No guests on this event yet.{canEdit && " Use + Add a guest at the top."}</td></tr>}
+              {guests.length === 0 && <tr><td colSpan={canSend ? 5 : 4} className="muted">No guests on this event yet.{canEdit && " Use + Add a guest at the top."}</td></tr>}
             </tbody>
           </table>
         </div>

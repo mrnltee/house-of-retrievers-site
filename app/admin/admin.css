@@ -1438,3 +1438,29 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .ht-chip.is-alert { background: var(--a-alert); color: #fff; }
 .ht-receipt { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: #fff; border: 1px solid var(--a-line); min-height: 120px; align-content: start; }
 .ht-qr { display: block; width: 44px; height: 44px; margin: 4px 0; border-radius: 4px; background: repeating-conic-gradient(var(--a-ink) 0 25%, #fff 0 50%) 0 0 / 11px 11px; }
+
+/* Guest tracker UX review (17 Nov 2026): set a reply right on the row, a visible Edit details button, the
+   event-page fields folded until used, and in the send window CC/BCC folded and Send kept in view. */
+.reply-quick { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.reply-quick form { display: contents; }
+.reply-opt { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--a-line); background: #fff; color: var(--a-ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+button.reply-opt:hover, button.reply-opt:focus-visible { border-color: var(--a-ink); }
+.reply-opt.is-on { cursor: default; background: var(--a-sand); border-color: var(--a-sand); font-weight: 700; }
+.reply-opt.is-on.good { background: var(--a-success); border-color: var(--a-success); color: #fff; }
+.reply-opt.is-on.alert { background: var(--a-alert); border-color: var(--a-alert); color: #fff; }
+.tracker-page .edit-dialog-open { margin-top: 6px; }
+.guest-public-fold { border-radius: 12px; background: var(--a-sand); padding: 12px 14px; }
+.guest-public-fold > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; }
+.guest-public-fold[open] > summary { margin-bottom: 8px; }
+.guest-public-fold .guest-public { background: transparent; padding: 0; }
+.letter-copies > summary { cursor: pointer; list-style: revert; }
+.letter-copies[open] > summary { margin-bottom: 8px; }
+.send-actions { position: sticky; bottom: 0; z-index: 2; margin: 0 -24px -24px; padding: 14px 24px; background: #fff; border-top: 1px solid var(--a-line); border-radius: 0 0 16px 16px; }
+@media (max-width: 720px) { .reply-opt { min-height: 36px; } }
+.reply-quick { flex-wrap: nowrap; gap: 0; border: 1px solid var(--a-line); border-radius: 999px; background: #fff; padding: 2px; }
+.reply-quick .reply-opt { border: 0; min-height: 30px; padding: 4px 10px; }
+.tracker-page .st-2 { min-width: 290px; }
+.guest-group { color: var(--a-muted); }
+.send-why { flex-basis: 100%; }
+.send-why p { margin: 2px 0 0; }
+@media (max-width: 720px) { .tracker-page .st-2 { min-width: 0; } .reply-quick { display: flex; width: 100%; } .reply-quick .reply-opt { flex: 1 1 0; min-width: 0; justify-content: center; text-align: center; white-space: normal; line-height: 1.15; min-height: 40px; padding: 4px 6px; font-size: 12.5px; } }

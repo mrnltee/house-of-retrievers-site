@@ -205,7 +205,7 @@ Object.assign(GUIDES, {
       { scene: "send", state: { guests: true, to: ["to1"], letter: "Follow-up: guests with no reply yet (email only)" }, target: "write", act: "click", caption: "Want a personal line? Edit wording for this send changes it for this send only; the saved letter stays as it is." },
       { scene: "send", state: { guests: true, to: ["to1"], letter: "Follow-up: guests with no reply yet (email only)" }, target: "send", act: "click", caption: "Press Send to 1, then confirm." },
       { scene: "guestTracker", target: "followAll", act: "click", caption: "To follow up everyone still waiting at once, press Follow up · N at the top. Untick anyone you've already spoken to." },
-      { scene: "guestTracker", target: "g1Status", caption: "Their reply stays No reply yet until you change it in Edit. When they answer, set Coming or Can't make it there." },
+      { scene: "guestTracker", target: "g1Status", caption: "Their reply stays No reply yet until you record it. When they answer, press Coming or Can't make it on their row and confirm." },
     ],
   },
   "guest-message": {

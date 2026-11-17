@@ -93,6 +93,7 @@ export const ACTION_LABELS = {
   "event.guest.add": "Added guests to an event",
   "event.guest.save": "Saved a guest's reply",
   "event.guest.remove": "Took a guest off an event",
+  "event.guest.reply": "Recorded a guest's reply",
   "beneficiary.unevent": "Taken off an event",
   "event.brand.invite": "Invited brands to an event",
   "event.brand.save": "Updated a brand on an event's Brand tracker",
