@@ -6,6 +6,7 @@ import Icon from "./Icon";
 import { socialLinks } from "../lib/socials.mjs";
 import LogoMoments from "./LogoMoments";
 import Footer from "./Footer";
+import { initialsOf, speakersTitle } from "../lib/eventSpeakers.mjs";
 import JoinModal from "./JoinModal";
 import RsvpModal from "./RsvpModal";
 import ShareMenu from "./ShareMenu";
@@ -598,6 +599,24 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
               <h3 id="included-title">What's included</h3>
               <ul>
                 {event.included.map((item) => <li key={item}><Icon name="check" size={14} /> <span><Linked text={item} /></span></li>)}
+              </ul>
+            </section>
+          )}
+          {event.speakers?.length > 0 && (
+            <section className="event-speakers" aria-labelledby="speakers-title">
+              <h3 id="speakers-title">{speakersTitle(event.speakers)}</h3>
+              <ul>
+                {event.speakers.map((p) => (
+                  <li key={p.id} className="event-speaker">
+                    <span className="event-speaker-photo" aria-hidden="true">{p.photo ? <img src={p.photo} alt="" loading="lazy" /> : initialsOf(p.name)}</span>
+                    <span className="event-speaker-body">
+                      <span className="event-speaker-role">{p.role}</span>
+                      <strong>{p.name}</strong>
+                      {p.intro && <span className="event-speaker-intro">{p.intro}</span>}
+                      {p.link && <a className="event-speaker-link" href={p.link} target="_blank" rel="noopener noreferrer">{p.linkLabel} <Icon name="external" size={12} /></a>}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </section>
           )}

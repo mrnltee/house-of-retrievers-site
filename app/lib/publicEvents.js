@@ -7,6 +7,7 @@ import { withPoster } from "./posterFrame.mjs";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { supporterLinks } from "./publicSupporters";
 import { beneficiariesForEvent } from "./publicBeneficiaries";
+import { speakersForEvent } from "./publicSpeakers";
 import { yesBrandsByEvent } from "./eventBrandsStore";
 import { publicNames, withoutBrands } from "./eventBrands.mjs";
 import { CAPACITY_USED_SQL, PUBLIC_HUMANS_USED_SQL } from "./eventCapacity.mjs";
@@ -66,6 +67,9 @@ export async function loadEvent(slug) {
     // "Photos by": the photographers credited on it (shown once the event has passed).
     const photographers = await photographersForEvent(row.id).catch(() => []);
     if (photographers.length) event.photographers = photographers;
+    // Speakers and special guests: switched on from its Guest list, replied Coming.
+    const speakers = await speakersForEvent(row.id);
+    if (speakers.length) event.speakers = speakers;
     // Where your support goes: the beneficiaries this charity event picked.
     if (row.is_charity) {
       const beneficiaries = await beneficiariesForEvent(row.id);

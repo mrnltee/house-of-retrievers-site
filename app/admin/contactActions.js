@@ -4,6 +4,7 @@ import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { cleanContact } from "../lib/contacts.mjs";
+import { cleanSpeaker } from "../lib/eventSpeakers.mjs";
 import { cleanEventDonor } from "../lib/eventDonors.mjs";
 import { pictureFrom } from "../lib/admin/imageUpload";
 
@@ -119,9 +120,22 @@ export async function saveEventGuest(data) {
       ? await sql("UPDATE event_guests SET reply=$3, notes=$4, updated_at=now() WHERE event_id=$1 AND contact_id=$2 RETURNING contact_id", [eventId, contactId, reply, notes])
       : [];
     if (!row) await backWith(back, "error", "That guest isn't on this event's list.");
+    // "On the event page" (speakers & special guests). Only when the form sent it, so an older open tab
+    // saving just the reply leaves these alone. The picture is public: it is uploaded for the page.
+    let shown = null;
+    if (form(data, "publicSent") === "1") {
+      const pub = cleanSpeaker({ show: form(data, "showOnSite"), role: form(data, "publicRole"), intro: form(data, "publicIntro"), link: form(data, "publicLink") });
+      if (form(data, "publicLink").trim() && !pub.link) await backWith(back, "error", "That link isn't one we can show. Use a full https:// address or an @handle.");
+      const photo = await pictureFrom(data, "publicPhoto", admin.email);
+      if (photo.error) await backWith(back, "error", photo.error);
+      await sql("UPDATE event_guests SET show_on_site=$3, public_role=$4, public_intro=$5, public_link=$6, public_photo=$7 WHERE event_id=$1 AND contact_id=$2",
+        [eventId, contactId, pub.show, pub.role || null, pub.intro || null, pub.link || null, photo.url]);
+      shown = pub.show;
+    }
     const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
-    await logActivity(admin.email, "event.guest.save", c?.name || "", { eventId, contactId, reply });
-    await backWith(back, "ok", `Saved ${c?.name}.`);
+    await logActivity(admin.email, "event.guest.save", c?.name || "", { eventId, contactId, reply, ...(shown === null ? {} : { onEventPage: shown }) });
+    const note = shown && reply !== "yes" ? " They'll appear on the event page once their reply is Coming." : "";
+    await backWith(back, "ok", `Saved ${c?.name}.${note}`);
   });
 }
 

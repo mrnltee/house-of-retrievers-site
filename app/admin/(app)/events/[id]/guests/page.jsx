@@ -14,6 +14,8 @@ import ConfirmButton from "../../../ConfirmButton";
 import SendStatus from "../../../SendStatus";
 import TickedSubmit from "../../../TickedSubmit";
 import ContactFields from "../../../guests/ContactFields";
+import ImageField from "../../../ImageField";
+import { INTRO_MAX, ROLE_MAX, SPEAKER_ROLES } from "../../../../../lib/eventSpeakers.mjs";
 
 const greetingOf = (f) => f.salutation || f.contact || f.name;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
@@ -35,7 +37,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
   const canEdit = can(admin, "guests:edit");
   const canSend = canEdit && can(admin, "letters:edit");
   const [guests, others, letters, chosen] = await Promise.all([
-    sql(`SELECT c.*, eg.reply, eg.notes AS event_notes FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
+    sql(`SELECT c.*, eg.reply, eg.notes AS event_notes, eg.show_on_site, eg.public_role, eg.public_intro, eg.public_photo, eg.public_link FROM event_guests eg JOIN letter_contacts c ON c.id = eg.contact_id
           WHERE eg.event_id = $1 AND c.deleted_at IS NULL ORDER BY lower(c.name)`, [event.id]),
     sql(`SELECT id, name, organization, specification, category, email FROM letter_contacts c WHERE deleted_at IS NULL
           AND NOT EXISTS (SELECT 1 FROM event_guests eg WHERE eg.event_id = $1 AND eg.contact_id = c.id) ORDER BY lower(name)`, [event.id]),
@@ -48,6 +50,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
   const letterName = (key) => letters.find((l) => l.key === key)?.name || key;
   const eventLetter = letters.find((l) => l.eventId === event.id)?.key || null;
   const counts = trackerCounts(guests);
+  const onPage = guests.filter((g) => g.show_on_site && g.reply === "yes").length;
   const groups = CONTACT_CATEGORIES.map((c) => ({ ...c, letter: eventLetter || letterFor(c.key, chosen), rows: guests.filter((g) => g.category === c.key) })).filter((g) => g.rows.length);
 
   return (
@@ -63,6 +66,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
         <span className="chip good">{counts.yes} coming</span>
         <span className="chip alert">{counts.no} can&apos;t make it</span>
         <span className="chip">{counts.waiting} no reply yet</span>
+        <span className="chip">{onPage} on the event page</span>
       </section>
 
       {canEdit && (
@@ -124,14 +128,24 @@ export default async function EventGuestsPage({ params, searchParams }) {
                       <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}</span></span>
                       {canEdit && (
                         <details className="tracker-edit">
-                          <summary className="small">Reply &amp; notes</summary>
+                          <summary className="small">Reply, notes &amp; event page</summary>
                           <form action={saveEventGuest} className="form">
                             <input type="hidden" name="event" value={event.id} />
                             <input type="hidden" name="contact" value={r.id} />
                             <label className="field"><span>Their reply</span><select name="reply" defaultValue={r.reply}>{REPLIES.map(([k, l]) => <option key={k} value={k}>{k === "yes" ? "Coming" : k === "no" ? "Can't make it" : l}</option>)}</select></label>
                             <label className="field"><span>Notes for this event <small>Only admins see these</small></span><textarea name="notes" rows={2} maxLength={1000} defaultValue={r.event_notes || ""} /></label>
+                            <fieldset className="field guest-public">
+                              <legend className="strong">On the event page</legend>
+                              <input type="hidden" name="publicSent" value="1" />
+                              <label className="check"><input type="checkbox" name="showOnSite" value="1" defaultChecked={r.show_on_site} /> <span>Show {r.name} under Speakers &amp; special guests <small className="muted">(only once their reply is Coming, and only with their OK)</small></span></label>
+                              <p className="small muted" style={{ margin: 0 }}>The page shows only what you fill in here: their name, role, intro, this picture and one link. Never their email, phone, notes or the photo on their guest record.</p>
+                              <label className="field"><span>Role <small>e.g. Guest speaker, Host, Special guest</small></span><input name="publicRole" list={`roles-${r.id}`} maxLength={ROLE_MAX} defaultValue={r.public_role || ""} /><datalist id={`roles-${r.id}`}>{SPEAKER_ROLES.map((x) => <option key={x} value={x} />)}</datalist></label>
+                              <label className="field"><span>Intro <small>One or two lines, up to {INTRO_MAX} characters</small></span><textarea name="publicIntro" rows={2} maxLength={INTRO_MAX} defaultValue={r.public_intro || ""} /></label>
+                              <ImageField name="publicPhoto" label="Picture for the event page" hint="A photo they're happy to have public. Square works best." current={r.public_photo || ""} round maxEdge={600} />
+                              <label className="field"><span>Link <small>Their Instagram (@handle) or a https:// page</small></span><input name="publicLink" maxLength={300} defaultValue={r.public_link || ""} /></label>
+                            </fieldset>
                             <div className="actions">
-                              <ConfirmButton className="btn dark" title={`Save ${r.name}'s reply?`} items={["For this event only."]}>Save</ConfirmButton>
+                              <ConfirmButton className="btn dark" title={`Save ${r.name} for this event?`} items={["Their reply and notes, for this event only.", "If “Show on the event page” is ticked and they're Coming, their name, role, intro, picture and link appear on the public event page."]}>Save</ConfirmButton>
                               <ConfirmButton className="btn ghost" formAction={removeEventGuest} tone="alert" title={`Take ${r.name} off this event?`} items={["They stay in your guests for other events.", "Letters already sent stay in the log."]}>Remove from this event</ConfirmButton>
                             </div>
                           </form>
@@ -141,7 +155,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                     <td>{letterEmails(r).to || <span className="muted">No email yet</span>}{r.rep_name && <><br /><span className="small muted">Rep: {r.rep_name}{r.send_to !== "person" ? " (gets letters)" : ""}</span></>}</td>
                     <td className="small">Dear {greetingOf(recipientFields({ contact: r }))},</td>
                     <td className="small"><SendStatus sends={sends[`contact:${r.id}`]} letterName={letterName} name={r.name} /></td>
-                    <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span></td>
+                    <td><span className={`chip ${replyTone[r.reply]}`.trim()}>{r.reply === "yes" ? "Coming" : r.reply === "no" ? "Can't make it" : replyLabel(r.reply)}</span>{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
                   </tr>
                 ))}
               </tbody>
