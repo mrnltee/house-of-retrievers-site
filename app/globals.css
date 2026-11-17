@@ -2044,3 +2044,9 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-editorial-topics li { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 12px; background: var(--media-ivory); font-size: 16px; font-weight: 600; }
 .media-editorial-topics .icon { flex: none; color: var(--media-gold-text); }
 @media (max-width: 800px) { .media-hub .media-editorial-note { grid-template-columns: 1fr; } }
+
+/* Footer: Privacy notice and Media kit side by side (17 Nov 2026, owner), a dot between them; each link is
+   44px tall so it is easy to tap. */
+.footer-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 6px; }
+.footer-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
+.footer-links a + a::before { content: "·"; margin-right: 10px; opacity: .55; text-decoration: none; display: inline-block; }

@@ -1,7 +1,7 @@
 "use client";
 
 import useLegal from "../lib/useLegal";
-import { PRIVACY_URL } from "../lib/siteSeo.mjs";
+import { MEDIA_URL, PRIVACY_URL } from "../lib/siteSeo.mjs";
 
 /**
  * The society's name and SEC registration are part of the unveiling. They
@@ -20,7 +20,10 @@ export default function FooterLegal() {
           <p>SEC Registration No. {legal.sec}</p>
         </>
       )}
-      <a className="footer-privacy" href={PRIVACY_URL}>Privacy notice</a>
+      <nav className="footer-links" aria-label="More from House of Retrievers">
+        <a className="footer-privacy" href={PRIVACY_URL}>Privacy notice</a>
+        <a className="footer-privacy" href={MEDIA_URL}>Media kit</a>
+      </nav>
       <p suppressHydrationWarning>© {new Date().getFullYear()} All rights reserved.</p>
     </div>
   );
