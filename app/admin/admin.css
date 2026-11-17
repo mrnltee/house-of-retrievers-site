@@ -1522,3 +1522,19 @@ button.reply-opt:hover, button.reply-opt:focus-visible { border-color: var(--a-i
 .site-on { color: var(--a-success); font-weight: 600; }
 .tracker-list .stack-table td { vertical-align: top; }
 .tracker-list > form#tracker-send { display: none; }
+
+/* Letters review (17 Nov 2026, design review): New letter in a window from the head, letters grouped by what
+   they're for with a search, a chip for PDF / email only / invitation card, and the rarely changed parts folded. */
+.letter-how > summary, .letter-groups-fold > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.letter-how[open] > summary { margin-bottom: 10px; }
+.letter-groups-fold { margin-top: 16px; }
+.letter-group { margin-top: 20px; }
+.letter-group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.letter-group-head h2 { margin: 0; }
+.letter-group-head p { margin: 0; }
+.letter-count { font-family: "DM Sans", sans-serif; font-size: 16px; }
+.letter-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 8px 0 0; }
+details.letter-how, details.letter-groups-fold { display: block; }
+/* Search hides rows and cards with the hidden attribute; a card's own display (flex, grid, or a table row
+   turned into a card on phones) must not bring it back (Letters review, 17 Nov 2026). */
+.admin [hidden] { display: none !important; }
