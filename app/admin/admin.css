@@ -1538,3 +1538,17 @@ details.letter-how, details.letter-groups-fold { display: block; }
 /* Search hides rows and cards with the hidden attribute; a card's own display (flex, grid, or a table row
    turned into a card on phones) must not bring it back (Letters review, 17 Nov 2026). */
 .admin [hidden] { display: none !important; }
+
+/* Email templates review (17 Nov 2026, design review): the email list first, automatic emails grouped by what
+   sends them, one + New template that asks what it's for, and the look (designs, sign-off and footer) last. */
+.email-group { margin-bottom: 16px; }
+.email-group-head { font-size: 15px; margin: 0 0 8px; }
+.template-kinds { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.template-kinds a { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--a-line); border-radius: 12px; color: var(--a-ink); text-decoration: none; }
+.template-kinds a:hover, .template-kinds a:focus-visible { border-color: var(--a-ink); background: var(--a-sand); }
+details.email-frame-fold { display: block; }
+.email-frame-fold > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.email-frame-fold > .card { border: 0; padding: 12px 0 0; margin: 0 !important; }
+.email-look-link { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; color: var(--a-ink); text-decoration: none; }
+.email-look-link:hover, .email-look-link:focus-visible { border-color: var(--a-ink); }
+.email-frame-fold > .card > h2 { display: none; }
