@@ -54,20 +54,20 @@ export default async function EventForm({ event, autoDescribe = false }) {
   return (
     <form action={saveEvent} className="form event-form">
       {event && <input type="hidden" name="id" value={event.id} />}
-      <section className="card">
+      <section className="card" id="ev-basics">
         <h2>The basics</h2>
         <label className="field"><span>Title</span><input type="text" name="title" required maxLength={120} defaultValue={v("title")} placeholder="e.g. Retriever Romp" /></label>
         <WhenFields date={event ? isoDate(event.date) : ""} allDay={event?.all_day} startTime={event?.start_time} endTime={event?.end_time} isNew={!event} recurrence={event?.recurrence || null} />
         <VenueField venue={event?.venue} city={event?.city} address={event?.venue_address} lat={event?.venue_lat} lng={event?.venue_lng} mapUrl={event?.map_url} />
       </section>
 
-      <section className="card">
+      <section className="card" id="ev-photos">
         <h2>Photos</h2>
         <EventPhoto key={event?.image || "none"} current={event?.image || ""} currentAlt={event?.image_alt || ""} currentSource={event?.image_source || ""} currentCrop={event?.image_crop || null} currentFit={event?.image_fit || "fit"} autoDescribe={autoDescribe} />
         <EventGallery initial={Array.isArray(event?.gallery) ? event.gallery : []} autoDescribe={autoDescribe} />
       </section>
 
-      <section className="card">
+      <section className="card" id="ev-about">
         <h2>About the event</h2>
         <label className="field"><span>Summary <small>As long as you need. Line breaks are kept. The card shows the first few lines; the event page shows all of it.</small></span>
           <textarea name="summary" maxLength={SUMMARY_MAX} rows={7} defaultValue={v("summary")} />
@@ -96,7 +96,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
         <SupportersField name="sponsors" label="Sponsors" hint="Optional. Who is giving money, products or prizes" initial={event?.sponsors} suggestions={sponsorNames} />
       </section>
 
-      <section className="card">
+      <section className="card" id="ev-registration">
         <h2>Registration</h2>
         <p className="small muted section-lead">Decide whether people can RSVP, how many can attend, and what information they need to provide.</p>
         <SignupFields
@@ -118,14 +118,14 @@ export default async function EventForm({ event, autoDescribe = false }) {
         />
       </section>
 
-      <section className="card">
+      <section className="card" id="ev-pricing">
         <h2>Pricing and availability</h2>
         <p className="small muted section-lead">Set the ticket rules first, then add sale periods or Early Bird limits. Pricing decides what a group pays; Capacity in Registration decides how many venue slots it uses.</p>
         <PriceField tiers={event ? eventTiers(event) : []} legacyCost={event && !eventTiers(event).length ? event.cost || "" : ""} counts={ticketCounts} pricingBasis={event?.pricing_basis || "registration"} includedFurbabiesPerHuman={event?.included_furbabies_per_human || 0} additionalFurbabyFee={event?.additional_furbaby_fee || 0} tiersInOrder={Boolean(event?.tiers_in_order)} tiersHideLater={Boolean(event?.tiers_hide_later)} />
         <PromoCodesField initial={Array.isArray(event?.promo_codes) ? event.promo_codes : []} uses={promoUses} />
       </section>
 
-      <section className="card">
+      <section className="card" id="ev-confirmation">
         <h2>Confirmation</h2>
         <p className="small muted section-lead">Choose the wording people receive after they RSVP. The event details and pass button are always added automatically.</p>
         <label className="field"><span>Confirmation email <small>What people get when they RSVP and have a spot. Write your own in Email templates (Event confirmation). The event's details and the pass button are always added.</small></span>

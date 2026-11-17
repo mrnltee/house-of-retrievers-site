@@ -7,6 +7,7 @@ import { setEventPhotographers } from "../../../photographerActions";
 import { can } from "../../../../lib/admin/roles.mjs";
 import { Flash, NotAllowed, PageHead, isoDate } from "../../ui";
 import EventForm from "../EventForm";
+import EditorNav from "../EditorNav";
 import { deleteEvent } from "../../../actions";
 import EventAlbum from "../EventAlbum";
 import { isPastDate } from "../../../../lib/admin/events.mjs";
@@ -38,10 +39,16 @@ export default async function EditEventPage({ params, searchParams }) {
         {event.status === "published" && <a className="btn ghost" href={eventUrl(event.slug)} target="_blank" rel="noreferrer">View event page</a>}
       </PageHead>
       <Flash params={query} />
+      <EditorNav sections={[
+        ...(event.status === "published" ? [{ id: "ev-share", label: "Share" }] : []),
+        { id: "ev-basics", label: "Basics" }, { id: "ev-photos", label: "Photos" }, { id: "ev-about", label: "About" },
+        { id: "ev-registration", label: "Registration" }, { id: "ev-pricing", label: "Pricing" }, { id: "ev-confirmation", label: "Confirmation" },
+        { id: "ev-checkin", label: "Check-in" }, { id: "ev-more", label: "More options" }, { id: "ev-album", label: "Album" }, { id: "ev-photos-by", label: "Photos by" },
+      ]} />
       {event.status === "published" && <ShareCard event={event} />}
       <EventForm event={event} autoDescribe={Boolean(process.env.GEMINI_API_KEY)} />
-      <AlbumCard event={event} />
-      <PhotosByCard event={event} base={base} canEdit={can(admin, "events:edit")} />
+      <div id="ev-album" className="editor-anchor"><AlbumCard event={event} /></div>
+      <div id="ev-photos-by" className="editor-anchor"><PhotosByCard event={event} base={base} canEdit={can(admin, "events:edit")} /></div>
       <DeleteEventCard event={event} registrations={registrations} />
     </>
   );
@@ -51,7 +58,7 @@ export default async function EditEventPage({ params, searchParams }) {
 function ShareCard({ event }) {
   const shared = toPublicEvent(event);
   return (
-    <section className="card">
+    <section className="card" id="ev-share">
       <div className="page-head" style={{ alignItems: "center" }}>
         <h2>Share this event</h2>
         <a className="small" href={eventUrl(event.slug)} target="_blank" rel="noreferrer">{eventUrl(event.slug).replace("https://", "")}</a>

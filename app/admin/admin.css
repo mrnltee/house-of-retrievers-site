@@ -1293,3 +1293,25 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .checkin-display-recent small { font-size: .8em; }
 .checkin-display-recent .tag { font-size: clamp(13px, .9vw, 16px); }
 @media (prefers-reduced-motion: reduce) { .checkin-display .is-control { transition: none; } }
+/* Event editor review (17 Nov 2026, owner). A sticky "Jump to" row of section links (EditorNav.jsx); sections
+   land below it. The Registration card's two columns sit at the top (the right one used to stretch, making the
+   Payment hold menu 80px tall); the Participant form box matches the other inset panels; the empty "Add a photo"
+   tile and photo thumbnails are a sensible size instead of a third of the card. */
+.editor-nav { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; margin: 0 0 16px; padding: 10px 14px; border: 1px solid var(--a-line); border-radius: 14px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); }
+.editor-nav-label { flex: none; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--a-muted); }
+.editor-nav ul { display: flex; gap: 6px; flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.editor-nav ul::-webkit-scrollbar { display: none; }
+.editor-nav a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; color: var(--a-ink); font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.editor-nav a:hover { background: var(--a-sand); }
+.editor-nav a[aria-current="true"] { background: var(--a-ink); color: #fff; }
+.editor-nav a:focus-visible { outline: 3px solid var(--a-gold, #a8843a); outline-offset: 2px; }
+.event-form > section.card, .event-form > details.card, .editor-anchor, #ev-share { scroll-margin-top: 84px; }
+.event-form .row-2.indent > .form { align-content: start; }
+.rsvp-form-settings { border: 0; border-radius: 12px; background: var(--a-sand); padding: 16px; display: grid; gap: 10px; }
+.rsvp-form-settings legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; }
+.rsvp-form-settings > :not(legend) { clear: both; }
+.gallery-edit { grid-template-columns: repeat(auto-fill, minmax(150px, 190px)); }
+@media (max-width: 860px) { .editor-nav { top: 64px; } .editor-nav-label { display: none; } }
+@media (prefers-reduced-motion: no-preference) { html:has(.editor-nav) { scroll-behavior: smooth; } }
+.editor-nav { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+@media (max-width: 860px) { .event-form > section.card, .event-form > details.card, .editor-anchor, #ev-share { scroll-margin-top: 140px; } }

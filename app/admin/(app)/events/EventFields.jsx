@@ -184,7 +184,7 @@ export function CharityField({ isCharity, supports, options = [], picked = [], b
             {options.length ? (
               <ul className="beneficiary-pick">
                 {options.map((b) => (
-                  <li key={b.id}><label className="check"><input type="checkbox" name="beneficiaries" value={b.id} defaultChecked={picked.includes(b.id)} /> <span>{b.name} <span className="small muted">· {b.kindLabel}{b.statusLabel ? ` · ${b.statusLabel}` : ""}</span></span></label></li>
+                  <li key={b.id}><label className="check"><input type="checkbox" name="beneficiaries" value={b.id} defaultChecked={picked.includes(b.id)} /> <span>{b.name} {(b.kindLabel || b.statusLabel) && <span className="small muted">· {[b.kindLabel, b.statusLabel].filter(Boolean).join(" · ")}</span>}</span></label></li>
                 ))}
               </ul>
             ) : (
@@ -826,7 +826,7 @@ export function CheckinSettings({ eventId, message, preset, failurePreset, hasCu
     reader.onerror = () => setError("That sound could not be read. Try another file.");
     reader.readAsDataURL(file);
   }
-  return <details className="card disclosure-card">
+  return <details className="card disclosure-card" id="ev-checkin">
     <summary><h2>Check-in experience</h2><span className="small muted">Success message, sound and display screen</span></summary>
     <div className="form" style={{ gap: 14, marginTop: 16 }}>
       <p className="small muted" style={{ margin: 0 }}>After a successful scan, the door screen welcomes the guest by name, with their furbaby&apos;s photo or their initials, and plays the selected sound. Failed scans keep the standard warning tone.</p>
@@ -875,7 +875,7 @@ export function CheckinSettings({ eventId, message, preset, failurePreset, hasCu
 export function MoreOptions({ slug, photoUploads }) {
   const [allow, setAllow] = useState(Boolean(photoUploads?.length));
   return (
-    <details className="card disclosure-card">
+    <details className="card disclosure-card" id="ev-more">
       <summary><h2>More options</h2><span className="small muted">{slug ? "Web address, " : ""}photos from guests</span></summary>
       <div className="form" style={{ gap: 18, marginTop: 16 }}>
         {slug && (
