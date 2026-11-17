@@ -21,6 +21,8 @@ import TrackerTools from "../brands/TrackerTools";
 import SelectionBar from "../brands/SelectionBar";
 import SelectAll from "../brands/SelectAll";
 import Icon from "../../../../../components/Icon";
+import HowTo from "../../../HowTo";
+import { GUEST_GUIDES } from "../../../../../lib/admin/howToGuides.mjs";
 
 const greetingOf = (f) => f.salutation || f.contact || f.name;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
@@ -76,6 +78,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
     <>
       <p className="small"><a href={`${base}/events/${event.id}`}><Icon name="arrowLeft" /> {event.title}</a></p>
       <PageHead title="Guest tracker" lead={`${event.date ? formatDay(event.date) : "Date to be set"} · who you invited, their reply, and who shows on the event page.`}>
+        {canSend && <HowTo guide="guest-invite" guides={GUEST_GUIDES} label="How emails work" className="btn ghost" />}
         {can(admin, "letters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/letters`}>Letters</a>}
         {canSend && followUp.href && <a className="btn ghost" href={followUp.href} title={`Email the ${followUp.count} guest${followUp.count === 1 ? "" : "s"} who had an invite and haven't replied. You can untick people and edit the wording before it's sent.${followUp.noEmail ? ` ${followUp.noEmail} ${followUp.noEmail === 1 ? "has" : "have"} no email yet.` : ""}`}>Follow up · {followUp.count}</a>}
         {canEdit && others.length > 0 && (

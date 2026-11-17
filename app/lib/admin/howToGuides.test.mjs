@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BRAND_GUIDES, GUIDES, LETTER_GUIDES, SCENE_TARGETS, stepDuration } from "./howToGuides.mjs";
+import { BRAND_GUIDES, GUEST_GUIDES, GUIDES, LETTER_GUIDES, SCENE_TARGETS, stepDuration } from "./howToGuides.mjs";
 
-test("every brand, letter and template guide exists, has steps, and points only at things its mock draws", () => {
-  for (const key of [...BRAND_GUIDES, ...LETTER_GUIDES]) {
+test("every brand, guest, letter and template guide exists, has steps, and points only at things its mock draws", () => {
+  for (const key of [...BRAND_GUIDES, ...LETTER_GUIDES, ...GUEST_GUIDES]) {
     const guide = GUIDES[key];
     assert.ok(guide, `${key} is defined`);
     assert.ok(guide.title && guide.steps.length >= 3, `${key} has a title and steps`);
@@ -23,4 +23,14 @@ test("steps stay up long enough to read, and not forever", () => {
   assert.ok(long > 2800 && long <= 7000);
   const caption = "Search the brand directory by name and tick the ones you want.";
   assert.ok(stepDuration({ caption, act: "type", text: "Pawsome Treats" }) > stepDuration({ caption }), "typing adds time");
+});
+
+test("every scene target a guide can point at is drawn by its mock", async () => {
+  const { readFileSync } = await import("node:fs");
+  const scenes = readFileSync(new URL("../../admin/(app)/HowToScenes.jsx", import.meta.url), "utf8");
+  for (const target of SCENE_TARGETS.guestTracker) {
+    const literal = scenes.includes(`"${target}"`);
+    const templated = /^g[12](Tick|Status|Follow|Invite|Message)$/.test(target) && scenes.includes(`\`\${r.id}${target.slice(2)}\``);
+    assert.ok(literal || templated, `guest tracker mock draws ${target}`);
+  }
 });
