@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { checkinFeed } from "../../../../actions";
 import { MAX_QUEUE, POLL_MS, enqueue, holdSeconds } from "../../../../../lib/checkinDisplay.mjs";
 import { welcomeMessageLine } from "../../../../../lib/welcomePhoto.mjs";
+import LogoMoments from "../../../../../components/LogoMoments";
 
 const timeOf = (iso) => new Date(iso).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
 
@@ -30,6 +31,17 @@ export default function Display({ base, eventId, title, message, background = { 
   const [recent, setRecent] = useState([]);
   const [counts, setCounts] = useState({ checked: 0, confirmed: 0 });
   const [status, setStatus] = useState("connecting");
+  // The screen faces guests: staff controls fade after a few still seconds and come back on any mouse move,
+  // touch or key press (owner review, 17 Nov 2026). "Reconnecting…" always shows, since staff need to see it.
+  const [controls, setControls] = useState(true);
+  useEffect(() => {
+    let timer;
+    const wake = () => { setControls(true); clearTimeout(timer); timer = setTimeout(() => setControls(false), 4000); };
+    wake();
+    const events = ["mousemove", "pointerdown", "keydown", "focusin"];
+    events.forEach((e) => window.addEventListener(e, wake));
+    return () => { clearTimeout(timer); events.forEach((e) => window.removeEventListener(e, wake)); };
+  }, []);
   const cursor = useRef(null);
   const seen = useRef(new Set());
   const line = welcomeMessageLine(message);
@@ -89,14 +101,14 @@ export default function Display({ base, eventId, title, message, background = { 
   const fullScreen = () => document.documentElement.requestFullscreen?.().catch(() => null);
 
   return (
-    <div className={`checkin-display is-bg-${background.kind}`}>
+    <div className={`checkin-display is-bg-${background.kind}${controls ? "" : " is-quiet"}`}>
       {background.image && <div className="checkin-display-bg" aria-hidden="true" style={{ backgroundImage: `url("${background.image.replace(/"/g, "")}")` }} />}
       <header className="checkin-display-head">
-        <span className="checkin-display-title">{title}</span>
+        <span className="checkin-display-brand" role="img" aria-label="The House of Retrievers’ Society, Inc."><LogoMoments tone={background.kind === "ivory" ? "light" : "dark"} /></span>
         <span className="checkin-display-count" aria-live="polite">{counts.checked} of {counts.confirmed} checked in</span>
-        <span className={`checkin-display-status is-${status}`}>{status === "live" ? "Live" : status === "offline" ? "Reconnecting…" : status === "forbidden" ? "No access" : "Connecting…"}</span>
-        <button type="button" className="checkin-display-btn" onClick={fullScreen}>Full screen</button>
-        <a className="checkin-display-btn" href={back}>Back to scanner</a>
+        <span className={`checkin-display-status is-${status}${status === "live" ? " is-control" : ""}`}>{status === "live" ? "Live" : status === "offline" ? "Reconnecting…" : status === "forbidden" ? "No access" : "Connecting…"}</span>
+        <button type="button" className="checkin-display-btn is-control" onClick={fullScreen}>Full screen</button>
+        <a className="checkin-display-btn is-control" href={back}>Back to scanner</a>
       </header>
 
       <main className="checkin-display-stage" aria-live="assertive">
@@ -115,7 +127,7 @@ export default function Display({ base, eventId, title, message, background = { 
           <div className="checkin-display-idle">
             <p className="tag">Welcome to</p>
             <h1 className="checkin-display-event">{title}</h1>
-            <p>Guests appear here as they're checked in at the door.</p>
+            <p>Check in at the door, then look for your name here.</p>
           </div>
         )}
       </main>

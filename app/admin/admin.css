@@ -1280,3 +1280,16 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .checkin .btn.small, .checkin-list .tabs button { min-height: 44px; }
 .checkin-noqr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; }
 .checkin-list li { align-items: center; padding: 4px 0; }
+/* Display screen review (17 Nov 2026, owner). The screen faces guests: the House of Retrievers logo sits top
+   left (the event title already leads the middle of the screen), staff controls fade after a few still seconds
+   (.is-quiet; any movement brings them back, "Reconnecting…" never hides), and the Just arrived strip is sized to
+   read across a room. */
+.checkin-display-brand { margin-right: auto; display: block; width: clamp(150px, 12vw, 220px); }
+.checkin-display-brand .hor-logo { width: 100%; }
+.checkin-display .is-control { transition: opacity .3s ease; }
+.checkin-display.is-quiet .is-control { opacity: 0; pointer-events: none; }
+.checkin-display.is-quiet { cursor: none; }
+.checkin-display-recent li { font-size: clamp(16px, 1.1vw, 20px); gap: 12px; }
+.checkin-display-recent small { font-size: .8em; }
+.checkin-display-recent .tag { font-size: clamp(13px, .9vw, 16px); }
+@media (prefers-reduced-motion: reduce) { .checkin-display .is-control { transition: none; } }
