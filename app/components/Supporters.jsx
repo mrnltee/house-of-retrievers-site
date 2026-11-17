@@ -47,7 +47,8 @@ function SupporterWall({ items, onOpen, label, direction = "left" }) {
 }
 
 /** The panel a tile opens: blurb, what they gave, links, and the events they backed. */
-function SupporterDialog({ supporter, onClose }) {
+/** A brand's detail window. Also opened from event pages (their "With thanks to" chips). */
+export function SupporterDialog({ supporter, onClose }) {
   const dialog = useRef(null);
   useEffect(() => {
     const el = dialog.current;

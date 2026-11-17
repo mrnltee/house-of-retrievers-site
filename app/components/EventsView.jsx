@@ -10,6 +10,7 @@ import { initialsOf, speakersTitle } from "../lib/eventSpeakers.mjs";
 import JoinModal from "./JoinModal";
 import RsvpModal from "./RsvpModal";
 import ShareMenu from "./ShareMenu";
+import { SupporterDialog } from "./Supporters";
 import { HOME_URL, SOCIAL_PROFILES } from "../lib/siteSeo.mjs";
 import { eventUrl, formatWhen } from "../lib/share.mjs";
 import { googleCalendarUrl, icsFile } from "../lib/calendar.mjs";
@@ -534,14 +535,34 @@ function supporterInitial(name) {
   return Array.from(String(name || "").trim())[0]?.toUpperCase() || "?";
 }
 
-function SupporterChip({ name, link }) {
+// The public brand list, loaded once per page the first time a chip is opened.
+let supportersRequest = null;
+const loadSupporters = () => {
+  supportersRequest ||= fetch("/api/supporters").then((r) => (r.ok ? r.json() : { supporters: [] })).then((d) => d.supporters || []).catch(() => { supportersRequest = null; return []; });
+  return supportersRequest;
+};
+
+/**
+ * A partner or sponsor under "With thanks to". One with a public record opens its details in a window on the
+ * event page (owner, 17 Nov 2026: it used to leave for the main site). The chip stays a real link to the
+ * main site's panel, which a Ctrl/⌘-click, a middle-click or a failed load still follows.
+ */
+function SupporterChip({ name, link, onOpen }) {
   const mark = link
     ? <img src={link.logo} alt="" width={32} height={32} />
     : <span className="event-supporter-initial">{supporterInitial(name)}</span>;
   if (!link) return <li className="has-initial"><span className="event-supporter-logo" aria-hidden="true">{mark}</span>{name}</li>;
+  const href = `${HOME_URL}/?supporter=${link.slug}#partners`;
+  async function open(event) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    const match = (await loadSupporters()).find((s) => s.slug === link.slug);
+    if (match) onOpen(match);
+    else window.location.href = href;
+  }
   return (
     <li className="has-logo">
-      <a href={`${HOME_URL}/?supporter=${link.slug}#partners`}>
+      <a href={href} onClick={open} aria-haspopup="dialog">
         <span className="event-supporter-logo" aria-hidden="true">{mark}</span>
         {name}
         <Icon name="arrow" size={13} />
@@ -555,6 +576,7 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
   const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
   const card = useRef(null);
   const [cardInView, setCardInView] = useState(true);
+  const [supporter, setSupporter] = useState(null);
   const canRsvp = !past && event.rsvp && ["open", "few-left", "full", "soon"].includes(event.status);
 
   // The phone's bottom bar steps aside while the main RSVP card is on screen.
@@ -648,17 +670,18 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
               {event.partners && (
                 <div>
                   <p className="event-supporters-role">In partnership with</p>
-                  <ul>{event.partners.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} />)}</ul>
+                  <ul>{event.partners.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
                 </div>
               )}
               {event.sponsors && (
                 <div>
                   <p className="event-supporters-role">Sponsored by</p>
-                  <ul>{event.sponsors.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} />)}</ul>
+                  <ul>{event.sponsors.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
                 </div>
               )}
             </section>
           )}
+          {supporter && <SupporterDialog supporter={supporter} onClose={() => setSupporter(null)} />}
           {past && <PhotoCredits photographers={event.photographers} />}
           {photos.length > 0 && <EventAlbum photos={photos} title={event.title} base={base} />}
           {Number.isFinite(event.venueLat) && Number.isFinite(event.venueLng) && (
