@@ -150,7 +150,7 @@ fieldset.plain legend { font-size: 13px; font-weight: 700; padding: 0; margin-bo
 }
 @media (max-width: 860px) {
   /* minmax(0, …) so a wide table scrolls inside its box instead of widening the page. */
-  .admin-shell { grid-template-columns: minmax(0, 1fr); }
+  .admin-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   /* Phones: a top bar with the page you're on and a Menu button; the menu opens as a panel. */
   .admin-side { position: sticky; top: 0; z-index: 30; height: auto; display: block; overflow: visible; padding: 0; }
   .admin-mbar { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px 8px 16px; }
@@ -1361,4 +1361,27 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
   .stack-table.dash-log tr > td.st-4 { grid-column: 1 / -1; grid-row: 3; }
   .dash-log td.st-3::before { content: "·"; margin: 0 6px; }
   .dash-log td.dash-empty { display: none; }
+
+/* Events list review (17 Nov 2026, design review). The actions cell keeps display: table-cell (a flex td left a
+   notch in the header row); poster thumbnails at the card's 4:5. */
+.admin-events td { vertical-align: middle; }
+.ev-row { display: flex; gap: 12px; align-items: center; min-width: 240px; }
+.ev-thumb { width: 44px; aspect-ratio: 4 / 5; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--a-sand); }
+.ev-thumb-empty { display: block; border: 1px dashed var(--a-line); }
+.ev-title { font-weight: 700; color: var(--a-ink); text-decoration: none; text-wrap: balance; }
+.ev-title:hover, .ev-title:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.ev-meta { display: block; margin-top: 2px; }
+.ev-when { white-space: nowrap; }
+.ev-actions { flex-wrap: nowrap; justify-content: flex-end; gap: 8px; }
+@media (max-width: 720px) {
+  .admin-events td { vertical-align: top; }
+  .admin-events .ev-row { min-width: 0; }
+  .stack-table.admin-events tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
+  .stack-table.admin-events tr > td.st-1, .stack-table.admin-events tr > td.st-6 { grid-column: 1 / -1; }
+  .stack-table.admin-events tr > td.st-2, .stack-table.admin-events tr > td.st-3 { grid-column: auto; }
+  .stack-table.admin-events tr > td.st-4, .stack-table.admin-events tr > td.st-5 { grid-column: auto; }
+  .admin-events .st-5 { align-self: end; }
+  .admin-events .ev-when { white-space: normal; }
+  .admin-events .ev-actions { justify-content: flex-start; }
+  .stack-table.admin-events tr > td.empty { grid-column: 1 / -1; }
 }
