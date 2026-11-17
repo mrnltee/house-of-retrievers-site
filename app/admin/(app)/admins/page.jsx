@@ -8,6 +8,9 @@ import { inviteAdmin, removeAdmin, updateAdmin } from "../../actions";
 import { Flash, NotAllowed, PageHead, formatWhen } from "../ui";
 import ConfirmButton from "../ConfirmButton";
 import PageAccessTable from "./PageAccessTable";
+import EditDialog from "../EditDialog";
+import ListSearch from "../ListSearch";
+import { displayName } from "../../../lib/admin/profile.mjs";
 
 const ROLE_HELP = {
   owner: "Everything, including admins and approving payment changes",
@@ -54,7 +57,7 @@ function PageAccess({ admins }) {
       <h2>Page access</h2>
       <p className="small muted">For each person, set every page to <strong>—</strong> (hidden), <strong>View</strong> (can open and read only) or <strong>Edit</strong> (can also save, send and delete), then press <strong>Save all</strong> at the bottom. Changed boxes are outlined in gold until saved. <strong>Preview</strong> shows you the admin exactly as they will see it. Only pages set to View or Edit show in their sidebar; every other page is blocked for them. Owners always see and edit every page.</p>
       {people.length === 0 ? (
-        <p className="empty">No one to set yet. Invite an admin above and set their pages there.</p>
+        <p className="empty">No one to set yet. Use + Invite an admin at the top and set their pages there.</p>
       ) : (
         <PageAccessTable
           pages={PAGES.map((p) => ({ key: p.key, label: p.label, canEdit: p.edit.length > 0 }))}
@@ -74,8 +77,9 @@ export default async function AdminsPage({ searchParams }) {
   if (!allowed) return <NotAllowed />;
   const envOwners = parseEmailList(process.env.ADMIN_OWNER_EMAILS);
   const [admins, log] = await Promise.all([
-    sql("SELECT email, name, roles, pages, active, last_seen_at, last_active_at, invited_by FROM admins WHERE active ORDER BY ('owner' = ANY(roles)) DESC, email"),
-    sql("SELECT at, actor_email, action, target FROM activity_log ORDER BY at DESC LIMIT 100"),
+    sql("SELECT email, name, first_name, furbaby_name, show_as, roles, pages, active, last_seen_at, last_active_at, invited_by FROM admins WHERE active ORDER BY ('owner' = ANY(roles)) DESC, email"),
+    sql(`SELECT l.at, l.actor_email, l.action, l.target, a.name, a.first_name, a.furbaby_name, a.show_as
+           FROM activity_log l LEFT JOIN admins a ON lower(a.email) = lower(l.actor_email) ORDER BY l.at DESC LIMIT 100`),
   ]);
   const owners = admins.filter((a) => a.roles.includes("owner")).length;
   const now = Date.now();
@@ -84,12 +88,8 @@ export default async function AdminsPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Admins & activity log" lead="Who can sign in and what they can change. Keep at least two Owners so payment changes can always be approved." />
-      <Flash params={params} />
-      {owners < 2 && <p className="banner alert">Only {owners} Owner. A payment change needs a different Owner to approve it, so invite a second one.</p>}
-
-      <section className="card">
-        <h2>Invite an admin</h2>
+      <PageHead title="Admins & activity log" lead="Who can sign in, what they can change, and everything that was changed. Keep at least two Owners so payment changes can always be approved.">
+        <EditDialog label="+ Invite an admin" buttonClass="btn gold" title="Invite an admin" lead="They get the pages you set here, and nothing else.">
         <p className="small muted">
           They sign in with {yahooReady ? <><strong>Sign in with Google</strong> or <strong>Sign in with Yahoo</strong></> : <strong>Sign in with Google</strong>}, using exactly the email you type here{yahooReady ? ": Google for a Gmail or Google account, Yahoo for a Yahoo account (some Yahoo accounts use another address, such as a Gmail one)" : ""}. Another email, such as Outlook, works with Google once they make a free Google account with it (accounts.google.com/signup → Use your existing email).
         </p>
@@ -120,26 +120,27 @@ export default async function AdminsPage({ searchParams }) {
             >Invite</ConfirmButton>
           </div>
         </form>
-      </section>
+        </EditDialog>
+      </PageHead>
+      <Flash params={params} />
+      {owners < 2 && <p className="banner alert">Only {owners} Owner. A payment change needs a different Owner to approve it, so invite a second one.</p>}
 
-      <PageAccess admins={admins} />
 
-      <h2>Team</h2>
+      <h2 style={{ marginTop: 8 }}>Team · {admins.length}</h2>
       <p className="muted">{online} online now. Online means they've used the admin in the last 5 minutes.</p>
       <div className="table-wrap">
-        <table>
+        <table className="stack-table team-table">
           <thead><tr><th>Admin</th><th>Status</th><th>Roles</th><th>Last signed in</th><th><span className="visually-hidden">Edit</span></th></tr></thead>
           <tbody>
             {admins.map((a) => (
               <tr key={a.email}>
-                <td className="strong">{a.name ? `${a.name} · ` : ""}{a.email}{envOwners.includes(a.email) && <span className="small muted"><br />Owner set in Vercel</span>}</td>
-                <td>{isOnline(a) ? <span className="presence on">Online</span> : <span className="presence off">Offline{a.last_active_at ? <small className="muted"><br />active {formatWhen(a.last_active_at)}</small> : null}</span>}</td>
-                <td><div className="actions">{a.roles.map((r) => <span key={r} className={`chip ${r === "owner" ? "dark" : ""}`}>{ROLE_LABELS[r] || r}</span>)}</div>{Array.isArray(a.pages) && !a.roles.includes("owner") && <span className="small muted">Pages: {PAGES.filter((p) => a.pages.includes(p.key)).map((p) => p.label).join(", ")}</span>}</td>
-                <td>{formatWhen(a.last_seen_at)}</td>
-                <td>
-                  <details>
-                    <summary className="linkish">Edit</summary>
-                    <form action={updateAdmin} className="form" style={{ marginTop: 12, minWidth: 320 }}>
+                <td className="strong st-1">{displayName(a)}<br /><span className="small muted">{a.email}{envOwners.includes(a.email) ? " · Owner set in Vercel" : ""}</span></td>
+                <td className="st-2" data-label="Status">{isOnline(a) ? <span className="presence on">Online</span> : <span className="presence off">Offline{a.last_active_at ? <small className="muted"><br />active {formatWhen(a.last_active_at)}</small> : null}</span>}</td>
+                <td className="st-3" data-label="Roles"><div className="actions">{a.roles.map((r) => <span key={r} className={`chip ${r === "owner" ? "dark" : ""}`}>{ROLE_LABELS[r] || r}</span>)}</div>{Array.isArray(a.pages) && !a.roles.includes("owner") && <span className="small muted">Pages: {PAGES.filter((p) => a.pages.includes(p.key)).map((p) => p.label).join(", ")}</span>}</td>
+                <td className="st-4" data-label="Last signed in">{formatWhen(a.last_seen_at)}</td>
+                <td className="st-5">
+                  <EditDialog label="Edit roles" buttonClass="btn ghost small" title={displayName(a)} lead={`${a.email} · roles decide their pages unless you set pages one by one under Page access.`}>
+                    <form action={updateAdmin} className="form">
                       <input type="hidden" name="email" value={a.email} />
                       <RolePicker selected={a.roles} idPrefix={`edit-${a.email}`} />
                       <div className="actions">
@@ -160,7 +161,7 @@ export default async function AdminsPage({ searchParams }) {
                         >Remove access</ConfirmButton>
                       </div>
                     </form>
-                  </details>
+                  </EditDialog>
                 </td>
               </tr>
             ))}
@@ -168,16 +169,27 @@ export default async function AdminsPage({ searchParams }) {
         </table>
       </div>
 
+      <PageAccess admins={admins} />
+
       <h2 id="activity-log">Activity log</h2>
       <p className="muted">Every change, by whom and when. Nobody can edit or delete it. Latest 100 shown.</p>
+      <ListSearch q="" action="" placeholder="Search the log by person, action or what it was about…" />
       <div className="table-wrap">
-        <table>
+        <table className="stack-table dash-log">
           <thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th></tr></thead>
           <tbody>
             {log.length === 0 && <tr><td colSpan={4} className="empty">Nothing yet.</td></tr>}
-            {log.map((row, i) => (
-              <tr key={i}><td>{formatWhen(row.at)}</td><td>{row.actor_email}</td><td>{actionLabel(row.action)}</td><td>{row.target || "—"}</td></tr>
-            ))}
+            {log.map((row, i) => {
+              const who = displayName({ ...row, email: row.actor_email });
+              return (
+                <tr key={i} data-find={`${who} ${row.actor_email} ${actionLabel(row.action)} ${row.target || ""}`.toLowerCase()}>
+                  <td className="st-3 dash-when">{formatWhen(row.at)}</td>
+                  <td className="st-2" title={row.actor_email}>{who}</td>
+                  <td className="st-1"><strong className="dash-what">{actionLabel(row.action)}</strong></td>
+                  <td className={`st-4${row.target ? "" : " dash-empty"}`}>{row.target || <span className="muted">—</span>}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
