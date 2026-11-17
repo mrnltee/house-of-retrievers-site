@@ -101,7 +101,7 @@ export default async function Dashboard({ searchParams }) {
           note={pending.length ? "Need a second Owner to approve" : "Nothing to approve"} />
       </section>
 
-      <div className="cols">
+      <div className="cols dash-cols">
         <section className="card" aria-labelledby="needs-you">
           <div><h2 id="needs-you">Needs you</h2><p className="small muted">Each item opens the record it is about.</p></div>
           {newPeople.length === 0 && waitlists.length === 0 && pending.length === 0 && staleReach.length === 0 && <p className="muted">Nothing waiting. Nice.</p>}

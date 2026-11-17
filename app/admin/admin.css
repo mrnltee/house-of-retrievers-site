@@ -1344,8 +1344,8 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
   .dash-stats .stat { min-height: 0; padding: 16px; }
   .dash-stats .stat .value { font-size: 30px; }
   .dash-stats .stat:nth-child(2) { grid-column: 1 / -1; order: -1; }
-  .task { flex-wrap: wrap; row-gap: 10px; }
-  .task > div:not(.datebox) { flex-basis: calc(100% - 80px); }
+  .dash-cols .task { flex-wrap: wrap; row-gap: 10px; }
+  .dash-cols .task > div:not(.datebox) { flex-basis: calc(100% - 80px); }
   .task-actions { width: 100%; justify-content: space-between; }
   .dash-log tr { row-gap: 2px; }
   .dash-log .dash-when { font-size: 13px; color: var(--a-muted); }
@@ -1353,7 +1353,7 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 @media (max-width: 520px) { .dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 720px) {
   .dash-stats .stat:last-child { grid-column: 1 / -1; }
-  .task > .datebox + div + .chip { margin-left: 68px; }
+  .dash-cols .task > .datebox + div + .chip { margin-left: 68px; }
   .dash-log tr { grid-template-columns: auto minmax(0, 1fr); column-gap: 0; }
   .stack-table.dash-log tr > td.st-1 { grid-column: 1 / -1; grid-row: 1; }
   .stack-table.dash-log tr > td.st-2 { grid-column: 1; grid-row: 2; font-size: 13px; color: var(--a-muted); }
@@ -1361,6 +1361,7 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
   .stack-table.dash-log tr > td.st-4 { grid-column: 1 / -1; grid-row: 3; }
   .dash-log td.st-3::before { content: "·"; margin: 0 6px; }
   .dash-log td.dash-empty { display: none; }
+}
 
 /* Events list review (17 Nov 2026, design review). The actions cell keeps display: table-cell (a flex td left a
    notch in the header row); poster thumbnails at the card's 4:5. */
@@ -1384,4 +1385,18 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
   .admin-events .ev-when { white-space: normal; }
   .admin-events .ev-actions { justify-content: flex-start; }
   .stack-table.admin-events tr > td.empty { grid-column: 1 / -1; }
+}
+
+/* Registrations index review (17 Nov 2026, design review): the Events list's rows, a capacity meter, what needs
+   doing as chips, Upcoming then Recent. A card's first task row has no rule above it (Check-in index too). */
+.card > .task:first-child { border-top: 0; padding-top: 0; }
+.card > .task:last-child { padding-bottom: 0; }
+.reg-index { display: grid; gap: 12px; }
+.reg-index + .reg-index { margin-top: 12px; }
+.reg-index-head h2 { margin: 0; }
+.reg-meter { display: block; width: 120px; max-width: 100%; height: 6px; margin-top: 6px; border-radius: 99px; background: var(--a-sand); overflow: hidden; }
+.reg-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--a-gold); }
+.reg-flags { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 720px) {
+  .reg-index .stack-table.admin-events tr > td.st-4 { grid-column: 1 / -1; }
 }
