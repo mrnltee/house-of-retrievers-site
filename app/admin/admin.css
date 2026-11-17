@@ -1552,3 +1552,23 @@ details.email-frame-fold { display: block; }
 .email-look-link { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; color: var(--a-ink); text-decoration: none; }
 .email-look-link:hover, .email-look-link:focus-visible { border-color: var(--a-ink); }
 .email-frame-fold > .card > h2 { display: none; }
+
+/* Standard details review (17 Nov 2026, design review): grouped (About HoR first), wider answer boxes, each
+   letter's own blanks folded, search, and Save kept in view. */
+.sd-form { display: grid; gap: 16px; }
+.sd-group h2 { margin: 0; }
+.sd-group > p { margin: 0; }
+details.sd-fold { display: block; }
+.sd-fold > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sd-fold[open] > summary { margin-bottom: 10px; }
+.sd-fold > p { margin: 0 0 10px; }
+.standard-details td { vertical-align: middle; }
+.standard-details .sd-blank { width: 34%; }
+.standard-details .sd-answer { width: 48%; }
+.standard-details .sd-answer input, .standard-details .sd-answer textarea { width: 100%; }
+.standard-details .sd-auto { white-space: nowrap; }
+.sd-used { display: block; margin-top: 4px; }
+.sd-save { position: sticky; bottom: 0; z-index: 3; padding: 14px 18px; background: #fff; border: 1px solid var(--a-line); border-radius: 14px; box-shadow: 0 -6px 18px rgba(13, 13, 13, .06); }
+@media (max-width: 720px) {
+  .standard-details .sd-blank, .standard-details .sd-answer { width: auto; }
+}

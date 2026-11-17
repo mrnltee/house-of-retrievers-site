@@ -22,6 +22,8 @@ export default function ListSearch({ q = "", action, hidden = {}, placeholder = 
     // A section (data-find-group) hides when nothing in it matches, so no heading sits over an empty list.
     document.querySelectorAll("[data-find-group]").forEach((group) => {
       group.hidden = ![...group.querySelectorAll("[data-find]")].some((el) => !el.hidden);
+      // A folded group with a match opens while searching, so the match is on screen.
+      if (group.tagName === "DETAILS" && words.length && !group.hidden) group.open = true;
     });
     setShown(words.length ? n : null);
     document.dispatchEvent(new Event("tracker:filtered"));
