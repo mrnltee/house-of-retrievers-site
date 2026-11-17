@@ -237,6 +237,23 @@ export function isPublic(row, { joined = 0 } = {}) {
   return joined > 0 && Boolean(row.show_on_site) && Boolean(row.logo) && Boolean(row.blurb);
 }
 
+/**
+ * Why a brand isn't on the website yet (design review, 17 Nov 2026), in the order to fix them:
+ * [] when it is. The list and cards show these instead of a bare "Not on the website".
+ */
+export function websiteGaps(row, { joined = 0 } = {}) {
+  if (isPublic(row, { joined })) return [];
+  return [
+    joined > 0 ? "" : "a Yes at an event",
+    row.logo ? "" : "a logo",
+    row.blurb ? "" : "a blurb",
+    row.show_on_site ? "" : "switching on",
+  ].filter(Boolean);
+}
+
+/** "a logo and a blurb" / "a Yes at an event, a logo and a blurb". */
+export const gapLine = (gaps) => (gaps.length < 2 ? gaps.join("") : `${gaps.slice(0, -1).join(", ")} and ${gaps[gaps.length - 1]}`);
+
 /** DB row → what the website shows. Amounts only once the sponsor was told. */
 export function publicSupporter(row, events = []) {
   const amounts = Boolean(row.amounts_agreed_at);
