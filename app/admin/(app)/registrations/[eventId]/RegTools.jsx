@@ -65,7 +65,7 @@ export function RegSelectAll() {
  * "N selected · Email a reminder · Send a message · Send invitation card · Clear". Each opens the usual
  * window or composer with those people ticked; nothing is sent from here.
  */
-export function RegSelectionBar({ reminderBase, messageBase, inviteBase = "", hint }) {
+export function RegSelectionBar({ reminderBase = "", messageBase, inviteBase = "", hint, refPrefix = "registration:", messageLabel = "Send a message" }) {
   const [count, setCount] = useState(0);
   useEffect(() => {
     const update = () => setCount(ticked().length);
@@ -94,8 +94,8 @@ export function RegSelectionBar({ reminderBase, messageBase, inviteBase = "", hi
         <>
           <strong>{count} selected</strong>
           {reminderBase && <button type="button" className="btn dark small" data-confirm="not-needed-read-only" onClick={() => open(reminderBase, "to")}>Email a reminder</button>}
-          {messageBase && <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => open(messageBase, "to", "registration:")}>Send a message</button>}
-          {inviteBase && <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => open(inviteBase, "to", "registration:")}>Send invitation card</button>}
+          {messageBase && <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => open(messageBase, "to", refPrefix)}>{messageLabel}</button>}
+          {inviteBase && <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={() => open(inviteBase, "to", refPrefix)}>Send invitation card</button>}
           <button type="button" className="btn ghost small" data-confirm="not-needed-read-only" onClick={clear}>Clear</button>
         </>
       ) : (
