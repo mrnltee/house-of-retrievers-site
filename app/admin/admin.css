@@ -1466,3 +1466,38 @@ button.reply-opt:hover, button.reply-opt:focus-visible { border-color: var(--a-i
 @media (max-width: 720px) { .tracker-page .st-2 { min-width: 0; } .reply-quick { display: flex; width: 100%; } .reply-quick .reply-opt { flex: 1 1 0; min-width: 0; justify-content: center; text-align: center; white-space: normal; line-height: 1.15; min-height: 40px; padding: 4px 6px; font-size: 12.5px; } }
 .rsvp-banner { background: #fff; border: 1px solid var(--a-gold); margin-bottom: 16px; }
 .rsvp-banner p { margin: 2px 0 0; }
+
+/* Registrations list review (17 Nov 2026, owner): built like the Guest and Brand trackers. Search, sort, ticks
+   and a selection bar sit in one card with the table; Export / Import live under More; each row shows its next
+   step and keeps Cancel, Delete and Undo check-in under More; the action column stays in view on wide tables. */
+.reg-tracker { gap: 12px; }
+.reg-tools { grid-template-columns: minmax(0, 1fr) auto; }
+.head-more { position: relative; }
+.head-more > summary { list-style: none; cursor: pointer; }
+.head-more > summary::-webkit-details-marker { display: none; }
+.head-more-menu, .row-more-menu { position: absolute; z-index: 20; display: grid; gap: 2px; min-width: 200px; padding: 6px; background: #fff; border: 1px solid var(--a-line); border-radius: 12px; box-shadow: 0 10px 30px rgba(13, 13, 13, .12); }
+.head-more-menu { right: 0; top: calc(100% + 6px); }
+.head-more-menu a { display: flex; align-items: center; min-height: 40px; padding: 6px 12px; border-radius: 8px; color: var(--a-ink); text-decoration: none; }
+.head-more-menu a:hover, .head-more-menu a:focus-visible { background: var(--a-sand); }
+.row-more { position: relative; }
+.row-more > summary { list-style: none; cursor: pointer; }
+.row-more > summary::-webkit-details-marker { display: none; }
+.row-more-menu { right: 0; top: calc(100% + 4px); justify-items: start; padding: 10px 12px; gap: 8px; }
+.registrations-table .reg-email { display: inline-block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; overflow-wrap: normal; }
+.registrations-table th.reg-question { white-space: normal; min-width: 110px; max-width: 160px; line-height: 1.3; }
+@media (min-width: 721px) {
+  .registrations-table th:last-child, .registrations-table td.st-10 { position: sticky; right: 0; z-index: 1; background: #fff; box-shadow: -10px 0 10px -10px rgba(13, 13, 13, .18); }
+  .registrations-table th:last-child { background: var(--a-sand); }
+  .registrations-table td.st-10 { min-width: 136px; }
+}
+@media (max-width: 720px) {
+  .reg-tools { grid-template-columns: 1fr; }
+  .registrations-table .reg-email { max-width: 100%; }
+  .row-more-menu { position: static; box-shadow: none; margin-top: 6px; }
+}
+.reg-flags-line { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+@media (max-width: 720px) {
+  .reg-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .reg-stats .stat { padding: 14px; }
+  .reg-stats .stat .value { font-size: 28px; }
+}

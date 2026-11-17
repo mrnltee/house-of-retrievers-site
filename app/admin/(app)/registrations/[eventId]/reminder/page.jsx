@@ -38,7 +38,9 @@ export default async function EventReminderPage({ params, searchParams }) {
       lastReminded: r.reminder_sent_at ? new Date(r.reminder_sent_at).toISOString() : null, count: r.reminder_count || 0,
     };
   });
-  const only = typeof query?.to === "string" && recipients.some((r) => r.id === query.to && r.eligible) ? query.to : "";
+  // ?to=<id> (one person, from a pass card) or several ?to= (ticked on the registrations list): only those start ticked.
+  const wanted = new Set([].concat(query?.to || []).map(String));
+  const only = wanted.size ? recipients.filter((r) => wanted.has(r.id) && r.eligible).map((r) => r.id) : null;
   const t = EDITABLE_TEMPLATES["event-reminder"];
   const saved = await loadTemplate("event-reminder");
   const mine = (await listCustomTemplates("reminder")).map((m) => ({ id: m.id, name: m.name, subject: m.subject, greeting: m.greeting, heading: m.heading, message: m.message, details: m.details }));
