@@ -4,6 +4,7 @@ import CopyButton from "./CopyButton";
 import PhotoLightbox from "./PhotoLightbox";
 import MessageForm from "./MessageForm";
 import PackCards from "./PackCards";
+import LaunchBrands from "./LaunchBrands";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { reachFrom, withLiveInstagram } from "../lib/mediaReach.mjs";
@@ -229,23 +230,7 @@ export default async function MediaPage() {
             {(launch.partners.length > 0 || launch.sponsors.length > 0) && (
               <div className="media-launch-block">
                 <h4>With thanks to</h4>
-                {[["Partners", launch.partners], ["Sponsors", launch.sponsors]].filter(([, list]) => list.length).map(([title, list]) => (
-                  <div className="media-launch-brands" key={title}>
-                    <span className="media-launch-brands-title">{title}</span>
-                    <ul>
-                      {list.map((b) => {
-                        const mark = b.logo ? <img src={b.logo} alt="" width={28} height={28} loading="lazy" /> : <span aria-hidden="true">{initialsOf(b.name).slice(0, 1)}</span>;
-                        return (
-                          <li key={b.name}>
-                            {b.slug
-                              ? <a href={`${HOME_URL}/?supporter=${b.slug}#partners`}><span className="media-launch-logo">{mark}</span>{b.name}</a>
-                              : <><span className="media-launch-logo">{mark}</span>{b.name}</>}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
+                <LaunchBrands groups={[["Partners", launch.partners], ["Sponsors", launch.sponsors]].filter(([, list]) => list.length)} />
               </div>
             )}
           </div>
