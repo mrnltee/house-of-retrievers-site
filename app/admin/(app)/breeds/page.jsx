@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { pageAdmin } from "../../../lib/admin/guard";
 import { BREEDS, breedIcon } from "../../../lib/breeds.mjs";
 import { resetBreedIcon } from "../../breedActions";
@@ -16,7 +18,7 @@ export default async function BreedIconsPage({ searchParams }) {
   const custom = new Map((await sql("SELECT key, updated_by, updated_at FROM breed_icons")).map((r) => [r.key, r]));
   return (
     <>
-      <PageHead title="Breed icons" lead="The icons people see when they pick a breed on the RSVP and Join form, and next to furbabies in the admin." />
+      <PageHead title="Breed icons" lead="The icons people see when they pick a breed on the RSVP and Join form, and next to furbabies in the admin." ><HowTo guide={PAGE_GUIDES.breeds[0]} guides={PAGE_GUIDES.breeds} className="btn ghost" /></PageHead>
       <Flash params={query} />
       <section className="banner note small">
         <span>

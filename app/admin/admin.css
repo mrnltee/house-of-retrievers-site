@@ -1783,3 +1783,57 @@ details.sd-fold { display: block; }
 @media (prefers-reduced-motion: reduce) { .admin a.guide-page, .guide-page-head .icon { transition: none; } }
 .guide-page-group { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--a-muted); }
 .gs-hero + .card .guide-pages { margin-top: 6px; }
+
+/* My profile review (18 Nov 2026, design review): photo, names and a live "how the team sees you" preview in
+   one card; account details as a quiet line; activity grouped by day. */
+.profile-form { display: grid; gap: 16px; }
+.profile-grid { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 18px 24px; margin: 0; padding: 0; border: 0; }
+.profile-photo { grid-column: 1 / -1; }
+.profile-fields { display: grid; gap: 14px; min-width: 0; }
+.profile-showas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; border: 0; }
+.profile-showas legend { margin-bottom: 6px; font-weight: 700; }
+.admin label.profile-choice { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--a-line); border-radius: 12px; background: #fff; cursor: pointer; }
+.admin label.profile-choice.is-on { border-color: var(--a-gold); box-shadow: 0 0 0 1px var(--a-gold); }
+.profile-choice input { margin-top: 3px; }
+.profile-choice strong, .profile-choice small { display: block; }
+.profile-choice small { color: var(--a-muted); overflow-wrap: anywhere; }
+.profile-preview { display: grid; gap: 8px; align-content: start; padding: 14px; border-radius: 14px; background: var(--a-sand); }
+.profile-chip { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #0d0d0d; color: #f2f2f2; }
+.profile-chip-text { display: grid; min-width: 0; }
+.profile-chip-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-chip-text span { font-size: 12px; color: rgba(242, 242, 242, .7); }
+.profile-save { align-items: center; }
+.profile-account { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 28px; margin: 14px 4px 20px; }
+.profile-account > div { display: flex; gap: 8px; }
+.profile-account dt { color: var(--a-muted); }
+.profile-account dd { margin: 0; font-weight: 600; }
+.profile-account p { margin: 0; }
+.profile-day + .profile-day { margin-top: 14px; }
+.profile-day h3 { margin: 12px 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--a-muted); }
+.profile-log { margin: 0; padding: 0; list-style: none; border: 1px solid var(--a-line); border-radius: 12px; background: #fff; overflow: hidden; }
+.profile-log li { display: grid; grid-template-columns: 76px minmax(0, 1fr) minmax(0, .8fr); gap: 12px; align-items: baseline; padding: 10px 14px; }
+.profile-log li + li { border-top: 1px solid var(--a-line); }
+.profile-log time { font-size: 13px; color: var(--a-muted); white-space: nowrap; }
+.profile-log-on { color: var(--a-muted); }
+@media (max-width: 860px) {
+  .profile-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .profile-showas { grid-template-columns: 1fr; }
+  .profile-log li { grid-template-columns: 64px minmax(0, 1fr); }
+  .profile-log-on { grid-column: 2; font-size: 13px; }
+}
+/* The data-driven page mock (guides on every page, 18 Nov 2026). */
+.ht-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.ht-tile { display: grid; gap: 2px; padding: 9px 10px; border-radius: 10px; background: #fff; border: 1px solid var(--a-line); }
+.ht-tile strong { font: 400 1.5em/1.1 "DM Serif Display", serif; }
+.ht-tile small { color: var(--a-muted); }
+.ht-tile.is-warn { border-color: var(--a-gold); background: #fbf6ea; }
+.ht-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ht-switch { position: relative; width: 28px; height: 16px; flex: none; border-radius: 99px; background: var(--a-line); transition: background .3s var(--ht-ease, ease); }
+.ht-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: transform .3s var(--ht-ease, ease); }
+.ht-switch.is-on { background: var(--a-ink); }
+.ht-switch.is-on::after { transform: translateX(12px); }
+/* A page mock can be taller than the stage; the camera pans down to it (HowTo measures .ht-page). */
+.ht-screen.ht-page { bottom: auto; min-height: 100%; overflow: visible; }
+.howto-scene:has(> .ht-screen.ht-page) { overflow: visible; }

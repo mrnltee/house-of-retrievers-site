@@ -63,7 +63,6 @@ export default async function GettingStarted() {
                 </span>
                 <span className="guide-page-what">{how.what}</span>
                 {howLine && howLine !== "Read only." && <span className="guide-page-how">{howLine}</span>}
-                {how.guide && p.level === "edit" && <span className="guide-page-tip"><Icon name="play" /> Has How it works guides</span>}
               </a>
             );
           })}
@@ -76,7 +75,7 @@ export default async function GettingStarted() {
           <li><strong>Nothing happens without a yes.</strong> Before anything is saved, sent or deleted, a box says exactly what will happen and asks you to confirm.</li>
           <li><strong>Exploring is safe.</strong> Every change is recorded with your name and the time, so mistakes can be traced and fixed.</li>
           <li><strong>Emails go to real people.</strong> Send yourself a test first when you can.</li>
-          <li><strong>Stuck on a page?</strong> Look for <strong>How it works</strong> at the top: a short film of the steps.</li>
+          <li><strong>Stuck on a page?</strong> Every page has <strong>How it works</strong> at the top: short films of the steps.</li>
           <li><strong>Keep details private.</strong> Never share your sign-in, and don't copy people's details out of the admin.</li>
           <li><strong>On a shared computer,</strong> press <strong>Sign out</strong> at the bottom of the menu when you're done.</li>
         </ul>

@@ -1,4 +1,6 @@
 import { pageAdmin } from "../../../lib/admin/guard";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { sql } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed } from "../ui";
 import MediaEditor from "./MediaEditor";
@@ -41,7 +43,7 @@ export default async function MediaAdminPage({ searchParams }) {
   const stale = staleCounts(document?.content || {}, { instagram });
   return (
     <>
-      <PageHead title="Media hub" lead="The wording, photos and numbers on the public media hub, in the order they appear there. Save draft keeps changes private; Publish puts them live." />
+      <PageHead title="Media hub" lead="The wording, photos and numbers on the public media hub, in the order they appear there. Save draft keeps changes private; Publish puts them live." ><HowTo guide={PAGE_GUIDES.media[0]} guides={PAGE_GUIDES.media} className="btn ghost" /></PageHead>
       <Flash params={params} />
       <MediaEditor content={content} stale={stale} liveInstagram={Boolean(instagram)} status={document?.status || "draft"} updatedAt={document?.updated_at} updatedBy={document?.updated_by} />
     </>

@@ -34,3 +34,20 @@ test("every scene target a guide can point at is drawn by its mock", async () =>
     assert.ok(literal || templated, `guest tracker mock draws ${target}`);
   }
 });
+
+test("every page's guides exist and point only at things their screen draws", async () => {
+  const { PAGE_GUIDES, pageTargets, WELCOME_GUIDES } = await import("./howToGuides.mjs");
+  for (const [page, keys] of Object.entries(PAGE_GUIDES)) {
+    assert.ok(keys.length > 0, `${page} has a guide`);
+    for (const key of [...keys, ...WELCOME_GUIDES]) {
+      const guide = GUIDES[key];
+      assert.ok(guide && guide.steps.length >= 2, `${page}: ${key} exists`);
+      guide.steps.forEach((s, i) => {
+        const targets = s.scene === "page" ? pageTargets(s.state) : SCENE_TARGETS[s.scene] || [];
+        assert.ok(targets.includes(s.target), `${key} step ${i + 1}: ${s.target} is drawn`);
+        assert.ok(!s.act || ["click", "tick", "type"].includes(s.act), `${key} step ${i + 1}: known action`);
+        if (s.act === "type") assert.ok(s.text, `${key} step ${i + 1}: typing needs text`);
+      });
+    }
+  }
+});

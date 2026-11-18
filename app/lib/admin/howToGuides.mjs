@@ -350,3 +350,329 @@ export function stepDuration(step) {
   const typing = step?.act === "type" ? String(step.text || "").length * 45 : 0;
   return Math.min(7000, Math.max(2800, 1400 + words * 160 + typing));
 }
+
+/* ── A guide on every page (owner, 18 Nov 2026) ─────────────────────────────────────────────────────────────
+   These play on the data-driven `page` mock: each step's `state` describes the screen, and every element with a
+   `t` can be pointed at (`pageTargets`). Shared screens are built once and varied per step. */
+
+/** Every pointer target a `page` screen draws. */
+export function pageTargets(state = {}) {
+  const out = [];
+  const add = (x) => { if (x?.t) out.push(x.t); };
+  (state.head || []).forEach(add);
+  (state.tabs || []).forEach(add);
+  add(state.search);
+  (state.tiles || []).forEach(add);
+  (state.fields || []).forEach(add);
+  (state.toggles || []).forEach(add);
+  (state.rows || []).forEach((r) => { add(r); add(r.tick); (r.btns || []).forEach(add); });
+  (state.foot || []).forEach(add);
+  if (state.confirm) out.push("confirm");
+  return out;
+}
+
+const P = (base, extra = {}) => ({ ...base, ...extra });
+const step = (state, target, caption, more = {}) => ({ scene: "page", state, target, caption, ...more });
+
+const DASH = {
+  title: "Dashboard",
+  sub: "What needs you today, then what's coming up.",
+  tiles: [
+    { t: "tPeople", label: "People", value: "48", note: "4 members · 1 partner" },
+    { t: "tNext", label: "Next event", value: "Dec 12", note: "A Golden Beginning" },
+    { t: "tWait", label: "Waitlist", value: "3", note: "Open RSVPs" },
+    { t: "tPay", label: "Payment changes", value: "0", note: "Nothing to approve" },
+  ],
+  rows: [
+    { name: "2 payments to check", sub: "A Golden Beginning", chip: "Needs you", tone: "warn", btns: [{ t: "needs1", label: "Open RSVPs", tone: "gold" }] },
+    { name: "3 new members waiting", sub: "Joined over 7 days ago", chip: "Needs you", tone: "warn", btns: [{ t: "needs2", label: "Open members" }] },
+  ],
+};
+
+const EVENTS = {
+  title: "Events",
+  head: [{ t: "create", label: "Create event", tone: "gold" }],
+  tabs: [{ t: "tabUp", label: "Upcoming · 2", on: true }, { t: "tabDrafts", label: "Drafts · 1" }, { t: "tabPast", label: "Past · 6" }],
+  rows: [
+    { name: "A Golden Beginning", sub: "Sat, Dec 12 · Novotel Manila", chip: "12 / 60", btns: [{ t: "edit1", label: "Edit" }, { t: "rsvps1", label: "RSVPs" }] },
+    { name: "Weekend Social Run", sub: "Sun, Jan 11 · Filinvest City", chip: "6 confirmed", btns: [{ label: "Edit" }, { label: "Participants" }] },
+  ],
+};
+
+const EDITOR = {
+  title: "A Golden Beginning",
+  head: [{ t: "preview", label: "Preview" }, { t: "save", label: "Save", tone: "gold" }],
+  tabs: [{ t: "jBasics", label: "Basics", on: true }, { t: "jReg", label: "Registration" }, { t: "jPricing", label: "Pricing" }, { t: "jCheckin", label: "Check-in" }],
+  fields: [
+    { t: "fTitle", label: "Event name", value: "A Golden Beginning" },
+    { t: "fDate", label: "Date and time", value: "Sat, Dec 12 · 3:00 PM" },
+    { t: "fCap", label: "Capacity", value: "60" },
+    { t: "fPrice", label: "Early Bird · first 20", value: "₱1,750" },
+  ],
+  toggles: [{ t: "open", label: "Registration is open", on: true }],
+};
+
+const REG_INDEX = {
+  title: "Registrations",
+  sub: "Who's coming to each event, and what still needs checking.",
+  rows: [
+    { name: "A Golden Beginning", sub: "Sat, Dec 12 · 12 / 60 signed up", chip: "2 payments to check", tone: "warn", btns: [{ t: "open1", label: "Open RSVPs", tone: "gold" }] },
+    { name: "Weekend Social Run", sub: "Sun, Jan 11 · 6 confirmed", chip: "Nothing waiting", btns: [{ t: "open2", label: "Open Participants" }] },
+  ],
+};
+
+const CHECKIN = {
+  title: "Check-in",
+  sub: "Pick the event, then scan the QR on each guest's confirmation email.",
+  rows: [
+    { name: "A Golden Beginning", sub: "Today · 3:00 PM · 0 of 48 checked in", chip: "Today", tone: "warn", btns: [{ t: "start", label: "Start check-in", tone: "gold" }, { t: "display", label: "Display screen" }] },
+  ],
+};
+
+const DOOR_LIST = {
+  title: "A Golden Beginning · Check-in",
+  head: [{ t: "byName", label: "Find them by name" }, { t: "openDisplay", label: "Open display screen" }],
+  tabs: [{ t: "tabIn", label: "Checked in · 12" }, { t: "tabNot", label: "Not checked in · 36", on: true }],
+  search: { t: "find", placeholder: "Search a name or furbaby…" },
+  rows: [{ name: "Ana Reyes", sub: "with Kobe", chip: "Paid", tone: "good", btns: [{ t: "checkinOne", label: "Check in", tone: "gold" }] }],
+};
+
+const PEOPLE = {
+  title: "People",
+  head: [{ label: "Import" }, { label: "Export CSV" }],
+  tabs: [{ t: "kMembers", label: "Members · 48", on: true }, { label: "Volunteers · 6" }, { label: "Partners · 3" }],
+  search: { t: "search", placeholder: "Find someone by name, email, furbaby…" },
+  tiles: [{ t: "tActive", label: "Active members", value: "41" }, { t: "tWaiting", label: "Waiting over 7 days", value: "3", tone: "warn" }],
+  rows: [
+    { tick: { t: "tick1" }, t: "p1", name: "Maria Santos", sub: "maria@… · with Mochi", chip: "New", tone: "warn", btns: [{ t: "status1", label: "New ▾" }] },
+    { tick: { t: "tick2" }, name: "Leo Cruz", sub: "leo@… · with Biscuit", chip: "Contacted", btns: [{ label: "Contacted ▾" }] },
+  ],
+};
+
+const BENEF = {
+  title: "Beneficiaries",
+  head: [{ t: "add", label: "+ Add a beneficiary", tone: "gold" }],
+  tabs: [{ label: "All · 4", on: true }, { label: "Partnered · 2" }, { label: "Talking · 1" }],
+  search: { t: "search", placeholder: "Search groups…" },
+  rows: [
+    { tick: { t: "tick1" }, name: "Pawssion Project", sub: "Animal rescue · Pampanga", chip: "On the website", tone: "good", btns: [{ t: "open1", label: "Open" }] },
+    { tick: { t: "tick2" }, name: "Little Sisters of the Abandoned Elderly", sub: "Elderly care · QC", chip: "Needs a blurb", tone: "warn", btns: [{ t: "open2", label: "Open" }] },
+  ],
+};
+
+const BENEF_FORM = {
+  title: "Little Sisters of the Abandoned Elderly",
+  head: [{ t: "save", label: "Save", tone: "gold" }],
+  fields: [
+    { t: "status", label: "Status", value: "Partnered" },
+    { t: "blurb", label: "Blurb for the website (up to 280)", value: "", placeholder: "One or two sentences about who they care for", tall: true },
+  ],
+  toggles: [{ t: "show", label: "Show on the website" }],
+};
+
+const MEDIA = {
+  title: "Media hub",
+  head: [{ t: "viewLive", label: "View the live hub" }, { t: "preview", label: "Preview" }, { t: "draft", label: "Save draft" }, { t: "publish", label: "Publish changes", tone: "gold" }],
+  tabs: [{ t: "jTop", label: "Top of the page", on: true }, { t: "jTimeline", label: "Activity history" }, { t: "jCommunity", label: "Our community" }, { t: "jPress", label: "Fact sheet" }],
+  fields: [
+    { t: "heroLead", label: "Hero introduction", value: "The media hub for The House of Retrievers' Society, Inc.", tall: true },
+    { t: "followers", label: "Instagram followers", value: "1,408" },
+    { t: "asOf", label: "Numbers as of", value: "16 November 2026" },
+  ],
+};
+
+const PHOTOGS = {
+  title: "Photographers",
+  head: [{ t: "add", label: "+ Add a photographer", tone: "gold" }],
+  rows: [{ name: "Kat Lim Photography", sub: "@katlimphoto · 3 events", btns: [{ t: "edit1", label: "Edit" }] }],
+};
+
+const PAY = {
+  title: "Payment settings",
+  sub: "A change goes live only after a different Owner approves it.",
+  rows: [
+    { name: "GCash", sub: "0917 ••• 1234 · Live since Nov 2", chip: "Offered", tone: "good", btns: [{ t: "editG", label: "Edit" }] },
+    { name: "Bank transfer", sub: "No details yet", chip: "Not offered", btns: [{ t: "addB", label: "Add details" }] },
+  ],
+};
+
+const JOURNEY = {
+  title: "Journey timeline",
+  head: [{ t: "fromEvent", label: "+ Add from an event", tone: "gold" }, { t: "milestone", label: "+ Add a milestone" }],
+  rows: [
+    { name: "Pawres de Mayo", sub: "May 2026 · Parklinks Pet Park", chip: "On the website", tone: "good", btns: [{ t: "edit1", label: "Edit" }] },
+    { name: "A Golden Beginning", sub: "No date yet", chip: "Draft", btns: [{ t: "edit2", label: "Edit" }] },
+  ],
+  toggles: [{ t: "show", label: "Show “Our journey” on the website", on: true }],
+};
+
+const BREEDS = {
+  title: "Breed icons",
+  search: { t: "search", placeholder: "Find a breed…" },
+  rows: [
+    { name: "Golden Retriever", sub: "Built-in icon", btns: [{ t: "upload1", label: "Upload icon" }] },
+    { name: "Aspin", sub: "Your icon", btns: [{ t: "builtin2", label: "Use built-in" }] },
+  ],
+  note: "Square, transparent, head only. SVG, or a 256 × 256 PNG / WebP, up to 100 KB.",
+};
+
+const ADMINS = {
+  title: "Admins & activity log",
+  head: [{ t: "invite", label: "+ Invite an admin", tone: "gold" }],
+  rows: [
+    { name: "Alyzza Angeles", sub: "alyzza@… · Online", chip: "Owner", btns: [{ t: "roles1", label: "Edit roles" }] },
+    { name: "Shey Santos", sub: "shey@… · active 2 h ago", chip: "Admin", btns: [{ t: "roles2", label: "Edit roles" }] },
+  ],
+  foot: [{ t: "access", label: "Page access: Save all" }, { t: "log", label: "Activity log" }],
+};
+
+const PROFILE = {
+  title: "My profile",
+  fields: [
+    { t: "fullName", label: "Full name", value: "Shey Santos" },
+    { t: "furbaby", label: "Furbaby's name", value: "" , placeholder: "Macchiato" },
+  ],
+  toggles: [{ t: "showAs", label: "Show my name as First name / furbaby" }],
+  foot: [{ t: "photo", label: "Upload photo" }, { t: "save", label: "Save profile", tone: "gold" }],
+};
+
+Object.assign(GUIDES, {
+  "dash-read": { title: "Read your dashboard", steps: [
+    step(DASH, "tNext", "The tiles count what matters. Each one opens what it counts: here, the next event.", { zoom: 1.4 }),
+    step(DASH, "needs1", "Needs you lists what's waiting on someone, like payments to check. Its button opens exactly that.", { zoom: 1.4 }),
+    step(DASH, "needs2", "Work down the list. When it's clear, it says so.", { act: "click", zoom: 1.4 }),
+  ] },
+  "events-create": { title: "Create an event", steps: [
+    step(EVENTS, "create", "On Events, press Create event.", { act: "click" }),
+    step(P(EDITOR, { title: "Create event", fields: EDITOR.fields.map((f) => ({ ...f, value: "" })) }), "fTitle", "Give it a name, then fill in the date, venue and poster.", { act: "type", text: "A Golden Beginning" }),
+    step(EDITOR, "jPricing", "Jump to Pricing to set the ticket price, early bird limits and promo codes.", { act: "click" }),
+    step(EDITOR, "save", "Save as a draft any time. It stays private until you publish.", { act: "click" }),
+    step(P(EDITOR, { confirm: { title: "Publish A Golden Beginning?", note: "It goes live on the events site and takes RSVPs.", yes: "Yes, publish" } }), "confirm", "Publish when every fact is confirmed, and confirm.", { act: "click" }),
+  ] },
+  "events-find": { title: "Find and edit an event", steps: [
+    step(EVENTS, "tabDrafts", "Upcoming, Drafts and Past tabs show their counts. Drafts are the ones not public yet.", { act: "click" }),
+    step(EVENTS, "edit1", "Press Edit on an event to change it.", { act: "click" }),
+    step(EDITOR, "jReg", "Jump to moves through the editor: Registration, Pricing, Check-in and more.", { act: "click" }),
+    step(EDITOR, "preview", "Preview shows the public page, card and RSVP form before you save.", { act: "click" }),
+  ] },
+  "event-edit": { title: "Change an event's details", steps: [
+    step(EDITOR, "fDate", "Change what you need. The poster, About text and prices are in their own sections.", { act: "click" }),
+    step(EDITOR, "fCap", "Under Registration, set the capacity and how long a payment hold lasts.", { act: "type", text: "60" }),
+    step(EDITOR, "open", "Switch Registration is open off to stop new RSVPs; the page stays up.", { act: "tick" }),
+    step(EDITOR, "save", "Press Save. The box lists what changed before anything is saved.", { act: "click" }),
+  ] },
+  "event-prices": { title: "Set prices and an early bird", steps: [
+    step(EDITOR, "jPricing", "Jump to Pricing.", { act: "click" }),
+    step(EDITOR, "fPrice", "Each price has a name and an amount. Limit one to the first 20 for an early bird, or give it a sale period.", { act: "type", text: "₱1,750" }),
+    step(EDITOR, "preview", "Preview shows how the prices read on the event page and in the RSVP form.", { act: "click" }),
+    step(EDITOR, "save", "Save. Registrations already made keep the price they paid.", { act: "click" }),
+  ] },
+  "reg-index": { title: "Open an event's RSVPs", steps: [
+    step(REG_INDEX, "open1", "Each event shows who's signed up and what needs you, like payments to check.", { zoom: 1.35 }),
+    step(REG_INDEX, "open1", "Press Open RSVPs to see the list, check payments and send QR passes.", { act: "click", zoom: 1.35 }),
+    step(REG_INDEX, "open2", "Activities like runs and workshops say Participants instead of RSVPs.", { zoom: 1.35 }),
+  ] },
+  "checkin-door": { title: "Check guests in at the door", steps: [
+    step(CHECKIN, "start", "On event day, press Start check-in on today's event.", { act: "click", zoom: 1.4 }),
+    { scene: "door", target: "scan", build: true, zoom: 1.15, caption: "Point the camera at the guest's QR pass, on their phone or printed." },
+    { scene: "door", state: { welcome: true }, target: "welcome", build: true, zoom: 1.05, caption: "They're welcomed by name. The next scan is ready in a few seconds." },
+    step(DOOR_LIST, "byName", "No QR? Press Find them by name.", { act: "click" }),
+    step(DOOR_LIST, "find", "Type their name or their furbaby's…", { act: "type", text: "Ana" }),
+    step(DOOR_LIST, "checkinOne", "…and press Check in. Unpaid guests are flagged, like a scan.", { act: "click" }),
+  ] },
+  "checkin-display": { title: "Show arrivals on a big screen", steps: [
+    step(CHECKIN, "display", "On a laptop or TV, press Display screen.", { act: "click", zoom: 1.4 }),
+    { scene: "door", state: { welcome: true }, target: "welcome", build: true, zoom: 1.05, caption: "Every guest checked in on any phone pops up here by name, with their furbaby." },
+    step(DOOR_LIST, "openDisplay", "From a scanner phone, Open display screen does the same.", { act: "click" }),
+  ] },
+  "people-follow": { title: "Follow up new joiners", steps: [
+    step(PEOPLE, "tWaiting", "Waiting over 7 days shows people nobody has contacted yet. Click it to see just them.", { act: "click", zoom: 1.4 }),
+    step(PEOPLE, "status1", "Change their follow-up status once you've reached out. Save appears when it changes.", { act: "click" }),
+    step(PEOPLE, "p1", "Open someone for their photo, furbabies, events and history.", { act: "click" }),
+  ] },
+  "people-email": { title: "Email several people", steps: [
+    step(PEOPLE, "search", "Search by name, email, handle, furbaby or member number.", { act: "type", text: "Mochi" }),
+    step(PEOPLE, "tick1", "Tick the people you want.", { act: "tick" }),
+    step(P(PEOPLE, { rows: PEOPLE.rows.map((r, i) => ({ ...r, tick: { ...r.tick, on: i === 0 } })), foot: [{ t: "emailThem", label: "1 selected · Email them", tone: "dark" }] }), "emailThem", "Press Email them. The send window opens so you can write it, preview it and confirm.", { act: "click" }),
+  ] },
+  "benef-add": { title: "Add a beneficiary", steps: [
+    step(BENEF, "add", "Press + Add a beneficiary. Or search: a name with no match offers to add it.", { act: "click" }),
+    step(P(BENEF_FORM, { title: "New beneficiary" }), "status", "Fill in who they are, where, what they need and who to contact.", { act: "click" }),
+    step(BENEF_FORM, "save", "Save. It's on your list, ready for letters and events.", { act: "click" }),
+  ] },
+  "benef-website": { title: "Put a beneficiary on the website", steps: [
+    step(BENEF, "open2", "The chip says what each one still needs to show on the website. Open it.", { act: "click" }),
+    step(BENEF_FORM, "blurb", "Write a short blurb about who they care for.", { act: "type", text: "Caring for elderly women with nowhere else to go." }),
+    step(P(BENEF_FORM, { fields: [BENEF_FORM.fields[0], { ...BENEF_FORM.fields[1], value: "Caring for elderly women with nowhere else to go." }] }), "show", "Switch on Show on the website.", { act: "tick" }),
+    step(P(BENEF_FORM, { toggles: [{ t: "show", label: "Show on the website", on: true }] }), "save", "Save. Partnered and past groups with a blurb show on the home page.", { act: "click" }),
+  ] },
+  "benef-letter": { title: "Send beneficiaries a letter", steps: [
+    step(BENEF, "tick1", "Tick the groups to write to.", { act: "tick" }),
+    step(P(BENEF, { rows: BENEF.rows.map((r, i) => ({ ...r, tick: { ...r.tick, on: i === 0 } })), foot: [{ t: "review", label: "1 selected · Review & send", tone: "dark" }] }), "review", "Press Review & send. You see each email before it goes.", { act: "click" }),
+  ] },
+  "media-edit": { title: "Update and publish the media hub", steps: [
+    step(MEDIA, "jCommunity", "Jump to the section you need, in the same order as the public hub.", { act: "click" }),
+    step(MEDIA, "followers", "Update the follower numbers about once a month, with the date.", { act: "type", text: "1,452" }),
+    step(MEDIA, "preview", "Preview shows the top of the hub with your changes.", { act: "click" }),
+    step(MEDIA, "draft", "Save draft keeps it private while you work…", { act: "click" }),
+    step(MEDIA, "publish", "…and Publish changes puts it live. Check every fact and name first.", { act: "click" }),
+  ] },
+  "photog-add": { title: "Add and credit a photographer", steps: [
+    step(PHOTOGS, "add", "Press + Add a photographer: their name, portfolio and socials.", { act: "click" }),
+    step(P(EDITOR, { tabs: [{ t: "jPhotos", label: "Photos by", on: true }] }), "jPhotos", "Then on an event's page, tick them under Photos by.", { act: "click" }),
+    step(PHOTOGS, "edit1", "Past events show them under “Photos by”, and the media hub credits their photos.", { zoom: 1.35 }),
+  ] },
+  "pay-change": { title: "Change a payment method", steps: [
+    step(PAY, "editG", "Press Edit on a method (or Add details).", { act: "click", zoom: 1.35 }),
+    step(P(PAY, { confirm: { title: "Request this GCash change?", note: "A different Owner approves it before it goes live.", yes: "Yes, request change" } }), "confirm", "Change the details and request the change.", { act: "click" }),
+    step(PAY, "editG", "A different Owner reviews and approves it. Until then the old details stay live. Switching a method off is immediate.", { zoom: 1.35 }),
+  ] },
+  "journey-add": { title: "Add a stop to the journey", steps: [
+    step(JOURNEY, "fromEvent", "Press + Add from an event (its date follows the event), or + Add a milestone.", { act: "click" }),
+    step(JOURNEY, "edit2", "New stops start as drafts. Open it to check the wording and add photos.", { act: "click" }),
+    step(P(JOURNEY, { rows: [JOURNEY.rows[0], { ...JOURNEY.rows[1], chip: "On the website", tone: "good" }] }), "edit2", "Publish it, and it joins “Our journey” on the home page.", { build: true }),
+  ] },
+  "journey-layout": { title: "Show or hide the journey", steps: [
+    step(JOURNEY, "show", "On the home page: switch the whole section on or off…", { act: "tick" }),
+    step(JOURNEY, "show", "…and pick its layout, vertical or sideways, then Save.", { zoom: 1.2 }),
+  ] },
+  "breeds-change": { title: "Change a breed icon", steps: [
+    step(BREEDS, "search", "Find the breed.", { act: "type", text: "Golden" }),
+    step(BREEDS, "upload1", "Press Upload icon and pick the file. The page says the size and style that fit.", { act: "click" }),
+    step(BREEDS, "builtin2", "Changed your mind? Use built-in puts the original back.", { act: "click" }),
+  ] },
+  "admins-invite": { title: "Invite an admin", steps: [
+    step(ADMINS, "invite", "Press + Invite an admin.", { act: "click" }),
+    step(P(ADMINS, { fields: [{ t: "email", label: "Their email", value: "" }, { t: "pages", label: "Page access", value: "Events: Edit · Check-in: Edit" }] }), "email", "Type the email they'll sign in with, and set which pages they can view or edit.", { act: "type", text: "shey@gmail.com" }),
+    step(P(ADMINS, { confirm: { title: "Invite this admin?", note: "Only the pages you set show in their menu.", yes: "Yes, invite admin" } }), "confirm", "Confirm. They can sign in with that email.", { act: "click" }),
+  ] },
+  "admins-access": { title: "Change what someone can open", steps: [
+    step(ADMINS, "roles2", "Edit roles gives a whole role, like Events or Check-in.", { act: "click" }),
+    step(ADMINS, "access", "Or under Page access, set each page to hidden, View or Edit, then Save all.", { act: "click" }),
+    step(ADMINS, "log", "The activity log shows every change, by whom and when.", { act: "click" }),
+  ] },
+  "profile-edit": { title: "Update your profile", steps: [
+    step(PROFILE, "photo", "Add a photo. Without one, your initials show.", { act: "click" }),
+    step(PROFILE, "furbaby", "Add your furbaby's name…", { act: "type", text: "Macchiato" }),
+    step(P(PROFILE, { fields: [PROFILE.fields[0], { ...PROFILE.fields[1], value: "Macchiato" }] }), "showAs", "…and choose to show your name as “Shey / Macchiato”.", { act: "tick" }),
+    step(P(PROFILE, { fields: [PROFILE.fields[0], { ...PROFILE.fields[1], value: "Macchiato" }], toggles: [{ t: "showAs", label: "Show my name as First name / furbaby", on: true }] }), "save", "Save. The menu and activity log show your new name.", { act: "click" }),
+  ] },
+});
+
+/** Each page's guides, first one opens. Every admin who can open the page sees them. */
+export const PAGE_GUIDES = {
+  dashboard: ["dash-read", "events-create", "checkin-door"],
+  events: ["events-create", "events-find", "event-prices"],
+  eventEditor: ["event-edit", "event-prices", "events-create"],
+  registrations: ["reg-index", "reg-check-payment", "reg-add"],
+  checkin: ["checkin-door", "checkin-display"],
+  people: ["people-follow", "people-email"],
+  beneficiaries: ["benef-add", "benef-website", "benef-letter"],
+  media: ["media-edit"],
+  photographers: ["photog-add"],
+  payments: ["pay-change"],
+  journey: ["journey-add", "journey-layout"],
+  breeds: ["breeds-change"],
+  admins: ["admins-invite", "admins-access"],
+  profile: ["profile-edit"],
+};

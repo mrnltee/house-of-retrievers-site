@@ -603,7 +603,61 @@ function Door({ state = {} }) {
   );
 }
 
-const SCENES = { eventNew: EventNew, eventLive: EventLive, door: Door, tracker: Tracker, regList: RegList, regPayment: RegPayment, regAdd: RegAdd, reminder: Reminder, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
+/**
+ * Any admin page, drawn from data (owner, 18 Nov 2026: a guide on every page). `state` describes the screen: a
+ * title and head buttons, tabs, a search box, rows, tiles, form fields, switches, foot buttons and a confirm box.
+ * Every element with a `t` can be pointed at (`pageTargets` in howToGuides.mjs lists them).
+ */
+function Page({ state = {}, typed }) {
+  const val = (f) => (typed?.target === f.t ? typed.text : f.value);
+  const B = (b) => <Btn key={b.t || b.label} t={b.t} tone={b.tone || ""}>{b.label}</Btn>;
+  return (
+    <div className="ht-screen ht-page">
+      <div className="ht-head"><strong className="ht-title">{state.title}</strong>{state.head && <span className="ht-actions">{state.head.map(B)}</span>}</div>
+      {state.sub && <small className="ht-legend">{state.sub}</small>}
+      {state.tabs && <span className="ht-actions">{state.tabs.map((tab) => <span key={tab.label} className={`ht-filter${tab.on ? " is-on" : ""}`} {...(tab.t ? T(tab.t) : {})}>{tab.label}</span>)}</span>}
+      {state.search && <span className={`ht-input${val(state.search) ? "" : " is-empty"}`} {...T(state.search.t)}>{val(state.search) || state.search.placeholder || "Search…"}{typed?.target === state.search.t && <span className="ht-caret" />}</span>}
+      {state.tiles && (
+        <div className="ht-tiles">
+          {state.tiles.map((tile) => (
+            <span key={tile.label} className={`ht-tile${tile.tone ? ` is-${tile.tone}` : ""}`} {...(tile.t ? T(tile.t) : {})}><small>{tile.label}</small><strong>{tile.value}</strong>{tile.note && <small>{tile.note}</small>}</span>
+          ))}
+        </div>
+      )}
+      {state.fields && (
+        <div className="ht-fields">
+          {state.fields.map((f) => <Field key={f.t} t={f.t} label={f.label} value={val(f)} placeholder={f.placeholder} multiline={f.tall} />)}
+        </div>
+      )}
+      {state.toggles && state.toggles.map((g) => <span key={g.t} className="ht-pick" {...T(g.t)}><span className={`ht-switch${g.on ? " is-on" : ""}`} />{g.label}</span>)}
+      {state.rows && (
+        <div className="ht-table">
+          {state.rows.map((r) => (
+            <div className={`ht-row${r.isNew ? " is-new" : ""}`} key={r.name} {...(r.t ? T(r.t) : {})}>
+              {r.tick ? <span {...T(r.tick.t)}><Box on={r.tick.on} /></span> : <span className="ht-avatar">{r.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span>}
+              <span className="ht-name"><strong>{r.name}</strong>{r.sub && <small>{r.sub}</small>}</span>
+              <span className="ht-cell">{r.chip && <span className={`ht-chip${r.tone ? ` is-${r.tone}` : ""}`}>{r.chip}</span>}</span>
+              <span className="ht-actions">{(r.btns || []).map(B)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {state.note && <div className="ht-card"><small>{state.note}</small></div>}
+      {state.foot && <span className="ht-actions">{state.foot.map(B)}</span>}
+      {state.confirm ? (
+        <div className="ht-screen ht-dim">
+          <div className="ht-dialog ht-small">
+            <strong>{state.confirm.title}</strong>
+            {state.confirm.note && <small>{state.confirm.note}</small>}
+            <Btn t="confirm" tone="dark">{state.confirm.yes || "Yes"}</Btn>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const SCENES = { page: Page, eventNew: EventNew, eventLive: EventLive, door: Door, tracker: Tracker, regList: RegList, regPayment: RegPayment, regAdd: RegAdd, reminder: Reminder, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
 
 /** One guide step's screen. `typed` is the text typed so far on a typing step. */
 export default function HowToScene({ scene, state, typed }) {

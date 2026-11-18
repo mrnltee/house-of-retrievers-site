@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { pageAdmin } from "../../../lib/admin/guard";
 import { ONLINE_MS, signInWith, yahooReady } from "../../../lib/admin/auth";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
@@ -88,7 +90,7 @@ export default async function AdminsPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Admins & activity log" lead="Who can sign in, what they can change, and everything that was changed. Keep at least two Owners so payment changes can always be approved.">
+      <PageHead title="Admins & activity log" lead="Who can sign in, what they can change, and everything that was changed. Keep at least two Owners so payment changes can always be approved."><HowTo guide={PAGE_GUIDES.admins[0]} guides={PAGE_GUIDES.admins} className="btn ghost" />
         <EditDialog label="+ Invite an admin" buttonClass="btn gold" title="Invite an admin" lead="They get the pages you set here, and nothing else.">
         <p className="small muted">
           They sign in with {yahooReady ? <><strong>Sign in with Google</strong> or <strong>Sign in with Yahoo</strong></> : <strong>Sign in with Google</strong>}, using exactly the email you type here{yahooReady ? ": Google for a Gmail or Google account, Yahoo for a Yahoo account (some Yahoo accounts use another address, such as a Gmail one)" : ""}. Another email, such as Outlook, works with Google once they make a free Google account with it (accounts.google.com/signup → Use your existing email).

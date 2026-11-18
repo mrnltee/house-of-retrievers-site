@@ -1,4 +1,6 @@
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { can } from "../../../lib/admin/roles.mjs";
 import { listPhotographers } from "../../../lib/photographersStore";
 import { Avatar } from "../ImageField";
@@ -13,7 +15,7 @@ export default async function PhotographersPage({ searchParams }) {
   const rows = await listPhotographers();
   return (
     <>
-      <PageHead title="Photographers" lead="Who takes HOR's event photos. Credit them on an event from that event's page; past events show them under “Photos by”, with their portfolio and socials.">
+      <PageHead title="Photographers" lead="Who takes HOR's event photos. Credit them on an event from that event's page; past events show them under “Photos by”, with their portfolio and socials."><HowTo guide={PAGE_GUIDES.photographers[0]} guides={PAGE_GUIDES.photographers} className="btn ghost" />
         {can(admin, "photographers:edit") && <a className="btn gold" href={`${base}/photographers/new`}>+ Add photographer</a>}
       </PageHead>
       <Flash params={params} />

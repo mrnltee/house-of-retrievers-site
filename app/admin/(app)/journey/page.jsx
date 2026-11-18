@@ -1,4 +1,6 @@
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { sql, hasDatabase } from "../../../lib/db";
 import { PageHead, Flash, NotAllowed, formatDay } from "../ui";
 import JourneySettingsForm from "./JourneySettingsForm";
@@ -32,7 +34,7 @@ export default async function JourneyAdminPage({ searchParams }) {
     : [];
   return (
     <>
-      <PageHead title="Journey timeline" lead="The stops on the home page's “Our journey”, oldest first, and how the section looks. New stops start as drafts: check the wording, add photos, then publish.">
+      <PageHead title="Journey timeline" lead="The stops on the home page's “Our journey”, oldest first, and how the section looks. New stops start as drafts: check the wording, add photos, then publish."><HowTo guide={PAGE_GUIDES.journey[0]} guides={PAGE_GUIDES.journey} className="btn ghost" />
         {canEdit && <AddFromEvent freeEvents={freeEvents} />}
         {canEdit && <AddMilestone />}
       </PageHead>
