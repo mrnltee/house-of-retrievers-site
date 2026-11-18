@@ -2,6 +2,7 @@ import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { PageHead } from "../ui";
 import { yahooReady } from "../../../lib/admin/auth";
 import { StartGuideButton } from "../GuideTour";
+import WelcomeFilm from "../WelcomeFilm";
 import { HOW, guidePages } from "../../../lib/admin/guide.mjs";
 import Icon from "../../../components/Icon";
 
@@ -19,7 +20,7 @@ export default async function GettingStarted() {
 
   return (
     <>
-      <PageHead title="Getting started" lead="A two-minute guide to the House of Retrievers admin."><StartGuideButton /></PageHead>
+      <PageHead title="Getting started" lead="A two-minute guide to the House of Retrievers admin."><WelcomeFilm /><StartGuideButton /></PageHead>
 
       <section className="card">
         <h2>1. Signing in</h2>
