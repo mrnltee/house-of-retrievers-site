@@ -1633,3 +1633,44 @@ details.sd-fold { display: block; }
 .jt-form .row-2 { align-items: start; }
 .jt-delete { padding-block: 16px; }
 .jt-delete > summary { list-style-position: inside; }
+
+/* Media hub editor review (18 Nov 2026, design review): one column in the public page's order, a pinned bar with
+   status, Preview (a window), Save / Publish and Jump to; repeated items (activities, families, angles) fold. */
+.media-admin-editor { max-width: 980px; }
+.media-editor-toolbar { position: sticky; top: 0; z-index: 20; display: grid; gap: 8px; background: rgba(255,255,255,.96); backdrop-filter: blur(6px); }
+.mh-bar-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mh-bar-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mh-unsaved { color: var(--a-alert); font-size: 14px; }
+.mh-unsaved::before { content: "●"; margin-right: 6px; }
+.media-editor-toolbar .actions { align-items: center; }
+.media-editor-toolbar .actions .linkish { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+.media-editor-toolbar .editor-nav { position: static; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; }
+.media-editor-fields > section.card { scroll-margin-top: 150px; }
+.mh-item { border: 1px solid var(--a-line); border-radius: 12px; background: #fff; }
+.mh-item > summary { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 52px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.mh-item > summary::-webkit-details-marker { display: none; }
+.mh-item > summary::after { content: ""; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid var(--a-muted); border-bottom: 2px solid var(--a-muted); transform: rotate(45deg); transition: transform .15s; }
+.mh-item[open] > summary::after { transform: rotate(-135deg); }
+.mh-item > summary:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; border-radius: 12px; }
+.mh-item-num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--a-sand); font-size: 13px; font-weight: 700; }
+.mh-item-title { font-weight: 700; }
+.mh-item-meta { color: var(--a-muted); font-size: 14px; }
+.mh-item-body { margin: 0 14px 14px; }
+.mh-preview-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 20px; border: 0; border-radius: 18px; overflow: auto; }
+.mh-preview-dialog::backdrop { background: rgba(13,13,13,.55); }
+.mh-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mh-preview-head h2 { margin: 0; }
+@media (max-width: 860px) {
+  .media-editor-toolbar { top: 64px; padding: 10px 12px; }
+  .media-editor-fields > section.card { scroll-margin-top: 210px; }
+  .mh-bar-row .actions { width: 100%; }
+}
+.media-editor-toolbar .editor-nav-label { display: none; }
+.media-editor-toolbar .editor-nav a { min-height: 40px; padding: 0 10px; font-size: 13.5px; }
+@media (max-width: 560px) {
+  .media-editor-toolbar { gap: 6px; }
+  .media-editor-toolbar .mh-bar-status small { display: none; }
+  .media-editor-toolbar .actions { flex-wrap: nowrap; gap: 6px; }
+  .media-editor-toolbar .actions .linkish { display: none; }
+  .media-editor-toolbar .actions .btn { flex: 1; min-height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
+}

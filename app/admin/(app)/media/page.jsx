@@ -32,16 +32,17 @@ const DEFAULTS = {
 };
 
 export default async function MediaAdminPage({ searchParams }) {
-  const { admin, allowed } = await pageAdmin("media:view");
+  const { allowed } = await pageAdmin("media:view");
   if (!allowed) return <NotAllowed />;
+  const params = await searchParams;
   const [document] = await sql("SELECT content, status, updated_at, updated_by FROM media_hub_documents WHERE id=true");
   const content = { ...DEFAULTS, ...(document?.content || {}) };
   const instagram = await loadInstagramCounts();
   const stale = staleCounts(document?.content || {}, { instagram });
   return (
     <>
-      <PageHead title="Media hub" lead="Edit the public PR, press, and partnership resource hub. Draft changes stay private until you publish them." />
-      <Flash params={searchParams} />
+      <PageHead title="Media hub" lead="The wording, photos and numbers on the public media hub, in the order they appear there. Save draft keeps changes private; Publish puts them live." />
+      <Flash params={params} />
       <MediaEditor content={content} stale={stale} liveInstagram={Boolean(instagram)} status={document?.status || "draft"} updatedAt={document?.updated_at} updatedBy={document?.updated_by} />
     </>
   );
