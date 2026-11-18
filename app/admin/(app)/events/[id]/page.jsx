@@ -18,6 +18,7 @@ import ShareMenu from "../../../../components/ShareMenu";
 import { toPublicEvent } from "../../../../lib/admin/events.mjs";
 import { eventUrl, shareCaption } from "../../../../lib/share.mjs";
 import ConfirmButton from "../../ConfirmButton";
+import Icon from "../../../../components/Icon";
 import { participantsLabel, showsGuestList } from "../../../../lib/eventCategories.mjs";
 
 export default async function EditEventPage({ params, searchParams }) {
@@ -33,6 +34,7 @@ export default async function EditEventPage({ params, searchParams }) {
 
   return (
     <>
+      <a className="btn small ghost page-back" href={`${base}/events`}><Icon name="arrowLeft" /> All events</a>
       <PageHead title={event.title} lead={`Status: ${event.status}`}><HowTo guide={PAGE_GUIDES.eventEditor[0]} guides={PAGE_GUIDES.eventEditor} className="btn ghost" />
         {can(admin, "supporters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/brands`}>Brands &amp; partnerships</a>}
         {showsGuestList(event.category) && can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/guests`}>Guest tracker</a>}

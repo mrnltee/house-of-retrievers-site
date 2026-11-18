@@ -1911,3 +1911,5 @@ details.sd-fold { display: block; }
   .checkin-display footer.checkin-display-recent { flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; }
   .checkin-display-recent ol { width: 100%; }
 }
+/* Back to the Events list from an event (owner, 18 Nov 2026): a small ghost button above the page head. */
+.page-back { display: inline-flex; align-items: center; gap: 6px; width: fit-content; justify-self: start; align-self: flex-start; margin: 0 0 12px; }
