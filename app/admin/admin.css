@@ -1751,3 +1751,35 @@ details.sd-fold { display: block; }
   .howto-scene, .howto-caption, .howto-end, .howto-build.is-on, .ht-pop, .ht-welcome, .ht-scanline, .howto-spin.is-on, .howto-steps li.is-done .howto-step-mark { animation: none; }
   .howto-build.is-on { opacity: 1; }
 }
+
+/* Getting started review (18 Nov 2026, design review): the film as the first thing, pages grouped like the menu
+   as whole-card links, and the notes as a two-column list. */
+.gs-hero { display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); gap: 24px; align-items: center; }
+.gs-hero-art { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; border-radius: 14px; background: radial-gradient(120% 90% at 30% 20%, #c9a35a 0%, #8a6a2c 45%, #1b1408 100%); overflow: hidden; }
+.gs-hero-play { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--a-ink); font-size: 22px; box-shadow: 0 8px 24px -8px rgba(0, 0, 0, .5); }
+.gs-hero-time { position: absolute; right: 10px; bottom: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(13, 13, 13, .7); color: #fff; font-size: 12px; font-weight: 700; }
+.gs-hero-copy h2 { margin: 2px 0 6px; }
+.gs-hero-copy p { margin: 0 0 14px; max-width: 560px; }
+.gs-kicker { margin: 0 !important; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--a-gold-text, #7a5a1c); }
+.gs-group + .gs-group { margin-top: 18px; }
+.gs-group-title { margin: 14px 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--a-muted); }
+.admin a.guide-page { display: grid; gap: 4px; align-content: start; padding: 14px; border: 1px solid var(--a-line); border-radius: 14px; background: #fff; color: var(--a-ink); text-decoration: none; transition: border-color .2s, box-shadow .2s, transform .2s; }
+.admin a.guide-page:hover { border-color: var(--a-gold); box-shadow: 0 6px 18px -12px rgba(13, 13, 13, .5); }
+.admin a.guide-page:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
+.guide-page-head { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.guide-page-head .icon { margin-left: auto; color: var(--a-muted); transition: transform .2s; }
+.admin a.guide-page:hover .guide-page-head .icon { transform: translateX(3px); color: var(--a-ink); }
+.guide-page-what { font-size: 14px; }
+.guide-page-how { font-size: 13px; color: var(--a-muted); }
+.guide-page-tip { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--a-gold-text, #7a5a1c); }
+.gs-know { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; padding: 0; list-style: none; }
+.gs-know li { padding-left: 14px; border-left: 3px solid var(--a-sand); }
+.gs-signin p { margin: 0; }
+@media (max-width: 720px) {
+  .gs-hero { grid-template-columns: 1fr; }
+  .gs-hero .actions .btn { flex: 1 1 100%; }
+  .gs-know { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .admin a.guide-page, .guide-page-head .icon { transition: none; } }
+.guide-page-group { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--a-muted); }
+.gs-hero + .card .guide-pages { margin-top: 6px; }

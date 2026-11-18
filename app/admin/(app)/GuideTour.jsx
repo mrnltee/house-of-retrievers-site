@@ -79,6 +79,6 @@ export default function GuideTour({ steps, autoStart, hidden, sessionKey }) {
 }
 
 /** "Show me around" button for the Getting started page. */
-export function StartGuideButton() {
-  return <button type="button" className="btn gold" onClick={() => window.dispatchEvent(new Event("hor-guide-start"))}>Show me around</button>;
+export function StartGuideButton({ className = "btn gold", label = "Show me around" }) {
+  return <button type="button" className={className} data-confirm="not-needed-read-only" onClick={() => window.dispatchEvent(new Event("hor-guide-start"))}>{label}</button>;
 }
