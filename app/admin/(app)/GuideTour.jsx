@@ -18,7 +18,9 @@ export default function GuideTour({ steps, autoStart, hidden, sessionKey }) {
     window.addEventListener("hor-guide-start", open);
     let seen = false;
     try { seen = sessionStorage.getItem(sessionKey) === "1"; } catch {}
-    if (autoStart && !seen) setStep(0);
+    // The welcome film opens first for someone new; its end card offers this tour.
+    const film = document.querySelector("dialog.howto-dialog.is-film[open]");
+    if (autoStart && !seen && !film) setStep(0);
     return () => window.removeEventListener("hor-guide-start", open);
   }, [autoStart, sessionKey]);
 

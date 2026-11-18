@@ -527,7 +527,83 @@ function TemplateEditor({ state = {}, typed }) {
   );
 }
 
-const SCENES = { tracker: Tracker, regList: RegList, regPayment: RegPayment, regAdd: RegAdd, reminder: Reminder, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
+/** Welcome tour (owner, 18 Nov 2026): a new event, its page going live, and the door. */
+function EventNew({ state = {}, typed }) {
+  const val = (k) => (typed?.target === k ? typed.text : state[k]);
+  return (
+    <div className="ht-screen">
+      <div className="ht-head"><strong className="ht-title">New event</strong><span className="ht-actions"><Btn>Preview</Btn><Btn t="publish" tone="gold">Publish</Btn></span></div>
+      <div className="ht-cols">
+        <div className="ht-col">
+          <Field t="title" label="Event name" value={val("title")} placeholder="e.g. A Golden Beginning" />
+          <div className="ht-field-row">
+            <Field t="date" label="Date and time" value={val("date")} placeholder="Pick a date" />
+            <Field t="venue" label="Venue" value={state.date ? "Novotel Manila" : undefined} placeholder="Search a place" />
+          </div>
+          <Field t="price" label="Early Bird · first 20" value={val("price")} placeholder="₱0 = free" />
+        </div>
+        <div className="ht-col">
+          <span className={`ht-poster${state.title ? " is-on" : ""}`}><span className="ht-poster-mark" />{state.title ? <strong>{state.title}</strong> : <small>4:5 poster</small>}</span>
+        </div>
+      </div>
+      {state.confirm ? (
+        <div className="ht-screen ht-dim">
+          <div className="ht-dialog ht-small">
+            <strong>Publish A Golden Beginning?</strong>
+            <small>It goes live on the events page and starts taking RSVPs.</small>
+            <Btn t="confirm" tone="dark">Yes, publish</Btn>
+          </div>
+        </div>
+      ) : <span className="ht-offstage"><span {...T("confirm")} /></span>}
+    </div>
+  );
+}
+
+function EventLive({ state = {} }) {
+  const people = [["Maria Santos", "with Mochi"], ["Leo Cruz", "with Biscuit & Pepper"], ["Ana Reyes", "with Kobe"]].slice(0, state.rsvps || 0);
+  return (
+    <div className="ht-screen ht-live">
+      <div className="ht-browser"><span /><span /><span /><small>events.houseofretrieversph.org/a-golden-beginning</small></div>
+      <div className="ht-cols">
+        <span className="ht-poster is-on is-tall"><span className="ht-poster-mark" /><strong>A Golden Beginning</strong><small>Sat, Dec 12 · 3:00 PM</small></span>
+        <div className="ht-col">
+          <span className="ht-chip is-good">Taking RSVPs</span>
+          <strong className="ht-title">A Golden Beginning: Paws &amp; Purpose</strong>
+          <small className="ht-legend">Novotel Manila · Early Bird ₱1,750</small>
+          <span className="ht-actions"><Btn t="rsvp" tone="gold">RSVP</Btn></span>
+          <div className="ht-list" {...T("rsvps")}>
+            {people.map(([name, dog]) => <span className="ht-pick ht-pop" key={name}><span className="ht-avatar">{name.split(" ").map((w) => w[0]).join("")}</span><span><strong>{name}</strong> <small>{dog} · just RSVP&apos;d</small></span></span>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Door({ state = {} }) {
+  return (
+    <div className="ht-screen ht-door">
+      {state.welcome ? (
+        <div className="ht-welcome" {...T("welcome")}>
+          <span className="ht-welcome-photo">MS</span>
+          <small>WELCOME TO</small>
+          <strong className="ht-title">A Golden Beginning</strong>
+          <span className="ht-welcome-name">Maria Santos</span>
+          <small>with Mochi</small>
+        </div>
+      ) : (
+        <div className="ht-scanner" {...T("scan")}>
+          <span className="ht-qr" />
+          <span className="ht-scanline" />
+          <small>Point the camera at their QR pass</small>
+        </div>
+      )}
+      {!state.welcome ? <span className="ht-offstage"><span {...T("welcome")} /></span> : <span className="ht-offstage"><span {...T("scan")} /></span>}
+    </div>
+  );
+}
+
+const SCENES = { eventNew: EventNew, eventLive: EventLive, door: Door, tracker: Tracker, regList: RegList, regPayment: RegPayment, regAdd: RegAdd, reminder: Reminder, brandEdit: BrandEdit, guestTracker: GuestTracker, invite: Invite, send: Send, editor: Editor, brandForm: BrandForm, letters: Letters, letterEditor: LetterEditor, details: Details, people: People, templates: Templates, templateEditor: TemplateEditor };
 
 /** One guide step's screen. `typed` is the text typed so far on a typing step. */
 export default function HowToScene({ scene, state, typed }) {

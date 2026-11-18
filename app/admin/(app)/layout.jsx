@@ -3,6 +3,7 @@ import { displayName, initialsOf, roleLine } from "../../lib/admin/profile.mjs";
 import { can, PAGES } from "../../lib/admin/roles.mjs";
 import AdminNav from "./AdminNav";
 import GuideTour from "./GuideTour";
+import WelcomeFilm from "./WelcomeFilm";
 import Presence from "./Presence";
 import PasteImages from "./PasteImages";
 import SendLetterModal from "./SendLetterModal";
@@ -65,6 +66,7 @@ export default async function AdminAppLayout({ children }) {
         home={base || "/"}
         me={{ name: displayName(admin), role: roleLine(admin), photo: admin.photo || "", initials: initialsOf(admin), email: admin.email, href: `${base}/profile` }}
       />
+      {!admin.preview && <WelcomeFilm auto />}
       {!admin.preview && <GuideTour steps={tour} autoStart={!admin.guide_hidden} hidden={Boolean(admin.guide_hidden)} sessionKey={`hor-guide-${admin.authTime || 0}`} />}
       {!admin.preview && <Presence />}
       {!admin.preview && <PasteImages />}

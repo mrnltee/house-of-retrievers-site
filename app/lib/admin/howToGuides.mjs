@@ -26,6 +26,9 @@ export const SCENE_TARGETS = {
   people: ["tick1", "tick2", "send"],
   templates: ["newAcceptance", "newEvent", "edit1"],
   templateEditor: ["tname", "subject", "heading", "message", "chip", "test", "save"],
+  eventNew: ["title", "date", "venue", "price", "publish", "confirm"],
+  eventLive: ["rsvp", "rsvps"],
+  door: ["scan", "welcome"],
 };
 
 export const GUIDES = {
@@ -306,6 +309,31 @@ Object.assign(GUIDES, {
     ],
   },
 });
+
+/**
+ * The welcome film (owner, 18 Nov 2026, inspired by a product demo the owner shared): one event from start to
+ * finish, shown once when someone first opens the admin. `zoom` frames the camera tighter or wider than the
+ * default; `build` shimmers over what appears instead of drawing the ring.
+ */
+GUIDES["welcome-event"] = {
+  title: "Run an event, start to finish",
+  steps: [
+    { scene: "eventNew", target: "title", act: "type", text: "A Golden Beginning", zoom: 1.6, caption: "Start in Events with + New event, and give it a name." },
+    { scene: "eventNew", state: { title: "A Golden Beginning" }, target: "date", act: "type", text: "Sat, Dec 12 · 3:00 PM", zoom: 1.6, caption: "Pick the date and the venue." },
+    { scene: "eventNew", state: { title: "A Golden Beginning", date: "Sat, Dec 12 · 3:00 PM" }, target: "price", act: "type", text: "₱1,750", zoom: 1.6, caption: "Set the ticket price. Early Bird limits, promo codes and capacity live here too." },
+    { scene: "eventNew", state: { title: "A Golden Beginning", date: "Sat, Dec 12 · 3:00 PM", price: "₱1,750" }, target: "publish", act: "click", zoom: 1.3, caption: "Press Publish." },
+    { scene: "eventNew", state: { title: "A Golden Beginning", date: "Sat, Dec 12 · 3:00 PM", price: "₱1,750", confirm: true }, target: "confirm", act: "click", zoom: 1.2, caption: "Confirm, and the event page goes live." },
+    { scene: "eventLive", state: { rsvps: 0 }, target: "rsvp", zoom: 1, caption: "Your event is on the events site, taking RSVPs." },
+    { scene: "eventLive", state: { rsvps: 3 }, target: "rsvps", build: true, zoom: 1.35, caption: "RSVPs come in. Each one holds a spot while they pay." },
+    { scene: "regList", state: { tab: "check" }, target: "r1Check", act: "click", zoom: 1.2, caption: "Receipts land under To check on Registrations. Press Check." },
+    { scene: "regPayment", target: "found", act: "tick", zoom: 1.3, caption: "Find their reference in HoR's own GCash or bank history, and tick it." },
+    { scene: "regPayment", state: { found: true }, target: "approve", act: "click", zoom: 1.3, caption: "Approve. Their QR pass is emailed straight away." },
+    { scene: "door", target: "scan", build: true, zoom: 1.15, caption: "On the day, scan their pass at the door." },
+    { scene: "door", state: { welcome: true }, target: "welcome", build: true, zoom: 1.05, caption: "They're welcomed by name, with their furbaby. That's the whole loop." },
+  ],
+};
+/** The welcome film, on its own. */
+export const WELCOME_GUIDES = ["welcome-event"];
 
 /** The brand guides, in the order the guide list shows them. */
 export const BRAND_GUIDES = ["send-one", "follow-up", "send-many", "own-email", "brand-reply", "brand-find", "invite", "add-brand"];
