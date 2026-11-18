@@ -29,9 +29,16 @@ const replyTone = { yes: "good", no: "alert", waiting: "" };
 // The row's reply control reads like the Guest tracker's: No reply yet, Yes, No.
 const REPLY_ORDER = ["waiting", "yes", "no"];
 
+/**
+ * What a brand gives, amounts first: "₱25,000 cash", "₱15,000 in kind: Treats ×200 · Booth". A kind with an
+ * amount isn't named again ("Cash · ₱25,000 cash" said cash twice; design review, 18 Nov 2026).
+ */
 function giving(r) {
-  const kinds = (r.gives || []).map((g) => GIVES.find(([k]) => k === g)?.[1]).filter(Boolean);
-  return [kinds.join(", "), r.cash_amount != null && `${peso(r.cash_amount)} cash`, r.in_kind_value != null && `${peso(r.in_kind_value)} in kind`, r.in_kind_note].filter(Boolean).join(" · ");
+  const cash = r.cash_amount != null ? `${peso(r.cash_amount)} cash` : "";
+  const inKind = r.in_kind_value != null ? `${peso(r.in_kind_value)} in kind${r.in_kind_note ? `: ${r.in_kind_note}` : ""}` : r.in_kind_note || "";
+  const kinds = (r.gives || []).filter((g) => !(g === "cash" && cash) && !(g === "in-kind" && inKind))
+    .map((g) => GIVES.find(([k]) => k === g)?.[1]).filter(Boolean);
+  return [cash, inKind, kinds.join(", ")].filter(Boolean).join(" · ");
 }
 
 /**
@@ -118,7 +125,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                 <tr key={r.supporter_id} data-row="" data-group={brandGroupKeys(r).join(" ")} data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
                   {canSend && <td className="st-pick"><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong st-1">
-                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a>{canEdit ? (
+                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a>{categoryLabel(r) && <span className="small muted role-category">{categoryLabel(r)}</span>}{canEdit ? (
                       /* Partner or sponsor at this event, switched right on the row (owner, 18 Nov 2026). */
                       <span className="role-quick-line"><span className="reply-quick role-quick" role="group" aria-label={`${r.name} at this event as`}>
                         {["Partner", "Sponsor"].map((k) => (k === (r.role === "Sponsor" ? "Sponsor" : "Partner")
@@ -132,10 +139,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                                 items={[`At ${event.title}: ${roleLabel(r)} → ${k}`, categoryLabel(r) ? `Their category (${categoryLabel(r)}) is cleared` : "", k === "Partner" ? "Pick a category (Co-presenter, In-kind partner, Exhibitor) in Edit details if they have one" : "Pick a level (Presenting, Major, Supporting) in Edit details if they have one", r.reply === "yes" ? `On the event page they move to ${k === "Sponsor" ? "Sponsored by" : "In partnership with"}` : "", "Their reply, giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>{k}</ConfirmButton>
                             </form>
                           )))}
-                      </span>{categoryLabel(r) && <span className="small muted"> {categoryLabel(r)}</span>}</span>
-                    ) : <><br /><span className="small muted">as {roleLabel(r)}</span></>}</span></span>
-                    {canEdit && (
-                      <EditDialog label="Edit details" buttonClass="btn small ghost" title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
+                      </span><EditDialog label="Edit details" buttonClass="btn small ghost" title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
                         <form action={saveTrackerEntry} className="form">
                           <input type="hidden" name="event" value={event.id} />
                           <input type="hidden" name="brand" value={r.supporter_id} />
@@ -170,9 +174,11 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                           </div>
                         </form>
                       </EditDialog>
-                    )}
+                      
+                    </span>
+                    ) : <><br /><span className="small muted">{r.role || "Partner"}</span></>}</span></span>
                   </td>
-                  <td className="st-4" data-label="Contact">{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
+                  <td className="st-4" data-label="Contact">{r.contact_name || r.contact_email ? <>{r.contact_name || <span className="muted">No contact person</span>}<br /><span className="small muted">{r.contact_email || "No email yet"}</span></> : <span className="muted">No contact yet</span>}<br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
                   <td className="small st-5" data-label="Invite letter">
                     {sendsOf(r).length ? <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} name={r.name} /> : <span className="muted">Not invited yet</span>}
                     {canSend && (() => {
