@@ -2005,3 +2005,27 @@ details.sd-fold { display: block; }
 @media (max-width: 720px) { .reg-tools:has(.tracker-group) { grid-template-columns: 1fr; } }
 .role-quick-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; }
 .role-quick .reply-opt { min-height: 30px; padding: 4px 12px; font-size: 12px; }
+/* Brand tracker second pass (18 Nov 2026, design review). The Partner / Sponsor switch, its category and Edit
+   details share one line under the brand's name (the row was four lines tall); the switch is quieter than the
+   reply control beside it, so the two don't compete; on phones "No reply yet" stays on one line and the head
+   buttons sit two a row with + Invite brands first. */
+.brand-tracker .role-quick-line { gap: 6px 10px; }
+.brand-tracker .role-quick { border-color: var(--a-line); }
+.brand-tracker .role-quick .reply-opt { min-height: 28px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+.brand-tracker .role-quick .reply-opt.is-on { background: var(--a-sand); color: var(--a-ink); }
+.brand-tracker .role-category { font-weight: 600; }
+.brand-tracker .role-quick-line .edit-dialog-open { margin: 0; }
+@media (max-width: 720px) {
+  .brand-tracker .reply-quick:not(.role-quick) .reply-opt { white-space: nowrap; font-size: 12px; padding: 4px 4px; }
+  .brand-tracker .role-quick { display: inline-flex; width: auto; }
+  .brand-tracker .role-quick .reply-opt { flex: none; min-height: 32px; }
+  .admin-main:has(.brand-tracker) .page-head .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .admin-main:has(.brand-tracker) .page-head .actions > * { width: 100%; justify-content: center; }
+  .admin-main:has(.brand-tracker) .page-head .actions > .btn.gold { order: -1; grid-column: 1 / -1; }
+}
+.brand-tracker .role-category { display: block; margin-top: 1px; }
+.brand-tracker .role-quick-line { flex-wrap: nowrap; }
+.brand-tracker .role-quick .reply-opt { padding: 2px 9px; }
+.brand-tracker .role-quick-line .edit-dialog-open { padding-inline: 12px; white-space: nowrap; }
+@media (min-width: 721px) { .brand-tracker .st-1 { min-width: 290px; } }
+@media (max-width: 720px) { .brand-tracker .role-quick-line { flex-wrap: wrap; } }
