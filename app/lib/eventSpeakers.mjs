@@ -8,7 +8,7 @@
  */
 
 /** Suggested roles, in the order the event page lists them (others typed by HoR come after). */
-export const SPEAKER_ROLES = ["Keynote speaker", "Guest speaker", "Speaker", "Host", "Special guest", "Performer", "Judge"];
+export const SPEAKER_ROLES = ["Keynote speaker", "Guest speaker", "Speaker", "Panelist", "Host", "Organizer", "Co-organizer", "Co-host", "Special guest", "Performer", "Judge"];
 
 export const ROLE_MAX = 40;
 export const INTRO_MAX = 200;
@@ -86,7 +86,7 @@ export function sortSpeakers(list) {
 
 /** The section title: "Speakers", "Special guests", or "Speakers & special guests". */
 export function speakersTitle(list) {
-  const speaks = (s) => /speaker|host/i.test(s.role);
+  const speaks = (s) => /speaker|host|panelist/i.test(s.role);
   const anySpeaker = list.some(speaks);
   const anyGuest = list.some((s) => !speaks(s));
   if (anySpeaker && anyGuest) return "Speakers & special guests";

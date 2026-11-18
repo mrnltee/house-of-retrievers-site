@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
-import { CONTACT_CATEGORIES, categoryOf, letterEmails } from "../../../../../lib/contacts.mjs";
+import { CONTACT_CATEGORIES, categoryOf, letterEmails, roleForSpecification } from "../../../../../lib/contacts.mjs";
 import { recipientFields } from "../../../../../lib/letters.mjs";
 import { REPLIES, replyLabel, sortTracker, trackerCounts, trackerSort } from "../../../../../lib/eventBrands.mjs";
 import { guestFollowUpLink, guestInviteLetter, guestMessageBase, guestRowLinks } from "../../../../../lib/eventGuestTracker.mjs";
@@ -181,7 +181,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                               <input type="hidden" name="publicSent" value="1" />
                               <label className="check"><input type="checkbox" name="showOnSite" value="1" defaultChecked={r.show_on_site} /> <span>Show {r.name} under Speakers &amp; special guests <small className="muted">(only once their reply is Coming, and only with their OK)</small></span></label>
                               <p className="small muted" style={{ margin: 0 }}>The page shows only what you fill in here: their name, role, intro, this picture and one link. Never their email, phone, notes or the photo on their guest record.</p>
-                              <label className="field"><span>Role <small>e.g. Guest speaker, Host, Special guest</small></span><input name="publicRole" list={`roles-${r.id}`} maxLength={ROLE_MAX} defaultValue={r.public_role || ""} /><datalist id={`roles-${r.id}`}>{SPEAKER_ROLES.map((x) => <option key={x} value={x} />)}</datalist></label>
+                              <label className="field"><span>Role <small>e.g. Guest speaker, Host, Special guest</small></span><input name="publicRole" list={`roles-${r.id}`} maxLength={ROLE_MAX} defaultValue={r.public_role || roleForSpecification(r.specification)} /><datalist id={`roles-${r.id}`}>{SPEAKER_ROLES.map((x) => <option key={x} value={x} />)}</datalist></label>
                               <label className="field"><span>Intro <small>One or two lines, up to {INTRO_MAX} characters</small></span><textarea name="publicIntro" rows={2} maxLength={INTRO_MAX} defaultValue={r.public_intro || ""} /></label>
                               <ImageField name="publicPhoto" label="Picture for the event page" hint="A photo they're happy to have public. Square works best." current={r.public_photo || ""} round maxEdge={600} />
                               <label className="field"><span>Link <small>Their Instagram (@handle) or a https:// page</small></span><input name="publicLink" maxLength={300} defaultValue={r.public_link || ""} /></label>

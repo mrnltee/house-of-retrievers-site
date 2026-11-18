@@ -8,7 +8,7 @@
 export const COMP_TYPES = [
   { key: "guest", label: "Guest", hint: "Invited guest" },
   { key: "vip", label: "VIP", hint: "VIP or distinguished guest" },
-  { key: "organizer", label: "Organizer", hint: "HOR team and admins" },
+  { key: "organizer", label: "Organizer", hint: "HoR team, co-organizers and co-hosts" },
 ];
 
 const KEYS = new Set(COMP_TYPES.map((t) => t.key));
