@@ -2138,3 +2138,14 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 }
 .media-press .media-launch-guests .media-launch-initials { display: grid; place-items: center; line-height: 1; letter-spacing: .02em; }
 .media-launch-facts dd { white-space: normal; }
+/* Partner and sponsor logos in the launch overview (18 Nov 2026, owner): each name as a chip with its logo in a
+   white circle (or its initial), like the event page's "With thanks to"; public brands link to their panel. */
+.media-launch-brands { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px 10px; align-items: start; margin-top: 10px; }
+.media-launch-brands-title { padding-top: 8px; color: rgba(255,255,255,.55); font-size: 13px; }
+.media-launch-brands ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.media-launch-brands li, .media-launch-brands li a { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; text-decoration: none; }
+.media-launch-brands li { padding: 4px 12px 4px 4px; border-radius: 999px; background: rgba(255,255,255,.07); }
+.media-launch-brands li a:hover, .media-launch-brands li a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.media-press .media-launch-card .media-launch-logo { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: #fff; color: #5c4515; font-size: 12px; font-weight: 700; line-height: 1; }
+.media-launch-logo img { width: 100%; height: 100%; object-fit: contain; }
+@media (max-width: 560px) { .media-launch-brands { grid-template-columns: 1fr; } .media-launch-brands-title { padding-top: 0; } }

@@ -19,6 +19,17 @@ function longDate(iso) {
   return Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Manila" }).format(d);
 }
 
+/**
+ * Partners and sponsors with their logo (owner, 18 Nov 2026): a brand with a public record (switched on, logo
+ * and blurb) has its logo and a link to its panel on the main site; the rest show an initial, like the event page.
+ */
+function brands(names = [], links = {}) {
+  return (names || []).map((name) => {
+    const link = links?.[String(name).toLowerCase()];
+    return { name, logo: link?.logo || null, slug: link?.slug || null };
+  });
+}
+
 /** The overview rows and lists for the card, from a public event (or the built-in facts when it can't be read). */
 export function launchOverview(event) {
   const e = event || {};
@@ -35,8 +46,8 @@ export function launchOverview(event) {
       ...(supports.length ? [["For", supports.join(" and ")]] : []),
     ],
     guests,
-    partners: e.partners || [],
-    sponsors: e.sponsors || [],
+    partners: brands(e.partners, e.supporterLinks),
+    sponsors: brands(e.sponsors, e.supporterLinks),
   };
 }
 

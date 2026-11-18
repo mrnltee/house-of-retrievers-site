@@ -229,8 +229,23 @@ export default async function MediaPage() {
             {(launch.partners.length > 0 || launch.sponsors.length > 0) && (
               <div className="media-launch-block">
                 <h4>With thanks to</h4>
-                {launch.partners.length > 0 && <p><span>Partners</span>{launch.partners.join(" · ")}</p>}
-                {launch.sponsors.length > 0 && <p><span>Sponsors</span>{launch.sponsors.join(" · ")}</p>}
+                {[["Partners", launch.partners], ["Sponsors", launch.sponsors]].filter(([, list]) => list.length).map(([title, list]) => (
+                  <div className="media-launch-brands" key={title}>
+                    <span className="media-launch-brands-title">{title}</span>
+                    <ul>
+                      {list.map((b) => {
+                        const mark = b.logo ? <img src={b.logo} alt="" width={28} height={28} loading="lazy" /> : <span aria-hidden="true">{initialsOf(b.name).slice(0, 1)}</span>;
+                        return (
+                          <li key={b.name}>
+                            {b.slug
+                              ? <a href={`${HOME_URL}/?supporter=${b.slug}#partners`}><span className="media-launch-logo">{mark}</span>{b.name}</a>
+                              : <><span className="media-launch-logo">{mark}</span>{b.name}</>}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
           </div>
