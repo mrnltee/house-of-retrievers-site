@@ -6,6 +6,7 @@
 /** Which complimentary type a guest gets: VIP for guests of honor, celebrities and VIP furparents, else Guest. */
 const VIP_CATEGORIES = new Set(["politician", "celebrity", "vip"]);
 export function compTypeForGuest(guest = {}) {
+  if (guest.category === "organizer") return "organizer";
   if (VIP_CATEGORIES.has(guest.category)) return "vip";
   if (/^\s*vip\b/i.test(String(guest.specification || ""))) return "vip";
   return "guest";

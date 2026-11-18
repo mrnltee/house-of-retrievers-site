@@ -5,7 +5,8 @@
  */
 export const CONTACT_CATEGORIES = [
   { key: "politician", label: "Politicians & guests of honor", letter: "invite-guests-of-honor" },
-  { key: "speaker", label: "Guest speakers (animal advocates)", letter: "invite-guest-speaker" },
+  { key: "speaker", label: "Guest speakers & hosts", letter: "invite-guest-speaker" },
+  { key: "organizer", label: "Event organizers & co-hosts", letter: "invite-special-guest" },
   { key: "celebrity", label: "Celebrities", letter: "invite-special-guest" },
   { key: "vip", label: "VIP furparents & special guests", letter: "invite-special-guest" },
   { key: "influencer", label: "Influencers & creators", letter: "invite-creators" },
@@ -16,11 +17,22 @@ export const CONTACT_CATEGORIES = [
 ];
 
 /**
- * Guest specifications (owner, 2026-11-12): what a guest is, from HOR's guest
- * sheet. A suggestion list (HOR can type another); each suggests the category
- * (and so the letter) when none is picked.
+ * Guest specifications (owner, 2026-11-12; organizers and speakers added 18 Nov 2026): what a guest is, from
+ * HOR's guest sheet. A suggestion list (HOR can type another); each suggests the category (and so the letter)
+ * when none is picked, and a speaker's suggests their role on the event page.
  */
 export const GUEST_SPECIFICATIONS = [
+  { label: "Keynote Speaker", category: "speaker", role: "Keynote speaker" },
+  { label: "Guest Speaker", category: "speaker", role: "Guest speaker" },
+  { label: "Panelist", category: "speaker", role: "Panelist" },
+  { label: "Host / Emcee", category: "speaker", role: "Host" },
+  { label: "Veterinarian", category: "speaker", role: "Guest speaker" },
+  { label: "Dog Trainer / Behaviorist", category: "speaker", role: "Guest speaker" },
+  { label: "Animal Welfare Advocate", category: "speaker", role: "Guest speaker" },
+  { label: "Event Organizer", category: "organizer", role: "Organizer" },
+  { label: "Co-organizer", category: "organizer", role: "Co-organizer" },
+  { label: "Co-host", category: "organizer", role: "Co-host" },
+  { label: "Organizing Committee", category: "organizer", role: "Organizer" },
   { label: "VIP", category: "vip" },
   { label: "Celebrity / Actress", category: "celebrity" },
   { label: "Celebrity / Actor", category: "celebrity" },
@@ -30,8 +42,18 @@ export const GUEST_SPECIFICATIONS = [
   { label: "Petfluencer", category: "influencer" },
 ];
 
+const specOf = (text) => GUEST_SPECIFICATIONS.find((s) => s.label.toLowerCase() === String(text || "").replace(/\s+/g, " ").trim().toLowerCase()) || null;
+
+/** The role a specification suggests on the event page ("Keynote Speaker" → "Keynote speaker"), else "". */
+export const roleForSpecification = (text) => specOf(text)?.role || "";
+
+/** Specifications grouped under their category, in category order: [{ key, label, specs: [label…] }]. */
+export const specificationGroups = () => CONTACT_CATEGORIES
+  .map((c) => ({ key: c.key, label: c.label, specs: GUEST_SPECIFICATIONS.filter((s) => s.category === c.key).map((s) => s.label) }))
+  .filter((g) => g.specs.length);
+
 /** The category a specification suggests ("Petfluencer" → influencer), else null. */
-export const categoryForSpecification = (text) => GUEST_SPECIFICATIONS.find((s) => s.label.toLowerCase() === String(text || "").replace(/\s+/g, " ").trim().toLowerCase())?.category || null;
+export const categoryForSpecification = (text) => specOf(text)?.category || null;
 
 export const CONTACT_LIMITS = { specification: 60, name: 120, organization: 120, email: 200, phone: 60, handle: 120, notes: 1000, address: 300, salutation: 120 };
 

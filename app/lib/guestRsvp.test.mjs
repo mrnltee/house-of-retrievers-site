@@ -30,3 +30,9 @@ test("changing the reply away from Coming cancels only an RSVP the tracker made,
   assert.deepEqual(rsvpChange({ reply: "no", linked: { id: "r1", status: "confirmed", checked_in_at: "t" }, made: true }), { op: "none" }, "they came anyway");
   assert.deepEqual(rsvpChange({ reply: "no" }), { op: "none" });
 });
+
+test("an event organizer on the Guest tracker joins the RSVP list as an Organizer", async () => {
+  const { compTypeForGuest } = await import("./guestRsvp.mjs");
+  assert.equal(compTypeForGuest({ category: "organizer" }), "organizer");
+  assert.equal(compTypeForGuest({ category: "speaker", specification: "Keynote Speaker" }), "guest");
+});

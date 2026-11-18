@@ -32,7 +32,9 @@ async function withBrands(rows) {
     const [yes, directory] = await Promise.all([yesBrandsByEvent(rows.map((r) => r.id)), sql("SELECT name FROM supporters")]);
     const names = directory.map((d) => d.name.toLowerCase());
     const of = (id, role) => (yes[id] || []).filter((b) => b.role === role).map((b) => b.name);
-    return rows.map((r) => ({ ...r, partners: publicNames(r.partners || [], of(r.id, "Partner"), names), sponsors: publicNames(r.sponsors || [], of(r.id, "Sponsor"), names) }));
+    // Each Yes partner's classification (co-presenter, in-kind, exhibitor), by name, for the event page's groups.
+    const types = (id) => Object.fromEntries((yes[id] || []).filter((b) => b.role === "Partner" && b.partnerType).map((b) => [b.name.toLowerCase(), b.partnerType]));
+    return rows.map((r) => ({ ...r, partners: publicNames(r.partners || [], of(r.id, "Partner"), names), sponsors: publicNames(r.sponsors || [], of(r.id, "Sponsor"), names), partner_types: types(r.id) }));
   } catch {
     return rows.map(withoutBrands);
   }

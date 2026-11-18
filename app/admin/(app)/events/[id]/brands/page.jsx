@@ -6,7 +6,7 @@ import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
 import { GIVES, newBrandHref } from "../../../../../lib/supporters.mjs";
-import { REPLIES, ROLES, replyLabel, sortTracker, trackerCounts, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
+import { REPLIES, ROLE_CHOICES, roleChoice, roleLabel, partnerTypeLabel, replyLabel, sortTracker, trackerCounts, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
 import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
@@ -70,7 +70,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
   const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value);
   const sorted = sortTracker(rows, sort, lastSent);
   // Words the tracker search looks through for each row.
-  const searchText = (r) => [r.name, r.role, r.contact_name, r.contact_email, recipientFields({ supporter: r }).salutation, replyLabel(r.reply), giving(r), ...sendsOf(r).slice(0, 1).flatMap((x) => [letterName(x.letter_key), x.status])].filter(Boolean).join(" ");
+  const searchText = (r) => [r.name, r.role, partnerTypeLabel(r.partner_type), r.contact_name, r.contact_email, recipientFields({ supporter: r }).salutation, replyLabel(r.reply), giving(r), ...sendsOf(r).slice(0, 1).flatMap((x) => [letterName(x.letter_key), x.status])].filter(Boolean).join(" ");
 
   return (
     <>
@@ -116,7 +116,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                 <tr key={r.supporter_id} data-row="" data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
                   {canSend && <td className="st-pick"><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong st-1">
-                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {r.role}</span></span></span>
+                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {roleLabel(r)}</span></span></span>
                     {canEdit && (
                       <EditDialog title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
                         <form action={saveTrackerEntry} className="form">
@@ -124,7 +124,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                           <input type="hidden" name="brand" value={r.supporter_id} />
                           <div className="row-3">
                             <label className="field"><span>Their reply</span><select name="reply" defaultValue={r.reply}>{REPLIES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-                            <label className="field"><span>At this event as</span><select name="role" defaultValue={r.role}>{ROLES.map((k) => <option key={k} value={k}>{k}</option>)}</select></label>
+                            <label className="field"><span>At this event as</span><select name="role" defaultValue={roleChoice(r)}>{ROLE_CHOICES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
                             <label className="field"><span>Follow up on</span><input type="date" name="followUpOn" defaultValue={r.follow_up_on || ""} /></label>
                           </div>
                           <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>

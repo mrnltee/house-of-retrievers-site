@@ -48,3 +48,19 @@ test("guest specification: kept, and picks the category when none is chosen", as
   assert.equal(cleanContact({ name: "Someone", category: "vip", specification: "Chef" }).contact.specification, "Chef");
   assert.equal(cleanContact({ name: "Someone", category: "vip" }).contact.specification, null);
 });
+
+test("organizers and speakers: specifications pick the category, and speakers' suggest a role", async () => {
+  const { CONTACT_CATEGORIES, categoryForSpecification, roleForSpecification, specificationGroups, cleanContact } = await import("./contacts.mjs");
+  assert.ok(CONTACT_CATEGORIES.some((c) => c.key === "organizer"));
+  assert.equal(categoryForSpecification("Event Organizer"), "organizer");
+  assert.equal(categoryForSpecification(" co-host "), "organizer");
+  assert.equal(categoryForSpecification("Keynote Speaker"), "speaker");
+  assert.equal(categoryForSpecification("Host / Emcee"), "speaker");
+  assert.equal(roleForSpecification("keynote speaker"), "Keynote speaker");
+  assert.equal(roleForSpecification("Event Organizer"), "Organizer");
+  assert.equal(roleForSpecification("Petfluencer"), "");
+  assert.equal(cleanContact({ name: "Dr. Lim", specification: "Veterinarian" }).contact.category, "speaker");
+  const groups = specificationGroups();
+  assert.deepEqual(groups.map((g) => g.key).slice(0, 2), ["speaker", "organizer"]);
+  assert.ok(groups.every((g) => g.specs.length));
+});

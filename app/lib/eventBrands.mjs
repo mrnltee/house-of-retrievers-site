@@ -11,6 +11,48 @@ export const REPLIES = [
   ["no", "No"],
 ];
 export const ROLES = ["Partner", "Sponsor"];
+
+/** What kind of partner a brand is at one event (owner, 2026-11-18). Sponsors have none. */
+export const PARTNER_TYPES = [
+  ["co-presenter", "Co-presenter", "Presents the event with HoR"],
+  ["in-kind", "In-kind partner", "Gives products or services instead of cash"],
+  ["exhibitor", "Exhibitor", "Has a booth or table at the event"],
+];
+export const partnerTypeLabel = (key) => PARTNER_TYPES.find(([k]) => k === key)?.[1] || "";
+
+/** The tracker's "At this event as" choices: one select for role and partner type ("Partner:exhibitor"). */
+export const ROLE_CHOICES = [
+  ["Partner", "Partner"],
+  ...PARTNER_TYPES.map(([k, l]) => [`Partner:${k}`, `Partner · ${l}`]),
+  ["Sponsor", "Sponsor"],
+];
+export const roleChoice = (row = {}) => (row.role === "Partner" && partnerTypeLabel(row.partner_type) ? `Partner:${row.partner_type}` : row.role || "Partner");
+/** "Exhibitor", "Partner", "Sponsor": how a brand's role at one event reads. */
+export const roleLabel = (row = {}) => (row.role === "Partner" && partnerTypeLabel(row.partner_type)) || row.role || "Partner";
+
+/**
+ * An event page's partners grouped by their classification, for "With thanks to": co-presenters, then partners
+ * with no classification (and names typed into the event), in-kind partners, exhibitors. Empty groups are left out.
+ * `types` is { lower-case name → partner type }.
+ */
+export function partnerGroups(partners = [], types = {}) {
+  const groups = [
+    { key: "co-presenter", title: "Co-presented with" },
+    { key: "", title: "In partnership with" },
+    { key: "in-kind", title: "In-kind partners" },
+    { key: "exhibitor", title: "Exhibitors" },
+  ];
+  const typeOf = (name) => { const t = types[String(name).toLowerCase()]; return PARTNER_TYPES.some(([k]) => k === t) ? t : ""; };
+  return groups.map((g) => ({ ...g, names: partners.filter((n) => typeOf(n) === g.key) })).filter((g) => g.names.length);
+}
+
+/** "Partner:exhibitor" → { role: "Partner", partnerType: "exhibitor" }; anything unknown → { role: null }. */
+export function readRole(value) {
+  const [role, type = ""] = String(value ?? "").split(":");
+  if (!ROLES.includes(role)) return { role: null, partnerType: null };
+  const partnerType = role === "Partner" && PARTNER_TYPES.some(([k]) => k === type) ? type : null;
+  return { role, partnerType };
+}
 export const replyLabel = (key) => REPLIES.find(([k]) => k === key)?.[1] || "No reply yet";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -31,7 +73,7 @@ function heads(value) {
 
 /** Tracker row form → { value } or { error }. */
 export function cleanEventBrand(input = {}) {
-  const role = ROLES.includes(input.role) ? input.role : null;
+  const { role, partnerType } = readRole(input.role);
   if (!role) return { error: "Pick Partner or Sponsor for this event." };
   const reply = REPLIES.some(([k]) => k === input.reply) ? input.reply : "waiting";
   const followUpOn = String(input.followUpOn ?? "").trim() || null;
@@ -46,7 +88,7 @@ export function cleanEventBrand(input = {}) {
   const gives = [...new Set([].concat(input.gives ?? []).filter((g) => keys.includes(g)))];
   return {
     value: {
-      role, reply, followUpOn, gives, cashAmount, inKindValue,
+      role, partnerType, reply, followUpOn, gives, cashAmount, inKindValue,
       inKindNote: text(input.inKindNote, 300),
       boothNeeds: text(input.boothNeeds, 500),
       repsAttending, dogsAttending,
