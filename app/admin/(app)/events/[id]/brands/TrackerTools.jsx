@@ -14,7 +14,7 @@ const rowsOf = () => [...document.querySelectorAll("#tracker-rows > tr[data-row]
 // Filter labels; the Guest tracker passes its own ("Coming", "Can't make it").
 const BRAND_LABELS = { yes: "Said yes", no: "Said no", waiting: "No reply yet", unsent: "No invite sent" };
 
-export default function TrackerTools({ counts, sort, publicNote = "", labels = BRAND_LABELS, placeholder = "Search brands…", searchTitle = "Searches brand, contact, email and letter", noun = "brands", sorts = TRACKER_SORTS, groups = null }) {
+export default function TrackerTools({ counts, sort, publicNote = "", labels = BRAND_LABELS, placeholder = "Search brands…", searchTitle = "Searches brand, contact, email and letter", noun = "brands", sorts = TRACKER_SORTS, groups = null, groupLabel = "All groups" }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [reply, setReply] = useState("");
@@ -25,7 +25,7 @@ export default function TrackerTools({ counts, sort, publicNote = "", labels = B
   useEffect(() => {
     let n = 0;
     rowsOf().forEach((tr) => {
-      const show = (!reply || (reply === "unsent" ? tr.dataset.sent === "no" : tr.dataset.reply === reply)) && (!group || tr.dataset.group === group) && fuzzyMatch(q, tr.dataset.search);
+      const show = (!reply || (reply === "unsent" ? tr.dataset.sent === "no" : tr.dataset.reply === reply)) && (!group || (tr.dataset.group || "").split(" ").includes(group)) && fuzzyMatch(q, tr.dataset.search);
       tr.hidden = !show;
       if (show) n++;
     });
@@ -56,7 +56,7 @@ export default function TrackerTools({ counts, sort, publicNote = "", labels = B
         <label className="tracker-group">
           <span className="sr-only">Show one group</span>
           <select value={group} onChange={(e) => setGroup(e.target.value)}>
-            <option value="">All groups</option>
+            <option value="">{groupLabel}</option>
             {groups.map(([key, label, n]) => <option key={key} value={key}>{label} · {n}</option>)}
           </select>
         </label>

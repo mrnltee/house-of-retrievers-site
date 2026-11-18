@@ -208,3 +208,29 @@ export function rowLetterLinks(base, eventId, row, letter, { sent = false } = {}
   const href = (key) => `${base}/letters/send?${new URLSearchParams([["letter", key], ["event", eventId], ["list", "brands"], ["to", `supporter:${row.supporter_id}`]])}`;
   return { send: href(letter), followUp: row.reply === "waiting" && sent ? href(FOLLOW_UP_LETTER) : "" };
 }
+
+/**
+ * The Brand tracker's Partners / Sponsors dropdown (owner, 18 Nov 2026). A row's keys go in data-group,
+ * space-separated: "partner partner:exhibitor", "partner partner:none" or "sponsor"; the dropdown picks one key,
+ * so "Partners" shows every partner and "Partners · Exhibitor" only those.
+ */
+export function brandGroupKeys(row = {}) {
+  if (row.role === "Sponsor") return ["sponsor"];
+  return ["partner", `partner:${partnerTypeLabel(row.partner_type) ? row.partner_type : "none"}`];
+}
+
+/** [[key, label, count]]: Partners, each classification in use, then Sponsors. */
+export function brandGroups(rows = []) {
+  const partners = rows.filter((r) => r.role !== "Sponsor");
+  const sponsors = rows.length - partners.length;
+  const out = [];
+  if (partners.length) {
+    out.push(["partner", "Partners", partners.length]);
+    const types = [...PARTNER_TYPES.map(([k, l]) => [k, `Partners · ${l}`]), ["none", "Partners · no category yet"]];
+    const used = types.map(([k, l]) => [`partner:${k}`, l, partners.filter((r) => brandGroupKeys(r)[1] === `partner:${k}`).length]).filter(([, , n]) => n);
+    // One category covering every partner would only repeat the Partners line.
+    if (!(used.length === 1 && used[0][2] === partners.length)) out.push(...used);
+  }
+  if (sponsors) out.push(["sponsor", "Sponsors", sponsors]);
+  return out;
+}

@@ -9,26 +9,37 @@ import { useEffect, useState } from "react";
 const ROWS = "#reg-rows tr[data-row]";
 const ticked = () => [...document.querySelectorAll("input[name='reg'][data-reg-pick]")].filter((b) => b.checked && !b.closest("tr")?.hidden);
 
-export function RegSearch({ total, sort, sortBase }) {
+export function RegSearch({ total, sort, sortBase, tickets = [] }) {
   const [q, setQ] = useState("");
+  // Ticket filter (owner, 18 Nov 2026): Complimentary, Early Bird, Regular… rows carry their keys in data-ticket.
+  const [ticket, setTicket] = useState("");
   const [shown, setShown] = useState(total);
   useEffect(() => {
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
     let n = 0;
     document.querySelectorAll(ROWS).forEach((tr) => {
-      const hit = words.every((w) => (tr.dataset.search || "").includes(w));
+      const hit = words.every((w) => (tr.dataset.search || "").includes(w)) && (!ticket || (tr.dataset.ticket || "").split(" ").includes(ticket));
       tr.hidden = !hit;
       if (hit) n += 1;
     });
     setShown(n);
     document.dispatchEvent(new Event("change"));
-  }, [q]);
+  }, [q, ticket]);
   return (
     <div className="tracker-tools reg-tools">
       <label className="tracker-search">
         <span className="sr-only">Search registrations</span>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, furbaby, reference…" autoComplete="off" />
       </label>
+      {tickets.length > 1 && (
+        <label className="tracker-group">
+          <span className="sr-only">Show one ticket</span>
+          <select value={ticket} onChange={(e) => setTicket(e.target.value)}>
+            <option value="">All tickets</option>
+            {tickets.map(([key, label, n]) => <option key={key} value={key}>{label} · {n}</option>)}
+          </select>
+        </label>
+      )}
       <label className="tracker-sort">
         <span className="sr-only">Sort</span>
         <select value={sort} onChange={(e) => { const url = new URL(sortBase, window.location.href); url.searchParams.set("sort", e.target.value); window.location.href = url.pathname + url.search; }}>
@@ -37,7 +48,7 @@ export function RegSearch({ total, sort, sortBase }) {
           <option value="name">Name A–Z</option>
         </select>
       </label>
-      <p className="small muted tracker-shown" aria-live="polite">{q ? (shown ? `Showing ${shown} of ${total}.` : "Nobody matches. Try fewer or different words.") : ""}</p>
+      <p className="small muted tracker-shown" aria-live="polite">{q || ticket ? (shown ? `Showing ${shown} of ${total}.` : "Nobody matches. Try fewer or different words.") : ""}</p>
     </div>
   );
 }

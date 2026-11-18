@@ -6,12 +6,12 @@ import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
 import { GIVES, newBrandHref } from "../../../../../lib/supporters.mjs";
-import { REPLIES, ROLE_CHOICES, roleChoice, roleLabel, partnerTypeLabel, replyLabel, sortTracker, trackerCounts, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
+import { REPLIES, ROLE_CHOICES, roleChoice, roleLabel, partnerTypeLabel, replyLabel, sortTracker, trackerCounts, brandGroups, brandGroupKeys, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
 import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { letterFor } from "../../../../../lib/contacts.mjs";
-import { setTrackerReply, inviteToEvent, removeTrackerEntry, saveTrackerEntry } from "../../../../eventBrandActions";
+import { setTrackerReply, setTrackerRole, inviteToEvent, removeTrackerEntry, saveTrackerEntry } from "../../../../eventBrandActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
@@ -108,17 +108,32 @@ export default async function BrandTrackerPage({ params, searchParams }) {
           <input type="hidden" name="letter" value={letter} />
           <input type="hidden" name="event" value={event.id} />
         </form>
-        {rows.length > 0 && <TrackerTools publicNote="Only brands that said Yes show on this event’s page and on the home page." counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} />}
+        {rows.length > 0 && <TrackerTools publicNote="Only brands that said Yes show on this event’s page and on the home page." counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} groups={brandGroups(rows)} groupLabel="Partners and sponsors" />}
         {canSend && rows.length > 0 && <SelectionBar letterHref={`${base}/letters/${letter}`} letterName={letterName(letter)} ownLetterHref={`${base}/events/${event.id}/letters`} />}
         <div className="table-wrap tracker-table">
           <table className="stack-table">
             <thead><tr>{canSend && <th>{rows.length > 0 ? <SelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Brand</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
             <tbody id="tracker-rows">
               {sorted.map((r) => (
-                <tr key={r.supporter_id} data-row="" data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
+                <tr key={r.supporter_id} data-row="" data-group={brandGroupKeys(r).join(" ")} data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
                   {canSend && <td className="st-pick"><input type="checkbox" form="tracker-send" name="to" value={`supporter:${r.supporter_id}`} aria-label={`Pick ${r.name}`} /></td>}
                   <td className="strong st-1">
-                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {roleLabel(r)}</span></span></span>
+                    <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a>{canEdit ? (
+                      /* Partner or sponsor at this event, switched right on the row (owner, 18 Nov 2026). */
+                      <span className="role-quick-line"><span className="reply-quick role-quick" role="group" aria-label={`${r.name} at this event as`}>
+                        {["Partner", "Sponsor"].map((k) => (k === (r.role === "Sponsor" ? "Sponsor" : "Partner")
+                          ? <span key={k} className="reply-opt is-on" aria-current="true">{k}</span>
+                          : (
+                            <form key={k} action={setTrackerRole}>
+                              <input type="hidden" name="event" value={event.id} />
+                              <input type="hidden" name="brand" value={r.supporter_id} />
+                              <input type="hidden" name="role" value={k} />
+                              <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, make them a ${k.toLowerCase()}`} title={`${r.name}: ${k.toLowerCase()} at this event?`}
+                                items={[`At ${event.title}: ${roleLabel(r)} → ${k}`, k === "Sponsor" && partnerTypeLabel(r.partner_type) ? `Their partner category (${partnerTypeLabel(r.partner_type)}) is cleared` : "", k === "Partner" ? "Pick a category (Co-presenter, In-kind partner, Exhibitor) in Edit details if they have one" : "", r.reply === "yes" ? `On the event page they move to ${k === "Sponsor" ? "Sponsored by" : "In partnership with"}` : "", "Their reply, giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>{k}</ConfirmButton>
+                            </form>
+                          )))}
+                      </span>{partnerTypeLabel(r.partner_type) && r.role !== "Sponsor" && <span className="small muted"> {partnerTypeLabel(r.partner_type)}</span>}</span>
+                    ) : <><br /><span className="small muted">as {roleLabel(r)}</span></>}</span></span>
                     {canEdit && (
                       <EditDialog label="Edit details" buttonClass="btn small ghost" title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
                         <form action={saveTrackerEntry} className="form">

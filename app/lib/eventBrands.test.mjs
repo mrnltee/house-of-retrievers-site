@@ -133,3 +133,20 @@ test("the Guest tracker can sort by group, then name; the Brand tracker can't", 
   assert.equal(trackerSort("group", GUEST_SORTS), "group");
   assert.equal(trackerSort("group"), "name");
 });
+
+import { brandGroupKeys, brandGroups } from "./eventBrands.mjs";
+
+test("brand tracker groups: partners with their categories, then sponsors", () => {
+  assert.deepEqual(brandGroupKeys({ role: "Partner", partner_type: "exhibitor" }), ["partner", "partner:exhibitor"]);
+  assert.deepEqual(brandGroupKeys({ role: "Partner", partner_type: null }), ["partner", "partner:none"]);
+  assert.deepEqual(brandGroupKeys({ role: "Sponsor", partner_type: "exhibitor" }), ["sponsor"]);
+  const rows = [{ role: "Partner", partner_type: "exhibitor" }, { role: "Partner" }, { role: "Partner", partner_type: "exhibitor" }, { role: "Sponsor" }];
+  assert.deepEqual(brandGroups(rows), [
+    ["partner", "Partners", 3],
+    ["partner:exhibitor", "Partners · Exhibitor", 2],
+    ["partner:none", "Partners · no category yet", 1],
+    ["sponsor", "Sponsors", 1],
+  ]);
+  // Every partner unclassified: no line repeating the total.
+  assert.deepEqual(brandGroups([{ role: "Partner" }, { role: "Sponsor" }]), [["partner", "Partners", 1], ["sponsor", "Sponsors", 1]]);
+});

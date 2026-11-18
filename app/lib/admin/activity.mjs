@@ -99,6 +99,7 @@ export const ACTION_LABELS = {
   "beneficiary.unevent": "Taken off an event",
   "event.brand.invite": "Invited brands to an event",
   "event.brand.reply": "Recorded a brand's reply",
+  "event.brand.role": "Changed a brand to partner or sponsor",
   "event.brand.save": "Updated a brand on an event's Brand tracker",
   "event.brand.remove": "Took a brand off an event's Brand tracker",
   "event.donor.save": "Updated a donor on an event",

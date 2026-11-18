@@ -1998,3 +1998,10 @@ details.sd-fold { display: block; }
   .checkin-top { grid-template-columns: minmax(0, 1fr); align-items: start; }
   .checkin-top .checkin-count { justify-self: start; justify-content: start; text-align: left; }
 }
+/* Filters and switches (18 Nov 2026, owner). Registrations: a ticket dropdown (Complimentary, Early Bird,
+   Regular…) between search and sort, and an Invitation card column. Brand tracker: a Partners and sponsors
+   dropdown, and a Partner / Sponsor switch under each brand's name. */
+.reg-tools:has(.tracker-group) { grid-template-columns: minmax(0, 1fr) auto auto; }
+@media (max-width: 720px) { .reg-tools:has(.tracker-group) { grid-template-columns: 1fr; } }
+.role-quick-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; }
+.role-quick .reply-opt { min-height: 30px; padding: 4px 12px; font-size: 12px; }

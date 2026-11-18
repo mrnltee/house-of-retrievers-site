@@ -133,3 +133,29 @@ export async function setTrackerReply(data) {
     await backWith(back, "ok", `${brand.name}: ${replyLabel(reply)}.${reply === "yes" ? " They show on this event's page." : ""}${numbered ? ` Their number is ${numbered}.` : ""}`);
   });
 }
+
+/**
+ * The Brand tracker row's Partner / Sponsor switch (owner, 18 Nov 2026): changes only the brand's role at this
+ * event. A sponsor never keeps a partner classification; switching back to Partner starts with none (pick it in
+ * Edit details). Reply, giving and notes stay as they are; nothing is emailed.
+ */
+export async function setTrackerRole(data) {
+  const event = await eventOf(data);
+  const back = event ? `/events/${event.id}/brands` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("supporters:edit");
+    if (!event) await backWith("/events", "error", "That event wasn't found.");
+    const supporterId = form(data, "brand");
+    const role = form(data, "role") === "Sponsor" ? "Sponsor" : "Partner";
+    const [brand] = isUuid(supporterId) ? await sql("SELECT name FROM supporters WHERE id = $1", [supporterId]) : [];
+    if (!brand) await backWith(back, "error", "That brand wasn't found.");
+    const [row] = await sql(
+      `UPDATE event_brands SET role = $3, partner_type = CASE WHEN $3 = 'Sponsor' OR role <> $3 THEN NULL ELSE partner_type END, updated_at = now()
+        WHERE event_id = $1 AND supporter_id = $2 RETURNING role`,
+      [event.id, supporterId, role],
+    );
+    if (!row) await backWith(back, "error", "That brand isn't on this event's tracker.");
+    await logActivity(admin.email, "event.brand.role", brand.name, { eventId: event.id, supporterId, role });
+    await backWith(back, "ok", `${brand.name} is now a ${role.toLowerCase()} at this event.`);
+  });
+}
