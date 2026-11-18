@@ -1926,3 +1926,6 @@ details.sd-fold { display: block; }
 .onpage-toggle.is-on .onpage-track::after { transform: translateX(16px); }
 .admin .onpage-toggle:focus-visible { outline: 2px solid var(--a-gold); outline-offset: 2px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { .onpage-track, .onpage-track::after { transition: none; } }
+/* Guest tracker group dropdown (owner, 18 Nov 2026): shows one group (category), beside the sort. */
+.tracker-group select { min-width: 220px; }
+@media (max-width: 720px) { .tracker-group, .tracker-group select, .tracker-sort, .tracker-sort select { flex: 1 1 100%; width: 100%; min-width: 0; } }
