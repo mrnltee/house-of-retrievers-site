@@ -35,7 +35,7 @@ export default function CategorySpecFields({ category: start = "", specification
         </label>
         {name}
       </div>
-      <label className="field"><span>Guest specification <small>Optional. Pick one or type your own, e.g. Keynote Speaker, Event Organizer, Petfluencer</small></span>
+      <label className="field"><span>Guest specification <small>Optional. Pick one or type your own, e.g. Keynote Speaker, Petfluencer. Shown beside their name on an event page they're on</small></span>
         <input name="specification" list="guest-specifications" value={spec} onChange={(e) => onSpec(e.target.value)} maxLength={CONTACT_LIMITS.specification} autoComplete="off" />
         <datalist id="guest-specifications">{specs.map((s) => <option key={s.label} value={s.label} label={categoryOf(s.category)?.label} />)}</datalist>
       </label>

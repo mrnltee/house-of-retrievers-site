@@ -239,7 +239,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                             title={r.show_on_site ? `Take ${r.name} off the event page?` : `Show ${r.name} on the event page?`}
                             items={r.show_on_site
                               ? ["They're taken off Speakers and special guests on the public event page", "Their reply and RSVP stay as they are", "Nothing is emailed"]
-                              : [`They show under Speakers and special guests${(r.public_role || roleForSpecification(r.specification)) ? ` as ${r.public_role || roleForSpecification(r.specification)}` : " as Special guest"}`, ...(r.reply === "yes" ? [] : ["Only once their reply is Coming"]), "Only their name, role, short intro, page photo and link: never their email, phone or notes", "Change their role, intro and photo in Edit details", "Nothing is emailed"]}>
+                              : [`They show under Speakers and special guests${(r.public_role || roleForSpecification(r.specification)) ? ` as ${r.public_role || roleForSpecification(r.specification)}` : " as Special guest"}`, ...(r.reply === "yes" ? [] : ["Only once their reply is Coming"]), "Only their name, guest specification, role, short intro, page photo and link: never their email, phone or notes", "Change their role, intro and photo in Edit details", "Nothing is emailed"]}>
                             <span className="onpage-track" aria-hidden="true" />
                             <span>Event page<span className="sr-only">: {r.show_on_site ? "on" : "off"}</span></span>
                           </ConfirmButton>

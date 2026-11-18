@@ -31,7 +31,7 @@ test("form values are tidied and capped", () => {
 
 test("the public shape never carries contact details or a private photo path", () => {
   const p = publicSpeaker({ contact_id: "c1", name: "Ana Cruz", email: "a@b.c", phone: "0917", notes: "x", photo: "/api/event-image/11111111-1111-1111-1111-111111111111", public_role: "", public_photo: "https://evil.example/x.png" });
-  assert.deepEqual(Object.keys(p).sort(), ["id", "intro", "link", "linkLabel", "name", "photo", "role"]);
+  assert.deepEqual(Object.keys(p).sort(), ["id", "intro", "label", "link", "linkLabel", "name", "photo", "role"]);
   assert.equal(p.role, "Special guest");
   assert.equal(p.photo, null);
 });
@@ -42,4 +42,11 @@ test("speakers come before special guests, and the title follows who is there", 
   assert.equal(speakersTitle(list), "Speakers and special guests");
   assert.equal(speakersTitle([{ role: "Guest speaker" }]), "Speakers and special guests");
   assert.equal(speakersTitle([{ role: "Special guest" }, { role: "VIP" }]), "Speakers and special guests");
+});
+
+test("a guest's specification sits beside their name, unless it only repeats the role", () => {
+  assert.equal(publicSpeaker({ name: "Macchiato", specification: "Petfluencer", public_role: "" }).label, "Petfluencer");
+  assert.equal(publicSpeaker({ name: "Eric", specification: "Guest Speaker", public_role: "Guest speaker" }).label, null);
+  assert.equal(publicSpeaker({ name: "Ana", specification: "", public_role: "Host" }).label, null);
+  assert.equal(publicSpeaker({ name: "Meg", specification: "  Celebrity /  Actress ", public_role: "" }).label, "Celebrity / Actress");
 });

@@ -664,7 +664,7 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
                     <span className="event-speaker-photo" aria-hidden="true">{p.photo ? <img src={p.photo} alt="" loading="lazy" /> : initialsOf(p.name)}</span>
                     <span className="event-speaker-body">
                       <span className="event-speaker-role">{p.role}</span>
-                      <strong>{p.name}</strong>
+                      <span className="event-speaker-name"><strong>{p.name}</strong>{p.label && <span className="event-speaker-label">{p.label}</span>}</span>
                       {p.intro && <span className="event-speaker-intro">{p.intro}</span>}
                       {p.link && <a className="event-speaker-link" href={p.link} target="_blank" rel="noopener noreferrer">{p.linkLabel} <Icon name="external" size={12} /></a>}
                     </span>
