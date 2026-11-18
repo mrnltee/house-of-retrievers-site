@@ -27,7 +27,7 @@ export function RegSearch({ total, sort, sortBase }) {
     <div className="tracker-tools reg-tools">
       <label className="tracker-search">
         <span className="sr-only">Search registrations</span>
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, furbaby or reference…" autoComplete="off" />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, furbaby, reference…" autoComplete="off" />
       </label>
       <label className="tracker-sort">
         <span className="sr-only">Sort</span>

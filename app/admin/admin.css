@@ -1961,3 +1961,28 @@ details.sd-fold { display: block; }
 .brand-tracker .st-3 { min-width: 170px; }
 .tracker-page .st-5 .tracker-row-actions { margin-top: 6px; }
 @media (max-width: 720px) { .brand-tracker .st-3 { min-width: 0; } }
+/* Registrations review (18 Nov 2026, design review). Every row action is the same small button, stacked in one
+   column (Check in, Confirm and More were gold text links that wrapped beside or under a button, and Add receipt
+   broke onto two lines inside its pill); the VIP / Guest chip sits on the chips line under the name instead of
+   squeezing the name onto two lines; the ticket reads name, then amount. Phones: Open check-in comes first in the
+   head, the head buttons share a two-column grid, and the filter tabs scroll sideways instead of taking 3 rows. */
+.reg-actions .btn, .reg-actions summary.btn { white-space: nowrap; }
+.reg-actions .row-more > summary .icon { margin-left: 4px; }
+.reg-ticket { display: grid; gap: 2px; }
+.reg-flags-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.reg-flags-line .chip { margin: 0; }
+@media (min-width: 721px) {
+  .reg-actions { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; width: 132px; }
+  .reg-actions > .btn, .reg-actions > form > .btn, .reg-actions > details > summary.btn { width: 100%; justify-content: center; }
+  .registrations-table td.st-10 { min-width: 0; width: 148px; }
+  .registrations-table .welcome-name .strong { white-space: nowrap; }
+}
+@media (max-width: 720px) {
+  .admin-main:has(.reg-stats) .page-head .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .admin-main:has(.reg-stats) .page-head .actions > * { width: 100%; justify-content: center; }
+  .admin-main:has(.reg-stats) .page-head .actions > .btn.gold { order: -1; grid-column: 1 / -1; }
+  .admin-main:has(.reg-stats) .page-head .head-more > summary { width: 100%; justify-content: center; }
+  .admin-main:has(.reg-stats) .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; }
+  .admin-main:has(.reg-stats) .tabs a { flex: none; }
+  .registrations-table td.st-5.is-empty { display: none; }
+}

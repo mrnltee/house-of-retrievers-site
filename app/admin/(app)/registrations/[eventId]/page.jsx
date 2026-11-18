@@ -25,7 +25,7 @@ import { eventLetters } from "../../../../lib/letterStore";
 import { participantInvitation } from "../../../../lib/invitationCard.mjs";
 import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
-import { compLabel, compLine } from "../../../../lib/compTickets.mjs";
+import { compLabel } from "../../../../lib/compTickets.mjs";
 import Icon from "../../../../components/Icon";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -222,17 +222,17 @@ export default async function EventRegistrations({ params, searchParams }) {
               return (
                 <tr key={r.id} data-row="" data-search={[r.name, r.email, r.furbaby_name, ...(r.guest_names || []), r.fee_reference, r.ticket_label, compLabel(r.comp_type), fromTracker.get(r.id)].filter(Boolean).join(" ").toLowerCase()}>
                   {pickable && <td className="st-pick">{!r.deleted_at && r.status !== "cancelled" && <input type="checkbox" name="reg" value={r.id} data-reg-pick="" aria-label={`Pick ${r.name}`} />}</td>}
-                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a>{r.comp_type && <> <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span></>}</span><br /><a className="small reg-email" href={`mailto:${r.email}`} title={r.email}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}{(!r.photo_consent || r.under_18) && <span className="reg-flags-line">{!r.photo_consent && <span className="chip">No photos</span>}{r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}</span>}</td>
+                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span><br /><a className="small reg-email" href={`mailto:${r.email}`} title={r.email}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}{(r.comp_type || !r.photo_consent || r.under_18) && <span className="reg-flags-line">{r.comp_type && <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span>}{!r.photo_consent && <span className="chip">No photos</span>}{r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}</span>}</td>
                   <td className="st-2">
                     {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? `Checked in · ${new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}` : "Confirmed"}</span>}
                     {r.checked_in_source === "manual" && r.checked_in_at && <><br /><span className="small muted">Checked in by hand</span></>}
                     {r.status === "waitlist" && <span className="chip">Waitlist #{waitPosition.get(r.id)}</span>}
                     {r.deleted_at ? <span className="chip alert">Deleted · recoverable</span> : r.status === "cancelled" && <span className="chip alert">Cancelled</span>}
                   </td>
-                  <td className="st-5" data-label="Furbaby"><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
+                  <td className={`st-5${r.furbaby_name ? "" : " is-empty"}`} data-label="Furbaby"><FurbabyList names={r.furbaby_name} breeds={r.furbaby_breeds} sexes={r.furbaby_sexes} ages={r.furbaby_ages} /></td>
                   {paidEvent && (
                     <>
-                      <td className="st-4" data-label="Ticket">{r.comp_type ? compLine(r.comp_type) : ticketLine(r.ticket_label, r.amount_due ?? r.ticket_amount) || "—"}</td>
+                      <td className="st-4" data-label="Ticket">{r.comp_type ? <span className="reg-ticket">{compLabel(r.comp_type)}<span className="small muted">Complimentary</span></span> : r.ticket_label ? <span className="reg-ticket">{r.ticket_label}{(r.amount_due ?? r.ticket_amount) != null && <span className="small muted">{ticketLine("", r.amount_due ?? r.ticket_amount)}</span>}</span> : <span className="muted">—</span>}</td>
                       <td className="st-3" data-label="Payment">
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
                         {r.fee_reference && <><br /><span className="small muted" title={`Reference ${r.fee_reference}`}>{[payMethodLabel(r.pay_method), r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}<br />Ref …{String(r.fee_reference).replace(/\s+/g, "").slice(-6)}</span></>}
@@ -266,7 +266,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                         <form action={changeRegistration}>
                           <input type="hidden" name="id" value={r.id} /><input type="hidden" name="op" value="confirm" />
                           <ConfirmButton
-                            className="linkish"
+                            className="btn small"
                             title={`Give ${r.name} a spot?`}
                             items={[
                               "Waitlist → Confirmed (it counts toward capacity)",
@@ -278,7 +278,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       )}
                       {canEdit && !r.deleted_at && r.status === "confirmed" && !r.checked_in_at && (
                         <details className="manual-checkin">
-                          <summary className="linkish">Check in</summary>
+                          <summary className="btn small ghost">Check in</summary>
                           <form action={manualCheckIn} className="form" style={{ gap: 8 }}>
                             <input type="hidden" name="id" value={r.id} />
                             <label className="field"><span>Arrived on</span><input type="date" name="checkinDate" required defaultValue={nowParts.date} /></label>
@@ -297,7 +297,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       {/* Less-used actions in a small menu (design review, 17 Nov 2026), so each row shows only its next step. */}
                       {canEdit && !r.deleted_at && (r.status !== "cancelled" || r.checked_in_at || (r.fee_status !== "paid" && !r.checked_in_at)) && (
                         <details className="row-more">
-                          <summary className="linkish">More</summary>
+                          <summary className="btn small ghost">More <Icon name="chevronDown" /></summary>
                           <div className="row-more-menu">
                       {canEdit && !r.deleted_at && r.status !== "cancelled" && (
                         <form action={changeRegistration}>
