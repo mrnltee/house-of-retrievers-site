@@ -114,6 +114,7 @@ export default async function EventForm({ event, autoDescribe = false }) {
           maxHumansPerFurbaby={event?.max_humans_per_furbaby}
           date={event ? isoDate(event.date) : ""}
           rsvpOpensAt={event?.rsvp_opens_at ? new Date(event.rsvp_opens_at).toISOString() : ""}
+          priceHiddenUntilOpen={Boolean(event?.price_hidden_until_open)}
           rsvpFormConfig={event?.rsvp_form_config}
         />
       </section>

@@ -653,7 +653,7 @@ function HoldField({ initial }) {
   );
 }
 
-export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, paymentHoldMinutes, maxFurbabiesPerRegistration, maxHumansPerFurbaby, maxPublicHumans, date, rsvpOpensAt, rsvpFormConfig }) {
+export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, rsvpLabel, vaccinationRecordRequired, feeRequired, onsitePayment, paymentHoldMinutes, maxFurbabiesPerRegistration, maxHumansPerFurbaby, maxPublicHumans, date, rsvpOpensAt, priceHiddenUntilOpen, rsvpFormConfig }) {
   const ref = useRef(null);
   const opensParts = manilaParts(rsvpOpensAt);
   const [scheduled, setScheduled] = useState(Boolean(rsvpOpensAt));
@@ -741,6 +741,13 @@ export function SignupFields({ registration, capacity, capacityBasis, rsvpOpen, 
               </div>
             )}
             {scheduled && opens.date && opens.time && <p className="small muted" style={{ margin: 0 }}>RSVPs open {formatOpens(manilaInstant(opens.date, opens.time))} (Manila). {opensLater(manilaInstant(opens.date, opens.time)) ? "Until then the RSVP button shows a countdown." : "That time has passed, so RSVPs are open now."}</p>}
+            <input type="hidden" name="priceHiddenSent" value="1" />
+            {scheduled ? (
+              <label className="check">
+                <input type="checkbox" name="priceHiddenUntilOpen" defaultChecked={Boolean(priceHiddenUntilOpen)} />
+                <span><strong>Keep the price private until RSVPs open</strong> <span className="small muted">The events page, the event page and its card say “Price revealed when RSVPs open”; the prices appear by themselves at the opening. Check both in Preview.</span></span>
+              </label>
+            ) : priceHiddenUntilOpen && <input type="hidden" name="priceHiddenUntilOpen" value="on" />}
           </div>
         </div>
       ) : (

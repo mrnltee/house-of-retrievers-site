@@ -47,6 +47,7 @@ const LABELS = {
   paymentHoldMinutes: "Payment hold length",
   tiersInOrder: "Offer prices in order",
   tiersHideLater: "Show later prices only once they open",
+  priceHiddenUntilOpen: "Keep the price private until RSVPs open",
   rsvpFormConfig: "Participant form",
   checkinSuccessMessage: "Check-in message",
   rsvpOpen: "RSVPs open",

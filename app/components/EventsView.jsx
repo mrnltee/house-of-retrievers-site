@@ -36,6 +36,7 @@ const STATUS_LABELS = {
 function useLiveEvent(event) {
   const opensAt = event.status === "soon" ? Date.parse(event.rsvpOpensAt || "") : NaN;
   const [open, setOpen] = useState(false);
+  const [prices, setPrices] = useState(null);
   useEffect(() => {
     if (!Number.isFinite(opensAt)) return undefined;
     let timer;
@@ -47,7 +48,28 @@ function useLiveEvent(event) {
     check();
     return () => clearTimeout(timer);
   }, [opensAt]);
-  return open ? { ...event, status: event.openStatus || "open" } : event;
+  // Prices kept private until the opening are fetched fresh at that moment (the page itself is cached for
+  // 5 minutes). Retried for a short while in case this clock runs a little ahead of the server's.
+  useEffect(() => {
+    if (!open || !event.pricePending || prices) return undefined;
+    let tries = 0;
+    let timer;
+    let live = true;
+    const load = async () => {
+      tries += 1;
+      try {
+        const response = await fetch(`/api/event-prices?slug=${encodeURIComponent(event.slug)}`, { cache: "no-store" });
+        if (response.ok) { const data = await response.json(); if (live) setPrices(data); return; }
+      } catch { /* try again below */ }
+      if (live && tries < 30) timer = setTimeout(load, 2000);
+    };
+    load();
+    return () => { live = false; clearTimeout(timer); };
+  }, [open, event.pricePending, event.slug, prices]);
+  if (!open) return event;
+  // Until the prices are in, keep showing the countdown's "soon", so nobody RSVPs without seeing a price.
+  if (event.pricePending && !prices) return event;
+  return { ...event, ...(prices ? { ...prices, pricePending: undefined } : {}), status: event.openStatus || "open" };
 }
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -141,6 +163,14 @@ function Linked({ text }) {
  * labels. Cards show the range; the event page also lists every tier.
  */
 function Price({ event, past }) {
+  if (!past && event.pricePending) {
+    return (
+      <p className="event-price is-pending">
+        <span className="event-price-label">Price</span>
+        <span className="event-price-value">Revealed when RSVPs open</span>
+      </p>
+    );
+  }
   if (past || !event.cost) return null;
   return (
     <p className="event-price">
@@ -602,14 +632,14 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
           {labels && <p className="event-category">{labels}</p>}
           <h1 id="event-title">{event.title}</h1>
           <DetailFacts event={event} past={past} />
-          {!past && (event.cost || canRsvp) && (
+          {!past && (event.cost || event.pricePending || canRsvp) && (
             <div className="event-action-card" ref={card}>
               <Price event={event} past={past} />
               <RsvpButton event={event} past={past} onRsvp={onRsvp} />
               <ShareMenu event={event} compact />
             </div>
           )}
-          {!past && !event.cost && !canRsvp && <div className="event-actions"><ShareMenu event={event} /></div>}
+          {!past && !event.cost && !event.pricePending && !canRsvp && <div className="event-actions"><ShareMenu event={event} /></div>}
           {event.summary && (
             <section className="event-about" aria-labelledby="about-title">
               <h2 id="about-title">About</h2>

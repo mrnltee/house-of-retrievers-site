@@ -78,9 +78,11 @@ function draftEvent(form, saved) {
     pricing_basis: pricingBasis,
     included_furbabies_per_human: Number(get("includedFurbabiesPerHuman") || 0),
     additional_furbaby_fee: Number(get("additionalFurbabyFee") || 0),
+    price_hidden_until_open: f.get("priceHiddenUntilOpen") === "on",
     status: "published",
   };
-  return { event: toPublicEvent(row, 0), past: isPastDate(date) };
+  // "Once RSVPs open" shows the prices even when they're kept private until then.
+  return { event: toPublicEvent(row, 0), openEvent: toPublicEvent({ ...row, price_hidden_until_open: false }, 0), past: isPastDate(date) };
 }
 
 /**
@@ -100,7 +102,7 @@ export default function EventPreview({ image = "", imageSource = "", slug = "" }
   // While RSVPs open later, registrants see a countdown; "Once RSVPs open" shows the page as it will be after.
   const [stage, setStage] = useState("now");
   const scheduled = draft?.event.status === "soon";
-  const shown = draft && scheduled && stage === "open" ? { ...draft, event: { ...draft.event, status: draft.event.openStatus, rsvpOpensAt: undefined } } : draft;
+  const shown = draft && scheduled && stage === "open" ? { ...draft, event: { ...(draft.openEvent || draft.event), status: draft.event.openStatus, rsvpOpensAt: undefined } } : draft;
 
   function open() {
     const form = anchor.current?.closest("form");
