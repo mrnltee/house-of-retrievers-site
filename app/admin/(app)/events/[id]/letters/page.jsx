@@ -56,7 +56,7 @@ export default async function EventLettersPage({ params, searchParams }) {
                 {mine.map((l) => (
                   <tr key={l.key}>
                     <td className="strong"><a href={`${base}/letters/${l.key}`}>{l.name}</a><br /><span className="small muted">{l.subject}</span></td>
-                    <td className="small">{l.invitation?.on ? (l.invitation.audience === "participants" ? "Invitation card · participants" : "Invitation card · guests") : l.basedOn ? nameOf(l.basedOn) : "Blank"}</td>
+                    <td className="small">{l.invitation?.on ? ({ participants: "Invitation card · participants", confirmed: "Invitation card · confirmed guests" }[l.invitation.audience] || "Invitation card · guests") : l.basedOn ? nameOf(l.basedOn) : "Blank"}</td>
                     <td className="small">{l.updatedAt ? formatWhen(l.updatedAt) : "—"}</td>
                     <td>
                       <span className="actions" style={{ justifyContent: "flex-end" }}>
@@ -120,6 +120,7 @@ export default async function EventLettersPage({ params, searchParams }) {
                   <option value="">Blank letter</option>
                   <option value="invitation-card">Invitation card for invited guests (asks them to reply)</option>
                   <option value="invitation-participants">Invitation card for registered participants (place confirmed)</option>
+                  <option value="invitation-confirmed">Invitation card for guests who said Coming (complimentary, place reserved)</option>
                   {general.map((l) => <option key={l.key} value={l.key}>{l.name}</option>)}
                 </select>
               </label>

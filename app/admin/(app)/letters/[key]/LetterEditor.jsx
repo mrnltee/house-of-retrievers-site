@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import FormatBar, { boldKey } from "./FormatBar";
 import { AUTO_BLANKS, LETTER_HELP, LETTER_LIMITS, blanksOf, fillLetter, letterDate, prepareLetter } from "../../../../lib/letters.mjs";
 import { applyEmailFrame, invitationEmail, letterCoverEmail } from "../../../../lib/emailTemplates.mjs";
-import { cleanInvitation } from "../../../../lib/invitationCard.mjs";
+import { cleanInvitation, forRegistrations } from "../../../../lib/invitationCard.mjs";
 import InvitationCardField, { invitationPostFields } from "./InvitationCardField";
 import { blankSample } from "../../../../lib/letters/samples.mjs";
 import { resetLetter, saveLetter } from "../../../letterActions";
@@ -37,7 +37,7 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
   const [cardSrc, setCardSrc] = useState("");
   const invChanged = inv.cardUpload !== "" || inv.pageUploads.some(Boolean) || (["on", "card", "y", "nameSize", "orgSize", "audience"].some((k) => inv[k] !== savedInv[k]) || JSON.stringify(inv.qr) !== JSON.stringify(savedInv.qr)) || inv.pages.join() !== savedInv.pages.join();
   const invite = inv.on;
-  const forParticipants = invite && inv.audience === "participants";
+  const forParticipants = invite && forRegistrations(inv.audience);
   const TO = forParticipants ? PARTICIPANT_TO : invite ? INVITE_TO : LETTER_TO;
   const sigChanged = sig.upload !== "" || ["on", "x", "dy", "width"].some((k) => sig[k] !== savedSig[k]) || sig.image !== savedSig.image;
   const changed = invChanged || sigChanged || attachPdf !== savedAttach || JSON.stringify(fields) !== JSON.stringify({ name: letter.name, subject: letter.subject, cover: letter.cover, body: letter.body });
@@ -101,9 +101,10 @@ export default function LetterEditor({ letter, original, pdfAction, standard = {
           <span><strong>Send as an invitation card</strong><br /><span className="small muted">{invite ? "Each guest gets their own card with their name in gold script and their organization under it: shown in the email, and as a PDF with the pages you add." : "For distinguished guests: a personalised card in place of a typed letter."}</span></span>
         </label>
         {invite && <fieldset className="field invitation-audience">
-          <legend className="field-head">Who it&apos;s for <small>Registrations&apos; “Send invitation cards” uses the participants&apos; one.</small></legend>
-          <label className="check"><input type="radio" name="invitationAudienceChoice" checked={inv.audience !== "participants"} onChange={() => setInv((s) => ({ ...s, audience: "guests" }))} /> <span><strong>Invited guests</strong> <span className="small muted">· VIPs and distinguished guests, asked to let HOR know if they can come</span></span></label>
+          <legend className="field-head">Who it&apos;s for <small>Registrations&apos; “Send invitation cards” uses the participants&apos; one, and “Send guest cards” the confirmed guests&apos; one.</small></legend>
+          <label className="check"><input type="radio" name="invitationAudienceChoice" checked={!forRegistrations(inv.audience)} onChange={() => setInv((s) => ({ ...s, audience: "guests" }))} /> <span><strong>Invited guests</strong> <span className="small muted">· VIPs and distinguished guests, asked to let HOR know if they can come</span></span></label>
           <label className="check"><input type="radio" name="invitationAudienceChoice" checked={inv.audience === "participants"} onChange={() => setInv((s) => ({ ...s, audience: "participants" }))} /> <span><strong>Registered participants</strong> <span className="small muted">· their place is confirmed, so don&apos;t ask them to RSVP; mention their QR pass</span></span></label>
+          <label className="check"><input type="radio" name="invitationAudienceChoice" checked={inv.audience === "confirmed"} onChange={() => setInv((s) => ({ ...s, audience: "confirmed" }))} /> <span><strong>Guests who said Coming</strong> <span className="small muted">· complimentary guests on the RSVP list: thank them for accepting; they never got a confirmation email, so put their QR on the last page</span></span></label>
         </fieldset>}
         {!invite && <label className="check attach-choice">
           <input type="checkbox" checked={attachPdf} onChange={(e) => setAttachPdf(e.target.checked)} />

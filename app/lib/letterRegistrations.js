@@ -53,13 +53,15 @@ export async function passCodes(ids, { eventId, admin } = {}) {
  * paid event; reminderEligibility), as registration ids, for the send window's
  * "participants=all". Same permission check as registrationRecipients.
  */
-export async function eventParticipantIds(eventId, { admin } = {}) {
+export async function eventParticipantIds(eventId, { admin, comp } = {}) {
   if (!isUuid(eventId) || !admin || !can(admin, "registrations:view")) return [];
   const rows = await sql(
-    `SELECT r.id, r.email, r.status, r.fee_status, r.deleted_at, e.fee_required
+    `SELECT r.id, r.email, r.status, r.fee_status, r.deleted_at, r.comp_type, e.fee_required
        FROM registrations r JOIN events e ON e.id = r.event_id
       WHERE r.event_id = $1 AND r.deleted_at IS NULL AND r.status = 'confirmed' ORDER BY lower(r.name)`,
     [eventId],
   );
-  return rows.filter((r) => reminderEligibility(r, { feeRequired: Boolean(r.fee_required) }).ok).map((r) => r.id);
+  // comp "only": complimentary guests (the confirmed guests' card); "exclude": everyone else (owner, 2026-11-18).
+  const kept = comp === "only" ? rows.filter((r) => r.comp_type) : comp === "exclude" ? rows.filter((r) => !r.comp_type) : rows;
+  return kept.filter((r) => reminderEligibility(r, { feeRequired: Boolean(r.fee_required) }).ok).map((r) => r.id);
 }

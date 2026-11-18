@@ -7,7 +7,7 @@ import { socialLinks } from "../lib/socials.mjs";
 import LogoMoments from "./LogoMoments";
 import Footer from "./Footer";
 import { initialsOf, speakersTitle } from "../lib/eventSpeakers.mjs";
-import { partnerGroups } from "../lib/eventBrands.mjs";
+import { partnerGroups, sponsorGroups } from "../lib/eventBrands.mjs";
 import JoinModal from "./JoinModal";
 import RsvpModal from "./RsvpModal";
 import ShareMenu from "./ShareMenu";
@@ -704,12 +704,12 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
                   <ul>{g.names.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
                 </div>
               ))}
-              {event.sponsors && (
-                <div>
-                  <p className="event-supporters-role">Sponsored by</p>
-                  <ul>{event.sponsors.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
+              {event.sponsors && sponsorGroups(event.sponsors, event.sponsorLevels).map((g) => (
+                <div key={g.key || "sponsors"}>
+                  <p className="event-supporters-role">{g.title}</p>
+                  <ul>{g.names.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
                 </div>
-              )}
+              ))}
             </section>
           )}
           {supporter && <SupporterDialog supporter={supporter} onClose={() => setSupporter(null)} />}

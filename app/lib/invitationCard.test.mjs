@@ -95,3 +95,18 @@ test("invitation QR: off by default, clamped, kept on the page", async () => {
   assert.equal(box.top, 1350 - 540);
   assert.deepEqual(qrBox({ qr: { x: 0.5, y: 0.5, size: 0.2 } }), { left: 432, top: 567, px: 216 });
 });
+
+test("confirmed guests' card: its own audience, never picked as the participants' card", async () => {
+  const { cleanInvitation, participantInvitation, confirmedGuestInvitation, forRegistrations } = await import("./invitationCard.mjs");
+  const card = "/api/event-image/11111111-1111-1111-1111-111111111111";
+  const L = (key, audience) => ({ key, invitation: { on: true, card, audience } });
+  assert.equal(cleanInvitation({ audience: "confirmed" }).audience, "confirmed");
+  assert.equal(cleanInvitation({ audience: "boss" }).audience, "guests");
+  assert.equal(participantInvitation([L("c", "confirmed")]), null);
+  assert.equal(participantInvitation([L("c", "confirmed"), L("g", "guests")]).key, "g");
+  assert.equal(participantInvitation([L("g", "guests"), L("p", "participants")]).key, "p");
+  assert.equal(confirmedGuestInvitation([L("p", "participants"), L("c", "confirmed")]).key, "c");
+  assert.equal(confirmedGuestInvitation([L("p", "participants")]), null);
+  assert.equal(forRegistrations("confirmed"), true);
+  assert.equal(forRegistrations("guests"), false);
+});

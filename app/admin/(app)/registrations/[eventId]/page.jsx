@@ -22,7 +22,8 @@ import HowTo from "../../HowTo";
 import { RegSearch, RegSelectAll, RegSelectionBar } from "./RegTools";
 import { REGISTRATION_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import { eventLetters } from "../../../../lib/letterStore";
-import { participantInvitation } from "../../../../lib/invitationCard.mjs";
+import { confirmedGuestInvitation, participantInvitation } from "../../../../lib/invitationCard.mjs";
+import { ticketGroups, ticketKeys } from "../../../../lib/regTicketFilter.mjs";
 import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 import { compLabel } from "../../../../lib/compTickets.mjs";
@@ -57,19 +58,30 @@ export default async function EventRegistrations({ params, searchParams }) {
   const paidEvent = event.fee_required;
   // Invitation cards (owner, 2026-11-11): the event's invitation letter for participants (else any invitation), sent to confirmed participants
   // who haven't had it yet (a failed or bounced email counts as not sent), up to a send's limit at a time.
-  const inviteLetter = can(admin, "letters:edit") ? participantInvitation(await eventLetters(eventId)) : null;
-  let inviteTodo = [];
-  let inviteEligible = [];
-  if (inviteLetter) {
-    const sent = new Set((await sql("SELECT DISTINCT ref FROM letter_sends WHERE letter_key = $1 AND status NOT IN ('failed', 'bounced')", [inviteLetter.key])).map((r) => r.ref));
-    inviteEligible = all.filter((r) => !r.deleted_at && reminderEligibility(r, { feeRequired: Boolean(paidEvent) }).ok);
-    inviteTodo = inviteEligible.filter((r) => !sent.has(`registration:${r.id}`));
-  }
-  // Still offered once everyone has it, to resend to someone (they start unticked).
-  const inviteHref = inviteLetter && inviteEligible.length
-    // Every paid participant is listed in the send window; those who haven't had it yet start ticked.
-    ? `${base}/letters/send?${new URLSearchParams([["letter", inviteLetter.key], ["event", eventId], ["list", "registrations"], ["participants", "all"], ["pick", "unsent"]]).toString()}`
-    : "";
+  const letters = can(admin, "letters:edit") ? await eventLetters(eventId) : [];
+  const inviteLetter = participantInvitation(letters);
+  // Complimentary guests who said Coming get their own card when the event has one (owner, 18 Nov 2026):
+  // it thanks them for accepting instead of for registering. Without one, they're sent the participants' card as before.
+  const guestLetter = confirmedGuestInvitation(letters);
+  const letterForRow = (r) => (r.comp_type && guestLetter ? guestLetter : inviteLetter);
+  // The latest good send per registration and letter (a failed or bounced email counts as not sent), for the
+  // Invitation card column and the buttons' counts.
+  const keys = [inviteLetter?.key, guestLetter?.key].filter(Boolean);
+  const inviteSent = new Map(keys.length
+    ? (await sql("SELECT ref, letter_key, max(sent_at) AS sent_at FROM letter_sends WHERE letter_key = ANY($1) AND status NOT IN ('failed', 'bounced') GROUP BY ref, letter_key", [keys])).map((r) => [`${r.letter_key} ${r.ref}`, r.sent_at])
+    : []);
+  const sentAt = (r) => { const l = letterForRow(r); return l ? inviteSent.get(`${l.key} registration:${r.id}`) : null; };
+  const eligible = all.filter((r) => !r.deleted_at && reminderEligibility(r, { feeRequired: Boolean(paidEvent) }).ok);
+  const cardButton = (letter, rows, participants) => {
+    if (!letter || !rows.length) return null;
+    const todo = rows.filter((r) => !sentAt(r)).length;
+    // Every one of them is listed in the send window; those who haven't had it yet start ticked. Still offered once
+    // everyone has it, to resend to someone (they start unticked).
+    return { todo, href: `${base}/letters/send?${new URLSearchParams([["letter", letter.key], ["event", eventId], ["list", "registrations"], ["participants", participants], ["pick", "unsent"]]).toString()}` };
+  };
+  const participantCards = cardButton(inviteLetter, eligible.filter((r) => !(guestLetter && r.comp_type)), guestLetter ? "paid" : "all");
+  const guestCards = cardButton(guestLetter, eligible.filter((r) => r.comp_type), "comp");
+  const showCardColumn = Boolean(inviteLetter || guestLetter);
   const acknowledgementEnabled = Boolean(event.rsvp_form_config?.consentEnabled);
   const tableQuestions = cleanCustomQuestions(event.rsvp_form_config?.questions).filter((q) => q.showInTable);
 
@@ -145,7 +157,8 @@ export default async function EventRegistrations({ params, searchParams }) {
       <PageHead title={event.title} lead={`${isActivityCategory(event.category) ? "Participants" : "Registrations"} · ${formatDay(event.date)}${paidEvent ? " · paid event · payments checked by hand" : ""}`}>
         <HowTo guide={paidEvent ? "reg-check-payment" : "reg-add"} guides={paidEvent ? REGISTRATION_GUIDES : REGISTRATION_GUIDES.filter((k) => !["reg-check-payment", "reg-new-receipt", "reg-remind-expired"].includes(k))} className="btn ghost" />
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/reminder`}>Email participants</a>}
-        {inviteHref && <a className="btn ghost" href={inviteHref} title={inviteTodo.length ? `${inviteTodo.length} confirmed participant${inviteTodo.length === 1 ? "" : "s"} haven't had the invitation card yet${inviteTodo.length > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{inviteTodo.length ? `Send invitation cards · ${inviteTodo.length}` : <>Invitation cards sent <Icon name="check" /></>}</a>}
+        {participantCards && <a className="btn ghost" href={participantCards.href} title={participantCards.todo ? `${participantCards.todo} confirmed participant${participantCards.todo === 1 ? "" : "s"} haven't had the invitation card yet${participantCards.todo > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{participantCards.todo ? `Send invitation cards · ${participantCards.todo}` : <>Invitation cards sent <Icon name="check" /></>}</a>}
+        {guestCards && <a className="btn ghost" href={guestCards.href} title={guestCards.todo ? `${guestCards.todo} complimentary guest${guestCards.todo === 1 ? "" : "s"} who said Coming haven't had their card yet. Pick who gets it.` : "Every complimentary guest has had theirs. Open to resend to someone."}>{guestCards.todo ? `Send guest cards · ${guestCards.todo}` : <>Guest cards sent <Icon name="check" /></>}</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
         <details className="head-more">
           <summary className="btn ghost">More <Icon name="chevronDown" /></summary>
@@ -199,7 +212,7 @@ export default async function EventRegistrations({ params, searchParams }) {
       )}
 
       <section className="card reg-tracker">
-      {shown.length > 0 && <RegSearch total={shown.length} sort={sort} sortBase={listHref(filter, "old")} />}
+      {shown.length > 0 && <RegSearch total={shown.length} sort={sort} sortBase={listHref(filter, "old")} tickets={paidEvent || shown.some((r) => r.comp_type) ? ticketGroups(shown) : []} />}
       {pickable && shown.length > 0 && (
         <RegSelectionBar
           hint="Tick people to email a reminder, send a message or an invitation card to several at once."
@@ -211,16 +224,16 @@ export default async function EventRegistrations({ params, searchParams }) {
       <div className="table-wrap">
         <table className="registrations-table stack-table">
           <thead>
-            <tr>{pickable && <th className="st-pick">{shown.length > 0 ? <RegSelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Name</th><th>Status</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}{tableQuestions.map((q) => <th key={q.id} className="reg-question">{q.label}</th>)}{showVax && <th>Vaccination</th>}{acknowledgementEnabled && <th>Acknowledged</th>}<th><span className="visually-hidden">Actions</span></th></tr>
+            <tr>{pickable && <th className="st-pick">{shown.length > 0 ? <RegSelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Name</th><th>Status</th><th>Furbaby</th>{paidEvent && <><th>Ticket</th><th>Payment</th></>}{showCardColumn && <th>Invitation card</th>}{tableQuestions.map((q) => <th key={q.id} className="reg-question">{q.label}</th>)}{showVax && <th>Vaccination</th>}{acknowledgementEnabled && <th>Acknowledged</th>}<th><span className="visually-hidden">Actions</span></th></tr>
           </thead>
           <tbody id="reg-rows">
-            {shown.length === 0 && <tr><td colSpan={(pickable ? 1 : 0) + (paidEvent ? 6 : 4) + tableQuestions.length + (showVax ? 1 : 0) + (acknowledgementEnabled ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={(pickable ? 1 : 0) + (paidEvent ? 6 : 4) + (showCardColumn ? 1 : 0) + tableQuestions.length + (showVax ? 1 : 0) + (acknowledgementEnabled ? 1 : 0)} className="empty">Nobody here yet.</td></tr>}
             {shown.map((r) => {
               const fee = FEE_STATUS[r.fee_status] || FEE_STATUS.not_due;
               const twins = sameRef(r);
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
-                <tr key={r.id} data-row="" data-search={[r.name, r.email, r.furbaby_name, ...(r.guest_names || []), r.fee_reference, r.ticket_label, compLabel(r.comp_type), fromTracker.get(r.id)].filter(Boolean).join(" ").toLowerCase()}>
+                <tr key={r.id} data-row="" data-ticket={ticketKeys(r).join(" ")} data-search={[r.name, r.email, r.furbaby_name, ...(r.guest_names || []), r.fee_reference, r.ticket_label, compLabel(r.comp_type), fromTracker.get(r.id)].filter(Boolean).join(" ").toLowerCase()}>
                   {pickable && <td className="st-pick">{!r.deleted_at && r.status !== "cancelled" && <input type="checkbox" name="reg" value={r.id} data-reg-pick="" aria-label={`Pick ${r.name}`} />}</td>}
                   <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span><br /><a className="small reg-email" href={`mailto:${r.email}`} title={r.email}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}{(r.comp_type || !r.photo_consent || r.under_18) && <span className="reg-flags-line">{r.comp_type && <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span>}{!r.photo_consent && <span className="chip">No photos</span>}{r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}</span>}</td>
                   <td className="st-2">
@@ -241,6 +254,17 @@ export default async function EventRegistrations({ params, searchParams }) {
                         {twins.length > 0 && <><br /><span className="small danger-text"><Icon name="warning" /> Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
                       </td>
                     </>
+                  )}
+                  {showCardColumn && (
+                    <td className="st-6 small" data-label="Invitation card">
+                      {(() => {
+                        if (!letterForRow(r)) return <span className="muted" title="This event has no invitation card for them">—</span>;
+                        const at = sentAt(r);
+                        if (at) return <span className="chip good" title={`Sent ${new Date(at).toLocaleString("en-PH", { timeZone: "Asia/Manila" })}`}>Sent · {new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" }).format(new Date(at))}</span>;
+                        const ok = reminderEligibility(r, { feeRequired: Boolean(paidEvent) });
+                        return ok.ok ? <span className="muted">Not sent yet</span> : <span className="muted" title={ok.reason}>{ok.reason === "Payment not confirmed yet" ? "After payment" : ok.reason === "No email address" ? "No email" : "—"}</span>;
+                      })()}
+                    </td>
                   )}
                   {tableQuestions.map((q) => <td key={q.id} className="st-9" data-label={q.label}>{answerText(r.custom_answers?.[q.id]) || <span className="muted">—</span>}</td>)}
                   {showVax && (

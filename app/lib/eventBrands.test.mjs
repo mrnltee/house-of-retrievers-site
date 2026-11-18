@@ -106,10 +106,10 @@ test("row letter links: Send letter for every brand, Follow up only once an invi
 
 test("partner classification: co-presenter, in-kind partner, exhibitor", async () => {
   const { readRole, roleChoice, roleLabel, cleanEventBrand, partnerGroups } = await import("./eventBrands.mjs");
-  assert.deepEqual(readRole("Partner:exhibitor"), { role: "Partner", partnerType: "exhibitor" });
-  assert.deepEqual(readRole("Partner"), { role: "Partner", partnerType: null });
-  assert.deepEqual(readRole("Sponsor:exhibitor"), { role: "Sponsor", partnerType: null });
-  assert.deepEqual(readRole("Partner:boss"), { role: "Partner", partnerType: null });
+  assert.deepEqual(readRole("Partner:exhibitor"), { role: "Partner", partnerType: "exhibitor", sponsorLevel: null });
+  assert.deepEqual(readRole("Partner"), { role: "Partner", partnerType: null, sponsorLevel: null });
+  assert.deepEqual(readRole("Sponsor:exhibitor"), { role: "Sponsor", partnerType: null, sponsorLevel: null });
+  assert.deepEqual(readRole("Partner:boss"), { role: "Partner", partnerType: null, sponsorLevel: null });
   assert.equal(readRole("Boss").role, null);
   assert.equal(cleanEventBrand({ role: "Partner:co-presenter" }).value.partnerType, "co-presenter");
   assert.equal(cleanEventBrand({ role: "Sponsor" }).value.partnerType, null);
@@ -132,4 +132,40 @@ test("the Guest tracker can sort by group, then name; the Brand tracker can't", 
   assert.equal(sortTracker(rows, "group", () => null, { groupRank }).map((r) => r.name).join(","), "Al,Bo,Ana,Zed");
   assert.equal(trackerSort("group", GUEST_SORTS), "group");
   assert.equal(trackerSort("group"), "name");
+});
+
+import { brandGroupKeys, brandGroups } from "./eventBrands.mjs";
+
+test("brand tracker groups: partners with their categories, then sponsors", () => {
+  assert.deepEqual(brandGroupKeys({ role: "Partner", partner_type: "exhibitor" }), ["partner", "partner:exhibitor"]);
+  assert.deepEqual(brandGroupKeys({ role: "Partner", partner_type: null }), ["partner", "partner:none"]);
+  assert.deepEqual(brandGroupKeys({ role: "Sponsor", partner_type: "exhibitor" }), ["sponsor", "sponsor:none"]);
+  const rows = [{ role: "Partner", partner_type: "exhibitor" }, { role: "Partner" }, { role: "Partner", partner_type: "exhibitor" }, { role: "Sponsor" }];
+  assert.deepEqual(brandGroups(rows), [
+    ["partner", "Partners", 3],
+    ["partner:exhibitor", "Partners · Exhibitor", 2],
+    ["partner:none", "Partners · no category yet", 1],
+    ["sponsor", "Sponsors", 1],
+  ]);
+  // Every partner unclassified: no line repeating the total.
+  assert.deepEqual(brandGroups([{ role: "Partner" }, { role: "Sponsor" }]), [["partner", "Partners", 1], ["sponsor", "Sponsors", 1]]);
+});
+
+test("sponsor levels: read back, labels, event-page groups and tracker groups", async () => {
+  const { readRole, roleChoice, roleLabel, sponsorGroups, brandGroups, cleanEventBrand } = await import("./eventBrands.mjs");
+  assert.deepEqual(readRole("Sponsor:major"), { role: "Sponsor", partnerType: null, sponsorLevel: "major" });
+  assert.deepEqual(readRole("Partner:major"), { role: "Partner", partnerType: null, sponsorLevel: null });
+  assert.equal(roleChoice({ role: "Sponsor", sponsor_level: "presenting" }), "Sponsor:presenting");
+  assert.equal(roleChoice({ role: "Partner", sponsor_level: "presenting" }), "Partner");
+  assert.equal(roleLabel({ role: "Sponsor", sponsor_level: "supporting" }), "Supporting sponsor");
+  assert.equal(roleLabel({ role: "Sponsor" }), "Sponsor");
+  assert.equal(cleanEventBrand({ role: "Sponsor:major", reply: "yes" }).value.sponsorLevel, "major");
+  assert.deepEqual(sponsorGroups(["Acme", "Bark", "Typed Co"], { acme: "major", bark: "presenting" }), [
+    { key: "presenting", title: "Presenting sponsors", names: ["Bark"] },
+    { key: "major", title: "Major sponsors", names: ["Acme"] },
+    { key: "", title: "Sponsored by", names: ["Typed Co"] },
+  ]);
+  assert.deepEqual(brandGroups([{ role: "Sponsor", sponsor_level: "major" }, { role: "Sponsor" }]), [
+    ["sponsor", "Sponsors", 2], ["sponsor:major", "Sponsors · Major sponsor", 1], ["sponsor:none", "Sponsors · no level yet", 1],
+  ]);
 });

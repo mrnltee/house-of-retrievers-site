@@ -20,15 +20,33 @@ export const PARTNER_TYPES = [
 ];
 export const partnerTypeLabel = (key) => PARTNER_TYPES.find(([k]) => k === key)?.[1] || "";
 
-/** The tracker's "At this event as" choices: one select for role and partner type ("Partner:exhibitor"). */
+/**
+ * A sponsor's level at one event (owner, 2026-11-18), listed in this order on the event page. Partners have none.
+ * The rule that keeps the two apart: partners give work or presence (co-present, exhibit, provide services),
+ * sponsors give money or goods; what they give is recorded under Giving.
+ */
+export const SPONSOR_LEVELS = [
+  ["presenting", "Presenting sponsor", "Top billing; named with the event"],
+  ["major", "Major sponsor", "A large share of the funding or goods"],
+  ["supporting", "Supporting sponsor", "Helps with a smaller amount or items"],
+];
+export const sponsorLevelLabel = (key) => SPONSOR_LEVELS.find(([k]) => k === key)?.[1] || "";
+
+/** The tracker's "At this event as" choices: one select for role and its category ("Partner:exhibitor", "Sponsor:major"). */
 export const ROLE_CHOICES = [
   ["Partner", "Partner"],
   ...PARTNER_TYPES.map(([k, l]) => [`Partner:${k}`, `Partner · ${l}`]),
   ["Sponsor", "Sponsor"],
+  ...SPONSOR_LEVELS.map(([k, l]) => [`Sponsor:${k}`, `Sponsor · ${l}`]),
 ];
-export const roleChoice = (row = {}) => (row.role === "Partner" && partnerTypeLabel(row.partner_type) ? `Partner:${row.partner_type}` : row.role || "Partner");
-/** "Exhibitor", "Partner", "Sponsor": how a brand's role at one event reads. */
-export const roleLabel = (row = {}) => (row.role === "Partner" && partnerTypeLabel(row.partner_type)) || row.role || "Partner";
+/** A row's category at this event: the partner type for a partner, the sponsor level for a sponsor. */
+export const categoryLabel = (row = {}) => (row.role === "Sponsor" ? sponsorLevelLabel(row.sponsor_level) : partnerTypeLabel(row.partner_type));
+export function roleChoice(row = {}) {
+  if (row.role === "Sponsor") return sponsorLevelLabel(row.sponsor_level) ? `Sponsor:${row.sponsor_level}` : "Sponsor";
+  return partnerTypeLabel(row.partner_type) ? `Partner:${row.partner_type}` : row.role || "Partner";
+}
+/** "Exhibitor", "Major sponsor", "Partner", "Sponsor": how a brand's role at one event reads. */
+export const roleLabel = (row = {}) => categoryLabel(row) || row.role || "Partner";
 
 /**
  * An event page's partners grouped by their classification, for "With thanks to": co-presenters, then partners
@@ -46,12 +64,29 @@ export function partnerGroups(partners = [], types = {}) {
   return groups.map((g) => ({ ...g, names: partners.filter((n) => typeOf(n) === g.key) })).filter((g) => g.names.length);
 }
 
-/** "Partner:exhibitor" → { role: "Partner", partnerType: "exhibitor" }; anything unknown → { role: null }. */
+/**
+ * An event page's sponsors grouped by level, for "With thanks to": presenting, major, supporting, then
+ * sponsors with no level (and names typed into the event) under "Sponsored by". Empty groups are left out.
+ * `levels` is { lower-case name → sponsor level }.
+ */
+export function sponsorGroups(sponsors = [], levels = {}) {
+  const groups = [
+    { key: "presenting", title: "Presenting sponsors" },
+    { key: "major", title: "Major sponsors" },
+    { key: "supporting", title: "Supporting sponsors" },
+    { key: "", title: "Sponsored by" },
+  ];
+  const levelOf = (name) => { const l = levels[String(name).toLowerCase()]; return SPONSOR_LEVELS.some(([k]) => k === l) ? l : ""; };
+  return groups.map((g) => ({ ...g, names: sponsors.filter((n) => levelOf(n) === g.key) })).filter((g) => g.names.length);
+}
+
+/** "Partner:exhibitor" → { role: "Partner", partnerType: "exhibitor", sponsorLevel: null }; anything unknown → { role: null }. */
 export function readRole(value) {
   const [role, type = ""] = String(value ?? "").split(":");
-  if (!ROLES.includes(role)) return { role: null, partnerType: null };
+  if (!ROLES.includes(role)) return { role: null, partnerType: null, sponsorLevel: null };
   const partnerType = role === "Partner" && PARTNER_TYPES.some(([k]) => k === type) ? type : null;
-  return { role, partnerType };
+  const sponsorLevel = role === "Sponsor" && SPONSOR_LEVELS.some(([k]) => k === type) ? type : null;
+  return { role, partnerType, sponsorLevel };
 }
 export const replyLabel = (key) => REPLIES.find(([k]) => k === key)?.[1] || "No reply yet";
 
@@ -73,7 +108,7 @@ function heads(value) {
 
 /** Tracker row form → { value } or { error }. */
 export function cleanEventBrand(input = {}) {
-  const { role, partnerType } = readRole(input.role);
+  const { role, partnerType, sponsorLevel } = readRole(input.role);
   if (!role) return { error: "Pick Partner or Sponsor for this event." };
   const reply = REPLIES.some(([k]) => k === input.reply) ? input.reply : "waiting";
   const followUpOn = String(input.followUpOn ?? "").trim() || null;
@@ -88,7 +123,7 @@ export function cleanEventBrand(input = {}) {
   const gives = [...new Set([].concat(input.gives ?? []).filter((g) => keys.includes(g)))];
   return {
     value: {
-      role, partnerType, reply, followUpOn, gives, cashAmount, inKindValue,
+      role, partnerType, sponsorLevel, reply, followUpOn, gives, cashAmount, inKindValue,
       inKindNote: text(input.inKindNote, 300),
       boothNeeds: text(input.boothNeeds, 500),
       repsAttending, dogsAttending,
@@ -207,4 +242,36 @@ export function followUpLink(base, eventId, rows = []) {
 export function rowLetterLinks(base, eventId, row, letter, { sent = false } = {}) {
   const href = (key) => `${base}/letters/send?${new URLSearchParams([["letter", key], ["event", eventId], ["list", "brands"], ["to", `supporter:${row.supporter_id}`]])}`;
   return { send: href(letter), followUp: row.reply === "waiting" && sent ? href(FOLLOW_UP_LETTER) : "" };
+}
+
+/**
+ * The Brand tracker's Partners / Sponsors dropdown (owner, 18 Nov 2026). A row's keys go in data-group,
+ * space-separated: "partner partner:exhibitor", "partner partner:none", "sponsor sponsor:major"…; the dropdown
+ * picks one key, so "Partners" shows every partner and "Partners · Exhibitor" only those.
+ */
+export function brandGroupKeys(row = {}) {
+  if (row.role === "Sponsor") return ["sponsor", `sponsor:${sponsorLevelLabel(row.sponsor_level) ? row.sponsor_level : "none"}`];
+  return ["partner", `partner:${partnerTypeLabel(row.partner_type) ? row.partner_type : "none"}`];
+}
+
+/** [[key, label, count]]: Partners and each classification in use, then Sponsors and each level in use. */
+export function brandGroups(rows = []) {
+  const partners = rows.filter((r) => r.role !== "Sponsor");
+  const sponsors = rows.length - partners.length;
+  const out = [];
+  if (partners.length) {
+    out.push(["partner", "Partners", partners.length]);
+    const types = [...PARTNER_TYPES.map(([k, l]) => [k, `Partners · ${l}`]), ["none", "Partners · no category yet"]];
+    const used = types.map(([k, l]) => [`partner:${k}`, l, partners.filter((r) => brandGroupKeys(r)[1] === `partner:${k}`).length]).filter(([, , n]) => n);
+    // One category covering every partner would only repeat the Partners line.
+    if (!(used.length === 1 && used[0][2] === partners.length)) out.push(...used);
+  }
+  if (sponsors) {
+    const list = rows.filter((r) => r.role === "Sponsor");
+    out.push(["sponsor", "Sponsors", sponsors]);
+    const levels = [...SPONSOR_LEVELS.map(([k, l]) => [k, `Sponsors · ${l}`]), ["none", "Sponsors · no level yet"]];
+    const used = levels.map(([k, l]) => [`sponsor:${k}`, l, list.filter((r) => brandGroupKeys(r)[1] === `sponsor:${k}`).length]).filter(([, , n]) => n);
+    if (!(used.length === 1 && used[0][2] === sponsors)) out.push(...used);
+  }
+  return out;
 }
