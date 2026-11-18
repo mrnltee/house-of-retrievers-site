@@ -7,6 +7,8 @@ import { WELCOME_COUNTDOWN_SECONDS } from "../../../../lib/manualCheckIn.mjs";
 import { welcomeMessageLine } from "../../../../lib/welcomePhoto.mjs";
 import ConfirmButton from "../../ConfirmButton";
 import Icon from "../../../../components/Icon";
+import HowTo from "../../HowTo";
+import { PAGE_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 
 const MESSAGES = {
   ok: ["Checked in", "good"],
@@ -85,6 +87,14 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
   const searchBox = useRef(null);
   const resultCard = useRef(null);
   const closeSuccess = useCallback(() => setSuccessOpen(false), []);
+
+  // Start the camera straight away when this browser already allowed it (design review, 18 Nov 2026):
+  // one tap fewer at the door. Otherwise the button asks, as before.
+  useEffect(() => {
+    let live = true;
+    navigator.permissions?.query({ name: "camera" }).then((state) => { if (live && state.state === "granted") setCamera((c) => (c === "off" ? "on" : c)); }).catch(() => null);
+    return () => { live = false; };
+  }, []);
 
   // Who's in: on open, after each good scan here, and every 30 s so door phones agree.
   const loadList = useCallback(async () => {
@@ -248,12 +258,21 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
   return (
     <div className="checkin">
       <div className="checkin-top">
-        <span className="tag">CHECK-IN</span>
-        <h1 style={{ color: "white" }}>{title}</h1>
-        <span className="muted" aria-live="polite">{checked} of {confirmed} checked in</span>
-        <a className="btn ghost small checkin-display-link" href={`${base}/checkin/${eventId}/display`} target="_blank" rel="noreferrer" title="For a laptop or TV: welcomes every guest checked in by any phone">Open display screen <Icon name="external" /></a>
+        <div className="checkin-top-title">
+          <span className="tag">Check-in</span>
+          <h1>{title}</h1>
+        </div>
+        <div className="checkin-count" aria-live="polite">
+          <strong>{checked}</strong><span> of {confirmed} checked in</span>
+          <span className="checkin-meter" aria-hidden="true"><i style={{ width: `${confirmed ? Math.min(100, (checked / confirmed) * 100) : 0}%` }} /></span>
+        </div>
+        <div className="checkin-top-links">
+          <a className="linkish checkin-display-link" href={`${base}/checkin/${eventId}/display`} target="_blank" rel="noreferrer" title="For a laptop or TV: welcomes every guest checked in by any phone">Display screen <Icon name="external" /></a>
+          <HowTo guide={PAGE_GUIDES.checkin[0]} guides={PAGE_GUIDES.checkin} className="linkish checkin-howto" />
+        </div>
       </div>
       <div className="checkin-body">
+        <div className="checkin-main">
         {successOpen && result?.outcome === "ok" && (
           <WelcomeCard key={result.person?.id} base={base} eventId={eventId} title={title} person={result.person} message={successMessage} onClose={closeSuccess} />
         )}
@@ -273,53 +292,61 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
         </div>
 
         {result && (
-          <section className="card" role="status" aria-live="assertive" ref={resultCard}>
-            <div className="actions" style={{ justifyContent: "space-between" }}>
-              <strong style={{ fontSize: 18 }}>{result.person?.name || "—"}</strong>
-              <span className={`chip ${tone}`}>{label}</span>
+          <section className={`checkin-result is-${tone}`} role="status" aria-live="assertive" ref={resultCard}>
+            <div className="checkin-result-head">
+              <Icon name={tone === "good" ? "check" : "warning"} />
+              <strong>{label}</strong>
+              <button type="button" className="checkin-result-close" aria-label="Dismiss" onClick={() => setResult(null)}><Icon name="close" /></button>
             </div>
             {result.person && (
               <>
-                <p className="muted">{result.person.furbaby ? `With ${result.person.furbaby}` : "No furbaby listed"}{result.person.ticket ? ` · ${result.person.ticket}` : ""}{result.person.feeStatus ? ` · fee: ${FEE_TEXT[result.person.feeStatus] || result.person.feeStatus}` : ""}</p>
-                {result.outcome === "unpaid" && <p className="small">Not checked in. Only someone with fee access can approve a payment: check it on the Registrations page, then scan or check them in again.</p>}
-                {result.outcome === "consent-required" && <p className="small">Not checked in yet. Ask them to open their private RSVP page, complete the event acknowledgement, then scan their QR or check them in again.</p>}
+                <p className="checkin-result-name">{result.person.name || "—"}</p>
+                <p className="small">{result.person.furbaby ? `with ${result.person.furbaby}` : "No furbaby listed"}{result.person.ticket ? ` · ${result.person.ticket}` : ""}{result.person.feeStatus ? ` · fee: ${FEE_TEXT[result.person.feeStatus] || result.person.feeStatus}` : ""}</p>
+                {result.outcome === "unpaid" && <p className="small">Not checked in. Someone with fee access checks the payment on their registration, then scan again or check them in by name.</p>}
+                {result.outcome === "consent-required" && <p className="small">Not checked in yet. Ask them to open their private RSVP page and complete the acknowledgement, then scan again.</p>}
                 <div className="actions">
                   {result.person.under18 && <span className="chip warn">Under 18 · guardian: {result.person.guardian}</span>}
-                  <span className={`chip ${result.person.photoConsent ? "" : "alert"}`}>{result.person.photoConsent ? "Photos OK" : "No photos"}</span>
+                  {!result.person.photoConsent && <span className="chip alert">No photos · tell the photographers</span>}
+                  {tone !== "good" && result.person.id && <a className="btn ghost small" href={`${base}/registrations/${eventId}/r/${result.person.id}`}>Open their registration</a>}
                 </div>
               </>
             )}
           </section>
         )}
 
-        <form className="form" onSubmit={(event) => { event.preventDefault(); submit(codeFrom(manual)); setManual(""); }}>
+        <form className="checkin-code" onSubmit={(event) => { event.preventDefault(); submit(codeFrom(manual)); setManual(""); }}>
           <label className="field">
-            <span>Or type the code</span>
-            <input type="text" inputMode="text" autoCapitalize="characters" autoComplete="off" value={manual} onChange={(event) => setManual(event.target.value)} placeholder="10 letters and numbers" />
+            <span>No camera? Type the code</span>
+            <span className="checkin-code-row">
+              <input type="text" inputMode="text" autoCapitalize="characters" autoComplete="off" value={manual} onChange={(event) => setManual(event.target.value)} placeholder="10 letters and numbers" />
+              <ConfirmButton
+                className="btn ghost"
+                title="Check in this code?"
+                echo={[]}
+                items={[`The matching registration is checked in to ${title}`, "The check-in time is saved under your admin account"]}
+                yes="Yes, check in"
+                tone="ghost"
+              >Check in</ConfirmButton>
+            </span>
           </label>
-          <ConfirmButton
-            className="btn ghost"
-            title="Check in this code?"
-            echo={[]}
-            items={[`The matching registration is checked in to ${title}`, "The check-in time is saved under your admin account"]}
-            yes="Yes, check in"
-            tone="ghost"
-          >Check in</ConfirmButton>
         </form>
         <p className="small checkin-noqr">No QR with them? <button type="button" className="btn ghost small" onClick={findByName}>Find them by name</button></p>
-        <p className="small muted">Someone who said no to photos shows a “No photos” flag here. Let the photographers know.</p>
+        </div>
 
         <section className="card checkin-list" aria-label="Guests">
           <nav className="tabs" aria-label="Show">
             <button type="button" aria-pressed={view === "in"} aria-current={view === "in" ? "page" : undefined} onClick={() => setView("in")}>Checked in{list ? ` · ${list.length}` : ""}</button>
             <button type="button" aria-pressed={view === "waiting"} aria-current={view === "waiting" ? "page" : undefined} onClick={() => setView("waiting")}>Not checked in{waiting ? ` · ${waiting.length}` : ""}</button>
           </nav>
-          <label className="field"><span className="visually-hidden">Search guests</span><input ref={searchBox} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search a name or furbaby" /></label>
-          {(view === "in" ? list : waiting) === null ? <p className="small muted">Loading…</p> : (() => {
-            const all = view === "in" ? list : waiting;
+          <label className="field"><span className="visually-hidden">Search guests</span><input ref={searchBox} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search everyone by name or furbaby" /></label>
+          {(list === null || waiting === null) ? <p className="small muted">Loading…</p> : (() => {
             const q = search.trim().toLowerCase();
-            const shown = q ? all.filter((row) => row.name.toLowerCase().includes(q) || row.furbaby.toLowerCase().includes(q)) : all;
-            if (!shown.length) return <p className="small muted">{q ? "No one by that name here." : view === "in" ? "No one has checked in yet." : "Everyone confirmed is in."}</p>;
+            const match = (row) => row.name.toLowerCase().includes(q) || row.furbaby.toLowerCase().includes(q);
+            // Searching looks through everyone, in or not, so a name is found whichever tab is open.
+            const shown = q
+              ? [...waiting.filter(match).map((row) => ({ ...row, isIn: false })), ...list.filter(match).map((row) => ({ ...row, isIn: true }))]
+              : (view === "in" ? list.map((row) => ({ ...row, isIn: true })) : waiting.map((row) => ({ ...row, isIn: false })));
+            if (!shown.length) return <p className="small muted">{q ? "No one by that name. Check the spelling, or try their furbaby's name." : view === "in" ? "No one has checked in yet." : "Everyone confirmed is in."}</p>;
             return (
               <ol>
                 {shown.map((row) => (
@@ -328,7 +355,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                       ? <img className="person-avatar" src={`${base}/checkin/photo/${eventId}/${row.id}?v=${encodeURIComponent(row.photo.version)}`} alt="" width={36} height={36} style={{ width: 36, height: 36 }} loading="lazy" />
                       : <span className="person-avatar is-empty" style={{ width: 36, height: 36, fontSize: 13 }} aria-hidden="true">{row.initials}</span>}
                     <span><strong>{row.name}</strong>{row.furbaby && <><br /><span className="small muted">with {row.furbaby}</span></>}{row.manual && <><br /><span className="small muted">Added by hand</span></>}</span>
-                    {view === "waiting" && (confirmingId === row.id ? (
+                    {!row.isIn && (confirmingId === row.id ? (
                       <span className="checkin-list-act is-confirming">
                         <button type="button" className="btn gold small" onClick={() => { setConfirmingId(null); record(() => checkInByName(eventId, row.id), true); }}>Yes, check in</button>
                         <button type="button" className="btn ghost small" onClick={() => setConfirmingId(null)}>Cancel</button>
@@ -336,7 +363,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                     ) : (
                       <button type="button" className="btn ghost small checkin-list-act" aria-label={`Check in ${row.name}`} onClick={() => setConfirmingId(row.id)}>Check in</button>
                     ))}
-                    {row.at && <span className="small checkin-list-time">{new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at))}</span>}
+                    {row.isIn && <span className="small checkin-list-time"><span className="chip good">In</span> {row.at ? new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at)) : ""}</span>}
                   </li>
                 ))}
               </ol>

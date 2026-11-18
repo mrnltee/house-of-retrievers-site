@@ -1837,3 +1837,50 @@ details.sd-fold { display: block; }
 /* A page mock can be taller than the stage; the camera pans down to it (HowTo measures .ht-page). */
 .ht-screen.ht-page { bottom: auto; min-height: 100%; overflow: visible; }
 .howto-scene:has(> .ht-screen.ht-page) { overflow: visible; }
+
+/* Check-in scanner review (18 Nov 2026, design review): a compact header with the count as the big number and a
+   meter, the camera higher up and taller, a result panel coloured by outcome with what to do next, the code on
+   one row, search across everyone, and the list beside the camera on a laptop. */
+.checkin { max-width: 1120px; }
+.checkin-top { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px 18px; }
+.checkin-top-title { min-width: 0; }
+.checkin-top h1 { margin: 2px 0 0; color: #fff; font-size: clamp(22px, 3vw, 30px); line-height: 1.1; text-wrap: balance; }
+.checkin-count { display: grid; grid-template-columns: auto auto; align-items: baseline; justify-content: end; gap: 0 6px; color: var(--a-on-dark-muted); text-align: right; }
+.checkin-count strong { color: #fff; font: 400 34px/1 "DM Serif Display", serif; }
+.checkin-meter { grid-column: 1 / -1; display: block; width: 160px; height: 6px; margin-top: 6px; border-radius: 99px; background: rgba(255, 255, 255, .18); overflow: hidden; }
+.checkin-meter i { display: block; height: 100%; border-radius: inherit; background: var(--a-gold); transition: width .4s ease; }
+.checkin-top-links { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.checkin-top .linkish, .checkin-top .checkin-howto { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; border: 0; background: none; color: #e9d6a8; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.checkin-body { grid-template-columns: minmax(0, 1fr); align-items: start; }
+.checkin-main { display: grid; gap: 14px; min-width: 0; }
+.viewfinder { aspect-ratio: 1 / 1; max-height: 62vh; width: 100%; }
+.checkin-result { display: grid; gap: 6px; padding: 14px 16px; border-radius: 16px; border: 2px solid var(--a-line); background: #fff; }
+.checkin-result.is-good { border-color: var(--a-success); background: #eef6ef; }
+.checkin-result.is-warn { border-color: var(--a-gold); background: #fbf6ea; }
+.checkin-result.is-alert { border-color: var(--a-alert); background: #fbefec; }
+.checkin-result-head { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.checkin-result.is-good .checkin-result-head { color: var(--a-success); }
+.checkin-result.is-alert .checkin-result-head { color: var(--a-alert); }
+.checkin-result-head .icon { width: 22px; height: 22px; flex: none; }
+.checkin-result-close { margin-left: auto; display: grid; place-items: center; width: 44px; height: 44px; margin-right: -10px; border: 0; border-radius: 50%; background: none; color: var(--a-ink); cursor: pointer; }
+.checkin-result-close:focus-visible { outline: 3px solid var(--a-gold); }
+.checkin-result-name { margin: 0; font: 400 24px/1.1 "DM Serif Display", serif; }
+.checkin-result p { margin: 0; }
+.checkin-code .field > span:first-child { font-size: 13px; color: var(--a-muted); }
+.checkin-code-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.checkin-code-row .btn { min-height: 44px; }
+.checkin-list li .checkin-list-time { display: inline-flex; align-items: center; gap: 6px; }
+@media (min-width: 1100px) {
+  .checkin-body { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+  .checkin-list { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow: auto; }
+}
+@media (max-width: 560px) {
+  .checkin-top { margin: 12px 12px 0; padding: 16px; }
+  .checkin-body { padding: 12px; }
+  .checkin-count strong { font-size: 28px; }
+  .checkin-meter { width: 110px; }
+  .viewfinder { aspect-ratio: 1 / 1; max-height: 52vh; }
+}
+@media (prefers-reduced-motion: reduce) { .checkin-meter i { transition: none; } }
+.checkin-top .tag { text-transform: uppercase; }
+.checkin-top-links { align-items: center; }
