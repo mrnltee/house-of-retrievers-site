@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { BRAND_GUIDES, GUIDES, stepDuration } from "../../lib/admin/howToGuides.mjs";
 import HowToScene from "./HowToScenes";
 import Icon from "../../components/Icon";
@@ -149,7 +149,7 @@ export default function HowTo({ guide = BRAND_GUIDES[0], guides = BRAND_GUIDES, 
   }
 
   const typed = step.act === "type" ? { target: step.target, text: String(step.text || "").slice(0, typedLen) } : null;
-  const titleId = `howto-title-${guide}`;
+  const titleId = `howto-title-${useId().replace(/:/g, "")}`;
   const close = () => dialog.current?.close();
 
   return (
