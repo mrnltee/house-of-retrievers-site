@@ -10,7 +10,7 @@ import { guestFollowUpLink, guestInviteLetter, guestMessageBase, guestRowLinks }
 import { INTRO_MAX, ROLE_MAX, SPEAKER_ROLES } from "../../../../../lib/eventSpeakers.mjs";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
-import { addComingGuestsToRsvps, addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, setEventGuestReply } from "../../../../contactActions";
+import { addComingGuestsToRsvps, addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, setEventGuestOnPage, setEventGuestReply } from "../../../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import ImageField, { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
@@ -145,7 +145,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
             noun="guests"
             placeholder="Search guests…"
             searchTitle="Searches name, organization, group, email, role and letter"
-            publicNote={`${onPage} shown on the event page. Guests appear there once they're Coming and switched on in Edit.`}
+            publicNote={`${onPage} shown on the event page. Guests appear there once they're Coming and their Event page switch is on.`}
           />
         )}
         {canSend && guests.length > 0 && (
@@ -179,7 +179,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
                             <summary className="strong">On the event page <span className="small muted">{r.show_on_site ? (r.reply === "yes" ? "· shown" : "· waiting for Coming") : "· not shown"}</span></summary>
                             <fieldset className="plain guest-public">
                               <input type="hidden" name="publicSent" value="1" />
-                              <label className="check"><input type="checkbox" name="showOnSite" value="1" defaultChecked={r.show_on_site} /> <span>Show {r.name} under Speakers &amp; special guests <small className="muted">(only once their reply is Coming, and only with their OK)</small></span></label>
+                              <label className="check"><input type="checkbox" name="showOnSite" value="1" defaultChecked={r.show_on_site} /> <span>Show {r.name} under Speakers and special guests <small className="muted">(only once their reply is Coming, and only with their OK)</small></span></label>
                               <p className="small muted" style={{ margin: 0 }}>The page shows only what you fill in here: their name, role, intro, this picture and one link. Never their email, phone, notes or the photo on their guest record.</p>
                               <label className="field"><span>Role <small>e.g. Guest speaker, Host, Special guest</small></span><input name="publicRole" list={`roles-${r.id}`} maxLength={ROLE_MAX} defaultValue={r.public_role || roleForSpecification(r.specification)} /><datalist id={`roles-${r.id}`}>{SPEAKER_ROLES.map((x) => <option key={x} value={x} />)}</datalist></label>
                               <label className="field"><span>Intro <small>One or two lines, up to {INTRO_MAX} characters</small></span><textarea name="publicIntro" rows={2} maxLength={INTRO_MAX} defaultValue={r.public_intro || ""} /></label>
@@ -221,7 +221,23 @@ export default async function EventGuestsPage({ params, searchParams }) {
                               </form>
                             )))}
                         </span>
-                      ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>}{r.on_rsvps && <><br /><a className="small" href={`${base}/registrations/${event.id}/r/${r.rsvp_id}`}>{r.rsvp_checked_in ? "Checked in" : "On the RSVP list"}{r.rsvp_comp ? ` · ${compLabel(r.rsvp_comp)}` : ""}</a></>}{r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
+                      ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>}{r.on_rsvps && <><br /><a className="small" href={`${base}/registrations/${event.id}/r/${r.rsvp_id}`}>{r.rsvp_checked_in ? "Checked in" : "On the RSVP list"}{r.rsvp_comp ? ` · ${compLabel(r.rsvp_comp)}` : ""}</a></>}{canEdit ? (
+                        <form action={setEventGuestOnPage} className="onpage-form">
+                          <input type="hidden" name="event" value={event.id} />
+                          <input type="hidden" name="contact" value={r.id} />
+                          <input type="hidden" name="on" value={r.show_on_site ? "0" : "1"} />
+                          <ConfirmButton className={`onpage-toggle${r.show_on_site ? " is-on" : ""}`} tone={r.show_on_site ? "alert" : "gold"}
+                            yes={r.show_on_site ? "Yes, take them off" : "Yes, show them"}
+                            title={r.show_on_site ? `Take ${r.name} off the event page?` : `Show ${r.name} on the event page?`}
+                            items={r.show_on_site
+                              ? ["They're taken off Speakers and special guests on the public event page", "Their reply and RSVP stay as they are", "Nothing is emailed"]
+                              : [`They show under Speakers and special guests${(r.public_role || roleForSpecification(r.specification)) ? ` as ${r.public_role || roleForSpecification(r.specification)}` : " as Special guest"}`, ...(r.reply === "yes" ? [] : ["Only once their reply is Coming"]), "Only their name, role, short intro, page photo and link: never their email, phone or notes", "Change their role, intro and photo in Edit details", "Nothing is emailed"]}>
+                            <span className="onpage-track" aria-hidden="true" />
+                            <span>Event page<span className="sr-only">: {r.show_on_site ? "on" : "off"}</span></span>
+                          </ConfirmButton>
+                          {r.show_on_site && <span className="small muted">{r.reply === "yes" ? (r.public_role || "Special guest") : "Waiting for Coming"}</span>}
+                        </form>
+                      ) : r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
                   </tr>
                 );
               })}

@@ -39,7 +39,7 @@ test("the public shape never carries contact details or a private photo path", (
 test("speakers come before special guests, and the title follows who is there", () => {
   const list = sortSpeakers([{ name: "Zed", role: "Special guest" }, { name: "Amy", role: "Host" }, { name: "Bo", role: "Keynote speaker" }]);
   assert.deepEqual(list.map((s) => s.name), ["Bo", "Amy", "Zed"]);
-  assert.equal(speakersTitle(list), "Speakers & special guests");
-  assert.equal(speakersTitle([{ role: "Guest speaker" }]), "Speaker");
-  assert.equal(speakersTitle([{ role: "Special guest" }, { role: "VIP" }]), "Special guests");
+  assert.equal(speakersTitle(list), "Speakers and special guests");
+  assert.equal(speakersTitle([{ role: "Guest speaker" }]), "Speakers and special guests");
+  assert.equal(speakersTitle([{ role: "Special guest" }, { role: "VIP" }]), "Speakers and special guests");
 });

@@ -4,7 +4,7 @@ import { syncGuestRsvp } from "../lib/guestRsvpStore";
 import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
-import { cleanContact } from "../lib/contacts.mjs";
+import { cleanContact, roleForSpecification } from "../lib/contacts.mjs";
 import { cleanSpeaker } from "../lib/eventSpeakers.mjs";
 import { cleanEventDonor } from "../lib/eventDonors.mjs";
 import { pictureFrom } from "../lib/admin/imageUpload";
@@ -164,6 +164,32 @@ export async function setEventGuestReply(data) {
     const label = reply === "yes" ? "Coming" : reply === "no" ? "Can't make it" : "No reply yet";
     const note = row.show_on_site ? (reply === "yes" ? " They now show on the event page." : " They're off the event page until they're Coming.") : "";
     await backWith(back, "ok", `${c?.name}: ${label}.${note}${rsvp ? ` ${rsvp}` : ""}`);
+  });
+}
+
+/**
+ * Guest tracker: the row's Event page toggle (owner, 18 Nov 2026). Switches only whether a guest shows under
+ * Speakers and special guests; a guest switched on with no role yet takes the one their specification suggests.
+ */
+export async function setEventGuestOnPage(data) {
+  const eventId = form(data, "event");
+  const back = isUuid(eventId) ? `/events/${eventId}/guests` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("guests:edit");
+    const contactId = form(data, "contact");
+    const on = form(data, "on") === "1";
+    const [c] = isUuid(contactId) ? await sql("SELECT name, specification FROM letter_contacts WHERE id = $1", [contactId]) : [];
+    const role = on ? roleForSpecification(c?.specification) || null : null;
+    const [row] = isUuid(eventId) && c
+      ? await sql(`UPDATE event_guests SET show_on_site=$3, public_role = CASE WHEN $3 AND coalesce(public_role, '') = '' THEN $4 ELSE public_role END, updated_at=now()
+                    WHERE event_id=$1 AND contact_id=$2 RETURNING reply, public_role`, [eventId, contactId, on, role])
+      : [];
+    if (!row) await backWith(back, "error", "That guest isn't on this event's list.");
+    await logActivity(admin.email, "event.guest.page", c.name, { eventId, contactId, on });
+    const msg = !on ? `${c.name} is off the event page.`
+      : row.reply === "yes" ? `${c.name} now shows on the event page${row.public_role ? ` as ${row.public_role}` : ""}.`
+      : `${c.name} will show on the event page once their reply is Coming.`;
+    await backWith(back, "ok", msg);
   });
 }
 

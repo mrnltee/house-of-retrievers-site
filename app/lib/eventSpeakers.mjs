@@ -84,13 +84,9 @@ export function sortSpeakers(list) {
   return [...list].sort((a, b) => roleRank(a.role) - roleRank(b.role) || a.name.localeCompare(b.name));
 }
 
-/** The section title: "Speakers", "Special guests", or "Speakers & special guests". */
-export function speakersTitle(list) {
-  const speaks = (s) => /speaker|host|panelist/i.test(s.role);
-  const anySpeaker = list.some(speaks);
-  const anyGuest = list.some((s) => !speaks(s));
-  if (anySpeaker && anyGuest) return "Speakers & special guests";
-  return anySpeaker ? (list.length === 1 ? "Speaker" : "Speakers") : list.length === 1 ? "Special guest" : "Special guests";
+/** The event page's section title (owner, 18 Nov 2026): always "Speakers and special guests". */
+export function speakersTitle() {
+  return "Speakers and special guests";
 }
 
 /** Initials for a guest without a picture. */
