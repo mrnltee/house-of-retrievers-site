@@ -123,3 +123,13 @@ test("partner classification: co-presenter, in-kind partner, exhibitor", async (
   ]);
   assert.deepEqual(partnerGroups(["A"]).map((g) => g.title), ["In partnership with"]);
 });
+
+test("the Guest tracker can sort by group, then name; the Brand tracker can't", async () => {
+  const { sortTracker, trackerSort, GUEST_SORTS } = await import("./eventBrands.mjs");
+  const order = ["speaker", "organizer", "vip"];
+  const rows = [{ name: "Zed", category: "vip" }, { name: "Ana", category: "organizer" }, { name: "Bo", category: "speaker" }, { name: "Al", category: "speaker" }];
+  const groupRank = (r) => order.indexOf(r.category);
+  assert.equal(sortTracker(rows, "group", () => null, { groupRank }).map((r) => r.name).join(","), "Al,Bo,Ana,Zed");
+  assert.equal(trackerSort("group", GUEST_SORTS), "group");
+  assert.equal(trackerSort("group"), "name");
+});

@@ -5,7 +5,7 @@ import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
 import { CONTACT_CATEGORIES, categoryOf, letterEmails, roleForSpecification } from "../../../../../lib/contacts.mjs";
 import { recipientFields } from "../../../../../lib/letters.mjs";
-import { REPLIES, replyLabel, sortTracker, trackerCounts, trackerSort } from "../../../../../lib/eventBrands.mjs";
+import { GUEST_SORTS, REPLIES, replyLabel, sortTracker, trackerCounts, trackerSort } from "../../../../../lib/eventBrands.mjs";
 import { guestFollowUpLink, guestInviteLetter, guestMessageBase, guestRowLinks } from "../../../../../lib/eventGuestTracker.mjs";
 import { INTRO_MAX, ROLE_MAX, SPEAKER_ROLES } from "../../../../../lib/eventSpeakers.mjs";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
@@ -82,8 +82,14 @@ export default async function EventGuestsPage({ params, searchParams }) {
   const onPage = guests.filter((g) => g.show_on_site && g.reply === "yes").length;
   const notOnRsvps = guests.filter((g) => g.reply === "yes" && !g.on_rsvps);
   const followUp = guestFollowUpLink(base, event.id, guests, wasSent);
-  const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value);
-  const sorted = sortTracker(guests, sort, lastSent);
+  const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value, GUEST_SORTS);
+  // Groups in the Guest list's category order; a guest whose category isn't known goes last, as Other.
+  const groupKey = (r) => (categoryOf(r.category) ? r.category : "other");
+  const groupRank = (r) => { const i = CONTACT_CATEGORIES.findIndex((c) => c.key === r.category); return i === -1 ? CONTACT_CATEGORIES.length : i; };
+  const sorted = sortTracker(guests, sort, lastSent, { groupRank });
+  const groups = [...CONTACT_CATEGORIES.map((c) => [c.key, c.label]), ["other", "Other"]]
+    .map(([key, label]) => [key, label, guests.filter((g) => groupKey(g) === key).length])
+    .filter(([, , n]) => n > 0);
   const categoryLabel = (key) => categoryOf(key)?.label || "Other";
   const searchText = (r) => [r.name, r.organization, r.specification, categoryLabel(r.category), r.email, r.rep_name, r.rep_email, guestReply(r.reply), r.public_role, ...sendsOf(r).slice(0, 1).flatMap((x) => [letterName(x.letter_key), x.status])].filter(Boolean).join(" ");
 
@@ -143,6 +149,8 @@ export default async function EventGuestsPage({ params, searchParams }) {
             sort={sort}
             labels={GUEST_LABELS}
             noun="guests"
+            sorts={GUEST_SORTS}
+            groups={groups}
             placeholder="Search guests…"
             searchTitle="Searches name, organization, group, email, role and letter"
             publicNote={`${onPage} shown on the event page. Guests appear there once they're Coming and their Event page switch is on.`}
@@ -164,7 +172,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
               {sorted.map((r) => {
                 const links = guestRowLinks(base, event.id, r, inviteOf(r), { sent: wasSent(r) });
                 return (
-                  <tr key={r.id} data-row="" data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
+                  <tr key={r.id} data-row="" data-group={groupKey(r)} data-reply={r.reply} data-sent={sendsOf(r).length ? "yes" : "no"} data-search={searchText(r)}>
                     {canSend && <td className="st-pick"><input type="checkbox" form="tracker-send" name="to" value={`contact:${r.id}`} aria-label={`Pick ${r.name}`} /></td>}
                     <td className="strong st-1">
                       <span className="row-name"><Avatar photo={r.photo} logo={r.logo} name={r.name} /><span><a href={`${base}/guests/${r.id}?event=${event.id}`}>{r.name}</a>{(r.specification || r.organization) && <><br /><span className="small muted">{[r.specification, r.organization].filter(Boolean).join(" · ")}</span></>}<br /><span className="small muted guest-group">{categoryLabel(r.category)}</span></span></span>

@@ -135,13 +135,15 @@ export const TRACKER_SORTS = [
   ["sent-old", "Sent: oldest first"],
   ["reply", "Reply: yes, waiting, no"],
 ];
-export const trackerSort = (value) => (TRACKER_SORTS.some(([k]) => k === value) ? value : "name");
+/** The Guest tracker's sorts (owner, 18 Nov 2026): the tracker's, plus by group (category order), then name. */
+export const GUEST_SORTS = [...TRACKER_SORTS, ["group", "Group, then name"]];
+export const trackerSort = (value, sorts = TRACKER_SORTS) => (sorts.some(([k]) => k === value) ? value : "name");
 
 /**
  * Orders tracker rows. `sentAt(row)` gives the latest letter time (Date, string or null);
  * rows never sent go last for both "sent" orders. Ties fall back to name A–Z.
  */
-export function sortTracker(rows = [], sort = "name", sentAt = () => null) {
+export function sortTracker(rows = [], sort = "name", sentAt = () => null, { groupRank = () => 0 } = {}) {
   const name = (r) => String(r.name || "").toLocaleLowerCase("en");
   const byName = (a, b) => name(a).localeCompare(name(b), "en");
   const time = (r) => { const t = sentAt(r); return t ? new Date(t).getTime() : null; };
@@ -152,7 +154,8 @@ export function sortTracker(rows = [], sort = "name", sentAt = () => null) {
     "sent-new": (a, b) => (time(a) == null) - (time(b) == null) || (time(b) ?? 0) - (time(a) ?? 0) || byName(a, b),
     "sent-old": (a, b) => (time(a) == null) - (time(b) == null) || (time(a) ?? 0) - (time(b) ?? 0) || byName(a, b),
     reply: (a, b) => (replyRank[a.reply] ?? 1) - (replyRank[b.reply] ?? 1) || byName(a, b),
-  }[trackerSort(sort)];
+    group: (a, b) => groupRank(a) - groupRank(b) || byName(a, b),
+  }[trackerSort(sort, GUEST_SORTS)];
   return [...rows].sort(pick);
 }
 
