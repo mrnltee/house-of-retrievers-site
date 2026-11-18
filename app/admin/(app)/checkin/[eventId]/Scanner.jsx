@@ -259,7 +259,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
     <div className="checkin">
       <div className="checkin-top">
         <div className="checkin-top-title">
-          <span className="tag">Check-in</span>
+          <a className="tag checkin-back" href={`${base}/checkin`}><Icon name="chevronLeft" /> Check-in · all events</a>
           <h1>{title}</h1>
         </div>
         <div className="checkin-count" aria-live="polite">
@@ -338,7 +338,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
             <button type="button" aria-pressed={view === "in"} aria-current={view === "in" ? "page" : undefined} onClick={() => setView("in")}>Checked in{list ? ` · ${list.length}` : ""}</button>
             <button type="button" aria-pressed={view === "waiting"} aria-current={view === "waiting" ? "page" : undefined} onClick={() => setView("waiting")}>Not checked in{waiting ? ` · ${waiting.length}` : ""}</button>
           </nav>
-          <label className="field"><span className="visually-hidden">Search guests</span><input ref={searchBox} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search everyone by name or furbaby" /></label>
+          <label className="field"><span className="visually-hidden">Search guests</span><input ref={searchBox} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name or furbaby" /></label>
           {(list === null || waiting === null) ? <p className="small muted">Loading…</p> : (() => {
             const q = search.trim().toLowerCase();
             const match = (row) => row.name.toLowerCase().includes(q) || row.furbaby.toLowerCase().includes(q);
@@ -363,7 +363,7 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                     ) : (
                       <button type="button" className="btn ghost small checkin-list-act" aria-label={`Check in ${row.name}`} onClick={() => setConfirmingId(row.id)}>Check in</button>
                     ))}
-                    {row.isIn && <span className="small checkin-list-time"><span className="chip good">In</span> {row.at ? new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at)) : ""}</span>}
+                    {row.isIn && <span className="small checkin-list-time">{q && <span className="chip good">In</span>} {row.at ? new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(row.at)) : ""}</span>}
                   </li>
                 ))}
               </ol>
