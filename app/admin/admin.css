@@ -1955,3 +1955,9 @@ details.sd-fold { display: block; }
 .tracker-page .st-1 .edit-dialog-open { margin-left: 42px; }
 .tracker-page .guest-group { font-weight: 400; }
 @media (max-width: 720px) { .tracker-page .st-1 { min-width: 0; } }
+/* Brand tracker review (18 Nov 2026, design review). The reply is set on the row like the Guest tracker's;
+   Giving gets room so its lines don't stack five deep; Edit details is the same button the Guest tracker uses. */
+.brand-tracker .st-2 { min-width: 0; }
+.brand-tracker .st-3 { min-width: 170px; }
+.tracker-page .st-5 .tracker-row-actions { margin-top: 6px; }
+@media (max-width: 720px) { .brand-tracker .st-3 { min-width: 0; } }

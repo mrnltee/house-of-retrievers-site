@@ -11,7 +11,7 @@ import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { letterFor } from "../../../../../lib/contacts.mjs";
-import { inviteToEvent, removeTrackerEntry, saveTrackerEntry } from "../../../../eventBrandActions";
+import { setTrackerReply, inviteToEvent, removeTrackerEntry, saveTrackerEntry } from "../../../../eventBrandActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
@@ -26,6 +26,8 @@ import Icon from "../../../../../components/Icon";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
+// The row's reply control reads like the Guest tracker's: No reply yet, Yes, No.
+const REPLY_ORDER = ["waiting", "yes", "no"];
 
 function giving(r) {
   const kinds = (r.gives || []).map((g) => GIVES.find(([k]) => k === g)?.[1]).filter(Boolean);
@@ -101,7 +103,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
       </PageHead>
       <Flash params={query} />
 
-      <section className="card tracker-page">
+      <section className="card tracker-page brand-tracker">
         <form id="tracker-send" method="get" action={`${base}/letters/send`}>
           <input type="hidden" name="letter" value={letter} />
           <input type="hidden" name="event" value={event.id} />
@@ -118,7 +120,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                   <td className="strong st-1">
                     <span className="row-name"><Avatar logo={r.logo} name={r.name} /><span><a href={`${base}/supporters/${r.supporter_id}`}>{r.name}</a><br /><span className="small muted">as {roleLabel(r)}</span></span></span>
                     {canEdit && (
-                      <EditDialog title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
+                      <EditDialog label="Edit details" buttonClass="btn small ghost" title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>
                         <form action={saveTrackerEntry} className="form">
                           <input type="hidden" name="event" value={event.id} />
                           <input type="hidden" name="brand" value={r.supporter_id} />
@@ -157,19 +159,33 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                   </td>
                   <td className="st-4" data-label="Contact">{r.contact_name || "—"}<br /><span className="small muted">{r.contact_email || "No email yet"}</span><br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
                   <td className="small st-5" data-label="Invite letter">
-                    <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} name={r.name} />
+                    {sendsOf(r).length ? <SendStatus sends={sendsOf(r)} letterName={letterName} usual={letter} name={r.name} /> : <span className="muted">Not invited yet</span>}
                     {canSend && (() => {
                       // One brand, no tick needed: the invite letter, or a follow-up once it went out unanswered.
                       const links = rowLetterLinks(base, event.id, r, letter, { sent: sendsOf(r).some((x) => !["failed", "bounced"].includes(x.status)) });
                       return (
                         <span className="tracker-row-actions">
                           {links.followUp && <a className="btn small dark" href={links.followUp} title={`Email ${r.name} the follow-up. You can edit the wording before it's sent.`}>Follow up</a>}
-                          <a className={`btn small ${links.followUp ? "ghost" : "dark"}`} href={links.send} title={`Open ${letterName(letter)} for ${r.name} only`}>Send letter</a>
+                          <a className={`btn small ${links.followUp || sendsOf(r).length ? "ghost" : "dark"}`} href={links.send} title={`Open ${letterName(letter)} for ${r.name} only`}>{sendsOf(r).length ? "Send again" : "Send letter"}</a>
                         </span>
                       );
                     })()}
                   </td>
-                  <td className="st-2"><span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
+                  <td className="st-2" data-label="Their reply">{canEdit ? (
+                    <span className="reply-quick" role="group" aria-label={`${r.name}'s reply`}>
+                      {REPLY_ORDER.map((k) => (k === r.reply
+                        ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true">{replyLabel(k)}</span>
+                        : (
+                          <form key={k} action={setTrackerReply}>
+                            <input type="hidden" name="event" value={event.id} />
+                            <input type="hidden" name="brand" value={r.supporter_id} />
+                            <input type="hidden" name="reply" value={k} />
+                            <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, mark ${replyLabel(k)}`} title={`${r.name}: ${replyLabel(k)}?`}
+                              items={[`Their reply for ${event.title}: ${replyLabel(r.reply)} → ${replyLabel(k)}`, k === "yes" ? "They show on this event's page (and the home page once they have a logo, a blurb and are switched on)" : r.reply === "yes" ? "They come off this event's page" : "", k === "yes" && !r.number_no ? "This gives them their HOR number" : "", "Their giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>{replyLabel(k)}</ConfirmButton>
+                          </form>
+                        )))}
+                    </span>
+                  ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>}{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
                   <td className="small st-3" data-label="Giving">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} ${r.reps_attending === 1 ? "person" : "people"}`, r.dogs_attending && `${r.dogs_attending} ${r.dogs_attending === 1 ? "dog" : "dogs"}`].filter(Boolean).join(", ")} coming</span></> : null}</td>
                 </tr>
               ))}

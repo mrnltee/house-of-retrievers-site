@@ -104,3 +104,32 @@ export async function addBrandToEventsAction(data) {
     await backWith(back, picks.note ? "error" : "ok", message);
   });
 }
+
+/**
+ * Brand tracker: the row's reply control (design review, 18 Nov 2026). Saves only the reply, like the Guest
+ * tracker's; a brand's first Yes still needs its 4-letter code and issues its HOR number, as the Edit window does.
+ */
+export async function setTrackerReply(data) {
+  const event = await eventOf(data);
+  const back = event ? `/events/${event.id}/brands` : "/events";
+  return guarded(back, async () => {
+    const admin = await actionAdmin("supporters:edit");
+    if (!event) await backWith("/events", "error", "That event wasn't found.");
+    const supporterId = form(data, "brand");
+    const reply = ["waiting", "yes", "no"].includes(form(data, "reply")) ? form(data, "reply") : "waiting";
+    const [brand] = isUuid(supporterId) ? await sql("SELECT name, code, number_no FROM supporters WHERE id = $1", [supporterId]) : [];
+    if (!brand) await backWith(back, "error", "That brand wasn't found.");
+    if (reply === "yes" && !brand.number_no && !brand.code) {
+      await backWith(back, "error", `Give ${brand.name} a 4-letter ID code first (on its brand page), then mark Yes.`);
+    }
+    const [row] = await sql(
+      `UPDATE event_brands SET reply = $3, replied_at = CASE WHEN $3 <> reply AND $3 <> 'waiting' THEN now() ELSE replied_at END, updated_at = now()
+        WHERE event_id = $1 AND supporter_id = $2 RETURNING reply`,
+      [event.id, supporterId, reply],
+    );
+    if (!row) await backWith(back, "error", "That brand isn't on this event's tracker.");
+    const numbered = reply === "yes" && !brand.number_no ? await issueSupporterNumber(supporterId) : "";
+    await logActivity(admin.email, "event.brand.reply", brand.name, { eventId: event.id, supporterId, reply, ...(numbered ? { number: numbered } : {}) });
+    await backWith(back, "ok", `${brand.name}: ${replyLabel(reply)}.${reply === "yes" ? " They show on this event's page." : ""}${numbered ? ` Their number is ${numbered}.` : ""}`);
+  });
+}
