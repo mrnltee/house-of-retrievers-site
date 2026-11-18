@@ -406,7 +406,7 @@ export function toPublicEvent(row, confirmed = 0) {
   const media = row.image
     ? [{ src: row.image, alt: row.image_alt || "", fit: coverFit }, ...gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }))]
     : gallery.map((g) => ({ ...g, fit: cleanFit(g.fit) }));
-  return {
+  const event = {
     slug: row.slug,
     title: row.title,
     category: row.category,
@@ -467,4 +467,22 @@ export function toPublicEvent(row, confirmed = 0) {
     // The tickets to choose from when RSVPing to a paid event, in the order the RSVP route reads them.
     tickets: row.fee_required && tiers.length ? tiers.map((t) => ({ label: t.label || "", amount: t.amount, bundleHumans: t.bundleHumans, bundleFurbabies: t.bundleFurbabies, attendanceBasis: t.attendanceBasis, includedHumansPerFurbaby: t.includedHumansPerFurbaby, additionalHumanFee: t.additionalHumanFee, extraHumanFee: t.extraHumanFee, extraFurbabyFee: t.extraFurbabyFee, limitUnit: t.limitUnit, withPrevious: t.withPrevious, from: t.from, until: t.until, limit: t.limit, left: tierLeft(t, counts) ?? undefined })) : undefined,
   };
+  return withPriceHidden(event, row);
+}
+
+/**
+ * "Keep the price private until RSVPs open" (owner, 18 Nov 2026): while a scheduled opening is still ahead, the
+ * public event carries no price, price list or tickets, only `pricePending`. At the opening the page asks
+ * /api/event-prices for them, so they appear the moment RSVPs open despite the 5-minute page cache.
+ */
+export function priceHidden(row, now = Date.now()) {
+  if (!row?.price_hidden_until_open || !row.rsvp_opens_at) return false;
+  const at = row.rsvp_opens_at instanceof Date ? row.rsvp_opens_at.getTime() : Date.parse(row.rsvp_opens_at);
+  return Number.isFinite(at) && at > now;
+}
+
+export function withPriceHidden(event, row, now = Date.now()) {
+  if (!priceHidden(row, now)) return event;
+  const { cost, priceTiers, tickets, dogWaitlistOpen, ...rest } = event;
+  return { ...rest, pricePending: true };
 }

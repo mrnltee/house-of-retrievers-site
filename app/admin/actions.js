@@ -272,6 +272,7 @@ export async function saveEvent(data) {
     if (data.has("priceTiers")) await sql("UPDATE events SET price_tiers=$1 WHERE id=$2", [JSON.stringify(value.priceTiers), eventId]);
     if (data.has("allDaySent")) await sql("UPDATE events SET all_day=$1 WHERE id=$2", [value.allDay, eventId]);
     if (data.has("rsvpOpensSent")) await sql("UPDATE events SET rsvp_opens_at=$1 WHERE id=$2", [value.rsvpOpensAt, eventId]);
+    if (data.has("priceHiddenSent")) await sql("UPDATE events SET price_hidden_until_open=$1 WHERE id=$2", [data.get("priceHiddenUntilOpen") === "on", eventId]);
     if (data.has("paymentHoldMinutes")) await sql("UPDATE events SET payment_hold_minutes=$1 WHERE id=$2", [value.paymentHoldMinutes, eventId]);
     if (data.has("tiersInOrderSent")) await sql("UPDATE events SET tiers_in_order=$1, tiers_hide_later=$2 WHERE id=$3", [data.get("tiersInOrder") === "on", data.get("tiersHideLater") === "on", eventId]);
     if (data.has("attendeeLimitsSent")) await sql("UPDATE events SET max_furbabies_per_registration=$1, max_humans_per_furbaby=$2 WHERE id=$3", [value.maxFurbabiesPerRegistration, value.maxHumansPerFurbaby, eventId]);
