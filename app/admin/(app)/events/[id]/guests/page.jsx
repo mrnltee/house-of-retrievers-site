@@ -243,9 +243,9 @@ export default async function EventGuestsPage({ params, searchParams }) {
                             <span className="onpage-track" aria-hidden="true" />
                             <span>Event page<span className="sr-only">: {r.show_on_site ? "on" : "off"}</span></span>
                           </ConfirmButton>
-                          {r.show_on_site && <span className="small muted">{r.reply === "yes" ? (r.public_role || "Special guest") : "Waiting for Coming"}</span>}
+                          {r.show_on_site && <span className="small muted">{r.reply === "yes" ? `Shown as ${r.public_role || "Special guest"}` : r.reply === "no" ? "Not shown: can't make it" : "Shows once they're Coming"}</span>}
                         </form>
-                      ) : r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : "Event page: waiting for Coming"}</span></>}</td>
+                      ) : r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : r.reply === "no" ? "Event page: not shown, can't make it" : "Event page: shows once they're Coming"}</span></>}</td>
                   </tr>
                 );
               })}
