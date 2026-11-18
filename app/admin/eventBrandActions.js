@@ -136,8 +136,8 @@ export async function setTrackerReply(data) {
 
 /**
  * The Brand tracker row's Partner / Sponsor switch (owner, 18 Nov 2026): changes only the brand's role at this
- * event. A sponsor never keeps a partner classification; switching back to Partner starts with none (pick it in
- * Edit details). Reply, giving and notes stay as they are; nothing is emailed.
+ * event. Switching clears the other role's category (partner type or sponsor level); pick the new one in
+ * Edit details. Reply, giving and notes stay as they are; nothing is emailed.
  */
 export async function setTrackerRole(data) {
   const event = await eventOf(data);
@@ -150,7 +150,8 @@ export async function setTrackerRole(data) {
     const [brand] = isUuid(supporterId) ? await sql("SELECT name FROM supporters WHERE id = $1", [supporterId]) : [];
     if (!brand) await backWith(back, "error", "That brand wasn't found.");
     const [row] = await sql(
-      `UPDATE event_brands SET role = $3, partner_type = CASE WHEN $3 = 'Sponsor' OR role <> $3 THEN NULL ELSE partner_type END, updated_at = now()
+      `UPDATE event_brands SET role = $3, partner_type = CASE WHEN $3 = 'Sponsor' OR role <> $3 THEN NULL ELSE partner_type END,
+         sponsor_level = CASE WHEN $3 = 'Partner' OR role <> $3 THEN NULL ELSE sponsor_level END, updated_at = now()
         WHERE event_id = $1 AND supporter_id = $2 RETURNING role`,
       [event.id, supporterId, role],
     );

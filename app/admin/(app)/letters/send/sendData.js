@@ -67,7 +67,8 @@ export async function loadSendData(params, { admin, base }) {
   // Registered participants: named ones, or every confirmed participant of the event (participants=all).
   const registrationIds = [
     ...refs.filter((r) => r.startsWith("registration:")).map((r) => r.slice(13)),
-    ...(params?.participants === "all" && event ? await eventParticipantIds(event.id, { admin }) : []),
+    // participants=all, or =paid (not complimentary) / =comp (complimentary guests only) when the event has a card for each.
+    ...(["all", "paid", "comp"].includes(params?.participants) && event ? await eventParticipantIds(event.id, { admin, comp: { paid: "exclude", comp: "only" }[params.participants] }) : []),
   ];
   const registrations = await registrationRecipients(registrationIds, { eventId: event?.id, admin });
   const recipients = [

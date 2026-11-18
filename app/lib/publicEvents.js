@@ -34,7 +34,9 @@ async function withBrands(rows) {
     const of = (id, role) => (yes[id] || []).filter((b) => b.role === role).map((b) => b.name);
     // Each Yes partner's classification (co-presenter, in-kind, exhibitor), by name, for the event page's groups.
     const types = (id) => Object.fromEntries((yes[id] || []).filter((b) => b.role === "Partner" && b.partnerType).map((b) => [b.name.toLowerCase(), b.partnerType]));
-    return rows.map((r) => ({ ...r, partners: publicNames(r.partners || [], of(r.id, "Partner"), names), sponsors: publicNames(r.sponsors || [], of(r.id, "Sponsor"), names), partner_types: types(r.id) }));
+    // Each Yes sponsor's level (presenting, major, supporting), by name, for "Presenting sponsors" and the rest.
+    const levels = (id) => Object.fromEntries((yes[id] || []).filter((b) => b.role === "Sponsor" && b.sponsorLevel).map((b) => [b.name.toLowerCase(), b.sponsorLevel]));
+    return rows.map((r) => ({ ...r, partners: publicNames(r.partners || [], of(r.id, "Partner"), names), sponsors: publicNames(r.sponsors || [], of(r.id, "Sponsor"), names), partner_types: types(r.id), sponsor_levels: levels(r.id) }));
   } catch {
     return rows.map(withoutBrands);
   }

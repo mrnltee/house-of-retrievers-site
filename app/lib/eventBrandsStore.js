@@ -29,10 +29,10 @@ export async function saveTrackerRow(eventId, supporterId, v, db = { sql }) {
   if (!before) return null;
   await db.sql(
     `UPDATE event_brands SET role=$3, reply=$4, follow_up_on=$5, gives=$6, cash_amount=$7, in_kind_value=$8, in_kind_note=$9,
-       booth_needs=$10, reps_attending=$11, dogs_attending=$12, show_amounts=$13, notes=$14, partner_type=$15,
+       booth_needs=$10, reps_attending=$11, dogs_attending=$12, show_amounts=$13, notes=$14, partner_type=$15, sponsor_level=$16,
        replied_at = CASE WHEN $4 <> reply AND $4 <> 'waiting' THEN now() ELSE replied_at END, updated_at = now()
      WHERE event_id = $1 AND supporter_id = $2`,
-    [eventId, supporterId, v.role, v.reply, v.followUpOn, v.gives, v.cashAmount, v.inKindValue, v.inKindNote, v.boothNeeds, v.repsAttending, v.dogsAttending, v.showAmounts, v.notes, v.partnerType ?? null],
+    [eventId, supporterId, v.role, v.reply, v.followUpOn, v.gives, v.cashAmount, v.inKindValue, v.inKindNote, v.boothNeeds, v.repsAttending, v.dogsAttending, v.showAmounts, v.notes, v.partnerType ?? null, v.sponsorLevel ?? null],
   );
   return before;
 }
@@ -45,20 +45,20 @@ export function removeFromTracker(eventId, supporterId) {
 export async function yesBrandsByEvent(eventIds) {
   if (!eventIds?.length) return {};
   const rows = await sql(
-    `SELECT eb.event_id, eb.role, eb.partner_type, s.id AS supporter_id, s.name, s.slug, s.logo
+    `SELECT eb.event_id, eb.role, eb.partner_type, eb.sponsor_level, s.id AS supporter_id, s.name, s.slug, s.logo
        FROM event_brands eb JOIN supporters s ON s.id = eb.supporter_id
       WHERE eb.event_id = ANY($1::uuid[]) AND eb.reply = 'yes' ORDER BY lower(s.name)`,
     [eventIds],
   );
   const out = {};
-  for (const r of rows) (out[r.event_id] ||= []).push({ supporterId: r.supporter_id, name: r.name, slug: r.slug, logo: r.logo, role: r.role, partnerType: r.partner_type || null });
+  for (const r of rows) (out[r.event_id] ||= []).push({ supporterId: r.supporter_id, name: r.name, slug: r.slug, logo: r.logo, role: r.role, partnerType: r.partner_type || null, sponsorLevel: r.sponsor_level || null });
   return out;
 }
 
 /** Every event a brand was invited to, newest first. */
 export function brandHistory(supporterId) {
   return sql(
-    `SELECT eb.event_id, e.title, e.date, e.status, eb.role, eb.partner_type, eb.reply, eb.gives, eb.cash_amount, eb.in_kind_value
+    `SELECT eb.event_id, e.title, e.date, e.status, eb.role, eb.partner_type, eb.sponsor_level, eb.reply, eb.gives, eb.cash_amount, eb.in_kind_value
        FROM event_brands eb JOIN events e ON e.id = eb.event_id
       WHERE eb.supporter_id = $1 ORDER BY e.date DESC NULLS LAST`,
     [supporterId],

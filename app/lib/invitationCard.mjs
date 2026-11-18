@@ -22,9 +22,12 @@ export const INVITATION_DEFAULT = { on: false, card: "", pages: [], y: 0.84, nam
  * Who an invitation letter is written for (owner, 2026-11-11): invited guests
  * (VIPs, who are asked to reply) or registered participants (already confirmed,
  * so never asked to RSVP). Registrations' "Send invitation cards" uses the
- * participants' one.
+ * participants' one. "confirmed" (owner, 2026-11-18): invited guests who said Coming and are on the RSVP list
+ * as complimentary; they never registered or got a confirmation email, so their card thanks them for accepting.
  */
-export const INVITATION_AUDIENCES = ["guests", "participants"];
+export const INVITATION_AUDIENCES = ["guests", "participants", "confirmed"];
+/** Audiences sent to registrations (so the card line is their furbabies and the last page can carry their QR). */
+export const forRegistrations = (audience) => audience === "participants" || audience === "confirmed";
 /** Gold as on HOR's cards, and the white of its organization line. */
 export const CARD_GOLD = "#C9A04E";
 export const CARD_WHITE = "#FFFFFF";
@@ -46,7 +49,7 @@ export function cleanInvitation(input) {
     y: Math.round(clamp(s.y, INVITATION_LIMITS.y, INVITATION_DEFAULT.y) * 1000) / 1000,
     nameSize: Math.round(clamp(s.nameSize, INVITATION_LIMITS.nameSize, INVITATION_DEFAULT.nameSize)),
     orgSize: Math.round(clamp(s.orgSize, INVITATION_LIMITS.orgSize, INVITATION_DEFAULT.orgSize)),
-    audience: s.audience === "participants" ? "participants" : "guests",
+    audience: INVITATION_AUDIENCES.includes(s.audience) ? s.audience : "guests",
     qr: cleanQr(s.qr),
   };
 }
@@ -79,10 +82,15 @@ export const isInvitation = (settings) => {
   return s.on && Boolean(s.card);
 };
 
-/** The letter Registrations sends its invitation cards with: the participants' one, else any invitation. */
+/** The letter Registrations sends its invitation cards with: the participants' one, else any invitation but the confirmed guests'. */
 export function participantInvitation(letters = []) {
   const invites = letters.filter((l) => isInvitation(l.invitation));
-  return invites.find((l) => cleanInvitation(l.invitation).audience === "participants") || invites[0] || null;
+  return invites.find((l) => cleanInvitation(l.invitation).audience === "participants") || invites.find((l) => cleanInvitation(l.invitation).audience !== "confirmed") || null;
+}
+
+/** The letter for complimentary guests who said Coming (audience "confirmed"), or null when the event has none. */
+export function confirmedGuestInvitation(letters = []) {
+  return letters.find((l) => isInvitation(l.invitation) && cleanInvitation(l.invitation).audience === "confirmed") || null;
 }
 
 const tidy = (text, max) => String(text ?? "").replace(/\s+/g, " ").trim().slice(0, max);

@@ -6,7 +6,7 @@ import { sql } from "../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../lib/admin/guard";
 import { can } from "../../../../../lib/admin/roles.mjs";
 import { GIVES, newBrandHref } from "../../../../../lib/supporters.mjs";
-import { REPLIES, ROLE_CHOICES, roleChoice, roleLabel, partnerTypeLabel, replyLabel, sortTracker, trackerCounts, brandGroups, brandGroupKeys, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
+import { REPLIES, ROLE_CHOICES, roleChoice, roleLabel, categoryLabel, replyLabel, sortTracker, trackerCounts, brandGroups, brandGroupKeys, trackerSort, followUpLink, rowLetterLinks } from "../../../../../lib/eventBrands.mjs";
 import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
@@ -72,7 +72,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
   const sort = trackerSort(query?.sort || (await cookies()).get("tracker_sort")?.value);
   const sorted = sortTracker(rows, sort, lastSent);
   // Words the tracker search looks through for each row.
-  const searchText = (r) => [r.name, r.role, partnerTypeLabel(r.partner_type), r.contact_name, r.contact_email, recipientFields({ supporter: r }).salutation, replyLabel(r.reply), giving(r), ...sendsOf(r).slice(0, 1).flatMap((x) => [letterName(x.letter_key), x.status])].filter(Boolean).join(" ");
+  const searchText = (r) => [r.name, r.role, categoryLabel(r), r.contact_name, r.contact_email, recipientFields({ supporter: r }).salutation, replyLabel(r.reply), giving(r), ...sendsOf(r).slice(0, 1).flatMap((x) => [letterName(x.letter_key), x.status])].filter(Boolean).join(" ");
 
   return (
     <>
@@ -129,10 +129,10 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                               <input type="hidden" name="brand" value={r.supporter_id} />
                               <input type="hidden" name="role" value={k} />
                               <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, make them a ${k.toLowerCase()}`} title={`${r.name}: ${k.toLowerCase()} at this event?`}
-                                items={[`At ${event.title}: ${roleLabel(r)} → ${k}`, k === "Sponsor" && partnerTypeLabel(r.partner_type) ? `Their partner category (${partnerTypeLabel(r.partner_type)}) is cleared` : "", k === "Partner" ? "Pick a category (Co-presenter, In-kind partner, Exhibitor) in Edit details if they have one" : "", r.reply === "yes" ? `On the event page they move to ${k === "Sponsor" ? "Sponsored by" : "In partnership with"}` : "", "Their reply, giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>{k}</ConfirmButton>
+                                items={[`At ${event.title}: ${roleLabel(r)} → ${k}`, categoryLabel(r) ? `Their category (${categoryLabel(r)}) is cleared` : "", k === "Partner" ? "Pick a category (Co-presenter, In-kind partner, Exhibitor) in Edit details if they have one" : "Pick a level (Presenting, Major, Supporting) in Edit details if they have one", r.reply === "yes" ? `On the event page they move to ${k === "Sponsor" ? "Sponsored by" : "In partnership with"}` : "", "Their reply, giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>{k}</ConfirmButton>
                             </form>
                           )))}
-                      </span>{partnerTypeLabel(r.partner_type) && r.role !== "Sponsor" && <span className="small muted"> {partnerTypeLabel(r.partner_type)}</span>}</span>
+                      </span>{categoryLabel(r) && <span className="small muted"> {categoryLabel(r)}</span>}</span>
                     ) : <><br /><span className="small muted">as {roleLabel(r)}</span></>}</span></span>
                     {canEdit && (
                       <EditDialog label="Edit details" buttonClass="btn small ghost" title={r.name} lead={`At ${event.title}: their reply, role and giving. The greeting applies to their letters at every event.`}>

@@ -74,7 +74,7 @@ export default function InvitationCardField({ inv, setInv, letterKey, action, on
         <SliderField label="Name size" hint="Height of the cursive name" unit="px" min={INVITATION_LIMITS.nameSize[0]} max={INVITATION_LIMITS.nameSize[1]} step={1} value={inv.nameSize} onChange={(v) => setInv((s) => ({ ...s, nameSize: v }))} />
         <SliderField label="Organization size" hint="The line under the name" unit="px" min={INVITATION_LIMITS.orgSize[0]} max={INVITATION_LIMITS.orgSize[1]} step={1} value={inv.orgSize} onChange={(v) => setInv((s) => ({ ...s, orgSize: v }))} />
         <div className="invitation-card-preview" aria-live="polite">
-          {state.src ? <img src={state.src} alt={inv.audience === "participants" ? "The card as a participant gets it, for the sample participant Jessie Mae Gabriel" : "The card as a guest gets it, for the sample guest Ms. Malou Perez"} /> : <p className="small muted">{state.error || (hasCard ? "Drawing the card…" : "Upload the card to see it with a guest's name.")}</p>}
+          {state.src ? <img src={state.src} alt={inv.audience === "participants" || inv.audience === "confirmed" ? "The card as a participant gets it, for the sample participant Jessie Mae Gabriel" : "The card as a guest gets it, for the sample guest Ms. Malou Perez"} /> : <p className="small muted">{state.error || (hasCard ? "Drawing the card…" : "Upload the card to see it with a guest's name.")}</p>}
           {state.busy && state.src && <span className="small muted">Updating…</span>}
         </div>
         <span className="field-head">Pages after the card <small>In the PDF only, in this order. 4:5 like the card.</small></span>

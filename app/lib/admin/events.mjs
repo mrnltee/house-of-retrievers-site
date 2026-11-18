@@ -417,6 +417,7 @@ export function toPublicEvent(row, confirmed = 0) {
     partners: row.partners?.length ? row.partners : undefined,
     partnerTypes: row.partner_types && Object.keys(row.partner_types).length ? row.partner_types : undefined,
     sponsors: row.sponsors?.length ? row.sponsors : undefined,
+    sponsorLevels: row.sponsor_levels && Object.keys(row.sponsor_levels).length ? row.sponsor_levels : undefined,
     venue: row.venue,
     city: row.city,
     // With sale periods, the card shows what's on sale now (5-minute page cache).

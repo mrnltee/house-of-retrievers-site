@@ -7,7 +7,7 @@ import { readSendTo } from "../../../../lib/letterSendTo.mjs";
 import { letterPdf } from "../../../../lib/letterPdf.mjs";
 import { loadLetter, savedAnswers, signatureForPdf } from "../../../../lib/letterStore";
 import { eventFills } from "../../../../lib/letterEventStore";
-import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, isInvitation, readCardNames, withCardName } from "../../../../lib/invitationCard.mjs";
+import { MAX_INVITATION_PAGES, cardNames, cleanInvitation, forRegistrations, isInvitation, readCardNames, withCardName } from "../../../../lib/invitationCard.mjs";
 import { extraPages, invitationPdf, renderCard, withPassQr } from "../../../../lib/invitationRender";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +71,7 @@ export async function POST(request) {
   if (isInvitation(invitation) || (cleanInvitation(invitation).on && cardUpload)) {
     const ref = field("previewTo") || field("to");
     // The editor's sample: an invited guest, or a registered participant with their furbabies under the name.
-    const sample = !ref ? (cleanInvitation(invitation).audience === "participants" ? { name: "Jessie Mae Gabriel", contact: "", cardLine: "& Mochi and Fudge" } : { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez" }) : to;
+    const sample = !ref ? (forRegistrations(cleanInvitation(invitation).audience) ? { name: "Jessie Mae Gabriel", contact: "", cardLine: "& Mochi and Fudge" } : { name: "Pawssion Project Foundation Inc", contact: "Ms. Malou Perez" }) : to;
     const names = cardNames(sample, readCardNames(field("cardNames"), [ref]).byRef[ref]);
     try {
       const card = await renderCard(invitation, names, { cardUpload });
