@@ -1,0 +1,33 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { launchOverview, initialsOf, LAUNCH_TIME } from "./mediaLaunch.mjs";
+
+test("launch overview reads the live event: date with the public time, venue, beneficiaries, guests", () => {
+  const o = launchOverview({
+    date: "2026-11-30", startTime: "14:30", venue: "Novotel Manila Araneta City", venueAddress: "General Aguinaldo Avenue, Quezon City",
+    beneficiaries: [{ name: "Pawssion Project Foundation Inc." }, { name: "Little Sisters" }],
+    speakers: [{ id: "a", name: "Eric Suguitan", role: "Guest speaker", label: "VIP", photo: "/api/event-image/x", intro: "long" }],
+    partners: ["Bluehive"], sponsors: ["Boop"],
+  });
+  assert.deepEqual(o.facts, [
+    ["When", `Monday, 30 November 2026 · ${LAUNCH_TIME}`],
+    ["Where", "Novotel Manila Araneta City, General Aguinaldo Avenue, Quezon City"],
+    ["For", "Pawssion Project Foundation Inc. and Little Sisters"],
+  ]);
+  assert.deepEqual(o.guests, [{ id: "a", name: "Eric Suguitan", role: "Guest speaker", label: "VIP", photo: "/api/event-image/x" }]);
+  assert.deepEqual([o.partners, o.sponsors], [["Bluehive"], ["Boop"]]);
+});
+
+test("without the event: the built-in facts, no guests", () => {
+  const o = launchOverview(null);
+  assert.equal(o.facts[0][1], `Monday, 30 November 2026 · ${LAUNCH_TIME}`);
+  assert.equal(o.facts[1][1], "Novotel Manila Araneta City, Quezon City");
+  assert.match(o.facts[2][1], /Pawssion/);
+  assert.deepEqual(o.guests, []);
+});
+
+test("initials", () => {
+  assert.equal(initialsOf("Mally the Kariton Dog"), "MT");
+  assert.equal(initialsOf("Ms. Malou Perez"), "MM");
+  assert.equal(initialsOf(""), "•");
+});

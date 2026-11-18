@@ -13,6 +13,8 @@ import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, clean
 import Icon from "../components/Icon";
 import { LEGAL } from "../lib/legal.mjs";
 import { HOME_URL, PRIVACY_URL } from "../lib/siteSeo.mjs";
+import { loadEvent } from "../lib/publicEvents";
+import { LAUNCH_SLUG, initialsOf, launchOverview } from "../lib/mediaLaunch.mjs";
 
 // Re-rendered hourly so new event albums and photographer credits reach the photo library; a publish in Admin → Media hub refreshes it at once.
 
@@ -109,6 +111,8 @@ export default async function MediaPage() {
   // One story per line: the editor saves single line breaks, so splitting only on blank lines ran all three together.
   const storyParts = String(content.stories || "").split(/\n+/).map((line) => line.trim()).filter(Boolean).slice(0, 6);
   const albums = await loadMediaAlbums();
+  // The launch at a glance, from the live event (speakers switched on in its Guest tracker, Yes brands, picks).
+  const launch = launchOverview(await loadEvent(LAUNCH_SLUG).catch(() => null));
   const albumDate = (value) => new Date(value).toLocaleDateString("en-PH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Manila" });
   const timeline = Array.isArray(content.timeline) ? cleanMediaTimeline(content.timeline) : DEFAULT_MEDIA_TIMELINE;
   const timelineOrientation = cleanTimelineOrientation(content.timelineOrientation);
@@ -199,11 +203,36 @@ export default async function MediaPage() {
             <h3>A Golden Beginning:<br /><em>Paws &amp; Purpose</em></h3>
           </div>
           <div>
-            <p>Monday, 30 November, from 3:00 to 6:00 PM, at Novotel Manila Araneta City, Quezon City. For the benefit of Pawssion Project Foundation Inc. and the Little Sisters of the Abandoned Elderly – Sta. Teresa Jornet Home.</p>
+            <p>The official launch of The House of Retrievers’ Society, Inc.: an afternoon with furparents, advocates and their dogs, raising support for the organisations below.</p>
             <div className="media-actions">
               <a className="media-button media-button-gold" href="mailto:houseofretrieversph@gmail.com?subject=Media%20access%3A%20Golden%20Beginning" data-message="interview">Ask about media access <Icon name="external" /></a>
               <a className="media-text-link" href="https://events.houseofretrieversph.org/golden-beginning-paws-and-purpose-2026-11" target="_blank" rel="noopener noreferrer">Event details <Icon name="external" /></a>
             </div>
+          </div>
+          <div className="media-launch-overview">
+            <dl className="media-launch-facts">
+              {launch.facts.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}
+            </dl>
+            {launch.guests.length > 0 && (
+              <div className="media-launch-block">
+                <h4>Speakers and special guests</h4>
+                <ul className="media-launch-guests">
+                  {launch.guests.map((g) => (
+                    <li key={g.id}>
+                      {g.photo ? <img src={g.photo} alt="" width={44} height={44} loading="lazy" /> : <span className="media-launch-initials" aria-hidden="true">{initialsOf(g.name)}</span>}
+                      <span><strong>{g.name}</strong><small>{[g.role, g.label].filter(Boolean).join(" · ")}</small></span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(launch.partners.length > 0 || launch.sponsors.length > 0) && (
+              <div className="media-launch-block">
+                <h4>With thanks to</h4>
+                {launch.partners.length > 0 && <p><span>Partners</span>{launch.partners.join(" · ")}</p>}
+                {launch.sponsors.length > 0 && <p><span>Sponsors</span>{launch.sponsors.join(" · ")}</p>}
+              </div>
+            )}
           </div>
         </article>
         <div className="media-press-grid">
