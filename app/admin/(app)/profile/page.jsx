@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { pageAdmin } from "../../../lib/admin/guard";
 import { actionLabel } from "../../../lib/admin/activity.mjs";
 import { roleLine } from "../../../lib/admin/profile.mjs";
@@ -34,7 +36,7 @@ export default async function ProfilePage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="My profile" lead="How you appear to the rest of the team, and everything you've done in the admin." />
+      <PageHead title="My profile" lead="How you appear to the rest of the team, and everything you've done in the admin." ><HowTo guide={PAGE_GUIDES.profile[0]} guides={PAGE_GUIDES.profile} className="btn ghost" /></PageHead>
       <Flash params={params} />
       <ProfileForm action={saveMyProfile} admin={{ name: admin.name, first_name: admin.first_name, furbaby_name: admin.furbaby_name, show_as: admin.show_as, photo: admin.photo, email: admin.email }} role={roleLine(admin)} disabled={Boolean(admin.preview)} />
       <dl className="profile-account">

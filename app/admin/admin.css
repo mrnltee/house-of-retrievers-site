@@ -1823,3 +1823,17 @@ details.sd-fold { display: block; }
   .profile-log li { grid-template-columns: 64px minmax(0, 1fr); }
   .profile-log-on { grid-column: 2; font-size: 13px; }
 }
+/* The data-driven page mock (guides on every page, 18 Nov 2026). */
+.ht-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.ht-tile { display: grid; gap: 2px; padding: 9px 10px; border-radius: 10px; background: #fff; border: 1px solid var(--a-line); }
+.ht-tile strong { font: 400 1.5em/1.1 "DM Serif Display", serif; }
+.ht-tile small { color: var(--a-muted); }
+.ht-tile.is-warn { border-color: var(--a-gold); background: #fbf6ea; }
+.ht-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ht-switch { position: relative; width: 28px; height: 16px; flex: none; border-radius: 99px; background: var(--a-line); transition: background .3s var(--ht-ease, ease); }
+.ht-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: transform .3s var(--ht-ease, ease); }
+.ht-switch.is-on { background: var(--a-ink); }
+.ht-switch.is-on::after { transform: translateX(12px); }
+/* A page mock can be taller than the stage; the camera pans down to it (HowTo measures .ht-page). */
+.ht-screen.ht-page { bottom: auto; min-height: 100%; overflow: visible; }
+.howto-scene:has(> .ht-screen.ht-page) { overflow: visible; }

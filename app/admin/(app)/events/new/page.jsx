@@ -1,4 +1,6 @@
 import { pageAdmin } from "../../../../lib/admin/guard";
+import HowTo from "../../HowTo";
+import { PAGE_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import { Flash, NotAllowed, PageHead } from "../../ui";
 import EventForm from "../EventForm";
 
@@ -8,7 +10,7 @@ export default async function NewEventPage({ searchParams }) {
   if (!allowed) return <NotAllowed />;
   return (
     <>
-      <PageHead title="Create event" lead="Save a draft any time. Publish when every fact is confirmed by HOR." />
+      <PageHead title="Create event" lead="Save a draft any time. Publish when every fact is confirmed by HOR." ><HowTo guide={PAGE_GUIDES.eventEditor[0]} guides={PAGE_GUIDES.eventEditor} className="btn ghost" /></PageHead>
       <Flash params={params} />
       <EventForm event={null} autoDescribe={Boolean(process.env.GEMINI_API_KEY)} />
     </>

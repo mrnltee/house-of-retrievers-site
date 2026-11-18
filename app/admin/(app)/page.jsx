@@ -1,4 +1,6 @@
 import { sql } from "../../lib/db";
+import HowTo from "./HowTo";
+import { PAGE_GUIDES } from "../../lib/admin/howToGuides.mjs";
 import { adminBase, pageAdmin } from "../../lib/admin/guard";
 import { redirect } from "next/navigation";
 import { PAGES, can } from "../../lib/admin/roles.mjs";
@@ -71,7 +73,7 @@ export default async function Dashboard({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Dashboard" lead="What needs you today, then what’s coming up.">
+      <PageHead title="Dashboard" lead="What needs you today, then what’s coming up."><HowTo guide={PAGE_GUIDES.dashboard[0]} guides={PAGE_GUIDES.dashboard} className="btn ghost" />
         {can(admin, "events:edit") && <a className="btn gold" href={`${base}/events/new`}>Create event</a>}
       </PageHead>
       <Flash params={params} />

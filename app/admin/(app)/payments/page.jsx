@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { METHODS, METHOD_KEYS, formatMobile, maskAccountNumber, maskMobile } from "../../../lib/admin/payments.mjs";
@@ -33,7 +35,7 @@ export default async function PaymentsPage({ searchParams }) {
       <PageHead
         title="Payment settings"
         lead="How people pay HoR: the Support the pack panel, the payment step of paid events, and the bank and GCash lines in letters. A change goes live only after a different Owner approves it; switching a method off is immediate."
-      />
+      ><HowTo guide={PAGE_GUIDES.payments[0]} guides={PAGE_GUIDES.payments} className="btn ghost" /></PageHead>
       <Flash params={params} />
 
       {pending.map((request) => (

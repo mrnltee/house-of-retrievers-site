@@ -94,7 +94,9 @@ export default function HowTo({ guide = BRAND_GUIDES[0], guides = BRAND_GUIDES, 
     // Phones keep the whole mock in view: zooming a narrow stage only squeezes it.
     const z = reducedMotion() || W < 560 ? 1 : Math.max(1, step.zoom ?? DEFAULT_ZOOM);
     const clamp = (v, min) => Math.min(0, Math.max(min, v));
-    setCam({ x: clamp(W / 2 - (t.x + t.w / 2) * z, W - W * z), y: clamp(H / 2 - (t.y + t.h / 2) * z, H - H * z), z });
+    // A screen taller than the stage (a long page) lets the camera pan down to what's below.
+    const tall = Math.max(H, layer.querySelector(".ht-screen.ht-page")?.offsetHeight || 0);
+    setCam({ x: clamp(W / 2 - (t.x + t.w / 2) * z, W - W * z), y: clamp(H / 2 - (t.y + t.h / 2) * z, H - tall * z), z });
   }, [key, at, step, layout]);
 
   // Measure again once the new scene has dissolved in and settled, so the ring and pointer land exactly.

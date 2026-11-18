@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { BENEFICIARY_KINDS, BENEFICIARY_STATUSES, beneficiaryWebsiteGaps, kindLabel, statusLabel } from "../../../lib/beneficiaries.mjs";
@@ -54,7 +56,7 @@ export default async function BeneficiariesPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Beneficiaries" lead="The groups HoR's events support: animal shelters and rescues, and people-care homes the dogs visit. Tick groups to send a letter; you see each one before it goes.">
+      <PageHead title="Beneficiaries" lead="The groups HoR's events support: animal shelters and rescues, and people-care homes the dogs visit. Tick groups to send a letter; you see each one before it goes."><HowTo guide={PAGE_GUIDES.beneficiaries[0]} guides={PAGE_GUIDES.beneficiaries} className="btn ghost" />
         {canEdit && <a className="btn gold" href={`${base}/beneficiaries/new`}>+ Add beneficiary</a>}
       </PageHead>
       <Flash params={params} />

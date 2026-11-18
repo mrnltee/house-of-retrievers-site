@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { CAPACITY_USED_AGGREGATE_SQL } from "../../../lib/eventCapacity.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { participantsLabel } from "../../../lib/eventCategories.mjs";
@@ -33,7 +35,7 @@ export default async function RegistrationsIndex() {
 
   return (
     <>
-      <PageHead title="Registrations" lead="Who's coming to each event that takes RSVPs, and what still needs checking." />
+      <PageHead title="Registrations" lead="Who's coming to each event that takes RSVPs, and what still needs checking." ><HowTo guide={PAGE_GUIDES.registrations[0]} guides={PAGE_GUIDES.registrations} className="btn ghost" /></PageHead>
       {rows.length === 0 && (
         <section className="card"><p className="muted">No events take RSVPs yet. Turn on Registration in an event’s editor and it will show here.</p></section>
       )}

@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import HowTo from "../../HowTo";
+import { PAGE_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { Avatar } from "../../ImageField";
@@ -31,7 +33,7 @@ export default async function EditEventPage({ params, searchParams }) {
 
   return (
     <>
-      <PageHead title={event.title} lead={`Status: ${event.status}`}>
+      <PageHead title={event.title} lead={`Status: ${event.status}`}><HowTo guide={PAGE_GUIDES.eventEditor[0]} guides={PAGE_GUIDES.eventEditor} className="btn ghost" />
         {can(admin, "supporters:view") && <a className="btn ghost" href={`${base}/events/${event.id}/brands`}>Brands &amp; partnerships</a>}
         {showsGuestList(event.category) && can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/guests`}>Guest tracker</a>}
         {can(admin, "guests:view") && <a className="btn ghost" href={`${base}/events/${event.id}/donors`}>Donors</a>}

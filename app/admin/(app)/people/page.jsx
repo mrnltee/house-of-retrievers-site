@@ -1,4 +1,6 @@
 import FurbabyList from "../registrations/FurbabyList";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
@@ -65,7 +67,7 @@ export default async function PeoplePage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="People" lead="Everyone who used the Join form, one record each. Open someone for their photo, events and history.">
+      <PageHead title="People" lead="Everyone who used the Join form, one record each. Open someone for their photo, events and history."><HowTo guide={PAGE_GUIDES.people[0]} guides={PAGE_GUIDES.people} className="btn ghost" />
         {canEdit && <a className="btn ghost" href={`${base}/people/import`}>Import</a>}
         <a className="btn ghost" href={`${base}/people/export?kind=${kind}`}>Export CSV</a>
       </PageHead>

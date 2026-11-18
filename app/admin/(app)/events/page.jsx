@@ -1,4 +1,6 @@
 import { formatOpens, opensLater } from "../../../lib/rsvpOpens.mjs";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { sql } from "../../../lib/db";
 import { CAPACITY_USED_AGGREGATE_SQL } from "../../../lib/eventCapacity.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
@@ -47,7 +49,7 @@ export default async function EventsPage({ searchParams }) {
 
   return (
     <>
-      <PageHead title="Events" lead="Drafts stay private. An event goes public only once every fact the page shows is filled in.">
+      <PageHead title="Events" lead="Drafts stay private. An event goes public only once every fact the page shows is filled in."><HowTo guide={PAGE_GUIDES.events[0]} guides={PAGE_GUIDES.events} className="btn ghost" />
         {canEdit && <a className="btn gold" href={`${base}/events/new`}>Create event</a>}
       </PageHead>
       <Flash params={params} />

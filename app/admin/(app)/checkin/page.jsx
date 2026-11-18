@@ -1,4 +1,6 @@
 import { sql } from "../../../lib/db";
+import HowTo from "../HowTo";
+import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { formatTime } from "../../../lib/share.mjs";
 import { NotAllowed, PageHead, formatDay, isoDate, manilaToday } from "../ui";
@@ -25,7 +27,7 @@ export default async function CheckInIndex() {
 
   return (
     <>
-      <PageHead title="Check-in" lead="Pick the event, then scan the QR on each guest's confirmation email." />
+      <PageHead title="Check-in" lead="Pick the event, then scan the QR on each guest's confirmation email." ><HowTo guide={PAGE_GUIDES.checkin[0]} guides={PAGE_GUIDES.checkin} className="btn ghost" /></PageHead>
       {rows.length === 0 && (
         <section className="card">
           <p className="muted">No published events with RSVPs today or coming up. An event shows here once it’s published and takes RSVPs.</p>

@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import HowTo from "../../HowTo";
+import { PAGE_GUIDES } from "../../../../lib/admin/howToGuides.mjs";
 import { sql } from "../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../lib/admin/guard";
 import { can } from "../../../../lib/admin/roles.mjs";
@@ -70,7 +72,7 @@ export default async function PersonPage({ params, searchParams }) {
         <PersonAvatar person={person} base={base} size={96} />
         <div>
           {canEdit && <PersonPhotoField personId={person.id} current={Boolean(person.photo_id)} name={person.name} />}
-          <PageHead title={person.name} lead={[person.kind, number, member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} />
+          <PageHead title={person.name} lead={[person.kind, number, member ? membershipLabel(person.membership) : person.status].filter(Boolean).join(" · ")} ><HowTo guide={PAGE_GUIDES.people[0]} guides={PAGE_GUIDES.people} className="btn ghost" /></PageHead>
         </div>
       </div>
       <Flash params={query} />
