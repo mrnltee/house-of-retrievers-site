@@ -68,10 +68,15 @@ const roleRank = (role) => {
 /** The public shape, from a guest-list row joined with its contact. */
 export function publicSpeaker(row) {
   const link = cleanSpeakerLink(row.public_link);
+  const role = tidy(row.public_role, ROLE_MAX) || "Special guest";
+  // Their guest specification beside the name (owner, 18 Nov 2026): "Macchiato [Petfluencer]". Left out when it
+  // only repeats the role ("Guest Speaker" under GUEST SPEAKER).
+  const spec = tidy(row.specification, 60);
   return {
     id: row.contact_id || row.id,
     name: tidy(row.name, 120),
-    role: tidy(row.public_role, ROLE_MAX) || "Special guest",
+    label: spec && spec.toLowerCase() !== role.toLowerCase() ? spec : null,
+    role,
     intro: tidy(row.public_intro, INTRO_MAX) || null,
     photo: /^\/api\/event-image\/[0-9a-f-]{36}$/i.test(String(row.public_photo || "")) ? row.public_photo : null,
     link: link || null,
