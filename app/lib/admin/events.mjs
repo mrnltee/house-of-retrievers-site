@@ -415,6 +415,7 @@ export function toPublicEvent(row, confirmed = 0) {
     startTime: (!row.all_day && row.start_time) || undefined,
     endTime: (!row.all_day && row.end_time) || undefined,
     partners: row.partners?.length ? row.partners : undefined,
+    partnerTypes: row.partner_types && Object.keys(row.partner_types).length ? row.partner_types : undefined,
     sponsors: row.sponsors?.length ? row.sponsors : undefined,
     venue: row.venue,
     city: row.city,

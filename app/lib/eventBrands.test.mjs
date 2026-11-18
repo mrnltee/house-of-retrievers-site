@@ -103,3 +103,23 @@ test("row letter links: Send letter for every brand, Follow up only once an invi
   // No email on record: still offered, the send window has "Send to another email".
   assert.match(rowLetterLinks("/admin", "ev1", { ...waiting, contact_email: null }, "ev-letter", { sent: true }).send, /to=supporter%3Aa$/);
 });
+
+test("partner classification: co-presenter, in-kind partner, exhibitor", async () => {
+  const { readRole, roleChoice, roleLabel, cleanEventBrand, partnerGroups } = await import("./eventBrands.mjs");
+  assert.deepEqual(readRole("Partner:exhibitor"), { role: "Partner", partnerType: "exhibitor" });
+  assert.deepEqual(readRole("Partner"), { role: "Partner", partnerType: null });
+  assert.deepEqual(readRole("Sponsor:exhibitor"), { role: "Sponsor", partnerType: null });
+  assert.deepEqual(readRole("Partner:boss"), { role: "Partner", partnerType: null });
+  assert.equal(readRole("Boss").role, null);
+  assert.equal(cleanEventBrand({ role: "Partner:co-presenter" }).value.partnerType, "co-presenter");
+  assert.equal(cleanEventBrand({ role: "Sponsor" }).value.partnerType, null);
+  assert.equal(roleChoice({ role: "Partner", partner_type: "in-kind" }), "Partner:in-kind");
+  assert.equal(roleChoice({ role: "Sponsor", partner_type: "in-kind" }), "Sponsor");
+  assert.equal(roleLabel({ role: "Partner", partner_type: "exhibitor" }), "Exhibitor");
+  assert.equal(roleLabel({ role: "Partner" }), "Partner");
+  const groups = partnerGroups(["Arf Co", "Pet Mart", "Typed Name", "Booth Ltd"], { "arf co": "co-presenter", "pet mart": "in-kind", "booth ltd": "exhibitor" });
+  assert.deepEqual(groups.map((g) => [g.title, g.names]), [
+    ["Co-presented with", ["Arf Co"]], ["In partnership with", ["Typed Name"]], ["In-kind partners", ["Pet Mart"]], ["Exhibitors", ["Booth Ltd"]],
+  ]);
+  assert.deepEqual(partnerGroups(["A"]).map((g) => g.title), ["In partnership with"]);
+});

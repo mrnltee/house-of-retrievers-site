@@ -7,7 +7,7 @@ import { isPublic, statusLabel, supporterNumber } from "../../../../lib/supporte
 import { brandHistory, eventsForBrand } from "../../../../lib/eventBrandsStore";
 import { addBrandToEventsAction } from "../../../eventBrandActions";
 import EventPicker from "../EventPicker";
-import { replyLabel } from "../../../../lib/eventBrands.mjs";
+import { replyLabel, roleLabel } from "../../../../lib/eventBrands.mjs";
 import { HOME_URL } from "../../../../lib/siteSeo.mjs";
 import { Flash, NotAllowed, PageHead, formatWhen, isoDate } from "../../ui";
 import SupporterForm from "../SupporterForm";
@@ -66,7 +66,7 @@ export default async function SupporterPage({ params, searchParams }) {
               <ul className="plain-list">
                 {events.map((e) => (
                   <li key={e.event_id}>
-                    <a href={`${base}/events/${e.event_id}/brands`}>{e.title}</a> <span className="small muted">· {e.date ? isoDate(e.date) : "no date"}{e.status === "draft" ? " · draft" : ""} · as {e.role}</span>{" "}
+                    <a href={`${base}/events/${e.event_id}/brands`}>{e.title}</a> <span className="small muted">· {e.date ? isoDate(e.date) : "no date"}{e.status === "draft" ? " · draft" : ""} · as {roleLabel(e)}</span>{" "}
                     <span className={`chip ${e.reply === "yes" ? "good" : e.reply === "no" ? "alert" : ""}`.trim()}>{replyLabel(e.reply)}</span>
                     {(e.cash_amount != null || e.in_kind_value != null) && <span className="small muted"> · {[e.cash_amount != null && `₱${Number(e.cash_amount).toLocaleString("en-PH")} cash`, e.in_kind_value != null && `₱${Number(e.in_kind_value).toLocaleString("en-PH")} in kind`].filter(Boolean).join(", ")}</span>}
                   </li>

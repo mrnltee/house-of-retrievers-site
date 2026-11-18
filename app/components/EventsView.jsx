@@ -7,6 +7,7 @@ import { socialLinks } from "../lib/socials.mjs";
 import LogoMoments from "./LogoMoments";
 import Footer from "./Footer";
 import { initialsOf, speakersTitle } from "../lib/eventSpeakers.mjs";
+import { partnerGroups } from "../lib/eventBrands.mjs";
 import JoinModal from "./JoinModal";
 import RsvpModal from "./RsvpModal";
 import ShareMenu from "./ShareMenu";
@@ -697,12 +698,12 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
           {(event.partners || event.sponsors) && (
             <section className="event-supporters" aria-labelledby="supporters-title">
               <h3 id="supporters-title">With thanks to</h3>
-              {event.partners && (
-                <div>
-                  <p className="event-supporters-role">In partnership with</p>
-                  <ul>{event.partners.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
+              {event.partners && partnerGroups(event.partners, event.partnerTypes).map((g) => (
+                <div key={g.key || "partners"}>
+                  <p className="event-supporters-role">{g.title}</p>
+                  <ul>{g.names.map((n) => <SupporterChip key={n} name={n} link={event.supporterLinks?.[n.toLowerCase()]} onOpen={setSupporter} />)}</ul>
                 </div>
-              )}
+              ))}
               {event.sponsors && (
                 <div>
                   <p className="event-supporters-role">Sponsored by</p>
