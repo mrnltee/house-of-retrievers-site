@@ -1884,3 +1884,30 @@ details.sd-fold { display: block; }
 @media (prefers-reduced-motion: reduce) { .checkin-meter i { transition: none; } }
 .checkin-top .tag { text-transform: uppercase; }
 .checkin-top-links { align-items: center; }
+/* Check-in display review (18 Nov 2026, design review). The guest's name leads the welcome and the event title
+   steps back to a line above it (it was 52px, competing with the name on every arrival); the face and name are
+   sized by the screen's height too, so a 1366 × 768 laptop keeps the message and "+N more" on screen; the count
+   sits at the far right, where it stays when the staff controls fade, and reads across a room; the idle screen,
+   which is what guests see most of the evening, gives the event title the space; on Ivory the initials circle is
+   light instead of a dark blot; the Just arrived strip fades at its edge instead of cutting a name in half. */
+.checkin-display-count { order: 10; margin-left: auto; font-size: clamp(15px, 1.2vw, 22px); font-weight: 500; white-space: nowrap; }
+.checkin-display-count strong { color: var(--a-gold); font: 400 1.5em/1 "DM Serif Display", serif; margin-right: 2px; }
+.checkin-display.is-bg-ivory .checkin-display-count strong { color: #7a5a12; }
+.checkin-display-card { gap: 4px; }
+.checkin-display-event.is-small { margin: 2px 0 0; font-size: clamp(20px, min(2.2vw, 3.6vh), 36px); color: #e7dfcd; }
+.checkin-display.is-bg-ivory .checkin-display-event.is-small { color: #4a4334; }
+.checkin-display-card .checkin-display-name { margin-top: clamp(8px, 1.6vh, 18px); font-size: clamp(44px, min(8vw, 13vh), 132px); text-wrap: balance; }
+.checkin-display-furbaby { color: var(--a-gold); font-weight: 600; opacity: 1; }
+.checkin-display.is-bg-ivory .checkin-display-furbaby { color: #7a5a12; }
+.display-face.is-big { width: clamp(120px, min(18vw, 26vh), 280px); height: clamp(120px, min(18vw, 26vh), 280px); margin-bottom: clamp(8px, 2vh, 20px); }
+.display-face.is-big .checkin-welcome-initials { font-size: clamp(44px, min(6.5vw, 9.5vh), 104px); }
+.checkin-display-more { padding: 6px 16px; border-radius: 999px; background: rgba(167,132,64,.16); font-size: clamp(14px, 1.2vw, 20px); }
+.checkin-display-idle .checkin-display-event { font-size: clamp(34px, min(5.2vw, 9vh), 96px); text-wrap: balance; }
+.checkin-display-idle p:last-child { margin-top: 14px; }
+.checkin-display.is-bg-ivory .checkin-welcome-photo { background: #efe4cc; }
+.checkin-display.is-bg-ivory .checkin-welcome-initials { color: #7a5a12; }
+.checkin-display-recent ol { justify-content: flex-start; min-width: 0; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 80px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 80px), transparent); }
+@media (max-width: 640px) {
+  .checkin-display footer.checkin-display-recent { flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; }
+  .checkin-display-recent ol { width: 100%; }
+}

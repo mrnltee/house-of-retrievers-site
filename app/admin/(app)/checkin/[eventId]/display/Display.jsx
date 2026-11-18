@@ -105,10 +105,10 @@ export default function Display({ base, eventId, title, message, background = { 
       {background.image && <div className="checkin-display-bg" aria-hidden="true" style={{ backgroundImage: `url("${background.image.replace(/"/g, "")}")` }} />}
       <header className="checkin-display-head">
         <span className="checkin-display-brand" role="img" aria-label="The House of Retrievers’ Society, Inc."><LogoMoments tone={background.kind === "ivory" ? "light" : "dark"} /></span>
-        <span className="checkin-display-count" aria-live="polite">{counts.checked} of {counts.confirmed} checked in</span>
         <span className={`checkin-display-status is-${status}${status === "live" ? " is-control" : ""}`}>{status === "live" ? "Live" : status === "offline" ? "Reconnecting…" : status === "forbidden" ? "No access" : "Connecting…"}</span>
         <button type="button" className="checkin-display-btn is-control" onClick={fullScreen}>Full screen</button>
         <a className="checkin-display-btn is-control" href={back}>Back to scanner</a>
+        <span className="checkin-display-count" aria-live="polite"><strong>{counts.checked}</strong> of {counts.confirmed} here</span>
       </header>
 
       <main className="checkin-display-stage" aria-live="assertive">
@@ -116,9 +116,9 @@ export default function Display({ base, eventId, title, message, background = { 
           <div className="checkin-display-card" key={current.id}>
             <Face base={base} eventId={eventId} person={current} />
             <p className="tag">Welcome to</p>
-            <h1 className="checkin-display-event">{title}</h1>
-            {current.comp && <p className="checkin-welcome-comp">{current.comp} · Complimentary</p>}
+            <h1 className="checkin-display-event is-small">{title}</h1>
             <p className="checkin-display-name">{current.name}</p>
+            {current.comp && <p className="checkin-welcome-comp">{current.comp} · Complimentary</p>}
             {current.furbaby && <p className="checkin-display-furbaby">with {current.furbaby}</p>}
             {line && <p className="checkin-display-message">{line}</p>}
             {queue.length > 0 && <p className="checkin-display-more">+{queue.length} more arriving</p>}
