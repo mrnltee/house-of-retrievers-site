@@ -7,7 +7,7 @@ test("launch overview reads the live event: date with the public time, venue, be
     date: "2026-11-30", startTime: "14:30", venue: "Novotel Manila Araneta City", venueAddress: "General Aguinaldo Avenue, Quezon City",
     beneficiaries: [{ name: "Pawssion Project Foundation Inc." }, { name: "Little Sisters" }],
     speakers: [{ id: "a", name: "Eric Suguitan", role: "Guest speaker", label: "VIP", photo: "/api/event-image/x", intro: "long" }],
-    partners: ["Bluehive"], sponsors: ["Boop"],
+    partners: ["Bluehive"], sponsors: ["Boop"], supporterLinks: { boop: { slug: "boop", logo: "/api/event-image/b" } },
   });
   assert.deepEqual(o.facts, [
     ["When", `Monday, 30 November 2026 · ${LAUNCH_TIME}`],
@@ -15,7 +15,8 @@ test("launch overview reads the live event: date with the public time, venue, be
     ["For", "Pawssion Project Foundation Inc. and Little Sisters"],
   ]);
   assert.deepEqual(o.guests, [{ id: "a", name: "Eric Suguitan", role: "Guest speaker", label: "VIP", photo: "/api/event-image/x" }]);
-  assert.deepEqual([o.partners, o.sponsors], [["Bluehive"], ["Boop"]]);
+  assert.deepEqual(o.partners, [{ name: "Bluehive", logo: null, slug: null }]);
+  assert.deepEqual(o.sponsors, [{ name: "Boop", logo: "/api/event-image/b", slug: "boop" }]);
 });
 
 test("without the event: the built-in facts, no guests", () => {
