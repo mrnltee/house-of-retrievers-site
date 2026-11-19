@@ -2149,3 +2149,16 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-press .media-launch-card .media-launch-logo { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: #fff; color: #5c4515; font-size: 12px; font-weight: 700; line-height: 1; }
 .media-launch-logo img { width: 100%; height: 100%; object-fit: contain; }
 @media (max-width: 560px) { .media-launch-brands { grid-template-columns: 1fr; } .media-launch-brands-title { padding-top: 0; } }
+
+/* Journey timeline review (19 Nov 2026, design review): in the sideways row every card reads the same way,
+   picture on top, text under it, the link on the bottom line, whichever side the vertical layout put the
+   picture on; a long story stops at five lines (the card links to the event for the rest), so one long
+   description no longer stretches every card in the row. */
+.journey.is-horizontal .journey-stop.is-right .journey-card > .journey-media,
+.journey.is-horizontal .journey-stop.is-right .journey-card > .journey-visual { order: 0; }
+.journey.is-horizontal .journey-body { flex: 1; }
+.journey.is-horizontal .journey-stop .journey-card { display: flex; flex-direction: column; }
+.journey.is-horizontal .journey-stop .journey-story { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; line-clamp: 5; overflow: hidden; }
+.journey.is-horizontal .journey-stop .journey-link { margin-top: auto; padding-top: 18px; }
+/* Cards fill their 320 px column: the vertical layout's centring shrank a card to its picture's width. */
+.journey.is-horizontal .journey-stop { align-items: stretch; }
