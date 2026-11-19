@@ -2,12 +2,23 @@ import { hasDatabase, sql } from "./db";
 import { cloudinaryConfig, photoUrl } from "./cloudinary.mjs";
 import { manilaDate, sortEntries, toStop } from "./journeyEntries.mjs";
 import { journey as fallback } from "../content/journey";
+import { posterPath } from "./posterFrame.mjs";
 
 /** Where a journey photo row's picture is: Cloudinary, public/journey, or the linked event's album. */
 export function journeyPhotoSrc(photo, cloudName, width = 1000) {
   if (photo.static_src) return photo.static_src;
   const publicId = photo.public_id || photo.album_public_id;
   return publicId && cloudName ? photoUrl(cloudName, publicId, width) : null;
+}
+
+/**
+ * A stop linked to a published event with no photos of its own shows the event's 4:5 poster, whole
+ * (owner, 19 Nov 2026), so a new upcoming event isn't a text-only card.
+ */
+export function eventPoster(row) {
+  if (row.event_status !== "published") return [];
+  const src = posterPath({ id: row.event_id, image: row.event_image, image_source: row.event_image_source, image_crop: row.event_image_crop });
+  return src ? [{ src, alt: `${row.title} poster`, fit: "contain" }] : [];
 }
 
 /**
@@ -20,7 +31,8 @@ export async function loadJourney() {
   if (!hasDatabase()) return fallback;
   try {
     const rows = await sql(
-      `SELECT j.*, e.slug AS event_slug, e.status AS event_status
+      `SELECT j.*, e.slug AS event_slug, e.status AS event_status,
+              e.image AS event_image, e.image_source AS event_image_source, e.image_crop AS event_image_crop
          FROM journey_entries j LEFT JOIN events e ON e.id = j.event_id
         WHERE j.status = 'published'`,
     );
@@ -36,13 +48,12 @@ export async function loadJourney() {
     );
     const cloudName = cloudinaryConfig()?.cloudName;
     const today = manilaDate();
-    return sortEntries(rows).map((row) => toStop(
-      row,
-      photos.filter((p) => p.entry_id === row.id)
+    return sortEntries(rows).map((row) => {
+      const own = photos.filter((p) => p.entry_id === row.id)
         .map((p) => ({ src: journeyPhotoSrc(p, cloudName), alt: p.alt, fit: p.fit }))
-        .filter((p) => p.src),
-      today,
-    ));
+        .filter((p) => p.src);
+      return toStop(row, own.length ? own : eventPoster(row), today);
+    });
   } catch (error) {
     if (error?.code !== "42P01") console.error("journey entries unavailable, using the built-in timeline:", error.message);
     return fallback;
