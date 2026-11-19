@@ -32,3 +32,8 @@ test("initials", () => {
   assert.equal(initialsOf("Ms. Malou Perez"), "MM");
   assert.equal(initialsOf(""), "•");
 });
+
+test("launch brands are grouped like the event page", () => {
+  const o = launchOverview({ date: "2026-11-30", partners: ["Bork", "Boop"], partnerTypes: { boop: "in-kind" }, sponsors: ["Kaori"] });
+  assert.deepEqual(o.brandGroups.map(([t, l]) => [t, l.map((b) => b.name)]), [["In partnership with", ["Bork"]], ["In-kind partners", ["Boop"]], ["Sponsored by", ["Kaori"]]]);
+});

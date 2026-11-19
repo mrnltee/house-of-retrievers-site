@@ -230,7 +230,7 @@ export default async function MediaPage() {
             {(launch.partners.length > 0 || launch.sponsors.length > 0) && (
               <div className="media-launch-block">
                 <h4>With thanks to</h4>
-                <LaunchBrands groups={[["Partners", launch.partners], ["Sponsors", launch.sponsors]].filter(([, list]) => list.length)} />
+                <LaunchBrands groups={launch.brandGroups} />
               </div>
             )}
           </div>
