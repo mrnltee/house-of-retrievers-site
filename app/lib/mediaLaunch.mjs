@@ -1,3 +1,5 @@
+import { partnerGroups, sponsorGroups } from "./eventBrands.mjs";
+
 /**
  * The media hub's launch overview (owner, 18 Nov 2026): the Golden Beginning card shows the event at a glance,
  * read from the live event (date, venue, beneficiaries, speakers and special guests, partners and sponsors) so
@@ -48,6 +50,11 @@ export function launchOverview(event) {
     guests,
     partners: brands(e.partners, e.supporterLinks),
     sponsors: brands(e.sponsors, e.supporterLinks),
+    // Grouped like the event page's "With thanks to" (in-kind partners, exhibitors, sponsor levels; 19 Nov 2026).
+    brandGroups: [
+      ...partnerGroups(e.partners || [], e.partnerTypes || {}),
+      ...sponsorGroups(e.sponsors || [], e.sponsorLevels || {}),
+    ].map((g) => [g.title, brands(g.names, e.supporterLinks)]),
   };
 }
 
