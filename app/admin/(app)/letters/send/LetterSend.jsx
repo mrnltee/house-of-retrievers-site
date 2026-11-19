@@ -283,8 +283,8 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
             <input type="text" name="copyCc" value={copyCc} onChange={(e) => setCopyCc(e.target.value)} placeholder="name@example.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraCc.error)} />
           </label>
           <label className="field">
-            <span>BCC <small>Hidden from the recipient, e.g. HOR&apos;s own inbox for the record</small></span>
-            <input type="text" name="copyBcc" value={copyBcc} onChange={(e) => setCopyBcc(e.target.value)} placeholder="houseofretrieversph@gmail.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraBcc.error)} />
+            <span>BCC <small>Hidden from the recipient. HoR&apos;s own inbox is copied in on every email already</small></span>
+            <input type="text" name="copyBcc" value={copyBcc} onChange={(e) => setCopyBcc(e.target.value)} placeholder="name@example.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraBcc.error)} />
           </label>
           {copyError ? <p className="small error-text" role="alert">{copyError}</p>
             : count > 1 && (extraCc.emails.length || extraBcc.emails.length) ? <p className="small muted">Each recipient gets their own email, so these addresses get {count} copies.</p> : null}

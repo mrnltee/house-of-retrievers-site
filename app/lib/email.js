@@ -1,5 +1,6 @@
 import { applyEmailFrame } from "./emailTemplates.mjs";
 import { loadEmailFrame } from "./emailSettings";
+import { withHorCopy } from "./horCopy.mjs";
 /**
  * Sends one email through Resend. Needs RESEND_API_KEY and EMAIL_FROM
  * (falls back to ADMIN_ALERT_FROM); EMAIL_REPLY_TO is where replies go.
@@ -22,6 +23,8 @@ export async function sendEmail({ to, cc = [], bcc = [], subject, html, text, id
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || process.env.ADMIN_ALERT_FROM;
   if (!key || !from || !to) return { skipped: true };
+  // HoR's own inbox is copied in on everything the site sends (owner, 19 Nov 2026; app/lib/horCopy.mjs).
+  ({ cc, bcc } = withHorCopy({ to, cc, bcc }));
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
