@@ -28,6 +28,7 @@ import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 import { compLabel } from "../../../../lib/compTickets.mjs";
 import Icon from "../../../../components/Icon";
+import { peopleMatch } from "../../../../lib/admin/people.mjs";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
 const PAY_FILTERS = [["all", "All"], ["check", "To check"], ["pending", "Payment pending"], ["expired", "Hold expired"], ["paid", "Paid"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -88,6 +89,15 @@ export default async function EventRegistrations({ params, searchParams }) {
   const current = all.filter((r) => !r.deleted_at);
   const deleted = all.filter((r) => r.deleted_at);
   const welcome = await welcomePhotosFor(current);
+  // Who each registrant is on People, matched by email (owner, 19 Nov 2026): "Member · HOR-26-0012" or "Not on People yet".
+  const seePeople = can(admin, "people:view");
+  const emails = [...new Set(current.map((r) => String(r.email || "").trim().toLowerCase()).filter(Boolean))];
+  const peopleRows = seePeople && emails.length
+    ? await sql("SELECT id, kind, membership, member_no, member_year, lower(trim(email)) AS key FROM people WHERE lower(trim(email)) = ANY($1::text[])", [emails])
+    : [];
+  const matchOf = new Map();
+  for (const key of emails) matchOf.set(key, peopleMatch(peopleRows.filter((p) => p.key === key)));
+  const peopleOf = (r) => matchOf.get(String(r.email || "").trim().toLowerCase()) || null;
   // Furbaby positions that already have a card, so "No vaccination card" lists confirmed guests with a dog still missing one.
   const cardRows = current.length ? await sql("SELECT registration_id, furbaby_index FROM registration_vaccination_records WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
   const cardsOf = new Map();
@@ -233,9 +243,11 @@ export default async function EventRegistrations({ params, searchParams }) {
               const twins = sameRef(r);
               const detail = `${base}/registrations/${event.id}/r/${r.id}`;
               return (
-                <tr key={r.id} data-row="" data-ticket={ticketKeys(r).join(" ")} data-search={[r.name, r.email, r.furbaby_name, ...(r.guest_names || []), r.fee_reference, r.ticket_label, compLabel(r.comp_type), fromTracker.get(r.id)].filter(Boolean).join(" ").toLowerCase()}>
+                <tr key={r.id} data-row="" data-ticket={ticketKeys(r).join(" ")} data-search={[r.name, r.email, r.furbaby_name, ...(r.guest_names || []), r.fee_reference, r.ticket_label, compLabel(r.comp_type), fromTracker.get(r.id), seePeople && !r.deleted_at && (peopleOf(r)?.label || "not on people yet")].filter(Boolean).join(" ").toLowerCase()}>
                   {pickable && <td className="st-pick">{!r.deleted_at && r.status !== "cancelled" && <input type="checkbox" name="reg" value={r.id} data-reg-pick="" aria-label={`Pick ${r.name}`} />}</td>}
-                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span><br /><a className="small reg-email" href={`mailto:${r.email}`} title={r.email}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}{(r.comp_type || !r.photo_consent || r.under_18) && <span className="reg-flags-line">{r.comp_type && <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span>}{!r.photo_consent && <span className="chip">No photos</span>}{r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}</span>}</td>
+                  <td className="st-1"><span className="welcome-name">{!r.deleted_at && <WelcomeAvatar base={base} eventId={event.id} registrationId={r.id} resolved={welcome.get(r.id)} />}<a className="strong" href={detail}>{r.name}</a></span><br /><a className="small reg-email" href={`mailto:${r.email}`} title={r.email}>{r.email}</a>{paidEvent && <><br /><span className="small muted">{countOf(r.human_count ?? 1, "person", "people")} · {countOf(r.furbaby_count ?? 0, "furbaby", "furbabies")}</span></>}{seePeople && !r.deleted_at && (() => { const m = peopleOf(r); return m
+                    ? <><br /><a className={`small reg-people${m.tone ? ` is-${m.tone}` : ""}`} href={`${base}/people/${m.person.id}`} title={m.others.length ? `Also on People as ${m.others.join(", ")}` : "Their People record"}>{m.label}</a></>
+                    : <><br /><span className="small muted reg-people is-none">Not on People yet</span></>; })()}{fromTracker.has(r.id) ? <><br /><span className="small muted">From the Guest tracker · {fromTracker.get(r.id)}</span></> : r.added_by && <><br /><span className="small muted">Added by an admin</span></>}{(r.comp_type || !r.photo_consent || r.under_18) && <span className="reg-flags-line">{r.comp_type && <span className="chip" title="Complimentary: no fee, not counted in capacity">{compLabel(r.comp_type)}</span>}{!r.photo_consent && <span className="chip">No photos</span>}{r.under_18 && <span className="chip warn">Under 18 · {r.guardian_name}</span>}</span>}</td>
                   <td className="st-2">
                     {r.status === "confirmed" && <span className="chip good">{r.checked_in_at ? `Checked in · ${new Intl.DateTimeFormat("en-PH", { timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(r.checked_in_at))}` : "Confirmed"}</span>}
                     {r.checked_in_source === "manual" && r.checked_in_at && <><br /><span className="small muted">Checked in by hand</span></>}
