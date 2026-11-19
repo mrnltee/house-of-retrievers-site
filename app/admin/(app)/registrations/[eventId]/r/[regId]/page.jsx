@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { sql } from "../../../../../../lib/db";
 import { adminBase, pageAdmin } from "../../../../../../lib/admin/guard";
 import { can } from "../../../../../../lib/admin/roles.mjs";
+import { peopleMatch } from "../../../../../../lib/admin/people.mjs";
 import { ADMIN_PAY_METHODS, FEE_STATUS, REJECT_REASONS, UNPAID, payMethodLabel, referenceKey, ticketLine } from "../../../../../../lib/eventPayments.mjs";
 import { DEFAULT_REMINDER_HOLD_MINUTES, REMINDER_HOLD_OPTIONS, isActiveRegistrationHold, isExpiredHold } from "../../../../../../lib/registrationHolds.mjs";
 import { WELCOME_PHOTO_SOURCE_LABELS } from "../../../../../../lib/welcomePhoto.mjs";
@@ -50,6 +51,11 @@ export default async function RegistrationDetail({ params, searchParams }) {
   );
   if (!reg) notFound();
   const base = await adminBase();
+  // Their People record, matched by email (owner, 19 Nov 2026).
+  const seePeople = can(admin, "people:view");
+  const match = seePeople && reg.email
+    ? peopleMatch(await sql("SELECT id, kind, membership, member_no, member_year FROM people WHERE lower(trim(email)) = lower(trim($1))", [reg.email]))
+    : null;
   const [proofs, twins, vaccinationRows, welcome] = await Promise.all([
     sql("SELECT id, uploaded_by, created_at, bytes FROM payment_proofs WHERE registration_id = $1 ORDER BY created_at DESC", [regId]),
     reg.fee_reference
@@ -128,6 +134,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
               {reg.fee_required && reg.status === "confirmed" && <span className={`chip ${fee.tone}`}>{fee.label}</span>}
             </div>
             <dl className="facts">
+              {seePeople && <div><dt>On People</dt><dd>{match ? <><a className={`reg-people${match.tone ? ` is-${match.tone}` : ""}`} href={`${base}/people/${match.person.id}`}>{match.label}</a>{match.others.length > 0 && <span className="small muted"> · also {match.others.join(", ")}</span>}</> : <span className="muted">Not on People yet</span>}</dd></div>}
               <div><dt>Status</dt><dd>{reg.status === "confirmed" ? (reg.checked_in_at ? `Checked in ${formatWhen(reg.checked_in_at)}` : "Confirmed") : reg.status === "waitlist" ? "Waitlist" : "Cancelled"}</dd></div>
               {(reg.fee_required || reg.comp_type) && <div><dt>Ticket</dt><dd>{reg.comp_type ? compLine(reg.comp_type) : ticketLine(reg.ticket_label, reg.ticket_amount) || "—"}</dd></div>}
               {reg.fee_required && <div><dt>Amount due</dt><dd>{due != null ? peso(due) : "—"}</dd></div>}

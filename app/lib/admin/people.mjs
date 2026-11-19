@@ -40,3 +40,32 @@ export const memberNumber = (person) => {
   if (!Number.isInteger(n) || n < 1 || !Number.isInteger(year)) return "";
   return `${NUMBER_PREFIX[person?.kind] || "HOR"}-${String(year % 100).padStart(2, "0")}-${String(n).padStart(4, "0")}`;
 };
+
+/**
+ * Who a registrant is on People (owner, 19 Nov 2026): the People records with the registration's email
+ * (any case), best first. An active member leads, then an active volunteer, then other memberships, then
+ * partners and sponsors. Returns { person, label, tone, others } or null when the email isn't on People.
+ * label reads "Member · HOR-26-0012", "Member applicant", "Former member", "Volunteer · HORV-26-0003", "Partner".
+ */
+const MATCH_RANK = (p) => {
+  const active = p.membership === "active";
+  if (p.kind === "Member") return active ? 0 : p.membership === "left" ? 4 : 2;
+  if (p.kind === "Volunteer") return active ? 1 : p.membership === "left" ? 5 : 3;
+  return 6;
+};
+export function peopleMatch(records = []) {
+  const list = (records || []).filter((p) => p && p.id).slice().sort((a, b) => MATCH_RANK(a) - MATCH_RANK(b));
+  if (!list.length) return null;
+  const [person, ...rest] = list;
+  let label = person.kind || "On People";
+  let tone = "";
+  if (hasMembership(person.kind)) {
+    const word = person.kind === "Volunteer" ? "Volunteer" : "Member";
+    const number = memberNumber(person);
+    if (person.membership === "active") { label = number ? `${word} · ${number}` : word; tone = "ok"; }
+    else if (person.membership === "inactive") label = `${word} · inactive`;
+    else if (person.membership === "left") label = `Former ${word.toLowerCase()}`;
+    else label = `${word} applicant`;
+  }
+  return { person, label, tone, others: rest.map((p) => p.kind).filter(Boolean) };
+}

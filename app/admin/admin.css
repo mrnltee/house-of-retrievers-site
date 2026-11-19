@@ -2029,3 +2029,9 @@ details.sd-fold { display: block; }
 .brand-tracker .role-quick-line .edit-dialog-open { padding-inline: 12px; white-space: nowrap; }
 @media (min-width: 721px) { .brand-tracker .st-1 { min-width: 290px; } }
 @media (max-width: 720px) { .brand-tracker .role-quick-line { flex-wrap: wrap; } }
+
+/* Registrants matched to People by email (19 Nov 2026, owner): a quiet line under the email,
+   green with the member number for an active member or volunteer, linked to their People record. */
+.reg-people { display: inline-block; margin-top: 2px; color: var(--a-muted, #6b665a); text-decoration: none; }
+a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
+.reg-people.is-ok { color: #2f6b3a; font-weight: 600; }
