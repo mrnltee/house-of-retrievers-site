@@ -23,6 +23,7 @@ import { cleanBreeds } from "../lib/breeds.mjs";
 import { cleanSexes } from "../lib/furbabySex.mjs";
 import { cleanAges } from "../lib/furbabyAge.mjs";
 import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS, freeVaccinationPages } from "../lib/vaccinationRecords.mjs";
+import { cleanVaccineKey, isVaccineKey, vaccineLabel } from "../lib/vaccineTypes.mjs";
 import { applyPromo, normalizeCode, promoSnapshot } from "../lib/promoCodes.mjs";
 import { checkPromo } from "../lib/promoStore";
 
@@ -674,10 +675,10 @@ export async function addVaccinationCard(data) {
     for (const [n, image] of images.entries()) {
       const bytes = Buffer.from(image.value.base64, "base64");
       await sql(
-        `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, uploaded_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, uploaded_by, vaccine)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (registration_id, furbaby_index, page_no) DO UPDATE SET mime = EXCLUDED.mime, data = EXCLUDED.data, bytes = EXCLUDED.bytes, uploaded_by = EXCLUDED.uploaded_by, uploaded_at = now()`,
-        [reg.id, index, pages[n], image.value.mime, bytes, bytes.length, admin.email],
+        [reg.id, index, pages[n], image.value.mime, bytes, bytes.length, admin.email, cleanVaccineKey(form(data, "vaccine"))],
       );
       await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: pages[n] + 1, action: "add" });
     }
@@ -701,5 +702,51 @@ export async function removeVaccinationCard(data) {
     await logActivity(admin.email, "registration.vaccination", reg.title, { registrationId: reg.id, furbaby: index + 1, page: page + 1, action: "remove" });
     revalidatePath("/registrations", "layout");
     await backWith(pagePath(reg), "ok", "Vaccination photo removed.");
+  });
+}
+
+/** What one vaccination photo shows: a vaccine, the rest of the card ("other"), or not said. */
+export async function setVaccinePhotoType(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const index = Number(form(data, "index"));
+    const page = Number(form(data, "page"));
+    if (!Number.isInteger(index) || index < 0 || index >= MAX_VACCINATION_PHOTOS || !Number.isInteger(page) || page < 0 || page >= MAX_IMAGES_PER_FURBABY) await backWith(pagePath(reg), "error", "That photo doesn't exist.");
+    const vaccine = cleanVaccineKey(form(data, "vaccine"));
+    const rows = await sql("UPDATE registration_vaccination_records SET vaccine = $4 WHERE registration_id = $1 AND furbaby_index = $2 AND page_no = $3 RETURNING page_no", [reg.id, index, page, vaccine]);
+    if (!rows.length) await backWith(pagePath(reg), "error", "That photo is no longer on this registration.");
+    await logActivity(admin.email, "registration.vaccine.type", reg.title, { registrationId: reg.id, furbaby: index + 1, page: page + 1, vaccine: vaccine || "not said" });
+    revalidatePath("/registrations", "layout");
+    await backWith(pagePath(reg), "ok", `Photo ${page + 1} marked as ${vaccineLabel(vaccine)}.`);
+  });
+}
+
+/** An admin's "checked against the card" for one vaccine of one furbaby, or taking it back. */
+export async function setVaccineCheck(data) {
+  const id = form(data, "id");
+  return guarded("/registrations", async () => {
+    const admin = await actionAdmin("registrations:edit");
+    const reg = await registration(id);
+    if (!reg) await backWith("/registrations", "error", "That registration no longer exists.");
+    const index = Number(form(data, "index"));
+    const vaccine = form(data, "vaccine");
+    const furbabies = Math.min(MAX_VACCINATION_PHOTOS, Number(reg.furbaby_count) || 0);
+    if (!Number.isInteger(index) || index < 0 || index >= furbabies || !isVaccineKey(vaccine)) await backWith(pagePath(reg), "error", "That vaccine isn't on this registration.");
+    const checked = form(data, "checked") === "yes";
+    if (checked) {
+      await sql(
+        `INSERT INTO registration_vaccine_checks (registration_id, furbaby_index, vaccine, verified_by) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (registration_id, furbaby_index, vaccine) DO UPDATE SET verified_by = EXCLUDED.verified_by, verified_at = now()`,
+        [reg.id, index, vaccine, admin.email],
+      );
+    } else {
+      await sql("DELETE FROM registration_vaccine_checks WHERE registration_id = $1 AND furbaby_index = $2 AND vaccine = $3", [reg.id, index, vaccine]);
+    }
+    await logActivity(admin.email, checked ? "registration.vaccine.check" : "registration.vaccine.uncheck", reg.title, { registrationId: reg.id, furbaby: index + 1, vaccine });
+    revalidatePath("/registrations", "layout");
+    await backWith(pagePath(reg), "ok", checked ? `${vaccineLabel(vaccine)} marked as checked.` : `${vaccineLabel(vaccine)} is back to "to check".`);
   });
 }
