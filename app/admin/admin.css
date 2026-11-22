@@ -2035,3 +2035,11 @@ details.sd-fold { display: block; }
 .reg-people { display: inline-block; margin-top: 2px; color: var(--a-muted, #6b665a); text-decoration: none; }
 a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
 .reg-people.is-ok { color: #2f6b3a; font-weight: 600; }
+
+/* Row More menu fix (22 Nov 2026, owner). Each pinned action cell (sticky, z-index 1) is its own layer, so an open
+   More menu went under the next row's pinned cell ("Cance…" cut off). The open row's cell is lifted above the
+   others, and the last two rows open their menu upwards so the table's scroll box doesn't clip it. */
+@media (min-width: 721px) {
+  .registrations-table td.st-10:has(details[open]) { z-index: 6; }
+  .registrations-table tbody tr:nth-last-child(-n+2):not(:nth-child(-n+2)) .row-more-menu { top: auto; bottom: calc(100% + 4px); }
+}
