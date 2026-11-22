@@ -721,6 +721,8 @@ main:focus { outline: none; }
 .live-row span { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
 .copy-button { min-height: 32px; padding: 4px 12px; border: 1px solid rgba(17,17,17,.3); border-radius: 999px; background: white; font-size: 12px; font-weight: 700; color: var(--ink); }
 .live-updated { margin-top: 10px !important; grid-column: auto !important; }
+.live-hint { margin: 6px 0 0 !important; font-size: 13px; color: var(--muted-on-light, #5c5f57); }
+.live-save-qr { display: inline-flex; align-items: center; justify-self: start; width: fit-content; min-height: 36px; margin-top: 8px; text-decoration: none; }
 .live-empty { grid-template-columns: 1fr; }
 .event-rsvp { align-self: flex-start; }
 
@@ -998,8 +1000,8 @@ main:focus { outline: none; }
 .journey-media .journey-media-backdrop { opacity: .55; object-fit: cover; filter: blur(18px) saturate(1.1); transform: scale(1.2); animation: none; }
 .journey-media .journey-dots { z-index: 2; }
 .journey-dots { position: absolute; left: 12px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 2px; max-width: calc(100% - 24px); padding: 2px 6px; border-radius: 999px; background: rgba(13,13,13,.45); backdrop-filter: blur(6px); }
-.journey-dots button { position: relative; width: 22px; height: 22px; padding: 0; border: 0; background: transparent; }
-.journey-dots button::before { content: ""; position: absolute; inset: 8px; border-radius: 999px; background: rgba(255,255,255,.65); transition: inset .25s, background .25s; }
+.journey-dots button { position: relative; width: 24px; height: 24px; padding: 0; border: 0; background: transparent; }
+.journey-dots button::before { content: ""; position: absolute; inset: 9px; border-radius: 999px; background: rgba(255,255,255,.65); transition: inset .25s, background .25s; }
 .journey-dots button.active::before { inset-inline: 3px; background: var(--gold); }
 .journey-dots button:focus-visible { outline: 2px solid white; outline-offset: -2px; border-radius: 50%; }
 
@@ -2162,3 +2164,13 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .journey.is-horizontal .journey-stop .journey-link { margin-top: auto; padding-top: 18px; }
 /* Cards fill their 320 px column: the vertical layout's centring shrank a card to its picture's width. */
 .journey.is-horizontal .journey-stop { align-items: stretch; }
+
+/* Live site audit fixes (22 Nov 2026) */
+.event-closed-note { flex-basis: 100%; margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink); }
+.event-closed-note a { color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+/* iOS Safari zooms the page when a field under 16 px is tapped: keep form fields at 16 px on phones. */
+@media (max-width: 760px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea { font-size: 16px; }
+}
+.not-found-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.not-found-page .privacy-intro { border-bottom: 0; }

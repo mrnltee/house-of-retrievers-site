@@ -2,6 +2,7 @@
 
 import useLegal from "../lib/useLegal";
 import { MEDIA_URL, PRIVACY_URL } from "../lib/siteSeo.mjs";
+import { EVENTS_URL } from "../lib/eventsHost.mjs";
 
 /**
  * The society's name and SEC registration are part of the unveiling. They
@@ -21,6 +22,8 @@ export default function FooterLegal() {
         </>
       )}
       <nav className="footer-links" aria-label="More from House of Retrievers">
+        <a className="footer-privacy" href={EVENTS_URL}>Events</a>
+        <span className="footer-links-dot" aria-hidden="true">·</span>
         <a className="footer-privacy" href={PRIVACY_URL}>Privacy notice</a>
         <span className="footer-links-dot" aria-hidden="true">·</span>
         <a className="footer-privacy" href={MEDIA_URL}>Media kit</a>

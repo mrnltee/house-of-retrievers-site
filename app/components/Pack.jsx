@@ -110,7 +110,7 @@ export default function Pack({ packView, setPackView, onSupport }) {
         )}
 
         <div className="pack-support-banner">
-          <div><span className="eyebrow light">A little goes a long way</span><h3>Help the pack do more good.</h3><p>Support a community activity through QR, bank transfer, or PayMongo.</p></div>
+          <div><span className="eyebrow light">A little goes a long way</span><h3>Help the pack do more good.</h3><p>Support a community activity through GCash, GoTyme or bank transfer.</p></div>
           <button className="button primary" onClick={onSupport}>Support the pack <Icon name="arrow" /></button>
         </div>
 

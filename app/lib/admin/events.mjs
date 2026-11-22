@@ -429,8 +429,10 @@ export function toPublicEvent(row, confirmed = 0) {
       ? (hideLater ? visibleTiers(tiers, counts) : [...tiers].sort((a, b) => a.amount - b.amount)).map((t) => {
           const left = tierLeft(t, counts);
           const unit = ticketLimitUnitLabel(row.pricing_basis, t);
-          const window = [t.limit ? (left === 0 ? `Sold out · it was for the first ${t.limit} ${unit === "registrations" ? "" : unit}`.trim() : `First ${t.limit} ${unit === "registrations" ? "registrants" : unit} · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
-          return { label: t.label, amount: t.amount, window: window || undefined, ended: Boolean((t.until && Date.now() >= Date.parse(t.until)) || left === 0) || undefined };
+          // Once a tier's sale period has ended, "N left" would contradict "Ended Nov 14": show the end alone.
+          const saleEnded = Boolean(t.until && Date.now() >= Date.parse(t.until));
+          const window = [t.limit && !saleEnded ? (left === 0 ? `Sold out · it was for the first ${t.limit} ${unit === "registrations" ? "" : unit}`.trim() : `First ${t.limit} ${unit === "registrations" ? "registrants" : unit} · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
+          return { label: t.label, amount: t.amount, window: window || undefined, ended: Boolean(saleEnded || left === 0) || undefined };
         })
       : undefined,
     supports: (row.is_charity && row.supports && !isPlaceholder(row.supports) && row.supports) || undefined,

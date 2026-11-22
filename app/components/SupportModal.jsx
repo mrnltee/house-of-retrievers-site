@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
+import { isPartlyHidden } from "../lib/partlyHidden.mjs";
 
 function formatUpdated(iso) {
   if (!iso) return "";
@@ -52,8 +53,10 @@ function LiveDetails({ methods }) {
         <div className="account-details">
           <strong>{method.label}</strong>
           {rows.map(([label, value]) => (
-            <div key={label} className="live-row"><small>{label}</small><span>{value}{label !== "Account name" && label !== "Bank" && <CopyButton value={value} label={label.toLowerCase()} />}</span></div>
+            <div key={label} className="live-row"><small>{label}</small><span>{value}{label !== "Account name" && label !== "Bank" && !isPartlyHidden(value) && <CopyButton value={value} label={label.toLowerCase()} />}</span></div>
           ))}
+          {method.qrImage && rows.some(([, value]) => isPartlyHidden(value)) && <p className="live-hint">On your phone? Save the QR, then upload it in your {method.label} app.</p>}
+          {method.qrImage && <a className="copy-button live-save-qr" href={method.qrImage} download={`HOR-${method.key}-QR.png`}>Save QR image</a>}
           {method.updatedAt && <p className="live-updated">Details updated {formatUpdated(method.updatedAt)}. Always check the account name before you send.</p>}
         </div>
       </div>

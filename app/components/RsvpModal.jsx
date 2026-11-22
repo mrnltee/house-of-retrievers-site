@@ -291,7 +291,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
               </>;
             })()}
             {(event.maxFurbabiesPerRegistration || event.maxHumansPerFurbaby) && !humanOnly && (
-                <p className="form-note">{[event.maxFurbabiesPerRegistration ? `Up to ${event.maxFurbabiesPerRegistration} ${event.maxFurbabiesPerRegistration === 1 ? "furbaby" : "furbabies"} per RSVP` : "", event.maxHumansPerFurbaby ? `up to ${event.maxHumansPerFurbaby} ${event.maxHumansPerFurbaby === 1 ? "person" : "people"} per furbaby` : ""].filter(Boolean).join(", ")}.</p>
+                <p className="form-note">{[event.maxFurbabiesPerRegistration ? `Up to ${event.maxFurbabiesPerRegistration} ${event.maxFurbabiesPerRegistration === 1 ? "furbaby" : "furbabies"} per RSVP` : "", event.maxHumansPerFurbaby ? `up to ${event.maxHumansPerFurbaby} ${event.maxHumansPerFurbaby === 1 ? "person" : "people"} per furbaby` : ""].filter(Boolean).join(", ").replace(/^./, (c) => c.toUpperCase())}.</p>
               )}
             {(formConfig.questions || []).map((q) => (
               <fieldset key={q.id} className="furbaby-question custom-question">
