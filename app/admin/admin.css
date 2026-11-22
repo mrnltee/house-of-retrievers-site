@@ -2043,3 +2043,11 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
   .registrations-table td.st-10:has(details[open]) { z-index: 6; }
   .registrations-table tbody tr:nth-last-child(-n+2):not(:nth-child(-n+2)) .row-more-menu { top: auto; bottom: calc(100% + 4px); }
 }
+
+/* Menus and the Payment cell (design review, 22 Nov 2026). A <details class="pop-menu"> is a menu, not a fold:
+   PopMenus.jsx keeps one open at a time and closes it on an outside click or Esc. The Payment cell keeps
+   "Bank transfer", "₱1,750" and "Ref …730938" whole; it breaks only between them. */
+.pop-menu > summary { list-style: none; cursor: pointer; }
+.pop-menu > summary::-webkit-details-marker { display: none; }
+.pop-menu[open] > summary { background: var(--a-sand); }
+.reg-pay > span { white-space: nowrap; }

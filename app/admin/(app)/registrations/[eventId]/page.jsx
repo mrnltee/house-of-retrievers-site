@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { answerText, cleanCustomQuestions } from "../../../../lib/customQuestions.mjs";
 import { categoryOf } from "../../../../lib/contacts.mjs";
 import { notFound } from "next/navigation";
@@ -170,7 +171,7 @@ export default async function EventRegistrations({ params, searchParams }) {
         {participantCards && <a className="btn ghost" href={participantCards.href} title={participantCards.todo ? `${participantCards.todo} confirmed participant${participantCards.todo === 1 ? "" : "s"} haven't had the invitation card yet${participantCards.todo > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{participantCards.todo ? `Send invitation cards · ${participantCards.todo}` : <>Invitation cards sent <Icon name="check" /></>}</a>}
         {guestCards && <a className="btn ghost" href={guestCards.href} title={guestCards.todo ? `${guestCards.todo} complimentary guest${guestCards.todo === 1 ? "" : "s"} who said Coming haven't had their card yet. Pick who gets it.` : "Every complimentary guest has had theirs. Open to resend to someone."}>{guestCards.todo ? `Send guest cards · ${guestCards.todo}` : <>Guest cards sent <Icon name="check" /></>}</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
-        <details className="head-more">
+        <details className="head-more pop-menu">
           <summary className="btn ghost">More <Icon name="chevronDown" /></summary>
           <div className="head-more-menu">
             <a href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
@@ -260,7 +261,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       <td className="st-4" data-label="Ticket">{r.comp_type ? <span className="reg-ticket">{compLabel(r.comp_type)}<span className="small muted">Complimentary</span></span> : r.ticket_label ? <span className="reg-ticket">{r.ticket_label}{(r.amount_due ?? r.ticket_amount) != null && <span className="small muted">{ticketLine("", r.amount_due ?? r.ticket_amount)}</span>}</span> : <span className="muted">—</span>}</td>
                       <td className="st-3" data-label="Payment">
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
-                        {r.fee_reference && <><br /><span className="small muted" title={`Reference ${r.fee_reference}`}>{[payMethodLabel(r.pay_method), r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}<br />Ref …{String(r.fee_reference).replace(/\s+/g, "").slice(-6)}</span></>}
+                        {r.fee_reference && <><br /><span className="small muted reg-pay" title={`Reference ${r.fee_reference}`}>{[payMethodLabel(r.pay_method), r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).map((part, i) => <Fragment key={i}>{i > 0 && " · "}<span>{part}</span></Fragment>)}<br /><span>Ref …{String(r.fee_reference).replace(/\s+/g, "").slice(-6)}</span></span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
                         {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span>{r.hold_reminders ? <span className="small muted"> · reminded {r.hold_reminders}×</span> : null}</>)}
                         {twins.length > 0 && <><br /><span className="small danger-text"><Icon name="warning" /> Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
@@ -332,7 +333,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       )}
                       {/* Less-used actions in a small menu (design review, 17 Nov 2026), so each row shows only its next step. */}
                       {canEdit && !r.deleted_at && (r.status !== "cancelled" || r.checked_in_at || (r.fee_status !== "paid" && !r.checked_in_at)) && (
-                        <details className="row-more">
+                        <details className="row-more pop-menu">
                           <summary className="btn small ghost">More <Icon name="chevronDown" /></summary>
                           <div className="row-more-menu">
                       {canEdit && !r.deleted_at && r.status !== "cancelled" && (
