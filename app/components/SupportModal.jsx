@@ -1,27 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
-import { isPartlyHidden } from "../lib/partlyHidden.mjs";
+import CopyButton from "./CopyButton";
 
 function formatUpdated(iso) {
   if (!iso) return "";
   return new Intl.DateTimeFormat("en-PH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Manila" }).format(new Date(iso));
 }
 
-function CopyButton({ value, label }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      type="button"
-      className="copy-button"
-      onClick={async () => {
-        try { await navigator.clipboard.writeText(value.replace(/\s+/g, "")); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* clipboard blocked: the value is on screen to copy by hand */ }
-      }}
-      aria-label={`Copy ${label}`}
-    >
-      {copied ? "Copied" : "Copy"}
-    </button>
-  );
-}
 
 /** Donation details an Owner approved in the admin. */
 function LiveDetails({ methods }) {
@@ -37,8 +22,8 @@ function LiveDetails({ methods }) {
   const d = method.details;
   const rows = [
     d.bankName && ["Bank", d.bankName],
-    d.number && ["Number", d.number],
-    d.accountNumber && ["Account number", d.accountNumber],
+    d.number && ["Number", d.number, method.copy?.number],
+    d.accountNumber && ["Account number", d.accountNumber, method.copy?.accountNumber],
     d.accountName && ["Account name", d.accountName],
   ].filter(Boolean);
   return (
@@ -52,10 +37,9 @@ function LiveDetails({ methods }) {
         {method.qrImage && <img className="live-qr" src={method.qrImage} alt={`${method.label} QR code for House of Retrievers`} width="160" height="160" />}
         <div className="account-details">
           <strong>{method.label}</strong>
-          {rows.map(([label, value]) => (
-            <div key={label} className="live-row"><small>{label}</small><span>{value}{label !== "Account name" && label !== "Bank" && !isPartlyHidden(value) && <CopyButton value={value} label={label.toLowerCase()} />}</span></div>
+          {rows.map(([label, value, copy]) => (
+            <div key={label} className="live-row"><small>{label}</small><span>{value}{label !== "Account name" && label !== "Bank" && <CopyButton value={copy || value} label={label.toLowerCase()} />}</span></div>
           ))}
-          {method.qrImage && rows.some(([, value]) => isPartlyHidden(value)) && <p className="live-hint">On your phone? Save the QR, then upload it in your {method.label} app.</p>}
           {method.qrImage && <a className="copy-button live-save-qr" href={method.qrImage} download={`HOR-${method.key}-QR.png`}>Save QR image</a>}
           {method.updatedAt && <p className="live-updated">Details updated {formatUpdated(method.updatedAt)}. Always check the account name before you send.</p>}
         </div>
