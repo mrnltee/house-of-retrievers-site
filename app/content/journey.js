@@ -136,7 +136,7 @@ export const journey = [
     tag: "Milestone",
     mark: "milestone",
     photos: [
-      { src: "/journey/sec-registration/1.jpg", fit: "contain", alt: "The top of the society’s BIR Certificate of Registration, dated September 21, 2026" },
+      { src: "/journey/sec-registration/1.jpg", fit: "contain", alt: "HoR’s “Registered with the Securities and Exchange Commission” card: The House of Retrievers’ Society, Inc., SEC Registration No. 2026090268846-04" },
     ],
   },
   {
