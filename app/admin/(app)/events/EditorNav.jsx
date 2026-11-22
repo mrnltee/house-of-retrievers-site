@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ScrollRow, { revealInRow } from "../ScrollRow";
 
 /**
  * "Jump to" for the event editor (owner design review, 17 Nov 2026): the editor is one long page of a dozen
@@ -30,7 +31,7 @@ export default function EditorNav({ sections }) {
   }, [sections]);
   // Keep the marked link in view inside the bar (it scrolls sideways on phones).
   useEffect(() => {
-    document.querySelector(`.editor-nav a[href="#${current}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    revealInRow(document.querySelector(`.editor-nav a[href="#${current}"]`));
   }, [current]);
 
   function jump(event, id) {
@@ -50,11 +51,13 @@ export default function EditorNav({ sections }) {
   return (
     <nav className="editor-nav" aria-label="Jump to a section">
       <span className="editor-nav-label">Jump to</span>
-      <ul>
-        {sections.map((s) => (
-          <li key={s.id}><a href={`#${s.id}`} aria-current={current === s.id ? "true" : undefined} onClick={(e) => jump(e, s.id)}>{s.label}</a></li>
-        ))}
-      </ul>
+      <ScrollRow label="sections">
+        <ul>
+          {sections.map((s) => (
+            <li key={s.id}><a href={`#${s.id}`} aria-current={current === s.id ? "true" : undefined} onClick={(e) => jump(e, s.id)}>{s.label}</a></li>
+          ))}
+        </ul>
+      </ScrollRow>
     </nav>
   );
 }

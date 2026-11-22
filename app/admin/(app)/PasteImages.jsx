@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 const IMAGE_INPUT = 'input[type="file"]';
-export const takesImages = (input) => input && !input.disabled && /image/.test(input.accept || "image/");
+// The event editor's RSVP form preview only shows the public form, so its uploads take no pastes.
+export const takesImages = (input) => input && !input.disabled && !input.closest(".rsvp-preview") && /image/.test(input.accept || "image/");
 const accepts = (input, file) => {
   const list = String(input.accept || "").split(",").map((t) => t.trim()).filter(Boolean);
   return !list.length || list.some((t) => t === file.type || (t.endsWith("/*") && file.type.startsWith(t.slice(0, -1))));

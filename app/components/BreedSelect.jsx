@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { BREEDS, breedIcon, breedLabel } from "../lib/breeds.mjs";
+import Icon from "./Icon";
 
 const OPTIONS = [{ key: "", label: "Choose a breed (optional)", icon: false }, ...BREEDS];
 
@@ -73,7 +74,7 @@ export default function BreedSelect({ name, label, value = "", onChange, halo = 
       >
         <span className={`breed-select-icon${halo && icon ? " has-halo" : ""}`} aria-hidden="true">{halo && icon ? <span className="furbaby-halo" /> : null}{icon ? <img src={icon} alt="" width={28} height={28} /> : null}</span>
         <span id={`${id}-value`} className={value ? "" : "breed-select-placeholder"}>{value ? breedLabel(value) : OPTIONS[0].label}</span>
-        <span className="breed-select-caret" aria-hidden="true">▾</span>
+        <span className="breed-select-caret" aria-hidden="true"><Icon name="chevronDown" /></span>
       </button>
       {open && (
         <ul
