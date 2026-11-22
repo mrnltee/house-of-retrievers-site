@@ -4,6 +4,7 @@
  */
 
 import { cleanCustomQuestions } from "../customQuestions.mjs";
+import { cleanVaccines } from "../vaccineTypes.mjs";
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { dogTicketsSoldOut, openTiers, visibleTiers } from "../eventPayments.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
@@ -46,7 +47,7 @@ export function cleanRsvpFormConfig(input) {
   const allowed = new Set(["identity", "attendees", "photoConsent", "under18", "vaccination"]);
   const order = Array.isArray(value?.order) ? value.order.filter((key, i, list) => allowed.has(key) && list.indexOf(key) === i) : [];
   for (const key of ["identity", "attendees", ...optional]) if (!order.includes(key)) order.push(key);
-  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions), vaccinationRequired: value?.vaccinationRequired === true, dogWaitlist: value?.dogWaitlist === true };
+  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions), vaccinationRequired: value?.vaccinationRequired === true, vaccines: cleanVaccines(value?.vaccines), dogWaitlist: value?.dogWaitlist === true };
 }
 
 /** "TBA", "To be named" and the like: not a beneficiary, so never shown or published. */

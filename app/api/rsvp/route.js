@@ -1,4 +1,5 @@
 import { missingVaccinationCards, vaccinationUploads } from "../../lib/vaccinationRecords.mjs";
+import { cleanVaccines, missingVaccines, missingVaccinesMessage } from "../../lib/vaccineTypes.mjs";
 import { cleanCustomQuestions, readCustomAnswers } from "../../lib/customQuestions.mjs";
 import { cleanGuestNames } from "../../lib/attendeeNames.mjs";
 import { NextResponse } from "next/server";
@@ -119,11 +120,15 @@ export async function POST(request) {
         for (const upload of vaccinationUploads(body, attendees.furbabies)) {
           const image = readProofImage(upload.dataUrl, { label: "vaccination record photo" });
           if (image.error) return { error: image.error, status: 422 };
-          vaccinations.push({ index: upload.index, page: upload.page, ...image.value });
+          vaccinations.push({ index: upload.index, page: upload.page, vaccine: upload.vaccine, ...image.value });
         }
         // "Require a vaccination card for each furbaby" (rsvp_form_config.vaccinationRequired).
         const missing = event.rsvp_form_config?.vaccinationRequired ? missingVaccinationCards(vaccinations, attendees.furbabies) : [];
         if (missing.length) return { error: attendees.furbabies > 1 ? `Add a vaccination card photo for furbaby ${missing.map((i) => i + 1).join(", ")}.` : "Add a photo of your furbaby's vaccination card.", status: 422 };
+        // Vaccines the event marks as required (rsvp_form_config.vaccines): a photo of each, per furbaby.
+        const vaccines = cleanVaccines(event.rsvp_form_config?.vaccines);
+        const missingTypes = missingVaccines(vaccinations, attendees.furbabies, vaccines);
+        if (missingTypes.length) return { error: missingVaccinesMessage(missingTypes, attendees.furbabies), status: 422 };
       }
       const [{ used, humansUsed }] = await tx.sql(`SELECT ${CAPACITY_USED_SQL} AS used, ${PUBLIC_HUMANS_USED_SQL} AS "humansUsed" FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.event_id = $1 AND r.status = 'confirmed' AND r.deleted_at IS NULL AND (r.fee_status <> 'waiting' OR r.hold_expires_at IS NULL OR r.hold_expires_at > now())`, [event.id]);
       // Over the capacity, or over "Most hoomans from public RSVPs": the waitlist.
@@ -145,8 +150,8 @@ export async function POST(request) {
       for (const record of vaccinations) {
         const bytes = Buffer.from(record.base64, "base64");
         await tx.sql(
-          "INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes) VALUES ($1, $2, $3, $4, $5, $6)",
-          [row.id, record.index, record.page, record.mime, bytes, bytes.length],
+          "INSERT INTO registration_vaccination_records (registration_id, furbaby_index, page_no, mime, data, bytes, vaccine) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          [row.id, record.index, record.page, record.mime, bytes, bytes.length, record.vaccine || null],
         );
       }
       return { id: row.id, promoDiscount: discount || null, status, code, feeStatus, holdExpiresAt: holdExpiry?.toISOString() || null, ticket: ticket.value, amountDue: due.amount, humanCount: attendees.humans, furbabyCount: attendees.furbabies };

@@ -5,6 +5,7 @@ import { resizeImageWithin } from "../../../lib/resizeImage";
 import { MAX_IMAGES_PER_FURBABY, vaccinationBudget } from "../../../lib/vaccinationRecords.mjs";
 import { addVaccinationCard, removeVaccinationCard } from "../../registrationActions";
 import ConfirmButton from "../ConfirmButton";
+import { OTHER_VACCINE, VACCINE_TYPES } from "../../../lib/vaccineTypes.mjs";
 
 /** Each photo is shrunk so a full set of five still fits in one save (the request ceiling is 4 MB). */
 const PHOTO_BYTES = vaccinationBudget(MAX_IMAGES_PER_FURBABY);
@@ -19,7 +20,7 @@ const PHOTO_BYTES = vaccinationBudget(MAX_IMAGES_PER_FURBABY);
  *   `remaining` is how many more photos this furbaby can still take.
  * - Replacing or removing one existing photo (`page`): one photo, as before.
  */
-export default function VaccinationCardField({ registrationId, index, page, label, hasCard, adding = false, remaining = MAX_IMAGES_PER_FURBABY }) {
+export default function VaccinationCardField({ registrationId, index, page, label, hasCard, adding = false, remaining = MAX_IMAGES_PER_FURBABY, vaccineChoice = false, defaultVaccine = "" }) {
   const replacing = page !== undefined;
   const [queue, setQueue] = useState([]); // [{ id, dataUrl }]
   const [note, setNote] = useState("");
@@ -120,6 +121,16 @@ export default function VaccinationCardField({ registrationId, index, page, labe
               </figure>
             ))}
           </div>
+          {vaccineChoice && !replacing && (
+            <label className="small vaccine-type-pick">
+              <span>{count === 1 ? "This photo shows" : "These photos show"}</span>
+              <select name="vaccine" defaultValue={defaultVaccine}>
+                <option value="">Not said (whole card)</option>
+                {VACCINE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+                <option value={OTHER_VACCINE}>Other page</option>
+              </select>
+            </label>
+          )}
           {full && !replacing && <p className="small muted" style={{ margin: 0 }}>That's every photo this furbaby can hold. Save these, or remove one to add a different photo.</p>}
           <div className="actions">
             <ConfirmButton

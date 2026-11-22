@@ -19,6 +19,7 @@ const DOG_WAITLIST = -2;
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import { resizeImageWithin } from "../lib/resizeImage";
 import { MAX_IMAGES_PER_FURBABY, MAX_IMAGES_PER_RSVP, vaccinationBudget } from "../lib/vaccinationRecords.mjs";
+import { OTHER_VACCINE, cleanVaccines, vaccineLabel, VACCINE_TYPES } from "../lib/vaccineTypes.mjs";
 import { applyPromo } from "../lib/promoCodes.mjs";
 
 const peso = (n) => (n === 0 ? "Free" : `₱${Number(n).toLocaleString("en-PH")}`);
@@ -68,6 +69,8 @@ export default function RsvpModal({ event, onClose, preview = false }) {
   const furbabyPackage = event.pricingBasis === "tiered" && chosen?.attendanceBasis === "furbaby_package";
   const formConfig = event.rsvpFormConfig || { optional: ["photoConsent", "under18"] };
   const askVaccination = Boolean(event.vaccinationRecordRequired && formConfig.optional.includes("vaccination"));
+  // Vaccines the event asks for by type (owner, 22 Nov 2026): one upload each per furbaby.
+  const vaccineTypes = askVaccination ? cleanVaccines(formConfig.vaccines) : [];
   const passHref = (code) => `${typeof window !== "undefined" && window.location.pathname.startsWith("/events") ? "/events" : ""}/r/${code}`;
 
   useEffect(() => {
@@ -157,12 +160,15 @@ export default function RsvpModal({ event, onClose, preview = false }) {
     try {
       // Up to MAX_IMAGES_PER_FURBABY vaccination photos per furbaby row, shrunk so they all fit in one request.
       const dogTotal = Number(form.get("furbabyCount")) || 0;
-      const picks = Array.from({ length: dogTotal }, (_, i) => form.getAll(`vaccinationRecord${i}`).filter((f) => f instanceof File && f.size));
+      const files = (name, vaccine) => form.getAll(name).filter((f) => f instanceof File && f.size).map((file) => ({ file, vaccine }));
+      const picks = Array.from({ length: dogTotal }, (_, i) => vaccineTypes.length
+        ? [...vaccineTypes.flatMap((v) => files(`vaccine${i}-${v.key}`, v.key)), ...files(`vaccinationRecord${i}`, OTHER_VACCINE)]
+        : files(`vaccinationRecord${i}`, null));
       const tooMany = picks.findIndex((files) => files.length > MAX_IMAGES_PER_FURBABY);
       if (askVaccination && tooMany >= 0) { setState({ sending: false, error: `Add up to ${MAX_IMAGES_PER_FURBABY} vaccination photos per furbaby${dogTotal > 1 ? ` (furbaby ${tooMany + 1} has ${picks[tooMany].length})` : ""}.`, result: null }); return; }
       if (askVaccination && picks.flat().length > MAX_IMAGES_PER_RSVP) { setState({ sending: false, error: `Add up to ${MAX_IMAGES_PER_RSVP} vaccination photos in one RSVP.`, result: null }); return; }
       const budget = vaccinationBudget(picks.flat().length);
-      const vaccinationRecords = askVaccination ? await Promise.all(picks.map((files) => Promise.all(files.map(async (f) => (await resizeImageWithin(f, budget)).dataUrl)))) : [];
+      const vaccinationRecords = askVaccination ? await Promise.all(picks.map((list) => Promise.all(list.map(async ({ file, vaccine }) => { const { dataUrl } = await resizeImageWithin(file, budget); return vaccine ? { dataUrl, vaccine } : dataUrl; })))) : [];
       const response = await fetch("/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -283,10 +289,12 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                       <BreedSelect name={`furbabyBreed${i}`} label="Breed" value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
                       <FurbabySexSelect name={`furbabySex${i}`} label="Gender" value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
                       <FurbabyAgeInput name={`furbabyAge${i}`} label="Age (years)" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
-                      {askVaccination && <label className="rsvp-vaccination">Vaccination card (up to {MAX_IMAGES_PER_FURBABY} photos)<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" multiple required={Boolean(formConfig.vaccinationRequired)} onChange={(e) => { if (e.target.files.length > MAX_IMAGES_PER_FURBABY) { e.target.value = ""; setState((st) => ({ ...st, error: `Pick up to ${MAX_IMAGES_PER_FURBABY} photos for each furbaby's vaccination card.` })); } else setState((st) => (st.error?.startsWith("Pick up to") ? { ...st, error: "" } : st)); }} /></label>}
+                      {vaccineTypes.length > 0 && <fieldset className="rsvp-vaccines"><legend>Vaccine records <small>up to {MAX_IMAGES_PER_FURBABY} photos in all</small></legend>{vaccineTypes.map((v) => <label key={v.key} className="rsvp-vaccination"><span className="rsvp-vaccine-name">{vaccineLabel(v.key)} <small>{v.required ? "Required" : "Optional"}</small></span><span className="rsvp-vaccine-hint">{VACCINE_TYPES.find((t) => t.key === v.key)?.hint}</span><input type="file" name={`vaccine${i}-${v.key}`} accept="image/jpeg,image/png,image/webp" multiple required={v.required} /></label>)}<label className="rsvp-vaccination"><span className="rsvp-vaccine-name">Other pages <small>Optional</small></span><span className="rsvp-vaccine-hint">The rest of the card, if it helps</span><input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" multiple /></label></fieldset>}
+                      {askVaccination && vaccineTypes.length === 0 && <label className="rsvp-vaccination">Vaccination card (up to {MAX_IMAGES_PER_FURBABY} photos)<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" multiple required={Boolean(formConfig.vaccinationRequired)} onChange={(e) => { if (e.target.files.length > MAX_IMAGES_PER_FURBABY) { e.target.value = ""; setState((st) => ({ ...st, error: `Pick up to ${MAX_IMAGES_PER_FURBABY} photos for each furbaby's vaccination card.` })); } else setState((st) => (st.error?.startsWith("Pick up to") ? { ...st, error: "" } : st)); }} /></label>}
                     </div>
                   ))}
-                  {askVaccination && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>{formConfig.vaccinationRequired ? <>A clear photo of each furbaby&apos;s vaccination card is required (up to 5 photos each, if it has several pages). Name, breed, gender and age are optional. Only authorised HOR admins can view the cards.</> : <>Name, breed, gender, age and vaccination card are all optional. If you have it handy, add clear photos of each furbaby&apos;s card (up to 5 each); only authorised HOR admins can view them.</>}</p>}
+                  {vaccineTypes.length > 0 && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>Add a clear photo of each vaccine record ({vaccineTypes.filter((v) => v.required).length ? <>those marked Required must be added for every furbaby</> : <>all optional</>}). Name, breed, gender and age are optional. Only authorised HOR admins can view them.</p>}
+                  {askVaccination && vaccineTypes.length === 0 && <p className="form-note" style={{ textAlign: "left", margin: 0 }}>{formConfig.vaccinationRequired ? <>A clear photo of each furbaby&apos;s vaccination card is required (up to 5 photos each, if it has several pages). Name, breed, gender and age are optional. Only authorised HOR admins can view the cards.</> : <>Name, breed, gender, age and vaccination card are all optional. If you have it handy, add clear photos of each furbaby&apos;s card (up to 5 each); only authorised HOR admins can view them.</>}</p>}
                 </div>}
               </>;
             })()}

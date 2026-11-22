@@ -17,10 +17,11 @@ import CustomAnswerFields from "../../../CustomAnswerFields";
 import WelcomePhotoField from "../../../WelcomePhotoField";
 import VaccinationCardField from "../../../VaccinationCardField";
 import { MAX_IMAGES_PER_FURBABY } from "../../../../../../lib/vaccinationRecords.mjs";
+import { OTHER_VACCINE, VACCINE_TYPES, cleanVaccines, vaccineLabel, vaccineShort, vaccineStatus } from "../../../../../../lib/vaccineTypes.mjs";
 import { eventTiers } from "../../../../../../lib/admin/events.mjs";
 import { calculateAmountDue, cleanPricingBasis, overpaidBy } from "../../../../../../lib/registrationPricing.mjs";
 import { applyPromo, promoLabel } from "../../../../../../lib/promoCodes.mjs";
-import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, remindExpiredHolds, resendPass, updateRegistration } from "../../../../../registrationActions";
+import { approvePayment, attachReceipt, correctPaidAmount, markPaid, recordRefund, rejectPayment, remindExpiredHolds, resendPass, setVaccineCheck, setVaccinePhotoType, updateRegistration } from "../../../../../registrationActions";
 import ConfirmButton from "../../../../ConfirmButton";
 import ReceiptField from "../../../ReceiptField";
 import ImageLightbox from "../../../ImageLightbox";
@@ -56,13 +57,14 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const match = seePeople && reg.email
     ? peopleMatch(await sql("SELECT id, kind, membership, member_no, member_year FROM people WHERE lower(trim(email)) = lower(trim($1))", [reg.email]))
     : null;
-  const [proofs, twins, vaccinationRows, welcome] = await Promise.all([
+  const [proofs, twins, vaccinationRows, welcome, vaccineChecks] = await Promise.all([
     sql("SELECT id, uploaded_by, created_at, bytes FROM payment_proofs WHERE registration_id = $1 ORDER BY created_at DESC", [regId]),
     reg.fee_reference
       ? sql("SELECT id, name, status FROM registrations WHERE event_id = $1 AND id <> $2 AND status <> 'cancelled' AND deleted_at IS NULL AND regexp_replace(upper(fee_reference), '[^A-Z0-9]', '', 'g') = $3", [eventId, regId, referenceKey(reg.fee_reference)])
       : [],
-    sql("SELECT furbaby_index, page_no, uploaded_at, uploaded_by, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index, page_no", [regId]),
+    sql("SELECT furbaby_index, page_no, vaccine, uploaded_at, uploaded_by, bytes FROM registration_vaccination_records WHERE registration_id = $1 ORDER BY furbaby_index, page_no", [regId]),
     reg.deleted_at ? null : welcomePhotoFor(regId, eventId),
+    sql("SELECT furbaby_index, vaccine, verified_at, verified_by FROM registration_vaccine_checks WHERE registration_id = $1", [regId]),
   ]);
   const proof = proofs[0];
   const dogNames = String(reg.furbaby_name || "").split(/,\s*/);
@@ -71,6 +73,14 @@ export default async function RegistrationDetail({ params, searchParams }) {
   const canEdit = can(admin, "registrations:edit");
   // One slot per furbaby on the registration, plus any older card beyond that count (the count may have been edited down).
   const vaccinationSlots = [...new Set([...Array.from({ length: Math.min(10, reg.furbaby_count || 0) }, (_, i) => i), ...vaccinationRows.map((v) => v.furbaby_index)])].sort((x, y) => x - y);
+  // Vaccines this event checks (Participant form). An event that lists none still shows a
+  // per-vaccine status once a photo has a type or someone was marked checked.
+  const eventVaccines = cleanVaccines(reg.rsvp_form_config?.vaccines);
+  const vaccineList = eventVaccines.length ? eventVaccines
+    : vaccinationRows.some((v) => v.vaccine && v.vaccine !== OTHER_VACCINE) || vaccineChecks.length ? VACCINE_TYPES.map((v) => ({ key: v.key, required: false })) : [];
+  const records = vaccinationRows.map((v) => ({ index: v.furbaby_index, vaccine: v.vaccine }));
+  const checks = vaccineChecks.map((c) => ({ index: c.furbaby_index, vaccine: c.vaccine }));
+  const checkOf = (i, key) => vaccineChecks.find((c) => c.furbaby_index === i && c.vaccine === key);
   const fee = FEE_STATUS[reg.fee_status] || FEE_STATUS.not_due;
   const owing = reg.fee_required && reg.status === "confirmed" && UNPAID.includes(reg.fee_status);
   const due = reg.amount_due ?? reg.ticket_amount;
@@ -176,14 +186,64 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 return (
                   <figure key={i} className="vaccination-dog">
                     <figcaption className="strong">{dogLabel(i)}{shots.length > 1 ? ` · ${shots.length} photos` : ""}</figcaption>
+                    {vaccineList.length > 0 && i < (reg.furbaby_count || 0) && (
+                      <ul className="vaccine-status" aria-label={`Vaccines for ${dogLabel(i)}`}>
+                        {vaccineStatus(records, checks, i, vaccineList).map((s) => {
+                          const check = checkOf(i, s.key);
+                          return (
+                            <li key={s.key} className={`vaccine-row is-${s.state}`}>
+                              <span className="vaccine-name">{s.label}{s.required ? <span className="small muted"> · required</span> : null}</span>
+                              <span className={`chip ${s.state === "verified" ? "good" : s.state === "uploaded" ? "" : s.required ? "warn" : ""}`}>
+                                {s.state === "verified" ? <><Icon name="check" /> Checked</> : s.state === "uploaded" ? "To check" : "No photo"}
+                              </span>
+                              {check && <span className="small muted vaccine-by">by {check.verified_by || "an admin"} {formatWhen(check.verified_at)}</span>}
+                              {canEdit && !reg.deleted_at && (
+                                <form action={setVaccineCheck} className="vaccine-toggle">
+                                  <input type="hidden" name="id" value={reg.id} />
+                                  <input type="hidden" name="index" value={i} />
+                                  <input type="hidden" name="vaccine" value={s.key} />
+                                  <input type="hidden" name="checked" value={s.state === "verified" ? "no" : "yes"} />
+                                  {s.state === "verified" ? (
+                                    <ConfirmButton className="linkish" title={`Take the check off ${s.label} for ${dogLabel(i)}?`} items={["It goes back to \u201cto check\u201d", "The photos stay as they are"]} yes="Yes, take it off">Undo</ConfirmButton>
+                                  ) : (
+                                    <ConfirmButton
+                                      className="btn ghost small"
+                                      title={`Mark ${s.label} as checked for ${dogLabel(i)}?`}
+                                      items={[s.state === "uploaded" ? "You've looked at the photo and the vet's record is valid for this event" : "There's no photo here: only do this if they showed you the record another way", "Your name and the time are kept with the check"]}
+                                      yes="Yes, mark checked"
+                                    >Mark checked</ConfirmButton>
+                                  )}
+                                </form>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                     {shots.length ? (
                       <div className="vaccination-pages">{shots.map((v) => {
                         const src = `${base}/registrations/vaccination/${reg.id}?i=${i}&p=${v.page_no}`;
-                        const caption = `Vaccination card · ${dogLabel(i)}${shots.length > 1 ? ` · photo ${v.page_no + 1}` : ""}`;
+                        const caption = `${vaccineLabel(v.vaccine)} · ${dogLabel(i)}${shots.length > 1 ? ` · photo ${v.page_no + 1}` : ""}`;
                         return (
                           <div key={v.page_no} className="vaccination-page">
                             <a href={src} target="_blank" rel="noreferrer" className="vaccination-shot" data-lightbox={caption}><img src={src} alt={`Vaccination record for ${dogLabel(i)}${shots.length > 1 ? `, photo ${v.page_no + 1}` : ""}`} loading="lazy" /></a>
                             <p className="small muted">{v.uploaded_by ? `Added by ${v.uploaded_by}` : "Uploaded"} {formatWhen(v.uploaded_at)} · <a href={src} target="_blank" rel="noreferrer" data-lightbox={caption}>Open full size</a></p>
+                            {canEdit && !reg.deleted_at ? (
+                              <form action={setVaccinePhotoType} className="vaccine-type-form">
+                                <input type="hidden" name="id" value={reg.id} />
+                                <input type="hidden" name="index" value={i} />
+                                <input type="hidden" name="page" value={v.page_no} />
+                                <label className="small">
+                                  <span>Shows</span>
+                                  <select name="vaccine" defaultValue={v.vaccine || ""} aria-label={`Which vaccine photo ${v.page_no + 1} shows`}>
+                                    <option value="">Not said (whole card)</option>
+                                    {VACCINE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+                                    <option value={OTHER_VACCINE}>Other page</option>
+                                  </select>
+                                </label>
+                                <ConfirmButton className="linkish" title={`Change what this photo shows?`} items={["Only the label on this photo changes", "Checks already made stay as they are"]} yes="Yes, save">Save</ConfirmButton>
+                              </form>
+                            ) : v.vaccine ? <span className="chip">{vaccineShort(v.vaccine)}</span> : null}
                             {canEdit && !reg.deleted_at && <VaccinationCardField registrationId={reg.id} index={i} page={v.page_no} label={dogLabel(i)} hasCard />}
                           </div>
                         );
@@ -191,7 +251,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                     ) : (
                       <p className="small muted"><span className="chip warn">No card yet</span></p>
                     )}
-                    {canEdit && !reg.deleted_at && shots.length < MAX_IMAGES_PER_FURBABY && <VaccinationCardField registrationId={reg.id} index={i} label={dogLabel(i)} hasCard={false} adding={shots.length > 0} remaining={MAX_IMAGES_PER_FURBABY - shots.length} />}
+                    {canEdit && !reg.deleted_at && shots.length < MAX_IMAGES_PER_FURBABY && <VaccinationCardField registrationId={reg.id} index={i} label={dogLabel(i)} hasCard={false} adding={shots.length > 0} remaining={MAX_IMAGES_PER_FURBABY - shots.length} vaccineChoice={vaccineList.length > 0} defaultVaccine={vaccineStatus(records, checks, i, vaccineList).find((s) => s.state === "missing")?.key || ""} />}
                   </figure>
                 );
               })}</div> : <p className="muted">No vaccination record was uploaded.</p>}

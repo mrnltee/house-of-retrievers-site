@@ -12,6 +12,7 @@ import { manualCheckInWarnings } from "../../../../lib/manualCheckIn.mjs";
 import { manilaParts } from "../../../../lib/rsvpOpens.mjs";
 import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
 import { missingVaccinationCards } from "../../../../lib/vaccinationRecords.mjs";
+import { cleanVaccines, vaccineShort, vaccineSummary } from "../../../../lib/vaccineTypes.mjs";
 import { DEFAULT_REMINDER_HOLD_MINUTES, REMINDER_HOLD_OPTIONS, isActiveRegistrationHold, isExpiredHold } from "../../../../lib/registrationHolds.mjs";
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
@@ -101,10 +102,19 @@ export default async function EventRegistrations({ params, searchParams }) {
   for (const key of emails) matchOf.set(key, peopleMatch(peopleRows.filter((p) => p.key === key)));
   const peopleOf = (r) => matchOf.get(String(r.email || "").trim().toLowerCase()) || null;
   // Furbaby positions that already have a card, so "No vaccination card" lists confirmed guests with a dog still missing one.
-  const cardRows = current.length ? await sql("SELECT registration_id, furbaby_index FROM registration_vaccination_records WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
+  const cardRows = current.length ? await sql("SELECT registration_id, furbaby_index, vaccine FROM registration_vaccination_records WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
   const cardsOf = new Map();
-  for (const row of cardRows) cardsOf.set(row.registration_id, [...(cardsOf.get(row.registration_id) || []), { index: row.furbaby_index }]);
-  const lacksCard = (r) => r.status === "confirmed" && missingVaccinationCards(cardsOf.get(r.id) || [], r.furbaby_count).length > 0;
+  for (const row of cardRows) cardsOf.set(row.registration_id, [...(cardsOf.get(row.registration_id) || []), { index: row.furbaby_index, vaccine: row.vaccine }]);
+  // Vaccines this event checks by type: one chip per vaccine on each row (checked, to check, missing).
+  const eventVaccines = cleanVaccines(event.rsvp_form_config?.vaccines);
+  const checkRows = eventVaccines.length && current.length ? await sql("SELECT registration_id, furbaby_index, vaccine FROM registration_vaccine_checks WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
+  const checksOf = new Map();
+  for (const row of checkRows) checksOf.set(row.registration_id, [...(checksOf.get(row.registration_id) || []), { index: row.furbaby_index, vaccine: row.vaccine }]);
+  // Across every furbaby on the registration: checked only when all are, missing when any has no photo.
+  const vaccineChips = (r, dogs) => vaccineSummary(cardsOf.get(r.id), checksOf.get(r.id), dogs, eventVaccines);
+  // "No vaccination card": a furbaby with no photo at all, or a required vaccine with no photo.
+  const lacksCard = (r) => r.status === "confirmed" && (missingVaccinationCards(cardsOf.get(r.id) || [], r.furbaby_count).length > 0
+    || (r.furbaby_count > 0 && vaccineChips(r, Math.min(10, r.furbaby_count)).some((v) => v.required && v.state === "missing")));
   const nowParts = manilaParts(new Date().toISOString());
   const live = current.filter((r) => r.status !== "cancelled");
   const confirmed = current.filter((r) => r.status === "confirmed");
@@ -125,8 +135,8 @@ export default async function EventRegistrations({ params, searchParams }) {
   heads.compFurbabies = total(comps, "furbaby_count", 0);
   const headLine = (all, paidN, compN) => [`${paidN} paid`, all - paidN - compN ? `${all - paidN - compN} holding a spot` : "", compN ? `${compN} complimentary` : ""].filter(Boolean).join(" · ");
   // The vaccination tab only appears for events that ask for cards (or already have some).
-  const showVax = Boolean(event.vaccination_record_required) || cardRows.length > 0;
-  const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || event.vaccination_record_required || cardRows.length > 0);
+  const showVax = Boolean(event.vaccination_record_required) || eventVaccines.length > 0 || cardRows.length > 0;
+  const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || showVax);
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
     filter === "deleted" ? Boolean(r.deleted_at)
@@ -288,6 +298,13 @@ export default async function EventRegistrations({ params, searchParams }) {
                       {(() => {
                         const dogs = Math.min(10, r.furbaby_count ?? 0);
                         if (!dogs) return <span className="muted">N/A</span>;
+                        if (eventVaccines.length) return (
+                          <span className="vaccine-chips">{vaccineChips(r, dogs).map((v) => (
+                            <span key={v.key} className={`chip${v.state === "verified" ? " good" : v.state === "missing" && v.required ? " warn" : ""}`} title={v.state === "verified" ? "Checked" : v.state === "uploaded" ? "Photo in, to check" : "No photo yet"}>
+                              {v.state === "verified" && <Icon name="check" />} {vaccineShort(v.key)}{v.state === "uploaded" ? " · to check" : v.state === "missing" ? " · missing" : ""}
+                            </span>
+                          ))}</span>
+                        );
                         const missing = missingVaccinationCards(cardsOf.get(r.id) || [], dogs).length;
                         return missing ? <span className="chip warn">{missing === dogs ? "No card" : `${dogs - missing}/${dogs} cards`}</span> : <span className="chip good">{dogs > 1 ? `${dogs}/${dogs} cards` : "Card on file"}</span>;
                       })()}

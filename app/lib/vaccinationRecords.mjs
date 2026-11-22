@@ -1,3 +1,5 @@
+import { cleanVaccineKey } from "./vaccineTypes.mjs";
+
 /**
  * Optional vaccination-record photos, one per furbaby (registration_vaccination_records,
  * keyed by registration + furbaby_index since migration 045). Private: admins only.
@@ -17,7 +19,7 @@ export function vaccinationBudget(count) {
 }
 
 /**
- * The RSVP body → [{ index, page, dataUrl }] for the furbabies that have photos.
+ * The RSVP body → [{ index, page, dataUrl, vaccine }] for the furbabies that have photos.
  * `vaccinationRecords[i]` is one data URL (older form) or an array of up to
  * MAX_IMAGES_PER_FURBABY; `vaccinationRecord` (one photo) is the oldest form.
  */
@@ -26,10 +28,12 @@ export function vaccinationUploads(body, furbabies) {
   const out = [];
   list.slice(0, Math.min(MAX_VACCINATION_PHOTOS, Math.max(0, Number(furbabies) || 0))).forEach((entry, index) => {
     const photos = Array.isArray(entry) ? entry : [entry];
+    // A photo is a data URL, or { dataUrl, vaccine } once the event lists vaccine types.
     photos
-      .filter((dataUrl) => typeof dataUrl === "string" && dataUrl)
+      .map((photo) => (typeof photo === "string" ? { dataUrl: photo, vaccine: null } : { dataUrl: photo?.dataUrl, vaccine: cleanVaccineKey(photo?.vaccine) }))
+      .filter((photo) => typeof photo.dataUrl === "string" && photo.dataUrl)
       .slice(0, MAX_IMAGES_PER_FURBABY)
-      .forEach((dataUrl, page) => out.push({ index, page, dataUrl }));
+      .forEach((photo, page) => out.push({ index, page, dataUrl: photo.dataUrl, vaccine: photo.vaccine }));
   });
   return out.slice(0, MAX_IMAGES_PER_RSVP);
 }

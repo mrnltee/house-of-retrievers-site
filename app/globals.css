@@ -2254,3 +2254,13 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .rsvp-vaccination input[type="file"]::file-selector-button { margin-right: 12px; padding: 8px 16px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .rsvp-vaccination input[type="file"]:hover { border-color: var(--gold); }
 .rsvp-vaccination input[type="file"]:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Vaccine records by type (22 Nov 2026, owner): one upload per vaccine the event asks for, under each furbaby. */
+.rsvp-vaccines { grid-column: 1 / -1; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); margin: 0; padding: 12px; border: 1px solid rgba(13, 13, 13, .14); border-radius: 12px; min-width: 0; }
+.rsvp-vaccines legend { padding: 0 6px; font-size: 13px; font-weight: 700; }
+.rsvp-vaccines legend small { font-weight: 400; color: var(--muted-on-light); }
+.rsvp-vaccines .rsvp-vaccination { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.rsvp-vaccines .rsvp-vaccination small { display: inline; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted-on-light); }
+.rsvp-vaccine-hint { font-size: 12px; font-weight: 400; line-height: 1.4; text-transform: none; letter-spacing: 0; color: var(--muted-on-light); }
+.with-vaccination .rsvp-vaccines .rsvp-vaccination { grid-column: auto; }
+.rsvp-vaccines .rsvp-vaccination { grid-template-rows: auto 1fr auto; }

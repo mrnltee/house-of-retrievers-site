@@ -6,6 +6,7 @@ import { pictureFrom } from "../lib/admin/imageUpload";
 import { cleanPromoCodes } from "../lib/promoCodes.mjs";
 import { cleanRainbow, livingFurbabyNames } from "../lib/attendeeNames.mjs";
 import { cleanCustomQuestions } from "../lib/customQuestions.mjs";
+import { cleanVaccines, vaccineSummary } from "../lib/vaccineTypes.mjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { pickedIds, supportsLine } from "../lib/eventBeneficiaries.mjs";
@@ -89,7 +90,7 @@ function parseCrop(raw) {
 function withCleanQuestions(text) {
   let config = {};
   try { config = JSON.parse(text || "{}") || {}; } catch { config = {}; }
-  return JSON.stringify({ ...config, questions: cleanCustomQuestions(config.questions) });
+  return JSON.stringify({ ...config, questions: cleanCustomQuestions(config.questions), vaccines: cleanVaccines(config.vaccines) });
 }
 
 export async function saveEvent(data) {
@@ -422,9 +423,19 @@ export async function changeRegistration(data) {
  * guest with payment or the acknowledgement missing is flagged, not let in.
  * `column` is one of two fixed names, never user input.
  */
+async function doorVaccines(reg) {
+  const vaccines = cleanVaccines(reg.vaccines);
+  if (!vaccines.length || !(Number(reg.furbaby_count) > 0)) return [];
+  const [records, checks] = await Promise.all([
+    sql("SELECT furbaby_index AS index, vaccine FROM registration_vaccination_records WHERE registration_id = $1", [reg.id]),
+    sql("SELECT furbaby_index AS index, vaccine FROM registration_vaccine_checks WHERE registration_id = $1", [reg.id]),
+  ]);
+  return vaccineSummary(records, checks, reg.furbaby_count, vaccines);
+}
+
 async function checkInAtDoor(admin, eventId, column, value, source) {
   const rows = await sql(
-    `SELECT r.id, r.event_id, r.name, r.email, r.furbaby_name, r.status, r.comp_type, r.checked_in_at, r.consent_completed_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required, (e.rsvp_form_config->>'consentRequiredBeforeCheckin')::boolean AS consent_required_before_checkin
+    `SELECT r.id, r.event_id, r.name, r.email, r.furbaby_name, r.status, r.comp_type, r.checked_in_at, r.consent_completed_at, r.photo_consent, r.under_18, r.guardian_name, r.fee_status, r.ticket_label, r.ticket_amount, r.amount_due, e.fee_required, (e.rsvp_form_config->>'consentRequiredBeforeCheckin')::boolean AS consent_required_before_checkin, r.furbaby_count, e.rsvp_form_config->'vaccines' AS vaccines
      FROM registrations r JOIN events e ON e.id = r.event_id WHERE r.${column} = $1 AND r.deleted_at IS NULL`,
     [value],
   );
@@ -433,6 +444,8 @@ async function checkInAtDoor(admin, eventId, column, value, source) {
   const person = reg && reg.event_id === eventId
     ? { name: reg.name, furbaby: reg.furbaby_name, photoConsent: reg.photo_consent, under18: reg.under_18, guardian: reg.guardian_name, feeStatus: reg.fee_required ? reg.fee_status : null, consentCompleted: Boolean(reg.consent_completed_at), ticket: reg.fee_required && !reg.comp_type ? ticketLine(reg.ticket_label, reg.amount_due ?? reg.ticket_amount) : "", comp: compLabel(reg.comp_type) }
     : null;
+  // Vaccine records by type (22 Nov 2026): shown at the door, never blocking the check-in.
+  if (person) person.vaccines = await doorVaccines(reg).catch(() => []);
   if (outcome === "ok") {
     await sql("UPDATE registrations SET checked_in_at = now(), checked_in_by = $2, checked_in_source = $3 WHERE id = $1 AND checked_in_at IS NULL", [reg.id, admin.email, source]);
     await logActivity(admin.email, "registration.checkin", null, { registrationId: reg.id, ...(source === "manual" ? { from: "door name search" } : {}) });

@@ -2206,3 +2206,21 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
 @media (max-width: 560px) {
   .admin .field > span > small { display: block; margin-top: 2px; font-weight: 400; }
 }
+
+/* Vaccine records by type (22 Nov 2026, owner) */
+.vaccine-settings { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--a-sand, #f4efe4); }
+.vaccine-setting { display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: 12px; align-items: center; }
+.vaccine-setting > span { display: grid; gap: 2px; }
+.vaccine-setting small { font-weight: 400; }
+@media (max-width: 560px) { .vaccine-setting { grid-template-columns: 1fr; } }
+.vaccine-status { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.vaccine-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: 10px; background: var(--a-sand, #f4efe4); }
+.vaccine-row .vaccine-name { font-weight: 600; flex: 1 1 10rem; min-width: 0; }
+.vaccine-row .vaccine-by { flex-basis: 100%; order: 3; }
+.vaccine-row .vaccine-toggle { margin: 0; }
+.vaccine-type-form, .vaccine-type-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0; }
+.vaccine-type-form label { display: flex; align-items: center; gap: 6px; }
+.vaccine-type-form select, .vaccine-type-pick select { min-height: 36px; padding: 4px 32px 4px 10px; font-size: 13px; }
+.vaccine-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.vaccine-chips .chip { white-space: nowrap; }
+.checkin-vaccines { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; }
