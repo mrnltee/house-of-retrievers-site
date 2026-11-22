@@ -6,7 +6,8 @@ import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
 import { cleanContact, roleForSpecification } from "../lib/contacts.mjs";
 import { cleanSpeaker } from "../lib/eventSpeakers.mjs";
-import { cleanEventDonor } from "../lib/eventDonors.mjs";
+import { checkProblem, cleanEventDonor } from "../lib/eventDonors.mjs";
+import { can } from "../lib/admin/roles.mjs";
 import { pictureFrom } from "../lib/admin/imageUpload";
 
 const form = (data, key) => {
@@ -241,6 +242,9 @@ export async function saveEventDonor(data) {
     const contactId = form(data, "contact");
     const { donor: d, error } = cleanEventDonor(Object.fromEntries(["status", "askedVia", "amount", "method", "receivedOn", "reference", "receiptName", "receiptAddress", "acknowledge", "publicName", "notes"].map((k) => [k, form(data, k)])));
     if (error) await backWith(back, "error", error);
+    const before = isUuid(eventId) && isUuid(contactId)
+      ? await sql("SELECT amount, method, reference, verified_at FROM event_donors WHERE event_id = $1 AND contact_id = $2", [eventId, contactId])
+      : [];
     const [row] = isUuid(eventId) && isUuid(contactId)
       ? await sql(
         `UPDATE event_donors SET status=$3, asked_via=$4, amount=$5, method=$6, received_on=$7, reference=$8, receipt_name=$9, receipt_address=$10, acknowledge=$11, public_name=$12, notes=$13, updated_at=now()
@@ -250,8 +254,33 @@ export async function saveEventDonor(data) {
       : [];
     if (!row) await backWith(back, "error", "That donor isn't on this event's list.");
     const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
+    // Checked against HoR's account (22 Nov 2026): only with proof attached, by an admin who checks payments.
+    // A change to the amount, method or reference takes the check off: the proof was for the old details.
+    const was = before[0] || {};
+    const detailsChanged = was.verified_at && (Number(was.amount) !== Number(d.amount) || (was.method || null) !== d.method || (was.reference || null) !== d.reference || !["received", "receipt_sent"].includes(d.status));
+    const mayCheck = can(admin, "registrations:fees");
+    let note = "";
+    if (detailsChanged) {
+      await sql("UPDATE event_donors SET verified_at = NULL, verified_by = NULL WHERE event_id = $1 AND contact_id = $2", [eventId, contactId]);
+      await logActivity(admin.email, "event.donor.uncheck", c?.name || "", { eventId, contactId, reason: "details changed" });
+      note = " Its details changed, so it needs checking against HoR's account again.";
+    } else if (form(data, "checkSent") && mayCheck) {
+      const wantChecked = form(data, "checked") === "on";
+      if (wantChecked && !was.verified_at) {
+        const [{ n }] = await sql("SELECT count(*)::int AS n FROM donation_files WHERE event_id = $1 AND contact_id = $2 AND kind = 'proof'", [eventId, contactId]);
+        const problem = checkProblem({ status: d.status, amount: d.amount, proofCount: n, mayCheck });
+        if (problem) await backWith(back, "error", `Saved ${c?.name || "the donor"}, but not marked as checked: ${problem}`);
+        await sql("UPDATE event_donors SET verified_at = now(), verified_by = $3 WHERE event_id = $1 AND contact_id = $2", [eventId, contactId, admin.email]);
+        await logActivity(admin.email, "event.donor.check", c?.name || "", { eventId, contactId, amount: d.amount });
+        note = " Marked as checked against HoR's account.";
+      } else if (!wantChecked && was.verified_at) {
+        await sql("UPDATE event_donors SET verified_at = NULL, verified_by = NULL WHERE event_id = $1 AND contact_id = $2", [eventId, contactId]);
+        await logActivity(admin.email, "event.donor.uncheck", c?.name || "", { eventId, contactId });
+        note = " The check was taken off.";
+      }
+    }
     await logActivity(admin.email, "event.donor.save", c?.name || "", { eventId, contactId, status: d.status, amount: d.amount });
-    await backWith(back, "ok", `Saved ${c?.name || "the donor"}.`);
+    await backWith(back, "ok", `Saved ${c?.name || "the donor"}.${note}`);
   });
 }
 

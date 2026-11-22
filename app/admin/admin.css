@@ -2051,3 +2051,69 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
 .pop-menu > summary::-webkit-details-marker { display: none; }
 .pop-menu[open] > summary { background: var(--a-sand); }
 .reg-pay > span { white-space: nowrap; }
+
+/* Donation tracker (22 Nov 2026, owner). An event's Donors page: the proceeds first (received, checked against
+   HoR's account, still to check, pledged; by method), then one table whose columns the admin picks
+   (ColumnPicker, saved per device). Each row's Edit details window attaches the returned form and proofs of
+   payment (DonationFiles); View opens them over the table (FileViewer). */
+.donation-proceeds h2 { margin: 0 0 12px; }
+.donation-proceeds-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.donation-total { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border: 1px solid var(--a-line); border-radius: 14px; background: #fff; }
+.donation-total strong { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.donation-total.good { border-color: #b9d4bf; background: #f4faf5; }
+.donation-total.alert { border-color: #e6c4c4; background: #fcf6f6; }
+.donation-methods { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0 8px; }
+.donation-methods .chip { margin: 0; }
+.donor-tracker { display: grid; gap: 12px; }
+.donor-tracker-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.donor-send { display: grid; justify-items: end; gap: 4px; margin-left: auto; }
+.donor-tracker-tools { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.donor-tracker-tools .brand-search { flex: 1 1 320px; }
+.column-picker-menu { right: 0; left: auto; min-width: 230px; padding: 12px 14px; gap: 10px; }
+.column-picker-menu fieldset { display: grid; gap: 6px; border: 0; margin: 0; padding: 0; }
+.column-picker-menu legend { margin-bottom: 4px; }
+.column-picker-foot { display: flex; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--a-line); }
+.donor-table th, .donor-table td { vertical-align: top; padding-left: 10px; padding-right: 10px; }
+.donor-table thead th { white-space: normal; }
+.donor-table th:first-child, .donor-table td:first-child { padding-left: 16px; }
+.donor-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.donor-table .nowrap { white-space: nowrap; }
+.donor-table .donor-cell { min-width: 200px; }
+.donor-table td .btn { white-space: nowrap; }
+.donor-table .donor-cell .edit-dialog-open { margin-top: 8px; }
+.donor-table .donor-notes { min-width: 180px; max-width: 280px; white-space: pre-line; }
+.donor-table tfoot th, .donor-table tfoot td { border-top: 2px solid var(--a-ink); background: var(--a-sand); font-weight: 600; }
+.donor-table .chip { white-space: nowrap; }
+.donation-files-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.donation-files { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; padding: 12px 14px; border-radius: 12px; background: var(--a-sand); }
+.donation-files-head { display: grid; gap: 2px; }
+.donation-file-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.donation-file-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 10px; background: #fff; }
+.donation-file-list a { display: flex; flex: 1 1 auto; align-items: center; gap: 8px; min-width: 0; color: var(--a-ink); }
+.donation-file-list a .small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.donation-file-list li > button, .donation-file-confirm { flex: none; }
+.donation-file-list img, .donation-file-pdf { flex: none; width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: var(--a-sand); }
+.donation-file-pdf { display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--a-alert); border: 1px solid var(--a-line); }
+.donation-file-confirm { display: flex; gap: 6px; flex: none; }
+.donation-file-add { justify-self: start; cursor: pointer; }
+.donation-file-add:focus-within .btn { outline: 2px solid var(--a-gold); outline-offset: 2px; }
+.donation-file-note { margin: 0; min-height: 1.2em; overflow-wrap: anywhere; }
+.donation-file-note.good { color: var(--a-success); }
+.donation-file-note.alert { color: var(--a-alert); }
+.donation-check { display: grid; gap: 6px; margin: 0; padding: 12px 14px; border: 1px solid var(--a-line); border-radius: 12px; }
+.donation-check legend { padding: 0 4px; }
+.file-viewer { width: min(1000px, 94vw); max-width: none; padding: 0; }
+.file-viewer-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--a-line); }
+.file-viewer-head h2 { margin: 0; font-size: 18px; }
+.file-viewer-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.file-viewer-body { height: min(78vh, 900px); overflow: auto; background: #f1ede4; }
+.file-viewer-body object { display: block; width: 100%; height: 100%; background: #fff; }
+.file-viewer-pdf-fallback { display: grid; place-items: center; gap: 12px; height: 100%; padding: 24px; text-align: center; }
+/* Payment screenshots are tall phone captures: full width, scroll down to the reference. */
+.file-viewer-body img { display: block; max-width: min(100%, 720px); height: auto; margin: 0 auto; background: #fff; }
+@media (max-width: 900px) { .donation-proceeds-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .donation-files-row { grid-template-columns: minmax(0, 1fr); }
+  .donor-send { justify-items: start; }
+  .file-viewer-body { height: 70vh; }
+}

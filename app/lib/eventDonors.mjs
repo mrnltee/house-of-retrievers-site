@@ -72,3 +72,79 @@ export function donorCounts(rows = []) {
     declined: rows.filter((r) => r.status === "declined").length,
   };
 }
+
+/**
+ * Donation tracker (owner, 22 Nov 2026). The table's columns, in order; the admin picks which show (saved per
+ * device). Donor always shows. `on` = shown until the admin changes it.
+ */
+export const DONOR_COLUMNS = [
+  { key: "asked", label: "Asked by", on: false },
+  { key: "status", label: "Status", on: true },
+  { key: "amount", label: "Amount", on: true },
+  { key: "checked", label: "Checked", on: true },
+  { key: "method", label: "Method", on: true },
+  { key: "date", label: "Received on", on: true },
+  { key: "reference", label: "Reference", on: true },
+  { key: "proof", label: "Proof", on: true },
+  { key: "form", label: "Form", on: true },
+  { key: "receipt", label: "Receipt name", on: false },
+  { key: "address", label: "Mailing address", on: false },
+  { key: "thanks", label: "Thanks", on: false },
+  { key: "notes", label: "Notes", on: false },
+];
+
+const GAVE = new Set(["received", "receipt_sent"]);
+/** A donation that counts as money in: received or receipt sent, with an amount. */
+export const gaveMoney = (r) => GAVE.has(r.status) && Number(r.amount) > 0;
+
+/**
+ * The proceeds: everything received, split into checked against HoR's account (with proof) and still to
+ * check, plus pledges not in yet and a breakdown by method. `proofs` maps contact id to its number of
+ * proof files.
+ */
+export function donationTotals(rows = [], proofs = {}) {
+  const sum = (list) => list.reduce((total, r) => total + (Number(r.amount) || 0), 0);
+  const gave = rows.filter(gaveMoney);
+  const checked = gave.filter((r) => r.verified_at);
+  const unchecked = gave.filter((r) => !r.verified_at);
+  const byMethod = [...DONATION_METHODS, ["", "Method not set"]]
+    .map(([key, label]) => {
+      const list = gave.filter((r) => (r.method || "") === key);
+      return { key, label, count: list.length, amount: sum(list) };
+    })
+    .filter((m) => m.count);
+  return {
+    received: sum(gave),
+    receivedCount: gave.length,
+    checked: sum(checked),
+    checkedCount: checked.length,
+    toCheck: sum(unchecked),
+    toCheckCount: unchecked.length,
+    noProofCount: gave.filter((r) => !(proofs[r.id] > 0)).length,
+    pledged: sum(rows.filter((r) => r.status === "pledged")),
+    pledgedCount: rows.filter((r) => r.status === "pledged").length,
+    byMethod,
+  };
+}
+
+/**
+ * Whether a save may mark a donation as checked against HoR's account history. Only a received donation
+ * with an amount and at least one proof of payment, by an admin who may check payments.
+ */
+export function checkProblem({ status, amount, proofCount = 0, mayCheck = false }) {
+  if (!mayCheck) return "Only admins who check payments can mark a donation as checked.";
+  if (!GAVE.has(status)) return "Set the status to Received before marking it as checked.";
+  if (!(Number(amount) > 0)) return "Add the amount received before marking it as checked.";
+  if (!(proofCount > 0)) return "Attach the proof of payment before marking it as checked.";
+  return "";
+}
+
+/** Donors whose reference number is the same as another donor's on this event: contact id to the others' names. */
+export function sameReferences(rows = []) {
+  const key = (v) => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const by = new Map();
+  for (const r of rows) if (key(r.reference)) by.set(key(r.reference), [...(by.get(key(r.reference)) || []), r]);
+  const out = {};
+  for (const list of by.values()) if (list.length > 1) for (const r of list) out[r.id] = list.filter((o) => o !== r).map((o) => o.name);
+  return out;
+}
