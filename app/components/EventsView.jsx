@@ -5,6 +5,7 @@ import PhotoCredits from "./PhotoCredits";
 import Icon from "./Icon";
 import { socialLinks } from "../lib/socials.mjs";
 import LogoMoments from "./LogoMoments";
+import useHeaderReturn from "./useHeaderReturn";
 import Footer from "./Footer";
 import { initialsOf, speakersTitle } from "../lib/eventSpeakers.mjs";
 import { partnerGroups, sponsorGroups } from "../lib/eventBrands.mjs";
@@ -633,15 +634,24 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
     <article className="event-detail" aria-labelledby="event-title">
       <a className="event-back" href={base ? `${base}` : "/"}><Icon name="arrowLeft" /> All events</a>
       <div className="event-detail-grid">
-        <div className="event-detail-media">
-          {media.length > 0 && <EventMedia media={media} title={event.title} />}
-        </div>
-        <div className="event-detail-body">
+        {/* Title first in the page order, so a phone opens on what the event is,
+            when and where, with the poster under it (audit #6, 23 Nov 2026).
+            From 960 px the grid puts it beside the poster, above the facts. */}
+        <header className="event-detail-head">
           <p className="event-badges">
             <span className={`event-status status-${past ? "past" : event.status}`}>{past ? "Past event" : STATUS_LABELS[event.status]}</span>
           </p>
           {labels && <p className="event-category">{labels}</p>}
           <h1 id="event-title">{event.title}</h1>
+          <p className="event-head-when">
+            <span><Icon name="calendar" size={15} /> {formatWhen(event)}</span>
+            {(event.venue || event.city) && <span><Icon name="pin" size={15} /> {[event.venue, event.city].filter(Boolean).join(", ")}</span>}
+          </p>
+        </header>
+        <div className="event-detail-media">
+          {media.length > 0 && <EventMedia media={media} title={event.title} />}
+        </div>
+        <div className="event-detail-body">
           <DetailFacts event={event} past={past} />
           {!past && (event.cost || event.pricePending || canRsvp) && (
             <div className="event-action-card" ref={card}>
@@ -769,6 +779,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [interest, setInterest] = useState("Member");
   const [rsvpEvent, setRsvpEvent] = useState(null);
+  const headerClass = useHeaderReturn(menuOpen);
 
   useEffect(() => {
     document.body.style.overflow = joinOpen || rsvpEvent ? "hidden" : "";
@@ -796,7 +807,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
     <>
       <a href="#main" className="skip-link">Skip to content</a>
 
-      <header className="site-header">
+      <header className={headerClass}>
         <a href={HOME_URL} className="brand" aria-label="House of Retrievers home">
           <span className="brand-logo-frame">
             <LogoMoments className="brand-logo" tone="dark" priority />

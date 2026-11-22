@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BrandTransition from "./BrandTransition";
 import Header from "./Header";
 import Hero from "./Hero";
+import ComingUp from "./ComingUp";
 import PurposeStories from "./PurposeStories";
 import Journey from "./Journey";
 import InstagramFeed from "./InstagramFeed";
@@ -17,7 +18,7 @@ import SupportModal from "./SupportModal";
 import ScrollProgress from "./ScrollProgress";
 
 /** The homepage. app/page.jsx (server) passes in the admin-set journey timeline settings. */
-export default function HomePage({ journeySettings, journeyStops }) {
+export default function HomePage({ journeySettings, journeyStops, nextEvent = null, moreEvents = 0 }) {
   const [packView, setPackView] = useState("impact");
   const [modalOpen, setModalOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -89,6 +90,7 @@ export default function HomePage({ journeySettings, journeyStops }) {
       <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} onJoin={openJoin} onSupport={() => { setMenuOpen(false); setSupportOpen(true); }} />
       <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
+      <ComingUp event={nextEvent} more={moreEvents} />
       <PurposeStories />
       <Journey onJoin={openJoin} settings={journeySettings} stops={journeyStops} />
       <InstagramFeed />

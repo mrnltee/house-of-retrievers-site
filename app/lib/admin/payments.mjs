@@ -117,6 +117,13 @@ export function publicMethods(rows) {
           ...(details.number ? { number: maskNumber ? maskMobile(details.number) : formatMobile(details.number) } : {}),
           ...(details.accountNumber ? { accountNumber: maskNumber ? maskAccountNumber(details.accountNumber) : details.accountNumber } : {}),
         },
+        // What Copy puts on the clipboard: the full digits, even when the screen
+        // shows the number partly hidden (owner, 23 Nov 2026). The mask keeps the
+        // number off screenshots and page text; donors still paste a usable one.
+        copy: {
+          ...(details.number ? { number: normalizeMobile(details.number) || String(details.number).replace(/\s+/g, "") } : {}),
+          ...(details.accountNumber ? { accountNumber: String(details.accountNumber).replace(/\D/g, "") } : {}),
+        },
         qrImage: row.qr_image || null,
         updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
       };
