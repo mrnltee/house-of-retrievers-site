@@ -1307,7 +1307,7 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .rsvp-form-settings { border: 0; border-radius: 12px; background: var(--a-sand); padding: 16px; display: grid; gap: 10px; }
 .rsvp-form-settings legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; }
 .rsvp-form-settings > :not(legend) { clear: both; }
-.gallery-edit { grid-template-columns: repeat(auto-fill, minmax(150px, 190px)); }
+/* .gallery-edit columns: see "More photos layout" below. */
 @media (max-width: 860px) { .editor-nav { top: 64px; } .editor-nav-label { display: none; } }
 @media (prefers-reduced-motion: no-preference) { html:has(.editor-nav) { scroll-behavior: smooth; } }
 .editor-nav { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; }
@@ -2224,3 +2224,22 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
 .vaccine-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .vaccine-chips .chip { white-space: nowrap; }
 .checkin-vaccines { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; }
+
+/* More photos layout (22 Nov 2026, owner): each photo card keeps to its column, so cards, captions and
+   Fit / Fill / Tile no longer run into each other; the Add tile's paste outline hugs the tile; the
+   reorder arrows are 44 px buttons. */
+.gallery-edit { grid-template-columns: repeat(auto-fill, minmax(232px, 280px)); gap: 24px 16px; }
+.gallery-edit > li { min-width: 0; }
+.gallery-edit .gallery-thumb { width: 100%; }
+.gallery-edit textarea { width: 100%; box-sizing: border-box; }
+.gallery-edit .fit-picker { min-width: 0; }
+.admin .gallery-edit .segmented { display: flex; width: 100%; box-sizing: border-box; }
+.admin .gallery-edit .segmented.small label { flex: 1 1 0; justify-content: center; padding: 6px 8px; min-width: 0; }
+.gallery-edit > li.gallery-add-item { align-self: start; }
+.gallery-add.paste-zone { border-radius: 12px; }
+.gallery-order { gap: 8px; }
+.gallery-move { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid var(--a-line); background: white; color: var(--a-ink); font-size: 18px; cursor: pointer; }
+.gallery-move:hover:not(:disabled) { border-color: var(--a-ink); }
+.gallery-move:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
+.gallery-move:disabled { opacity: .35; cursor: default; }
+@media (max-width: 560px) { .gallery-edit { grid-template-columns: minmax(0, 1fr); } }
