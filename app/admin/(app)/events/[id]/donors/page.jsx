@@ -33,14 +33,16 @@ const DONATION_LETTER = "donation-letter";
 export default async function EventDonorsPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
-  const { admin, allowed } = await pageAdmin("guests:view");
+  const { admin, allowed } = await pageAdmin("donors:view");
   if (!allowed) return <NotAllowed />;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const [event] = await sql("SELECT id, title, date FROM events WHERE id = $1", [id]);
   if (!event) notFound();
   const base = await adminBase();
-  const canEdit = can(admin, "guests:edit");
-  const canSend = canEdit && can(admin, "letters:edit");
+  // Treasurers record and check donations (donors:edit); adding people and sending letters stay with guests:edit.
+  const canEdit = can(admin, "donors:edit");
+  const canList = can(admin, "guests:edit");
+  const canSend = canList && can(admin, "letters:edit");
   const [donors, others, letters, fileRows] = await Promise.all([
     sql(`SELECT c.*, ed.status, ed.asked_via, ed.amount, ed.method, ed.received_on, ed.reference, ed.receipt_name, ed.receipt_address,
                 ed.acknowledge, ed.public_name, ed.notes AS event_notes, ed.verified_at, ed.verified_by,
@@ -111,7 +113,7 @@ export default async function EventDonorsPage({ params, searchParams }) {
         <p className="small muted" style={{ margin: 0 }}>{counts.donors} on the list · {counts.asked} no answer yet · <span className={counts.receiptsDue ? "danger-text" : ""}>{counts.receiptsDue} receipt{counts.receiptsDue === 1 ? "" : "s"} to send</span> · {counts.declined} declined. Only money marked as checked has been seen in HoR&apos;s account.</p>
       </section>
 
-      {canEdit && (
+      {canList && (
         <details className="card" open={donors.length === 0}>
           <summary className="strong">+ Add a donor</summary>
           <form action={saveContact} className="form" style={{ marginTop: 12 }}>
@@ -123,7 +125,7 @@ export default async function EventDonorsPage({ params, searchParams }) {
         </details>
       )}
 
-      {canEdit && otherGroups.length > 0 && (
+      {canList && otherGroups.length > 0 && (
         <details className="card">
           <summary className="strong">+ Add from your guests and earlier donors <span className="muted small">({others.length})</span></summary>
           <form action={addGuestsToEvent} className="form" style={{ marginTop: 12 }}>
@@ -145,7 +147,7 @@ export default async function EventDonorsPage({ params, searchParams }) {
         </details>
       )}
 
-      {donors.length === 0 ? <p className="card muted">No donors on this event yet.{canEdit && " Use + Add a donor above."}</p> : (
+      {donors.length === 0 ? <p className="card muted">No donors on this event yet.{canList && " Use + Add a donor above."}</p> : (
         <section className="card donor-tracker">
           <form id="send-donors" method="get" action={`${base}/letters/send`}>
             <input type="hidden" name="letter" value={DONATION_LETTER} />
@@ -225,7 +227,7 @@ export default async function EventDonorsPage({ params, searchParams }) {
                               </fieldset>
                               <div className="actions">
                                 <ConfirmButton className="btn dark" title={`Save ${r.name}'s donation?`} items={["For this event only.", "Nothing is emailed.", "Attached files are already saved."]}>Save</ConfirmButton>
-                                <ConfirmButton className="btn ghost" formAction={removeEventDonor} tone="alert" title={`Take ${r.name} off this event's donors?`} items={["Their returned form and proofs of payment for this event are deleted too.", "They stay in your guests for other events.", "Letters already sent stay in the log."]}>Remove from this event</ConfirmButton>
+                                {canList && <ConfirmButton className="btn ghost" formAction={removeEventDonor} tone="alert" title={`Take ${r.name} off this event's donors?`} items={["Their returned form and proofs of payment for this event are deleted too.", "They stay in your guests for other events.", "Letters already sent stay in the log."]}>Remove from this event</ConfirmButton>}
                               </div>
                             </form>
                           </EditDialog>

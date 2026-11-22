@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request, { params }) {
   const admin = await currentAdmin();
-  if (!admin || !can(admin, "guests:view")) return new Response("Not allowed", { status: 403 });
+  if (!admin || !can(admin, "donors:view")) return new Response("Not allowed", { status: 403 });
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response("Not found", { status: 404 });
   const [row] = await sql("SELECT mime, name, data FROM donation_files WHERE id = $1", [id]);

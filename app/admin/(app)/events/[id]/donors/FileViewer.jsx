@@ -6,16 +6,17 @@ import Icon from "../../../../../components/Icon";
 /**
  * View a donor's returned form or proofs of payment in a window over the donor table (owner, 22 Nov 2026):
  * a PDF in the browser's own viewer, a screenshot as a picture; several files step with ‹ › or the arrow
- * keys. Open in a new tab and Download are there too. Files come from /donations/file/<id> (admins only).
+ * keys. Open in a new tab and Download are there too. Files come from /<path>/<id> (admins only): donation forms
+ * and proofs (donations/file), ledger receipts (ledger/file).
  */
-export default function FileViewer({ files = [], base, title, label = "View", buttonClass = "btn small ghost" }) {
+export default function FileViewer({ files = [], base, title, label = "View", buttonClass = "btn small ghost", path = "donations/file" }) {
   const dialog = useRef(null);
   const [at, setAt] = useState(0);
   const [open, setOpen] = useState(false); // files load only once the window opens
   const titleId = useId();
   if (!files.length) return null;
   const file = files[Math.min(at, files.length - 1)];
-  const url = `${base}/donations/file/${file.id}`;
+  const url = `${base}/${path}/${file.id}`;
   const step = (by) => setAt((i) => (i + by + files.length) % files.length);
   return (
     <>

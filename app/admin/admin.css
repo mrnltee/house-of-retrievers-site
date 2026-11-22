@@ -80,7 +80,9 @@ p.card { display: block; }
 .chip.alert { background: var(--a-alert); color: white; }
 .chip.dark { background: var(--a-ink); color: white; }
 
-.table-wrap { background: white; border: 1px solid var(--a-line); border-radius: 16px; overflow-x: auto; }
+/* position: relative keeps screen-reader-only labels (.sr-only, absolutely positioned) inside the scroll box:
+   a hidden "Edit" header in a table's last column otherwise escaped it and widened the phone page (22 Nov 2026). */
+.table-wrap { position: relative; background: white; border: 1px solid var(--a-line); border-radius: 16px; overflow-x: auto; }
 .admin table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .admin th { text-align: left; background: var(--a-sand); color: var(--a-muted); font-size: 12px; font-weight: 700; padding: 12px 16px; white-space: nowrap; }
 .admin td { padding: 14px 16px; border-top: 1px solid var(--a-line); vertical-align: middle; }
@@ -2116,4 +2118,48 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
   .donation-files-row { grid-template-columns: minmax(0, 1fr); }
   .donor-send { justify-items: start; }
   .file-viewer-body { height: 70vh; }
+}
+
+/* Ledger (22 Nov 2026, owner). Totals for the chosen scope (all, one event, or general lines), then every line
+   in one table: typed lines with their receipts, and lines from Registrations, Donors and the Brand tracker
+   (linked, not editable here). The add / edit windows reuse the donation tracker's file panels. */
+.ledger-summary-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.ledger-summary-head h2 { margin: 0; }
+.ledger-scope select { min-width: 260px; max-width: 100%; }
+.ledger-notes { display: grid; gap: 4px; margin: 12px 0 0; padding-left: 18px; }
+.ledger-lines { display: grid; gap: 12px; }
+.ledger-table th, .ledger-table td { vertical-align: top; padding-left: 10px; padding-right: 10px; }
+.ledger-table th:first-child, .ledger-table td:first-child { padding-left: 16px; }
+.ledger-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ledger-table .nowrap { white-space: nowrap; }
+.ledger-table td .btn, .ledger-table .chip { white-space: nowrap; }
+.ledger-table td:nth-child(3) { min-width: 220px; }
+.ledger-form .ledger-kind { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
+.donation-file-item { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
+.donation-file-item .small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.donation-file-item img { flex: none; width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
+@media (max-width: 640px) { .ledger-scope, .ledger-scope select { width: 100%; min-width: 0; } }
+
+/* Transparency report (22 Nov 2026, owner): a readable, printable page; Print leaves off the admin menu. */
+.ledger-report { max-width: 860px; display: grid; gap: 22px; }
+.ledger-report-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ledger-report-head .eyebrow { margin: 0 0 6px; color: var(--a-gold-ink); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.ledger-report-head h1 { margin: 0; }
+.ledger-report-head p { margin: 6px 0 0; }
+.ledger-report section { display: grid; gap: 8px; }
+.ledger-report h2 { margin: 0; padding-bottom: 6px; border-bottom: 1px solid var(--a-line); font-size: 22px; }
+.ledger-report-table { width: 100%; border-collapse: collapse; font-size: 14px; background: transparent; }
+.ledger-report-table th, .ledger-report-table td { padding: 6px 4px; text-align: left; font-weight: 400; background: transparent; color: var(--a-ink); font-size: 14px; white-space: normal; border-top: 0; border-bottom: 1px solid #ece6d6; }
+.ledger-report-table thead th { font-size: 12px; font-weight: 700; color: var(--a-muted); }
+.ledger-report-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; width: 130px; }
+.ledger-report-table tr.sub th, .ledger-report-table tr.sub td { font-weight: 700; }
+.ledger-report-table tr.item td:first-child { padding-left: 18px; color: var(--a-muted); }
+.ledger-report-table tr.total th, .ledger-report-table tr.total td { font-weight: 700; border-top: 2px solid var(--a-ink); border-bottom: 0; }
+.ledger-report-foot { border-top: 1px solid var(--a-line); padding-top: 10px; }
+@media print {
+  .admin-side, .admin-nav, .no-print, .howto-launch, nextjs-portal { display: none !important; }
+  .admin-shell { display: block !important; }
+  .admin-main { padding: 0 !important; }
+  .ledger-report { max-width: none; }
+  .ledger-report section { break-inside: avoid-page; }
 }

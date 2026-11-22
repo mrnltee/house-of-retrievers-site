@@ -19,7 +19,7 @@ const safeName = (name) => String(name || "").replace(/[^\w .()&,-]+/g, "_").tri
 
 async function admin() {
   try {
-    return { admin: await actionAdmin("guests:edit") };
+    return { admin: await actionAdmin("donors:edit") };
   } catch (error) {
     if (error instanceof Forbidden) return { error: error.message };
     throw error;

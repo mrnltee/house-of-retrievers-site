@@ -238,7 +238,7 @@ export async function saveEventDonor(data) {
   const eventId = form(data, "event");
   const back = isUuid(eventId) ? `/events/${eventId}/donors` : "/events";
   return guarded(back, async () => {
-    const admin = await actionAdmin("guests:edit");
+    const admin = await actionAdmin("donors:edit");
     const contactId = form(data, "contact");
     const { donor: d, error } = cleanEventDonor(Object.fromEntries(["status", "askedVia", "amount", "method", "receivedOn", "reference", "receiptName", "receiptAddress", "acknowledge", "publicName", "notes"].map((k) => [k, form(data, k)])));
     if (error) await backWith(back, "error", error);

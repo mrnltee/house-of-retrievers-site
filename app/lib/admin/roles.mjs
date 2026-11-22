@@ -39,6 +39,12 @@ const PERMISSIONS = {
   "beneficiaries:edit": ["owner", "events"],
   "guests:view": ["owner", "events"],
   "guests:edit": ["owner", "events"],
+  // Donation tracker and ledger (owner, 22 Nov 2026): Treasurers keep the ledger and record and check
+  // donations; Events leads see the ledger. Adding people to a donor list still needs guests:edit.
+  "donors:view": ["owner", "events", "treasurer"],
+  "donors:edit": ["owner", "events", "treasurer"],
+  "ledger:view": ["owner", "events", "treasurer"],
+  "ledger:edit": ["owner", "treasurer"],
   "journey:edit": ["owner", "content"],
   "breeds:edit": ["owner", "events"],
   // View-only rights for pages whose only right used to be "edit".
@@ -69,10 +75,11 @@ export const PAGES = [
   { key: "supporters", label: "Brands & Partners", group: "Run", path: "/supporters", view: ["supporters:view"], edit: ["supporters:edit"] },
   { key: "beneficiaries", label: "Beneficiaries", group: "Run", path: "/beneficiaries", view: ["beneficiaries:view"], edit: ["beneficiaries:edit"] },
   // Opened from each event (its own guest list, owner 2026-11-01), not the sidebar; kept here for access settings.
-  { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["guests:view"], edit: ["guests:edit"], fromEvents: true },
+  { key: "guests", label: "Guest list", group: "Run", path: "/guests", view: ["guests:view", "donors:view"], edit: ["guests:edit", "donors:edit"], fromEvents: true },
   { key: "media", label: "Media hub", group: "Publish", path: "/media", view: ["media:view"], edit: ["media:edit"] },
   { key: "photographers", label: "Photographers", group: "Publish", path: "/photographers", view: ["photographers:view"], edit: ["photographers:edit"] },
   { key: "payments", label: "Payment settings", group: "Money", path: "/payments", view: ["payments:view"], edit: ["payments:request"] },
+  { key: "ledger", label: "Ledger", group: "Money", path: "/ledger", view: ["ledger:view", "donors:view"], edit: ["ledger:edit", "donors:edit"] },
   { key: "emails", label: "Email templates", group: "Settings", path: "/emails", view: ["emails:view"], edit: ["emails:edit"] },
   { key: "letters", label: "Letters", group: "Settings", path: "/letters", view: ["letters:view"], edit: ["letters:edit"] },
   { key: "journey", label: "Journey timeline", group: "Settings", path: "/journey", view: ["journey:view"], edit: ["journey:edit"] },
