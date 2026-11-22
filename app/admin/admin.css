@@ -2163,3 +2163,11 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
   .ledger-report { max-width: none; }
   .ledger-report section { break-inside: avoid-page; }
 }
+
+/* Ledger: edit and remove (22 Nov 2026, owner). Typed lines: Edit, and More ▾ with Remove (a pop-menu); lines
+   from Registrations, Donors or the Brand tracker link there instead. Removed lines wait under the Removed tab. */
+.ledger-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: max-content; min-width: 112px; }
+.ledger-actions > .btn, .ledger-actions > details > summary.btn { justify-content: center; white-space: nowrap; }
+.ledger-actions .row-more > summary .icon { margin-left: 4px; }
+.ledger-table tbody tr:nth-last-child(-n+2):not(:nth-child(-n+2)) .row-more-menu { top: auto; bottom: calc(100% + 4px); }
+.ledger-removed { display: grid; gap: 10px; }

@@ -53,3 +53,16 @@ export async function loadLedger(scope = "all") {
   const lines = ledgerLines({ entries, fees, donations, brands });
   return { lines, entries, files: files.map((f) => ({ ...f, created_at: String(f.created_at) })), events, beneficiaries };
 }
+
+/** Lines removed from the ledger (newest first), so they can be restored. Same scopes as loadLedger. */
+export async function loadRemovedLedger(scope = "all") {
+  const isEvent = /^[0-9a-f-]{36}$/i.test(String(scope));
+  const general = scope === "general";
+  return sql(
+    `SELECT le.*, b.name AS beneficiary_name, (SELECT count(*) FROM ledger_files f WHERE f.entry_id = le.id)::int AS files
+       FROM ledger_entries le LEFT JOIN beneficiaries b ON b.id = le.beneficiary_id
+      WHERE le.deleted_at IS NOT NULL ${isEvent ? "AND le.event_id = $1" : general ? "AND le.event_id IS NULL" : ""}
+      ORDER BY le.deleted_at DESC LIMIT 100`,
+    isEvent ? [scope] : [],
+  );
+}

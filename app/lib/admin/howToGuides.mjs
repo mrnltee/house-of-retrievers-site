@@ -503,8 +503,8 @@ const LEDGER = {
   tiles: [{ t: "tIn", label: "Cash in", value: "₱48,500" }, { t: "tOut", label: "Spent", value: "₱12,300" }, { t: "tTurn", label: "Turned over", value: "₱30,000" }, { t: "tHeld", label: "Held", value: "₱6,200" }],
   search: { t: "search", placeholder: "Search description, payee, category…" },
   rows: [
-    { t: "e1", name: "Venue deposit · Novotel", sub: "Expense · Venue · Nov 3", chip: "Receipt ✓", tone: "good", btns: [{ t: "edit1", label: "Edit" }] },
-    { name: "Registration fees · 24 paid", sub: "From Registrations", chip: "₱42,000" },
+    { t: "e1", name: "Venue deposit · Novotel", sub: "Expense · Venue · Nov 3", chip: "Receipt ✓", tone: "good", btns: [{ t: "edit1", label: "Edit" }, { t: "more1", label: "More ▾" }] },
+    { name: "Registration fees · 24 paid", sub: "From Registrations", chip: "₱42,000", btns: [{ t: "source1", label: "Open Registrations" }] },
     { name: "Pawssion Project Foundation", sub: "Turnover · cash · Dec 2", chip: "Proof ✓", tone: "good", btns: [{ label: "Edit" }] },
   ],
 };
@@ -646,6 +646,11 @@ Object.assign(GUIDES, {
     step(P(LEDGER, { fields: [{ t: "fEvent", label: "Event", value: "A Golden Beginning" }, { t: "fCat", label: "Category", value: "Printing & signage" }, { t: "fAmt", label: "Amount (₱)", value: "2,450" }, { t: "fRcpt", label: "Receipt", value: "Choose a photo or PDF" }] }), "fRcpt", "Attach the receipt: a photo or PDF. Every expense needs one.", { act: "click" }),
     step(P(LEDGER, { confirm: { title: "Add this expense?", note: "It counts in the ledger and the report.", yes: "Yes, add it" } }), "confirm", "Confirm, and it joins the ledger with its receipt.", { act: "click" }),
   ] },
+  "ledger-fix": { title: "Edit, remove or restore a line", steps: [
+    step(LEDGER, "edit1", "Press Edit to change a line you added: its amount, date, category or receipts.", { act: "click" }),
+    step(LEDGER, "more1", "More ▾ → Remove takes it off the ledger and the report. It waits under the Removed tab, where Restore puts it back.", { act: "click" }),
+    step(LEDGER, "source1", "Fees, donations and brand cash come from their own pages. Change them there, and the ledger follows.", { act: "click" }),
+  ] },
   "ledger-report": { title: "Make the transparency report", steps: [
     step(LEDGER, "tIn", "The totals: cash in, spent, turned over to beneficiaries, and what HoR still holds.", { zoom: 1.35 }),
     step(LEDGER, "addTurnover", "When you hand money or goods to a beneficiary, record it as a turnover with its proof.", { act: "click" }),
@@ -695,7 +700,7 @@ export const PAGE_GUIDES = {
   media: ["media-edit"],
   photographers: ["photog-add"],
   payments: ["pay-change"],
-  ledger: ["ledger-expense", "ledger-report"],
+  ledger: ["ledger-expense", "ledger-fix", "ledger-report"],
   journey: ["journey-add", "journey-layout"],
   breeds: ["breeds-change"],
   admins: ["admins-invite", "admins-access"],

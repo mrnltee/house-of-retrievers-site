@@ -119,6 +119,19 @@ export async function removeLedgerEntry(data) {
   });
 }
 
+/** Put a removed line back in the ledger and the report. */
+export async function restoreLedgerEntry(data) {
+  const back = backTo(data);
+  return guarded(back, async () => {
+    const admin = await actionAdmin("ledger:edit");
+    const id = form(data, "id");
+    const [row] = isUuid(id) ? await sql("UPDATE ledger_entries SET deleted_at = NULL, updated_by = $2, updated_at = now() WHERE id = $1 AND deleted_at IS NOT NULL RETURNING description, amount, kind, event_id", [id, admin.email]) : [];
+    if (row) await logActivity(admin.email, "ledger.restore", describe(row), { entryId: id, eventId: row.event_id, kind: row.kind, amount: row.amount });
+    revalidatePath("/ledger");
+    await backWith(back, "ok", row ? `Restored: ${row.description}.` : "That line is already in the ledger.");
+  });
+}
+
 /** Remove one receipt or proof. An expense's or turnover's last proof stays: attach another first. */
 export async function removeLedgerFile(data) {
   try {

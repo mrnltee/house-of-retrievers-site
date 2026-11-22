@@ -111,6 +111,7 @@ export const ACTION_LABELS = {
   "ledger.add": "Added a line to the ledger",
   "ledger.edit": "Changed a line in the ledger",
   "ledger.remove": "Removed a line from the ledger",
+  "ledger.restore": "Put a removed line back in the ledger",
   "ledger.file.remove": "Removed a receipt from the ledger",
   "event.photographers": "Changed an event's photographers",
   "photographer.add": "Added a photographer",

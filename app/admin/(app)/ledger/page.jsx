@@ -1,12 +1,17 @@
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { categoryLabel, LEDGER_KINDS, LEDGER_METHODS, labelOf, ledgerTotals, needsProof } from "../../../lib/ledger.mjs";
-import { loadLedger } from "../../../lib/ledgerStore";
+import { loadLedger, loadRemovedLedger } from "../../../lib/ledgerStore";
+import { displayName } from "../../../lib/admin/profile.mjs";
+import { sql } from "../../../lib/db";
+import { removeLedgerEntry, restoreLedgerEntry } from "../../ledgerActions";
 import { manilaDate } from "../../../lib/journeyEntries.mjs";
 import { formatPeso } from "../../../lib/prices.mjs";
 import { PAGE_GUIDES } from "../../../lib/admin/howToGuides.mjs";
 import { Flash, NotAllowed, PageHead, formatDay } from "../ui";
 import EditDialog from "../EditDialog";
+import ConfirmButton from "../ConfirmButton";
+import Icon from "../../../components/Icon";
 import HowTo from "../HowTo";
 import ListSearch from "../ListSearch";
 import FileViewer from "../events/[id]/donors/FileViewer";
@@ -38,8 +43,12 @@ export default async function LedgerPage({ searchParams }) {
   const base = await adminBase();
   const canEdit = can(admin, "ledger:edit");
   const scope = isUuid(query.event) ? query.event : query.event === "general" ? "general" : "";
-  const kindTab = TABS.some(([k]) => k && k === query.kind) ? query.kind : "";
-  const { lines, entries, files, events, beneficiaries } = await loadLedger(scope || "all");
+  const showRemoved = query.kind === "removed" && canEdit;
+  const kindTab = showRemoved ? "removed" : TABS.some(([k]) => k && k === query.kind) ? query.kind : "";
+  const [{ lines, entries, files, events, beneficiaries }, removed] = await Promise.all([loadLedger(scope || "all"), canEdit ? loadRemovedLedger(scope || "all") : []]);
+  // Who removed each line, by display name.
+  const removers = removed.length ? await sql("SELECT email, name, first_name, furbaby_name, show_as FROM admins WHERE lower(email) = ANY($1::text[])", [[...new Set(removed.map((r) => String(r.updated_by || "").toLowerCase()))]]) : [];
+  const removerName = (email) => { const a = removers.find((x) => x.email.toLowerCase() === String(email || "").toLowerCase()); return a ? displayName(a) : email || "an admin"; };
   const totals = ledgerTotals(lines);
   const peso = (n) => formatPeso(Number(n) || 0);
   const eventTitle = Object.fromEntries(events.map((e) => [e.id, e.title]));
@@ -47,7 +56,7 @@ export default async function LedgerPage({ searchParams }) {
   const today = manilaDate();
   const entryById = Object.fromEntries(entries.map((e) => [e.id, e]));
   const filesOf = (id) => files.filter((f) => f.entry_id === id);
-  const shown = kindTab ? lines.filter((l) => l.kind === kindTab) : lines;
+  const shown = showRemoved ? [] : kindTab ? lines.filter((l) => l.kind === kindTab) : lines;
   const count = (k) => (k ? lines.filter((l) => l.kind === k).length : lines.length);
   const back = scope;
   const qs = (params) => {
@@ -55,6 +64,8 @@ export default async function LedgerPage({ searchParams }) {
     return p.toString() ? `?${p}` : "";
   };
   const formProps = { events, beneficiaries, base, back, today, eventId: isUuid(scope) ? scope : "" };
+  // Lines from elsewhere are changed where they come from; the ledger follows.
+  const sourceEdit = (l) => (l.source === "fees" ? (can(admin, "registrations:view") ? "Open Registrations" : "") : l.source === "donation" ? (can(admin, "donors:edit") ? "Edit on Donors" : can(admin, "donors:view") ? "Open Donors" : "") : l.source === "brand" ? (can(admin, "supporters:edit") ? "Edit on Brand tracker" : can(admin, "supporters:view") ? "Open Brand tracker" : "") : "");
   const sourceHref = (l) => (l.source === "fees" ? `${base}/registrations/${l.eventId}` : l.source === "donation" ? `${base}/events/${l.eventId}/donors` : l.source === "brand" ? `${base}/events/${l.eventId}/brands` : "");
 
   return (
@@ -105,15 +116,46 @@ export default async function LedgerPage({ searchParams }) {
           {TABS.filter(([k]) => !k || count(k) || kindTab === k).map(([k, label]) => (
             <a key={k || "all"} href={`${base}/ledger${qs({ kind: k })}`} aria-current={kindTab === k ? "page" : undefined}>{label} · {count(k)}</a>
           ))}
+          {canEdit && (removed.length > 0 || showRemoved) && <a className="tab-aside" href={`${base}/ledger${qs({ kind: "removed" })}`} aria-current={showRemoved ? "page" : undefined}>Removed · {removed.length}</a>}
         </nav>
+        {showRemoved && (
+          <div className="ledger-removed">
+            <p className="small muted" style={{ margin: 0 }}>Lines taken off the ledger, newest first. They aren&apos;t in the totals or the transparency report; Restore puts one back as it was, with its receipts.</p>
+            {removed.length === 0 ? <p className="muted">Nothing removed here.</p> : (
+              <div className="table-wrap">
+                <table className="ledger-table">
+                  <thead><tr><th>Date</th>{!isUuid(scope) && <th>Event</th>}<th>Line</th><th className="num">Amount</th><th>Removed</th><th><span className="sr-only">Restore</span></th></tr></thead>
+                  <tbody>
+                    {removed.map((r) => (
+                      <tr key={r.id}>
+                        <td className="small nowrap">{formatDay(r.entry_date)}</td>
+                        {!isUuid(scope) && <td className="small">{r.event_id ? eventTitle[r.event_id] || "Event" : <span className="muted">General</span>}</td>}
+                        <td><span className="strong">{r.description}</span><br /><span className="small muted">{[KIND_LABEL[r.kind], categoryLabel(r.kind, r.category), r.beneficiary_name || r.party].filter(Boolean).join(" · ")}</span></td>
+                        <td className="num">{r.amount == null ? <span className="muted">Not valued</span> : peso(r.amount)}</td>
+                        <td className="small">{formatDay(r.deleted_at)}<br /><span className="muted">by {removerName(r.updated_by)}</span></td>
+                        <td>
+                          <form action={restoreLedgerEntry}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <input type="hidden" name="back" value={back} />
+                            <ConfirmButton className="btn small ghost" title={`Restore “${r.description}”?`} items={["It's back in the ledger, the totals and the transparency report.", `Its ${r.files} file${r.files === 1 ? "" : "s"} come back with it.`, "Logged under your name."]} yes="Yes, restore it">Restore</ConfirmButton>
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
         <ListSearch placeholder="Search description, payee, category, event…" />
-        {shown.length === 0 ? (
+        {showRemoved ? null : shown.length === 0 ? (
           <p className="muted">{lines.length ? "Nothing of this kind here." : canEdit ? "No money in or out here yet. Add an expense, or record fees and donations on each event." : "No money in or out here yet."}</p>
         ) : (
           <div className="table-wrap">
             <table className="ledger-table">
               <thead>
-                <tr><th>Date</th>{!isUuid(scope) && <th>Event</th>}<th>Line</th><th>Category</th><th className="num">Amount</th><th>Proof</th>{canEdit && <th><span className="sr-only">Edit</span></th>}</tr>
+                <tr><th>Date</th>{!isUuid(scope) && <th>Event</th>}<th>Line</th><th>Category</th><th className="num">Amount</th><th>Proof</th><th><span className="sr-only">Edit or remove</span></th></tr>
               </thead>
               <tbody>
                 {shown.map((l) => {
@@ -147,15 +189,28 @@ export default async function LedgerPage({ searchParams }) {
                           : l.source === "donation" && l.kind === "income" ? (l.checked ? <span className="chip good">Checked</span> : <a className="chip" href={sourceHref(l)}>{l.proofs ? "To check" : "No proof yet"}</a>)
                           : <span className="muted">—</span>}
                       </td>
-                      {canEdit && (
-                        <td>
-                          {entry && (
-                            <EditDialog label="Edit" buttonClass="btn small ghost" title={l.description} lead={`${KIND_LABEL[l.kind]}${l.eventId ? ` · ${eventTitle[l.eventId] || ""}` : ""}. Changes are logged under your name.`}>
-                              <LedgerEntryForm entry={entry} kinds={[entry.kind]} files={proofs} {...formProps} />
-                            </EditDialog>
+                      <td>
+                        <div className="ledger-actions">
+                          {entry && canEdit && (
+                            <>
+                              <EditDialog label="Edit" buttonClass="btn small ghost" title={l.description} lead={`${KIND_LABEL[l.kind]}${l.eventId ? ` · ${eventTitle[l.eventId] || ""}` : ""}. Changes are logged under your name.`}>
+                                <LedgerEntryForm entry={entry} kinds={[entry.kind]} files={proofs} {...formProps} />
+                              </EditDialog>
+                              <details className="row-more pop-menu">
+                                <summary className="btn small ghost">More <Icon name="chevronDown" /></summary>
+                                <div className="row-more-menu">
+                                  <form action={removeLedgerEntry}>
+                                    <input type="hidden" name="id" value={l.id} />
+                                    <input type="hidden" name="back" value={back} />
+                                    <ConfirmButton className="linkish danger-text" tone="alert" title={`Remove “${l.description}”?`} items={["It leaves the ledger, the totals and the transparency report.", "It waits under Removed, where Restore puts it back with its receipts.", "Logged under your name."]} yes="Yes, remove it">Remove from the ledger</ConfirmButton>
+                                  </form>
+                                </div>
+                              </details>
+                            </>
                           )}
-                        </td>
-                      )}
+                          {!entry && sourceEdit(l) && <a className="btn small ghost" href={sourceHref(l)} title="This line comes from that page: change it there and the ledger follows.">{sourceEdit(l)}</a>}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
