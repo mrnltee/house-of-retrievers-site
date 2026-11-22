@@ -29,6 +29,7 @@ import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 import { compLabel } from "../../../../lib/compTickets.mjs";
 import Icon from "../../../../components/Icon";
+import ScrollRow from "../../ScrollRow";
 import { peopleMatch } from "../../../../lib/admin/people.mjs";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -203,12 +204,14 @@ export default async function EventRegistrations({ params, searchParams }) {
         )}
       </section>
 
-      <nav className="tabs" aria-label="Filter">
-        {/* Only filters with someone in them (and the one you're on), so the row stays short. */}
-        {FILTERS.filter(([key]) => key === "all" || key === filter || counts[key] > 0).filter(([key]) => key !== "deleted" || filter === "deleted").map(([key, label]) => (
-          <a key={key} href={listHref(key)} aria-current={filter === key ? "page" : undefined}>{label} · {counts[key]}</a>
-        ))}
-      </nav>
+      <ScrollRow label="filters" className="reg-tabs-row">
+        <nav className="tabs" aria-label="Filter">
+          {/* Only filters with someone in them (and the one you're on), so the row stays short. */}
+          {FILTERS.filter(([key]) => key === "all" || key === filter || counts[key] > 0).filter(([key]) => key !== "deleted" || filter === "deleted").map(([key, label]) => (
+            <a key={key} href={listHref(key)} aria-current={filter === key ? "page" : undefined}>{label} · {counts[key]}</a>
+          ))}
+        </nav>
+      </ScrollRow>
 
       {filter === "expired" && canFees && counts.expired > 0 && (
         <form action={remindExpiredHolds} className="card form remind-all">

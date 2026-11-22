@@ -2177,3 +2177,32 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
 .admin .rsvp-preview .furbaby-sex-field select { height: 48px; min-height: 48px; padding: 0 38px 0 14px; border: 1px solid var(--line); border-radius: 0; background-color: white; background-position: right 14px center; color: var(--ink); font-size: inherit; }
 .admin .rsvp-preview .rsvp-furbaby-row .breed-select-button { font-size: var(--text-caption); }
 .admin .rsvp-preview .rsvp-vaccination input[type="file"] { min-height: 48px; padding: 7px 8px; border: 1px dashed var(--line); border-radius: 0; background: white; }
+
+/* Scrolling rows get arrows (owner, 22 Nov 2026: on phones the event editor's Jump to row cut
+   "Registration" off with no sign there was more). ScrollRow.jsx: the track scrolls; a ‹ / › button
+   over a soft fade shows on a side only while there is more that way. 44 px touch targets. */
+.scroll-row { position: relative; min-width: 0; flex: 1; --scroll-row-bg: var(--a-ivory); }
+.scroll-row-track { position: relative; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.scroll-row-track::-webkit-scrollbar { display: none; }
+.scroll-row-btn { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; padding: 0; border: 0; color: var(--a-ink); cursor: pointer; font-size: 20px; }
+.scroll-row-btn[hidden] { display: none; }
+.scroll-row-btn.is-prev { left: 0; justify-content: start; padding-left: 4px; background: linear-gradient(90deg, var(--scroll-row-bg) 55%, transparent); }
+.scroll-row-btn.is-next { right: 0; justify-content: end; padding-right: 4px; background: linear-gradient(270deg, var(--scroll-row-bg) 55%, transparent); }
+.scroll-row-btn .icon { width: 30px; height: 30px; padding: 6px; border: 1px solid var(--a-line); border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(13, 13, 13, .12); }
+.scroll-row-btn:hover .icon { border-color: var(--a-ink); }
+.scroll-row-btn:focus-visible { outline: none; }
+.scroll-row-btn:focus-visible .icon { outline: 3px solid var(--a-gold); outline-offset: 1px; }
+.editor-nav .scroll-row { --scroll-row-bg: #fff; }
+.editor-nav .scroll-row-track > ul { overflow: visible; flex-wrap: nowrap; padding: 4px 0; }
+.reg-tabs-row .scroll-row-track > .tabs { overflow: visible; margin-right: 0; padding: 2px 0 4px; }
+
+/* Event editor on phones (owner, 22 Nov 2026): iOS draws date and time inputs at their own width,
+   centred, so they ran past the card; check labels keep their hint underneath; field hints get a line. */
+.admin .field { min-width: 0; }
+.admin input[type="date"], .admin input[type="time"], .admin input[type="datetime-local"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: left; }
+.admin input[type="date"]::-webkit-date-and-time-value, .admin input[type="time"]::-webkit-date-and-time-value, .admin input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.check .check-text { display: grid; gap: 2px; }
+.check .check-text > .small { font-size: 12px; }
+@media (max-width: 560px) {
+  .admin .field > span > small { display: block; margin-top: 2px; font-weight: 400; }
+}

@@ -69,11 +69,11 @@ export function WhenFields({ date, allDay, startTime, endTime, isNew = false, re
       )}
       <div className="when-checks">
         <label className="check">
-          <input type="checkbox" name="allDay" checked={whole} onChange={(e) => setWhole(e.target.checked)} /> All-day event <span className="small muted">No start or end time; shown as "All day"</span>
+          <input type="checkbox" name="allDay" checked={whole} onChange={(e) => setWhole(e.target.checked)} /> <span className="check-text">All-day event <span className="small muted">No start or end time; shown as "All day"</span></span>
         </label>
         {isNew && (
           <label className="check">
-            <input type="checkbox" name="repeats" checked={repeats} onChange={(e) => setRepeats(e.target.checked)} /> Repeats <span className="small muted">e.g. every last Sunday of the month</span>
+            <input type="checkbox" name="repeats" checked={repeats} onChange={(e) => setRepeats(e.target.checked)} /> <span className="check-text">Repeats <span className="small muted">e.g. every last Sunday of the month</span></span>
           </label>
         )}
       </div>
