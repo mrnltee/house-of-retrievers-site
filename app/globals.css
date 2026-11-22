@@ -2235,3 +2235,22 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
   .coming-up-card img { width: 64px; height: 80px; }
   .coming-up-go { grid-column: 1 / -1; justify-content: center; }
 }
+
+/* Furbaby row fix (22 Nov 2026, owner): name, breed, gender and age share one
+   height, label style, border and chevron, and never overlap. The breed button's
+   nowrap text had set its column's minimum width, pushing it under Gender. */
+.rsvp-furbaby-row > *, .breed-select-row > * { min-width: 0; }
+.breed-select { gap: 7px; }
+.rsvp-furbaby-row .breed-select-label, .join-modal .breed-select-label { color: #585c54; letter-spacing: .07em; }
+.furbaby-sex-field, .furbaby-age-field { gap: 7px; }
+.breed-select-button .breed-select-icon:empty { display: none; }
+.breed-select-caret { display: inline-flex; color: var(--ink); font-size: 16px; }
+.rsvp-furbaby-row input:not([type="file"]):not([type="checkbox"]), .rsvp-furbaby-row select, .rsvp-furbaby-row .breed-select-button { height: 48px; min-height: 48px; }
+.rsvp-furbaby-row .breed-select-button { padding: 0 14px; font-size: var(--text-caption); font-weight: 700; letter-spacing: 0; text-transform: none; }
+.furbaby-sex-field select { padding-top: 0; padding-bottom: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-size: 16px; background-position: right 14px center; text-overflow: ellipsis; }
+@media (max-width: 760px) { .rsvp-furbaby-row .breed-select-button, .furbaby-sex-field select { font-size: 16px; } }
+/* The vaccination upload: a field like the others, with our own button instead of the browser's. */
+.rsvp-vaccination input[type="file"] { width: 100%; min-height: 48px; padding: 7px 8px; border: 1px dashed var(--line); background: white; color: var(--muted-on-light); font-size: 13px; font-weight: 500; cursor: pointer; }
+.rsvp-vaccination input[type="file"]::file-selector-button { margin-right: 12px; padding: 8px 16px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.rsvp-vaccination input[type="file"]:hover { border-color: var(--gold); }
+.rsvp-vaccination input[type="file"]:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
