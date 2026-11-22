@@ -5,6 +5,7 @@ import { resizeImage } from "../lib/resizeImage";
 import { PAY_METHODS, READABLE, parsePeso, ticketLine } from "../lib/eventPayments.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import Icon from "./Icon";
+import { isPartlyHidden } from "../lib/partlyHidden.mjs";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 
@@ -120,6 +121,7 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
               {shown.qrImage && <img src={shown.qrImage} alt={`${shown.label} QR code for ${shown.details.accountName || "House of Retrievers"}`} width="220" height="220" />}
               <strong>{shown.details.accountName}</strong>
               <span>{[shown.label, shown.details.number, shown.details.bankName, shown.details.accountNumber].filter(Boolean).join(" · ")}</span>
+              {shown.qrImage && (isPartlyHidden(shown.details.number) || isPartlyHidden(shown.details.accountNumber)) && <span className="pay-hint">On your phone? Save the QR, then upload it in your {shown.label} app.</span>}
               {shown.qrImage && <a className="pay-link" href={shown.qrImage} download={`HOR-${shown.key}-QR.png`}>Save QR image</a>}
             </div>
           )}

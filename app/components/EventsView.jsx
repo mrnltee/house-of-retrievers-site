@@ -235,7 +235,7 @@ function OpensPill({ event }) {
  * the date tile and availability, event type, title, time, place and price,
  * then View details and RSVP. Everything else is on the event page.
  */
-export function EventCard({ event: given, past = false, onRsvp, base }) {
+export function EventCard({ event: given, past = false, onRsvp, base, eager = false }) {
   const event = useLiveEvent(given);
   const href = `${base}/${event.slug}`;
   const date = dateParts(event.date);
@@ -244,7 +244,7 @@ export function EventCard({ event: given, past = false, onRsvp, base }) {
   return (
     <li className={`event-card is-compact${past ? " is-past" : ""}`}>
       <a className={`event-card-media${event.image ? "" : " no-image"}`} href={href} tabIndex={-1} aria-hidden="true">
-        {event.image && <img src={event.image} alt="" loading="lazy" />}
+        {event.image && <img src={event.image} alt="" loading={eager ? "eager" : "lazy"} fetchPriority={eager ? "high" : undefined} />}
         {date && (
           <span className="event-date-tile">
             <strong>{date.day}</strong>
@@ -602,6 +602,16 @@ function SupporterChip({ name, link, onOpen }) {
   );
 }
 
+/** "RSVP closed" on an upcoming event: say what that means and where to ask, so it isn't a dead end. */
+function ClosedNote() {
+  return (
+    <p className="event-closed-note" role="note">
+      Registration isn&apos;t open on this page right now.{" "}
+      <a href="https://www.instagram.com/houseofretrieversph/" target="_blank" rel="noopener noreferrer">Message us on Instagram <Icon name="external" size={13} /></a> to ask about a spot.
+    </p>
+  );
+}
+
 export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
   const event = useLiveEvent(given);
   const media = event.media || (event.image ? [{ src: event.image, alt: event.imageAlt || "" }] : []);
@@ -638,9 +648,10 @@ export function EventDetail({ event: given, past, onRsvp, base, photos = [] }) {
               <Price event={event} past={past} />
               <RsvpButton event={event} past={past} onRsvp={onRsvp} />
               <ShareMenu event={event} compact />
+              {event.status === "closed" && <ClosedNote />}
             </div>
           )}
-          {!past && !event.cost && !event.pricePending && !canRsvp && <div className="event-actions"><ShareMenu event={event} /></div>}
+          {!past && !event.cost && !event.pricePending && !canRsvp && <div className="event-actions"><ShareMenu event={event} />{event.status === "closed" && <ClosedNote />}</div>}
           {event.summary && (
             <section className="event-about" aria-labelledby="about-title">
               <h2 id="about-title">About</h2>
@@ -820,7 +831,7 @@ export default function EventsView({ upcoming, past, focus = null }) {
           <h2 id="upcoming-title">Coming up</h2>
           {upcoming.length > 0 ? (
             <ul className="event-grid">
-              {upcoming.map((event) => <EventCard key={event.slug} event={event} onRsvp={setRsvpEvent} base={base} />)}
+              {upcoming.map((event, i) => <EventCard key={event.slug} event={event} onRsvp={setRsvpEvent} base={base} eager={i < 2} />)}
             </ul>
           ) : (
             <div className="events-empty">
