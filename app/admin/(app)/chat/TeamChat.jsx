@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { deleteChat, editChat, loadChat, sendChat } from "../../chatActions";
 import { CHAT_MAX } from "../../../lib/admin/chat.mjs";
 
@@ -67,20 +67,31 @@ export function ChatMessage({ m, onEdit, onDelete, readOnly }) {
   );
 }
 
-/** The team room: refreshed every few seconds while the tab is open. */
-export default function TeamChat({ preview }) {
+/**
+ * The team room: refreshed every few seconds while the tab is open. The chat page shows it as a card; the
+ * floating chat (ChatBubble.jsx) shows it `compact` in its panel, focuses the message box and hears about
+ * each refresh through `onMessages` (that's how it chimes while the panel is open).
+ */
+export default function TeamChat({ preview, compact = false, autoFocus = false, onMessages }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const list = useRef(null);
+  const box = useRef(null);
   const lastId = useRef(0);
+  const textId = useId();
+  const heard = useRef(onMessages);
+  heard.current = onMessages;
 
   const refresh = useCallback(async () => {
     const result = await loadChat().catch(() => null);
     if (!result || result.error) return;
     setMessages(result.messages);
+    heard.current?.(result.messages);
   }, []);
+
+  useEffect(() => { if (autoFocus && !preview) box.current?.focus(); }, [autoFocus, preview]);
 
   useEffect(() => {
     refresh();
@@ -110,20 +121,21 @@ export default function TeamChat({ preview }) {
   const remove = async (id) => { const r = await deleteChat(id).catch(() => ({ error: "Didn't delete. Try again." })); refresh(); return r; };
 
   return (
-    <section className="card chat">
+    <section className={compact ? "chat chat-compact" : "card chat"}>
       <div className="chat-list" ref={list} aria-live="polite">
         {messages.length === 0 && <p className="empty">No messages yet. Say hello to the team!</p>}
         {messages.map((m) => <ChatMessage key={`${m.id}-${m.edited}-${m.deleted}`} m={m} onEdit={edit} onDelete={remove} readOnly={preview} />)}
       </div>
       <form className="chat-form" onSubmit={send}>
-        <label className="visually-hidden" htmlFor="chat-text">Message</label>
+        <label className="visually-hidden" htmlFor={textId}>Message</label>
         <textarea
-          id="chat-text"
+          id={textId}
+          ref={box}
           rows={2}
           maxLength={CHAT_MAX}
           value={text}
           disabled={preview}
-          placeholder={preview ? "Sending is off while you preview." : "Write to the team… (Enter sends, Shift+Enter for a new line)"}
+          placeholder={preview ? "Sending is off while you preview." : compact ? "Message the team… (Enter sends)" : "Write to the team… (Enter sends, Shift+Enter for a new line)"}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) send(e); }}
         />

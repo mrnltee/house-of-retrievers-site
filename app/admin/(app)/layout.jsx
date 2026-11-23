@@ -9,6 +9,7 @@ import PasteImages from "./PasteImages";
 import PopMenus from "./PopMenus";
 import SendLetterModal from "./SendLetterModal";
 import AddBrandModal from "./AddBrandModal";
+import ChatBubble from "./ChatBubble";
 import { sql } from "../../lib/db";
 import { CHAT_ROOM_DAYS } from "../../lib/admin/chat.mjs";
 import { exitPreview } from "../previewActions";
@@ -79,6 +80,7 @@ export default async function AdminAppLayout({ children }) {
       {!admin.preview && <PasteImages />}
       {!admin.preview && <SendLetterModal base={base} />}
       {!admin.preview && can(admin, "supporters:edit") && <AddBrandModal base={base} />}
+      <ChatBubble base={base} initialUnread={unread} preview={Boolean(admin.preview)} />
       <main className="admin-main" id="admin-main">
         {admin.preview && (
           <div className="banner alert preview-bar" role="status">

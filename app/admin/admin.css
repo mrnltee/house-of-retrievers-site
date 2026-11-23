@@ -2331,3 +2331,50 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
   .admin-collapse, .admin-tip { display: none; }
   .admin-side .admin-menu .admin-side-head { display: none; }
 }
+
+/* Floating team chat (owner, 23 Nov 2026). ChatBubble.jsx: a round black-and-gold button in the bottom-right
+   corner with the unread count, opening the team room in a panel over the page. --chat-lift (set by the
+   component) raises both above a save bar stuck to the bottom of the screen. Under the phone menu (z 30),
+   the check-in welcome card (z 20 covers the button) and every dialog (top layer). */
+.chat-float { --chat-edge: 24px; position: fixed; right: var(--chat-edge); bottom: calc(var(--chat-edge) + var(--chat-lift, 0px) + env(safe-area-inset-bottom)); z-index: 15; display: grid; justify-items: end; gap: 12px; pointer-events: none; }
+.chat-float > * { pointer-events: auto; }
+.chat-fab { position: relative; display: grid; place-items: center; width: 60px; height: 60px; padding: 0; border: 2px solid var(--a-gold); border-radius: 50%; background: var(--a-ink); color: #f2e3bf; cursor: pointer; box-shadow: 0 10px 26px -8px rgba(13, 13, 13, .55), 0 2px 6px rgba(13, 13, 13, .2); }
+.chat-fab:hover { background: #262219; color: #fff; }
+.chat-fab:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 3px; }
+.chat-fab-badge { position: absolute; top: -6px; right: -6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; border: 2px solid var(--a-ivory); background: #d4b26a; color: #111; font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; box-sizing: border-box; }
+.chat-panel { width: min(400px, calc(100vw - 48px)); height: min(600px, calc(100dvh - 140px - var(--chat-lift, 0px))); min-height: 320px; display: flex; flex-direction: column; overflow: hidden; background: #fff; color: var(--a-ink); border: 1px solid var(--a-line); border-radius: 18px; box-shadow: 0 24px 60px -18px rgba(13, 13, 13, .45), 0 4px 14px rgba(13, 13, 13, .12); }
+.chat-panel[hidden] { display: none; }
+.chat-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 10px 12px 18px; background: var(--a-ink); color: #fff; border-bottom: 2px solid var(--a-gold); }
+.chat-panel-head h2 { margin: 0; font-size: 17px; line-height: 1.25; color: #fff; }
+.chat-panel-head p { margin: 2px 0 0; font-size: 12px; color: var(--a-on-dark-muted); }
+.chat-panel-tools { display: flex; gap: 2px; flex: none; }
+.chat-tool { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: #f2e3bf; cursor: pointer; text-decoration: none; }
+.chat-tool:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.chat-tool[aria-pressed="false"] { color: var(--a-on-dark-muted); }
+.chat-panel .chat-compact { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0; }
+.chat-panel .chat-compact .chat-list { flex: 1; min-height: 0; max-height: none; padding: 14px 14px 8px; background: var(--a-ivory); }
+.chat-panel .chat-compact .chat-msg { max-width: 88%; }
+.chat-panel .chat-compact .chat-form { padding: 10px 12px; border-top: 1px solid var(--a-line); background: #fff; }
+.chat-panel .chat-compact .chat-form textarea { min-height: 44px; max-height: 140px; resize: none; }
+.chat-panel .chat-compact .chat-form .btn { min-height: 44px; }
+.chat-panel .chat-compact > .banner { margin: 0 12px 10px !important; }
+.chat-panel-note { margin: 0; padding: 0 14px 10px; font-size: 12px; color: var(--a-muted); background: #fff; }
+@media (prefers-reduced-motion: no-preference) {
+  .chat-panel:not([hidden]) { transform-origin: bottom right; animation: chat-panel-in .18s cubic-bezier(.2, .7, .2, 1); }
+  .chat-fab { transition: background .15s ease, transform .15s ease; }
+  .chat-fab:active { transform: scale(.95); }
+  .chat-float { transition: bottom .2s ease; }
+}
+@keyframes chat-panel-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+/* Phones: a smaller button; the open panel fills the screen (its own ✕ closes it), so the button steps aside. */
+@media (max-width: 560px) {
+  .chat-float { --chat-edge: 16px; }
+  .chat-fab { width: 54px; height: 54px; }
+  .chat-float.is-open { inset: 0; z-index: 45; display: block; }
+  .chat-float.is-open .chat-fab { display: none; }
+  .chat-float.is-open .chat-panel { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; }
+  .chat-float.is-open .chat-panel-head { padding-top: calc(10px + env(safe-area-inset-top)); }
+  .chat-float.is-open .chat-panel-note { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+}
+/* Print and the check-in welcome overlay don't need it. */
+@media print { .chat-float { display: none; } }
