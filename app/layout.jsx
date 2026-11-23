@@ -63,7 +63,9 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning covers this element's own attributes only: the admin sets
+    // data-admin-nav on <html> before paint (collapsed sidebar, app/admin/(app)/layout.jsx).
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
