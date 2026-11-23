@@ -10,7 +10,7 @@ import { guestFollowUpLink, guestInviteLetter, guestMessageBase, guestRowLinks }
 import { INTRO_MAX, ROLE_MAX, SPEAKER_ROLES } from "../../../../../lib/eventSpeakers.mjs";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
-import { addComingGuestsToRsvps, addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, setEventGuestOnPage, setEventGuestReply } from "../../../../contactActions";
+import { addComingGuestsToRsvps, addGuestsToEvent, removeEventGuest, saveContact, saveEventGuest, saveGuestChanges } from "../../../../contactActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import ImageField, { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
@@ -20,6 +20,7 @@ import ContactFields from "../../../guests/ContactFields";
 import TrackerTools from "../brands/TrackerTools";
 import SelectionBar from "../brands/SelectionBar";
 import SelectAll from "../brands/SelectAll";
+import { ReplyPicker, StagedSwitch, TrackerChanges } from "../brands/TrackerChanges";
 import Icon from "../../../../../components/Icon";
 import { compLabel } from "../../../../../lib/compTickets.mjs";
 import { compTypeForGuest } from "../../../../../lib/guestRsvp.mjs";
@@ -166,6 +167,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
             messageBase={guestMessageBase(base, event.id)}
           />
         )}
+        <TrackerChanges on={canEdit} action={saveGuestChanges} eventId={event.id} keeps="notes, letters and event-page details" picks="replies and Event page switches" noun="guest">
         <div className="table-wrap tracker-table">
           <table className="stack-table">
             <thead><tr>{canSend && <th>{guests.length > 0 ? <SelectAll label="Pick every guest showing" /> : <span className="sr-only">Pick</span>}</th>}<th>Guest</th><th>Contact</th><th>Letters</th><th>Their reply</th></tr></thead>
@@ -217,35 +219,16 @@ export default async function EventGuestsPage({ params, searchParams }) {
                     </td>
                     <td className="st-2" data-label="Their reply">
                       {canEdit ? (
-                        <span className="reply-quick reply-icons" role="group" aria-label={`${r.name}'s reply`}>
-                          {REPLIES.map(([k]) => (k === r.reply
-                            ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true" title={`Their reply: ${guestReply(k)}`}><Icon name={REPLY_ICON[k]} label={guestReply(k)} /></span>
-                            : (
-                              <form key={k} action={setEventGuestReply}>
-                                <input type="hidden" name="event" value={event.id} />
-                                <input type="hidden" name="contact" value={r.id} />
-                                <input type="hidden" name="reply" value={k} />
-                                <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, ${guestReply(k)}`} title={`${r.name}: ${guestReply(k)}?`}
-                                  items={[`Their reply for ${event.title}: ${guestReply(r.reply)} → ${guestReply(k)}`, ...rsvpNote(r, k), ...(r.show_on_site ? [k === "yes" ? "They'll show on the event page" : "They'll be taken off the event page until they're Coming"] : []), "Nothing is emailed"]} buttonLabel={`Mark ${guestReply(k)}`}><Icon name={REPLY_ICON[k]} /></ConfirmButton>
-                              </form>
-                            )))}
-                        </span>
+                        <ReplyPicker row={r.id} name={r.name} saved={r.reply} options={REPLIES.map(([k]) => ({
+                          key: k, label: guestReply(k), icon: REPLY_ICON[k], tone: replyTone[k],
+                          notes: [...rsvpNote(r, k).map((n) => `${r.name}: ${n}`), ...(r.show_on_site ? [k === "yes" ? `${r.name} shows on the event page` : `${r.name} is taken off the event page until they're Coming`] : [])],
+                        }))} />
                       ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{guestReply(r.reply)}</span>}{r.on_rsvps && <><br /><a className="small" href={`${base}/registrations/${event.id}/r/${r.rsvp_id}`}>{r.rsvp_checked_in ? "Checked in" : "On the RSVP list"}{r.rsvp_comp ? ` · ${compLabel(r.rsvp_comp)}` : ""}</a></>}{canEdit ? (
-                        <form action={setEventGuestOnPage} className="onpage-form">
-                          <input type="hidden" name="event" value={event.id} />
-                          <input type="hidden" name="contact" value={r.id} />
-                          <input type="hidden" name="on" value={r.show_on_site ? "0" : "1"} />
-                          <ConfirmButton className={`onpage-toggle${r.show_on_site ? " is-on" : ""}`} tone={r.show_on_site ? "alert" : "gold"}
-                            yes={r.show_on_site ? "Yes, take them off" : "Yes, show them"}
-                            title={r.show_on_site ? `Take ${r.name} off the event page?` : `Show ${r.name} on the event page?`}
-                            items={r.show_on_site
-                              ? ["They're taken off Speakers and special guests on the public event page", "Their reply and RSVP stay as they are", "Nothing is emailed"]
-                              : [`They show under Speakers and special guests${(r.public_role || roleForSpecification(r.specification)) ? ` as ${r.public_role || roleForSpecification(r.specification)}` : " as Special guest"}`, ...(r.reply === "yes" ? [] : ["Only once their reply is Coming"]), "Only their name, guest specification, role, short intro, page photo and link: never their email, phone or notes", "Change their role, intro and photo in Edit details", "Nothing is emailed"]}>
-                            <span className="onpage-track" aria-hidden="true" />
-                            <span>Event page<span className="sr-only">: {r.show_on_site ? "on" : "off"}</span></span>
-                          </ConfirmButton>
+                        <StagedSwitch row={r.id} name={r.name} saved={r.show_on_site} what="Event page"
+                          onNotes={[`${r.name} shows under Speakers and special guests as ${(r.public_role || roleForSpecification(r.specification) || "Special guest")}, once they're Coming`, "Only their name, guest specification, role, short intro, page photo and link go on the page: never their email, phone or notes"]}
+                          offNotes={[`${r.name} is taken off Speakers and special guests on the public event page`]}>
                           {r.show_on_site && <span className="small muted">{r.reply === "yes" ? `Shown as ${r.public_role || "Special guest"}` : r.reply === "no" ? "Not shown: can't make it" : "Shows once they're Coming"}</span>}
-                        </form>
+                        </StagedSwitch>
                       ) : r.show_on_site && <><br /><span className="small muted">{r.reply === "yes" ? `On the event page${r.public_role ? ` · ${r.public_role}` : ""}` : r.reply === "no" ? "Event page: not shown, can't make it" : "Event page: shows once they're Coming"}</span></>}</td>
                   </tr>
                 );
@@ -254,6 +237,7 @@ export default async function EventGuestsPage({ params, searchParams }) {
             </tbody>
           </table>
         </div>
+        </TrackerChanges>
       </section>
     </>
   );

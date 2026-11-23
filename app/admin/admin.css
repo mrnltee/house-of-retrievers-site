@@ -2245,9 +2245,8 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
 @media (max-width: 560px) { .gallery-edit { grid-template-columns: minmax(0, 1fr); } }
 
 /* Partner types in a column (owner, 23 Nov 2026): the Brand tracker's Type column sets Co-presenter, In-kind
-   partner, Exhibitor (or a sponsor level) right on the row; Save appears once the choice changes. */
+   partner, Exhibitor (or a sponsor level) right on the row; the tracker's one Save bar saves it. */
 .brand-tracker .st-type { min-width: 190px; }
-.type-form { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0; }
 .type-select { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; }
 .type-select select { width: 100%; max-width: 220px; min-height: 36px; font-size: 13px; }
 @media (max-width: 720px) {
@@ -2259,8 +2258,23 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
    Yes / Coming (thumbs up), No / Can't make it (thumbs down), each 44 px round with its name as the tooltip and for screen readers. */
 .tracker-page .reply-quick.reply-icons { display: inline-flex; width: auto; gap: 2px; padding: 2px; }
 .tracker-page .reply-icons .reply-opt { flex: none; width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; font-size: 19px; color: var(--a-muted); }
-.tracker-page .reply-icons button.reply-opt:hover, .tracker-page .reply-icons button.reply-opt:focus-visible { color: var(--a-ink); background: var(--a-sand); }
+.tracker-page .reply-icons button.reply-opt:not(.is-on):hover, .tracker-page .reply-icons button.reply-opt:not(.is-on):focus-visible { color: var(--a-ink); background: var(--a-sand); }
 .tracker-page .reply-icons .reply-opt.is-on { color: var(--a-ink); }
 .tracker-page .reply-icons .reply-opt.is-on.good, .tracker-page .reply-icons .reply-opt.is-on.alert { color: #fff; }
 .tracker-page .reply-icons .icon { vertical-align: 0; }
 @media (max-width: 720px) { .tracker-page .reply-quick.reply-icons { display: inline-flex; width: auto; } }
+
+/* One Save for a tracker (owner, 23 Nov 2026): replies, Type and the Event page switch are staged on the rows
+   (outlined in gold until saved) and saved together from the bar under the table (TrackerChanges.jsx). The bar
+   reuses the Page access save bar and stays at the bottom of the screen while the table scrolls. */
+.tracker-savebar { margin: 12px 0 0; }
+.tracker-savebar:not(.has-changes) { position: static; }
+.tracker-savebar .actions { margin: 0; }
+.tracker-page .reply-quick.is-changed { border-color: var(--a-gold); box-shadow: 0 0 0 2px var(--a-gold); }
+.tracker-page .type-select.is-changed select { border-color: var(--a-gold); box-shadow: 0 0 0 2px var(--a-gold); }
+.tracker-page .onpage-form.is-changed .onpage-toggle { outline: 2px solid var(--a-gold); outline-offset: 3px; border-radius: 999px; }
+@media (max-width: 720px) {
+  /* An older phone rule (.brand-tracker .reply-quick:not(.role-quick) .reply-opt) shrank the icons to 12 px. */
+  .tracker-page .reply-quick.reply-icons .reply-opt { font-size: 19px; padding: 0; }
+  .tracker-savebar .actions { width: 100%; justify-content: space-between; }
+}

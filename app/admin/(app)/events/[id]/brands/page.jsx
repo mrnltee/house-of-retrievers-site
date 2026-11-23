@@ -11,14 +11,14 @@ import { trackerRows } from "../../../../../lib/eventBrandsStore";
 import { refreshSends, sendsFor } from "../../../../../lib/letterSendsStore";
 import { groupLetters, listLetters } from "../../../../../lib/letterStore";
 import { letterFor } from "../../../../../lib/contacts.mjs";
-import { setTrackerReply, setTrackerRole, inviteToEvent, removeTrackerEntry, saveTrackerEntry } from "../../../../eventBrandActions";
+import { inviteToEvent, removeTrackerEntry, saveTrackerChanges, saveTrackerEntry } from "../../../../eventBrandActions";
 import { Flash, NotAllowed, PageHead, formatDay } from "../../../ui";
 import { Avatar } from "../../../ImageField";
 import ConfirmButton from "../../../ConfirmButton";
 import SendStatus from "../../../SendStatus";
 import SelectionBar from "./SelectionBar";
 import TrackerTools from "./TrackerTools";
-import TypeSelect from "./TypeSelect";
+import { ReplyPicker, StagedSelect, TrackerChanges } from "./TrackerChanges";
 import SelectAll from "./SelectAll";
 import InviteDialog from "./InviteDialog";
 import HowTo from "../../../HowTo";
@@ -31,6 +31,10 @@ const replyTone = { yes: "good", no: "alert", waiting: "" };
 const REPLY_ORDER = ["waiting", "yes", "no"];
 // Icon-only reply buttons (owner, 23 Nov 2026); each keeps its name for screen readers and as a tooltip.
 const REPLY_ICON = { waiting: "hourglass", yes: "thumbsUp", no: "thumbsDown" };
+const TYPE_GROUPS = [
+  { label: "Partner", options: [["Partner", "Partner · no type yet"], ...PARTNER_TYPES.map(([k, l]) => [`Partner:${k}`, l])] },
+  { label: "Sponsor", options: [["Sponsor", "Sponsor · no level yet"], ...SPONSOR_LEVELS.map(([k, l]) => [`Sponsor:${k}`, l])] },
+];
 
 /**
  * What a brand gives, amounts first: "₱25,000 cash", "₱15,000 in kind: Treats ×200 · Booth". A kind with an
@@ -120,6 +124,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
         </form>
         {rows.length > 0 && <TrackerTools publicNote="Only brands that said Yes show on this event’s page and on the home page." counts={{ ...counts, unsent: rows.filter((r) => sendsOf(r).length === 0).length }} sort={sort} groups={brandGroups(rows)} groupLabel="Partners and sponsors" />}
         {canSend && rows.length > 0 && <SelectionBar letterHref={`${base}/letters/${letter}`} letterName={letterName(letter)} ownLetterHref={`${base}/events/${event.id}/letters`} />}
+        <TrackerChanges on={canEdit} action={saveTrackerChanges} eventId={event.id} keeps="giving, notes and letters" picks="replies and types" noun="brand">
         <div className="table-wrap tracker-table">
           <table className="stack-table">
             <thead><tr>{canSend && <th>{rows.length > 0 ? <SelectAll /> : <span className="sr-only">Pick</span>}</th>}<th>Brand</th><th>Type</th><th>Contact</th><th>Invite letter</th><th>Their reply</th><th>Giving</th></tr></thead>
@@ -169,14 +174,8 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                     ) : null}</span></span>
                   </td>
                   <td className="st-type" data-label="Type">{canEdit ? (
-                    <form action={setTrackerRole} className="type-form">
-                      <input type="hidden" name="event" value={event.id} />
-                      <input type="hidden" name="brand" value={r.supporter_id} />
-                      <TypeSelect id={`type-${r.supporter_id}`} name={r.name} value={roleChoice(r)} partnerTypes={PARTNER_TYPES.map(([k, l]) => [k, l])} sponsorLevels={SPONSOR_LEVELS.map(([k, l]) => [k, l])}>
-                        <ConfirmButton className="btn small dark" yes="Yes, change it" title={`Change ${r.name}'s type at this event?`} echo={[{ name: "role", label: "New type" }]}
-                          items={[`Now: ${roleLabel(r)}`, r.reply === "yes" ? "On the event page they move to the matching group under With thanks to" : "", "Their reply, giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>Save</ConfirmButton>
-                      </TypeSelect>
-                    </form>
+                    <StagedSelect id={`type-${r.supporter_id}`} row={r.supporter_id} name={r.name} field="role" what="Type" saved={roleChoice(r)} label={`${r.name} at this event as`}
+                      groups={TYPE_GROUPS} notes={[r.reply === "yes" ? "Brands that said Yes move to the matching group under With thanks to on the event page" : ""].filter(Boolean)} />
                   ) : <span className="chip">{roleLabel(r)}</span>}</td>
                   <td className="st-4" data-label="Contact">{r.contact_name || r.contact_email ? <>{r.contact_name || <span className="muted">No contact person</span>}<br /><span className="small muted">{r.contact_email || "No email yet"}</span></> : <span className="muted">No contact yet</span>}<br /><span className="small muted">Dear {recipientFields({ supporter: r }).salutation},</span></td>
                   <td className="small st-5" data-label="Invite letter">
@@ -193,19 +192,10 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                     })()}
                   </td>
                   <td className="st-2" data-label="Their reply">{canEdit ? (
-                    <span className="reply-quick reply-icons" role="group" aria-label={`${r.name}'s reply`}>
-                      {REPLY_ORDER.map((k) => (k === r.reply
-                        ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true" title={`Their reply: ${replyLabel(k)}`}><Icon name={REPLY_ICON[k]} label={replyLabel(k)} /></span>
-                        : (
-                          <form key={k} action={setTrackerReply}>
-                            <input type="hidden" name="event" value={event.id} />
-                            <input type="hidden" name="brand" value={r.supporter_id} />
-                            <input type="hidden" name="reply" value={k} />
-                            <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, mark ${replyLabel(k)}`} title={`${r.name}: ${replyLabel(k)}?`}
-                              items={[`Their reply for ${event.title}: ${replyLabel(r.reply)} → ${replyLabel(k)}`, k === "yes" ? "They show on this event's page (and the home page once they have a logo, a blurb and are switched on)" : r.reply === "yes" ? "They come off this event's page" : "", k === "yes" && !r.number_no ? "This gives them their HOR number" : "", "Their giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)} buttonLabel={`Mark ${replyLabel(k)}`}><Icon name={REPLY_ICON[k]} /></ConfirmButton>
-                          </form>
-                        )))}
-                    </span>
+                    <ReplyPicker row={r.supporter_id} name={r.name} saved={r.reply} options={REPLY_ORDER.map((k) => ({
+                      key: k, label: replyLabel(k), icon: REPLY_ICON[k], tone: replyTone[k],
+                      notes: [k === "yes" ? "Brands marked Yes show on this event's page (and the home page once they have a logo, a blurb and are switched on)" : r.reply === "yes" ? "Brands moved off Yes come off this event's page" : "", k === "yes" && !r.number_no ? `${r.name} gets their HOR number` : ""].filter(Boolean),
+                    }))} />
                   ) : <span className={`chip ${replyTone[r.reply]}`.trim()}>{replyLabel(r.reply)}</span>}{r.reply === "waiting" && r.follow_up_on && <><br /><span className="small muted">Follow up {formatDay(r.follow_up_on)}</span></>}</td>
                   <td className="small st-3" data-label="Giving">{giving(r) || "—"}{(r.reps_attending || r.dogs_attending) ? <><br /><span className="muted">{[r.reps_attending && `${r.reps_attending} ${r.reps_attending === 1 ? "person" : "people"}`, r.dogs_attending && `${r.dogs_attending} ${r.dogs_attending === 1 ? "dog" : "dogs"}`].filter(Boolean).join(", ")} coming</span></> : null}</td>
                 </tr>
@@ -214,6 +204,7 @@ export default async function BrandTrackerPage({ params, searchParams }) {
             </tbody>
           </table>
         </div>
+        </TrackerChanges>
       </section>
     </>
   );
