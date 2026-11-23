@@ -2348,3 +2348,23 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
   .media-timeline-horizontal .media-timeline-list { grid-template-columns: minmax(0, 1fr); }
   .media-timeline-horizontal .media-timeline-thumb { height: 190px; }
 }
+
+/* Stories in three columns (23 Nov 2026, owner): the intro is the first column and
+   the story cards fill the other two, two to a row, so four stories are two rows
+   instead of a tall stack. Cards in a row share a height and their buttons line up
+   at the bottom (grid rows stretch; .has-story puts the button on the last row).
+   An odd last card spans both columns. Tablets: intro on top, cards two a row.
+   Phones: one column. */
+@media (min-width: 1100px) {
+  .media-stories-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: clamp(32px, 4vw, 64px); }
+}
+.media-angle-list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.media-angle-list article:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (max-width: 1099px) {
+  .media-stories-grid { grid-template-columns: 1fr; gap: 36px; }
+  .media-stories-grid > :first-child { position: static; }
+}
+@media (max-width: 560px) {
+  .media-angle-list { grid-template-columns: 1fr; }
+  .media-angle-list article:last-child:nth-child(odd) { grid-column: auto; }
+}
