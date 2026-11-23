@@ -5,12 +5,14 @@ import PhotoLightbox from "./PhotoLightbox";
 import MessageForm from "./MessageForm";
 import PackCards from "./PackCards";
 import LaunchBrands from "./LaunchBrands";
+import StoryCards from "./StoryCards";
+import { STORIES_APPROVED, storyCards } from "../lib/mediaStories.mjs";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
 import { reachFrom, withLiveInstagram } from "../lib/mediaReach.mjs";
 import { loadInstagramCounts } from "../lib/instagramCounts";
 import { safeRichHtml } from "../lib/safeRichHtml.mjs";
-import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation, thumbnailFit } from "../lib/mediaHub.mjs";
+import { DEFAULT_MEDIA_PROFILE, DEFAULT_MEDIA_TIMELINE, cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation, thumbnailFit, thumbnailPosition } from "../lib/mediaHub.mjs";
 import Icon from "../components/Icon";
 import { LEGAL } from "../lib/legal.mjs";
 import { HOME_URL, PRIVACY_URL } from "../lib/siteSeo.mjs";
@@ -86,8 +88,6 @@ const partnershipPathways = [
   ["Venue, content, and CSR", "Open a space, tell a thoughtful story, or bring a team to volunteer."],
 ];
 
-const STORY_TITLES = ["Pawres de Mayo", "Care and companionship", "Community collaboration"];
-
 const FALLBACK_CONTENT = {
   heroTitle: "A house with<br><em>a purpose.</em>",
   heroLead: "The media hub for The House of Retrievers’ Society, Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
@@ -96,6 +96,11 @@ const FALLBACK_CONTENT = {
   stories: "17 May 2026 · Parklinks Pet Park, Pasig · Beneficiary: MBY Pet Rescue and Sanctuary\n\nVisit to Milagros Elderly Shelter · August 2026 · Milagros Elderly Home Care and Services\n\nPack walk with Beagle Buddies PH · 23 August 2026 · Ayala Triangle, Makati",
   partnerships: "Partnerships are shaped around shared objectives—not a fixed price list. Possibilities include an event partnership, a Purpose program partnership, responsible-pet-ownership advocacy, product or in-kind support, educational sessions, venue collaboration, content, and CSR volunteering.",
 };
+
+/** A Stories line as plain text: the cards are client-rendered, and lines rarely carry markup. */
+function plainText(value) {
+  return String(value || "").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&apos;|&#39;/g, "’").replace(/&quot;/g, "\"").replace(/\s+/g, " ").trim();
+}
 
 function rich(value) {
   return { __html: safeRichHtml(value).replace(/\n\n/g, "<br><br>") };
@@ -176,11 +181,11 @@ export default async function MediaPage() {
         <div className="media-section-label">04 / For the media</div>
         <div className="media-stories-grid">
           <div><h2 id="stories-title">Stories worth<br /><em>sharing.</em></h2><p>We welcome thoughtful coverage of responsible pet ownership, animal welfare, community service, supportive experiences with dogs, and the people who make this work possible.</p><a className="media-button media-button-dark" href="mailto:houseofretrieversph@gmail.com?subject=Story%20idea%20for%20House%20of%20Retrievers" data-message="story">Share a story idea <Icon name="external" /></a></div>
-          <div className="media-angle-list">{storyParts.map((text, index) => <article key={text.slice(0, 32)}>{STORY_TITLES[index] ? <h3>{STORY_TITLES[index]}</h3> : null}<p dangerouslySetInnerHTML={rich(text)} /></article>)}</div>
+          <StoryCards cards={storyCards(storyParts.map(plainText))} approved={STORIES_APPROVED} />
         </div>
         <div className={`media-timeline media-timeline-${timelineOrientation}`} aria-label="Documented activity timeline">
           <div className="media-timeline-heading"><span>Activity history</span></div>
-          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} className={thumbnailFit(item.thumbnail) === "contain" ? "is-poster" : undefined} /> : <Icon name="sparkle" />}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
+          <div className="media-timeline-list">{timeline.map((item, index) => <article key={`${item.activity}-${index}`}><div className="media-timeline-thumb">{item.thumbnail ? <img src={item.thumbnail} alt={item.activity} className={thumbnailFit(item.thumbnail) === "contain" ? "is-poster" : undefined} style={thumbnailPosition(item.thumbnail) ? { objectPosition: thumbnailPosition(item.thumbnail) } : undefined} /> : <Icon name="sparkle" />}</div><div className="media-timeline-detail"><time>{item.date}</time><h3>{item.activity}</h3><p>{item.location}</p><small>{item.purpose}</small></div></article>)}</div>
         </div>
       </section>
 
