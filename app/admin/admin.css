@@ -2378,3 +2378,18 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
 }
 /* Print and the check-in welcome overlay don't need it. */
 @media print { .chat-float { display: none; } }
+
+/* Emoji presets in the team chat (owner, 23 Nov 2026). EmojiPicker.jsx: a smiley button left of the message
+   box; its grid opens above the box, inside the chat card or the floating panel. */
+.chat-form { position: relative; }
+.emoji-toggle { display: grid; place-items: center; width: 44px; height: 44px; flex: none; padding: 0; border: 1px solid var(--a-line); border-radius: 12px; background: #fff; color: var(--a-muted); cursor: pointer; }
+.emoji-toggle:hover, .emoji-toggle[aria-expanded="true"] { color: var(--a-ink); background: var(--a-sand); border-color: var(--a-field); }
+.emoji-toggle:disabled { opacity: .5; cursor: not-allowed; }
+.emoji-pop { position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 5; display: grid; gap: 8px; width: max-content; max-width: calc(100% - 8px); padding: 10px 12px 12px; background: #fff; border: 1px solid var(--a-line); border-radius: 14px; box-shadow: 0 14px 36px -12px rgba(13, 13, 13, .35); }
+.chat-panel .emoji-pop { left: 12px; }
+.emoji-pop[hidden] { display: none; }
+.emoji-group-name { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--a-muted); }
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 40px); gap: 2px; }
+.emoji-opt { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; }
+.emoji-opt:hover, .emoji-opt:focus-visible { background: var(--a-sand); }
+@media (max-width: 400px) { .emoji-grid { grid-template-columns: repeat(8, 36px); } .emoji-opt { width: 36px; height: 36px; font-size: 20px; } }
