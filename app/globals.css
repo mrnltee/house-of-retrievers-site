@@ -1174,7 +1174,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .event-media-wrap { display: grid; gap: 12px; }
 .event-media { position: relative; overflow: hidden; border-radius: 20px; aspect-ratio: 4 / 5; background: #3a3833; box-shadow: 0 30px 60px -36px rgba(13,13,13,.55); outline: none; }
 .event-media:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-.event-media-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity .45s ease; }
+.event-media-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity .8s ease-in-out; }
 .event-media-photo.is-active { opacity: 1; }
 .event-media-photo.is-fill { object-fit: cover; }
 .event-media-photo.is-tile { background-repeat: repeat; background-size: auto 50%; background-position: center; }
@@ -1183,7 +1183,7 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .event-media-prev svg { transform: scaleX(-1); }
 .event-media-next { right: 12px; }
 .event-media-prev:focus-visible, .event-media-next:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.event-media-dots { position: absolute; left: 50%; bottom: 12px; translate: -50% 0; display: flex; gap: 6px; padding: 7px 10px; border-radius: 999px; background: rgba(13,13,13,.5); backdrop-filter: blur(6px); }
+.event-media-dots { position: absolute; left: 50%; bottom: 22px; translate: -50% 0; display: flex; gap: 6px; padding: 7px 10px; border-radius: 999px; background: rgba(13,13,13,.5); backdrop-filter: blur(6px); }
 .event-media-dots span { width: 7px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.65); transition: width .2s; }
 .event-media-dots span.active { width: 18px; background: var(--gold); }
 .event-media-thumbs { display: none; align-items: center; gap: 10px; }
@@ -1191,6 +1191,9 @@ body:has(.journey.is-horizontal) { overflow-x: clip; }
 .event-media-thumbs button.active { border-color: var(--ink); opacity: 1; }
 .event-media-thumbs button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .event-media-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.event-media-play { position: absolute; right: 12px; bottom: 11px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(13,13,13,.55); color: #fff; cursor: pointer; backdrop-filter: blur(6px); opacity: .85; transition: opacity .2s; }
+.event-media-play:hover, .event-media-play:focus-visible { opacity: 1; }
+.event-media-play:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .event-media-count { font-size: 13px; font-weight: 600; color: var(--muted-on-light); }
 @media (prefers-reduced-motion: reduce) { .event-media-photo { transition: none; } }
 

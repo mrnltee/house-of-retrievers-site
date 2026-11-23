@@ -1,6 +1,6 @@
 import {
   ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight,
-  ChevronUp, Download, Heart, MapPin, Menu, PawPrint, PenLine, Play, RefreshCw, Share2, Sparkle, SquareParking, Star,
+  ChevronUp, Download, Heart, MapPin, Menu, Pause, PawPrint, PenLine, Play, RefreshCw, Share2, Sparkle, SquareParking, Star,
   TriangleAlert, X,
 } from "lucide-react";
 
@@ -33,6 +33,7 @@ const ICONS = {
   menu: Menu,
   parking: SquareParking,
   paw: PawPrint,
+  pause: Pause,
   pin: MapPin,
   play: Play,
   share: Share2,

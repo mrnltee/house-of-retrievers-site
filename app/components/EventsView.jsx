@@ -385,35 +385,89 @@ function EventAlbum({ photos, title, base = "" }) {
   );
 }
 
+/** How long each picture stays before the slideshow moves on (Journey uses about the same). */
+const MEDIA_SLIDE_MS = 5000;
+
 /**
  * The event's pictures in one 4:5 frame, each as its fill says: whole (Fit),
  * filling the frame (Fill) or repeated (Tile). Wide screens get arrows and
  * thumbnails, narrow ones dots and swipe; arrow keys work once it has focus.
+ *
+ * With two or more pictures it is a slideshow (owner, 23 Nov 2026): a crossfade
+ * every MEDIA_SLIDE_MS while the frame is on screen and the tab is visible. It
+ * holds while a mouse is over it or the keyboard is inside it, never moves under
+ * reduced motion, and has its own Pause / Play (WCAG 2.2.2). Stepping by hand
+ * (arrows, thumbnails, swipe, keys) pauses it, like the Journey cards; Play
+ * restarts it. One picture stays still, with no controls.
  */
 function EventMedia({ media, title }) {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [held, setHeld] = useState({ hover: false, focus: false, touch: false });
+  const [visible, setVisible] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(true);
   const touch = useRef(null);
+  const wrap = useRef(null);
   const count = media.length;
+  const slideshow = count > 1 && !reducedMotion;
+  const playing = slideshow && !paused && visible && !held.hover && !held.focus && !held.touch;
   const step = (d) => setIndex((i) => (i + d + count) % count);
+  const stepByHand = (d) => { setPaused(true); step(d); };
+  const hold = (key, on) => setHeld((h) => (h[key] === on ? h : { ...h, [key]: on }));
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // Only on screen, and only while the tab is showing.
+  useEffect(() => {
+    if (count < 2) return undefined;
+    const el = wrap.current;
+    let inView = false;
+    const update = () => setVisible(inView && document.visibilityState === "visible");
+    const io = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; update(); }, { threshold: 0.4 });
+    io.observe(el);
+    document.addEventListener("visibilitychange", update);
+    return () => { io.disconnect(); document.removeEventListener("visibilitychange", update); };
+  }, [count]);
+
+  // A fresh full interval after every change of picture, so a hand step never jumps on at once.
+  useEffect(() => {
+    if (!playing) return undefined;
+    const timer = setTimeout(() => step(1), MEDIA_SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [playing, index]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <section
+      ref={wrap}
       className="event-media-wrap"
       aria-roledescription={count > 1 ? "carousel" : undefined}
       aria-label={count > 1 ? `${title} photos` : undefined}
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") hold("hover", true); }}
+      onPointerLeave={(e) => { if (e.pointerType === "mouse") hold("hover", false); }}
+      onFocus={(e) => { if (e.target.matches?.(":focus-visible")) hold("focus", true); }}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) hold("focus", false); }}
     >
       <div
         className="event-media"
         tabIndex={count > 1 ? 0 : undefined}
         onKeyDown={(e) => {
           if (count < 2) return;
-          if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
-          if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
+          if (e.key === "ArrowRight") { e.preventDefault(); stepByHand(1); }
+          if (e.key === "ArrowLeft") { e.preventDefault(); stepByHand(-1); }
         }}
-        onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+        onTouchStart={(e) => { touch.current = e.touches[0].clientX; hold("touch", true); }}
         onTouchEnd={(e) => {
+          hold("touch", false);
           const dx = e.changedTouches[0].clientX - (touch.current ?? 0);
-          if (count > 1 && Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+          if (count > 1 && Math.abs(dx) > 50) stepByHand(dx < 0 ? 1 : -1);
         }}
+        onTouchCancel={() => hold("touch", false)}
       >
         {media.map((item, i) =>
           item.fit === "tile" ? (
@@ -439,22 +493,33 @@ function EventMedia({ media, title }) {
         )}
         {count > 1 && (
           <>
-            <button type="button" className="event-media-prev" onClick={() => step(-1)} aria-label="Previous photo"><Icon name="arrow" size={18} /></button>
-            <button type="button" className="event-media-next" onClick={() => step(1)} aria-label="Next photo"><Icon name="arrow" size={18} /></button>
+            <button type="button" className="event-media-prev" onClick={() => stepByHand(-1)} aria-label="Previous photo"><Icon name="arrow" size={18} /></button>
+            <button type="button" className="event-media-next" onClick={() => stepByHand(1)} aria-label="Next photo"><Icon name="arrow" size={18} /></button>
             <div className="event-media-dots" aria-hidden="true">
               {media.map((item, i) => <span key={item.src} className={i === index ? "active" : undefined} />)}
             </div>
+            {slideshow && (
+              <button
+                type="button"
+                className="event-media-play"
+                onClick={() => setPaused((p) => !p)}
+                aria-label={paused ? "Play slideshow" : "Pause slideshow"}
+                title={paused ? "Play slideshow" : "Pause slideshow"}
+              >
+                <Icon name={paused ? "play" : "pause"} size={16} />
+              </button>
+            )}
           </>
         )}
       </div>
       {count > 1 && (
         <div className="event-media-thumbs">
           {media.map((item, i) => (
-            <button key={item.src} type="button" className={i === index ? "active" : undefined} aria-label={`Photo ${i + 1} of ${count}`} aria-current={i === index} onClick={() => setIndex(i)}>
+            <button key={item.src} type="button" className={i === index ? "active" : undefined} aria-label={`Photo ${i + 1} of ${count}`} aria-current={i === index} onClick={() => { setPaused(true); setIndex(i); }}>
               <img src={item.src} alt="" loading="lazy" decoding="async" />
             </button>
           ))}
-          <span className="event-media-count" aria-live="polite">{index + 1} / {count}</span>
+          <span className="event-media-count" aria-live={playing ? "off" : "polite"}>{index + 1} / {count}</span>
         </div>
       )}
     </section>
