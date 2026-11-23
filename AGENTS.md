@@ -463,8 +463,9 @@ domain in Vercel after the production release.
    remove a photo". The design is in `docs/event-albums-plan.md`.
 3. Email delivery tracking (Resend webhooks: delivered or bounced, shown on a
    registration or person). Proposed, not built.
-4. Transparency: donations and spending reports (HOR promises public amounts).
-   Not built.
+4. Transparency: built 22 Nov 2026 as the admin Ledger and its transparency
+   report (private PDF; see "Ledger and transparency report" in CLAUDE.md).
+   Still open: a public page for the report, if HoR wants one.
 5. Later phases: member portal (members log in, get event updates; guest
    album uploads use `events.photo_uploads`), forms builder, content editing,
    privacy requests, online checkout (PayMongo; current payments are manual

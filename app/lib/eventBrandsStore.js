@@ -74,6 +74,14 @@ export async function joinedCounts() {
   return Object.fromEntries(rows.map((r) => [r.supporter_id, r.n]));
 }
 
+/** { supporter id → [{ role, partner_type, sponsor_level }] } for every event a brand hasn't said No to. */
+export async function typeRows() {
+  const rows = await sql("SELECT supporter_id, role, partner_type, sponsor_level FROM event_brands WHERE reply <> 'no'");
+  const out = {};
+  for (const r of rows) (out[r.supporter_id] ||= []).push(r);
+  return out;
+}
+
 /** Events a brand isn't on yet (any status, upcoming or past), for "Add to events". No brand = every event. */
 export function eventsForBrand(supporterId = null) {
   return sql(

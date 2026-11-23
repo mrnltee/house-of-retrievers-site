@@ -6,6 +6,7 @@ import GuideTour from "./GuideTour";
 import WelcomeFilm from "./WelcomeFilm";
 import Presence from "./Presence";
 import PasteImages from "./PasteImages";
+import PopMenus from "./PopMenus";
 import SendLetterModal from "./SendLetterModal";
 import AddBrandModal from "./AddBrandModal";
 import { sql } from "../../lib/db";
@@ -21,7 +22,7 @@ const page = (key) => {
 const GROUPS = [
   ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters", "beneficiaries"].map(page)],
   ["Publish", [["Gallery", null], ["Forms", null], page("media"), page("photographers"), ["Content", null]]],
-  ["Money", [page("payments"), ["Donations & spending", null]]],
+  ["Money", [page("payments"), page("ledger")]],
   ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
   ["Team", [["Team chat", "/chat", "*"]]],
   ["Help", [["Getting started", "/start", "*"]]],
@@ -69,6 +70,7 @@ export default async function AdminAppLayout({ children }) {
       {!admin.preview && <WelcomeFilm auto />}
       {!admin.preview && <GuideTour steps={tour} autoStart={!admin.guide_hidden} hidden={Boolean(admin.guide_hidden)} sessionKey={`hor-guide-${admin.authTime || 0}`} />}
       {!admin.preview && <Presence />}
+      <PopMenus />
       {!admin.preview && <PasteImages />}
       {!admin.preview && <SendLetterModal base={base} />}
       {!admin.preview && can(admin, "supporters:edit") && <AddBrandModal base={base} />}

@@ -1,7 +1,7 @@
 import {
   ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight,
-  ChevronUp, Download, Heart, MapPin, Menu, Pause, PawPrint, PenLine, Play, RefreshCw, Share2, Sparkle, SquareParking, Star,
-  TriangleAlert, X,
+  ChevronUp, Download, Heart, Hourglass, MapPin, Menu, Pause, PawPrint, PenLine, Play, RefreshCw, Share2, Sparkle, SquareParking, Star,
+  ThumbsDown, ThumbsUp, TriangleAlert, X,
 } from "lucide-react";
 
 /**
@@ -30,6 +30,7 @@ const ICONS = {
   edit: PenLine,
   flip: RefreshCw,
   heart: Heart,
+  hourglass: Hourglass,
   menu: Menu,
   parking: SquareParking,
   paw: PawPrint,
@@ -39,6 +40,8 @@ const ICONS = {
   share: Share2,
   sparkle: Sparkle,
   star: Star,
+  thumbsUp: ThumbsUp,
+  thumbsDown: ThumbsDown,
   warning: TriangleAlert,
 };
 

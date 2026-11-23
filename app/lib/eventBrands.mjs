@@ -94,6 +94,17 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const text = (value, max) => String(value ?? "").replace(/\r\n?/g, "\n").trim().slice(0, max) || null;
 const on = (v) => v === true || v === "on" || v === "true";
 
+/**
+ * The types a brand has across events, for the Brands & Partners list's Type column (owner, 23 Nov 2026):
+ * each distinct label once, in the order of the event page's With thanks to (co-presenter, partner, in-kind,
+ * exhibitor, then sponsors by level). `rows` are event_brands rows ({ role, partner_type, sponsor_level }).
+ */
+export function typesAtEvents(rows = []) {
+  const order = ["Co-presenter", "Partner", ...PARTNER_TYPES.slice(1).map(([, l]) => l), ...SPONSOR_LEVELS.map(([, l]) => l), "Sponsor"];
+  const labels = [...new Set(rows.map((r) => roleLabel(r)))];
+  return labels.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
 /** "1,500" → 1500; "" → null; anything else → NaN (an error). */
 function pesos(value) {
   const t = String(value ?? "").replace(/[₱,\s]/g, "");

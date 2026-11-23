@@ -5,6 +5,7 @@ import { resizeImage } from "../lib/resizeImage";
 import { PAY_METHODS, READABLE, parsePeso, ticketLine } from "../lib/eventPayments.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import Icon from "./Icon";
+import CopyButton from "./CopyButton";
 
 const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 
@@ -120,6 +121,12 @@ export default function PayStep({ code, ticketLabel, amount, methods: given, rea
               {shown.qrImage && <img src={shown.qrImage} alt={`${shown.label} QR code for ${shown.details.accountName || "House of Retrievers"}`} width="220" height="220" />}
               <strong>{shown.details.accountName}</strong>
               <span>{[shown.label, shown.details.number, shown.details.bankName, shown.details.accountNumber].filter(Boolean).join(" · ")}</span>
+              {(shown.details.number || shown.details.accountNumber) && (
+                <span className="pay-copy">
+                  {shown.details.number && <CopyButton value={shown.copy?.number || shown.details.number} label={`${shown.label} number`} text="Copy number" />}
+                  {shown.details.accountNumber && <CopyButton value={shown.copy?.accountNumber || shown.details.accountNumber} label="account number" text="Copy account number" />}
+                </span>
+              )}
               {shown.qrImage && <a className="pay-link" href={shown.qrImage} download={`HOR-${shown.key}-QR.png`}>Save QR image</a>}
             </div>
           )}

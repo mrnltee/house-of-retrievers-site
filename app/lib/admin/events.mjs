@@ -4,6 +4,7 @@
  */
 
 import { cleanCustomQuestions } from "../customQuestions.mjs";
+import { cleanVaccines } from "../vaccineTypes.mjs";
 import { activeTiers, cleanTiers, hasTierDates, priceSummary, tierLeft, tierWindow, tiersFromCost } from "../prices.mjs";
 import { dogTicketsSoldOut, openTiers, visibleTiers } from "../eventPayments.mjs";
 import { opensLater, readOpensAt } from "../rsvpOpens.mjs";
@@ -46,7 +47,7 @@ export function cleanRsvpFormConfig(input) {
   const allowed = new Set(["identity", "attendees", "photoConsent", "under18", "vaccination"]);
   const order = Array.isArray(value?.order) ? value.order.filter((key, i, list) => allowed.has(key) && list.indexOf(key) === i) : [];
   for (const key of ["identity", "attendees", ...optional]) if (!order.includes(key)) order.push(key);
-  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions), vaccinationRequired: value?.vaccinationRequired === true, dogWaitlist: value?.dogWaitlist === true };
+  return { optional: optional.length ? optional : RSVP_FORM_DEFAULT.optional, order, questions: cleanCustomQuestions(value?.questions), vaccinationRequired: value?.vaccinationRequired === true, vaccines: cleanVaccines(value?.vaccines), dogWaitlist: value?.dogWaitlist === true };
 }
 
 /** "TBA", "To be named" and the like: not a beneficiary, so never shown or published. */
@@ -429,8 +430,10 @@ export function toPublicEvent(row, confirmed = 0) {
       ? (hideLater ? visibleTiers(tiers, counts) : [...tiers].sort((a, b) => a.amount - b.amount)).map((t) => {
           const left = tierLeft(t, counts);
           const unit = ticketLimitUnitLabel(row.pricing_basis, t);
-          const window = [t.limit ? (left === 0 ? `Sold out · it was for the first ${t.limit} ${unit === "registrations" ? "" : unit}`.trim() : `First ${t.limit} ${unit === "registrations" ? "registrants" : unit} · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
-          return { label: t.label, amount: t.amount, window: window || undefined, ended: Boolean((t.until && Date.now() >= Date.parse(t.until)) || left === 0) || undefined };
+          // Once a tier's sale period has ended, "N left" would contradict "Ended Nov 14": show the end alone.
+          const saleEnded = Boolean(t.until && Date.now() >= Date.parse(t.until));
+          const window = [t.limit && !saleEnded ? (left === 0 ? `Sold out · it was for the first ${t.limit} ${unit === "registrations" ? "" : unit}`.trim() : `First ${t.limit} ${unit === "registrations" ? "registrants" : unit} · ${left} left`) : "", tierWindow(t)].filter(Boolean).join(" · ");
+          return { label: t.label, amount: t.amount, window: window || undefined, ended: Boolean(saleEnded || left === 0) || undefined };
         })
       : undefined,
     supports: (row.is_charity && row.supports && !isPlaceholder(row.supports) && row.supports) || undefined,

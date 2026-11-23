@@ -11,8 +11,9 @@ import { useId, useRef, useState } from "react";
  * - `echo`: [{ name, label }] form fields to repeat in the dialog (e.g. the
  *   reason or reference typed), read when the dialog opens.
  * - `note`: a highlighted caution under the list.
+ * - `buttonLabel`: the button's accessible name and tooltip, for an icon-only button.
  */
-export default function ConfirmButton({ children, className = "btn gold", formAction, title, items = [], echo = [], note = "", yes = "Yes, go ahead", tone = "gold", disabled = false, name, value, duplicateEntries = [] }) {
+export default function ConfirmButton({ children, className = "btn gold", formAction, title, items = [], echo = [], note = "", yes = "Yes, go ahead", tone = "gold", disabled = false, name, value, duplicateEntries = [], buttonLabel }) {
   const button = useRef(null);
   const dialog = useRef(null);
   const confirmed = useRef(false);
@@ -57,7 +58,7 @@ export default function ConfirmButton({ children, className = "btn gold", formAc
 
   return (
     <>
-      <button ref={button} type="submit" data-confirmed-action="true" className={className} formAction={formAction} onClick={onClick} disabled={disabled} name={name} value={value}>{children}</button>
+      <button ref={button} type="submit" data-confirmed-action="true" className={className} formAction={formAction} onClick={onClick} disabled={disabled} name={name} value={value} aria-label={buttonLabel} title={buttonLabel}>{children}</button>
       <dialog ref={dialog} className="confirm-dialog" aria-labelledby={`${id}-title`}>
         <div className="confirm-body">
           <h2 id={`${id}-title`}>{duplicate ? "Add another matching registration?" : title}</h2>

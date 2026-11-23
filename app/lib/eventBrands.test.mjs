@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanEventBrand, publicNames, replyLabel, trackerCounts, trackerReply } from "./eventBrands.mjs";
+import { cleanEventBrand, publicNames, replyLabel, trackerCounts, trackerReply, typesAtEvents, readRole } from "./eventBrands.mjs";
 
 test("a tracker row is checked: role, amounts, head counts, follow-up date", () => {
   const { value } = cleanEventBrand({ role: "Sponsor", reply: "yes", cashAmount: "1,500", gives: ["cash", "nope"], showAmounts: "on" });
@@ -168,4 +168,23 @@ test("sponsor levels: read back, labels, event-page groups and tracker groups", 
   assert.deepEqual(brandGroups([{ role: "Sponsor", sponsor_level: "major" }, { role: "Sponsor" }]), [
     ["sponsor", "Sponsors", 2], ["sponsor:major", "Sponsors · Major sponsor", 1], ["sponsor:none", "Sponsors · no level yet", 1],
   ]);
+});
+
+test("typesAtEvents lists each type once, in the With thanks to order", () => {
+  const rows = [
+    { role: "Partner", partner_type: "exhibitor" },
+    { role: "Sponsor", sponsor_level: "major" },
+    { role: "Partner", partner_type: "exhibitor" },
+    { role: "Partner", partner_type: "co-presenter" },
+    { role: "Partner", partner_type: null },
+    { role: "Partner", partner_type: "in-kind" },
+  ];
+  assert.deepEqual(typesAtEvents(rows), ["Co-presenter", "Partner", "In-kind partner", "Exhibitor", "Major sponsor"]);
+  assert.deepEqual(typesAtEvents([]), []);
+});
+
+test("readRole reads the Type column's choices", () => {
+  assert.deepEqual(readRole("Partner:exhibitor"), { role: "Partner", partnerType: "exhibitor", sponsorLevel: null });
+  assert.deepEqual(readRole("Partner"), { role: "Partner", partnerType: null, sponsorLevel: null });
+  assert.deepEqual(readRole("Sponsor:exhibitor"), { role: "Sponsor", partnerType: null, sponsorLevel: null });
 });

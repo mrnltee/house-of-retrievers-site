@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { answerText, cleanCustomQuestions } from "../../../../lib/customQuestions.mjs";
 import { categoryOf } from "../../../../lib/contacts.mjs";
 import { notFound } from "next/navigation";
@@ -11,6 +12,7 @@ import { manualCheckInWarnings } from "../../../../lib/manualCheckIn.mjs";
 import { manilaParts } from "../../../../lib/rsvpOpens.mjs";
 import { capacityUnitLabel, capacityUnits } from "../../../../lib/eventCapacity.mjs";
 import { missingVaccinationCards } from "../../../../lib/vaccinationRecords.mjs";
+import { cleanVaccines, vaccineShort, vaccineSummary } from "../../../../lib/vaccineTypes.mjs";
 import { DEFAULT_REMINDER_HOLD_MINUTES, REMINDER_HOLD_OPTIONS, isActiveRegistrationHold, isExpiredHold } from "../../../../lib/registrationHolds.mjs";
 import { welcomePhotosFor } from "../../../../lib/welcomePhotos";
 import WelcomeAvatar from "../WelcomeAvatar";
@@ -28,6 +30,7 @@ import { reminderEligibility } from "../../../../lib/eventReminders.mjs";
 import { MAX_LETTER_RECIPIENTS } from "../../../../lib/letters.mjs";
 import { compLabel } from "../../../../lib/compTickets.mjs";
 import Icon from "../../../../components/Icon";
+import ScrollRow from "../../ScrollRow";
 import { peopleMatch } from "../../../../lib/admin/people.mjs";
 
 const BASE_FILTERS = [["all", "All"], ["confirmed", "Confirmed"], ["waitlist", "Waitlist"], ["checked", "Checked in"], ["notchecked", "Not checked in"], ["novax", "No vaccination card"], ["cancelled", "Cancelled"], ["deleted", "Recently deleted"]];
@@ -99,10 +102,19 @@ export default async function EventRegistrations({ params, searchParams }) {
   for (const key of emails) matchOf.set(key, peopleMatch(peopleRows.filter((p) => p.key === key)));
   const peopleOf = (r) => matchOf.get(String(r.email || "").trim().toLowerCase()) || null;
   // Furbaby positions that already have a card, so "No vaccination card" lists confirmed guests with a dog still missing one.
-  const cardRows = current.length ? await sql("SELECT registration_id, furbaby_index FROM registration_vaccination_records WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
+  const cardRows = current.length ? await sql("SELECT registration_id, furbaby_index, vaccine FROM registration_vaccination_records WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
   const cardsOf = new Map();
-  for (const row of cardRows) cardsOf.set(row.registration_id, [...(cardsOf.get(row.registration_id) || []), { index: row.furbaby_index }]);
-  const lacksCard = (r) => r.status === "confirmed" && missingVaccinationCards(cardsOf.get(r.id) || [], r.furbaby_count).length > 0;
+  for (const row of cardRows) cardsOf.set(row.registration_id, [...(cardsOf.get(row.registration_id) || []), { index: row.furbaby_index, vaccine: row.vaccine }]);
+  // Vaccines this event checks by type: one chip per vaccine on each row (checked, to check, missing).
+  const eventVaccines = cleanVaccines(event.rsvp_form_config?.vaccines);
+  const checkRows = eventVaccines.length && current.length ? await sql("SELECT registration_id, furbaby_index, vaccine FROM registration_vaccine_checks WHERE registration_id = ANY($1::uuid[])", [current.map((r) => r.id)]) : [];
+  const checksOf = new Map();
+  for (const row of checkRows) checksOf.set(row.registration_id, [...(checksOf.get(row.registration_id) || []), { index: row.furbaby_index, vaccine: row.vaccine }]);
+  // Across every furbaby on the registration: checked only when all are, missing when any has no photo.
+  const vaccineChips = (r, dogs) => vaccineSummary(cardsOf.get(r.id), checksOf.get(r.id), dogs, eventVaccines);
+  // "No vaccination card": a furbaby with no photo at all, or a required vaccine with no photo.
+  const lacksCard = (r) => r.status === "confirmed" && (missingVaccinationCards(cardsOf.get(r.id) || [], r.furbaby_count).length > 0
+    || (r.furbaby_count > 0 && vaccineChips(r, Math.min(10, r.furbaby_count)).some((v) => v.required && v.state === "missing")));
   const nowParts = manilaParts(new Date().toISOString());
   const live = current.filter((r) => r.status !== "cancelled");
   const confirmed = current.filter((r) => r.status === "confirmed");
@@ -123,8 +135,8 @@ export default async function EventRegistrations({ params, searchParams }) {
   heads.compFurbabies = total(comps, "furbaby_count", 0);
   const headLine = (all, paidN, compN) => [`${paidN} paid`, all - paidN - compN ? `${all - paidN - compN} holding a spot` : "", compN ? `${compN} complimentary` : ""].filter(Boolean).join(" · ");
   // The vaccination tab only appears for events that ask for cards (or already have some).
-  const showVax = Boolean(event.vaccination_record_required) || cardRows.length > 0;
-  const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || event.vaccination_record_required || cardRows.length > 0);
+  const showVax = Boolean(event.vaccination_record_required) || eventVaccines.length > 0 || cardRows.length > 0;
+  const FILTERS = (paidEvent ? PAY_FILTERS : BASE_FILTERS).filter(([k]) => k !== "novax" || showVax);
   const filter = FILTERS.some(([k]) => k === query?.show) ? query.show : "all";
   const shown = all.filter((r) =>
     filter === "deleted" ? Boolean(r.deleted_at)
@@ -170,7 +182,7 @@ export default async function EventRegistrations({ params, searchParams }) {
         {participantCards && <a className="btn ghost" href={participantCards.href} title={participantCards.todo ? `${participantCards.todo} confirmed participant${participantCards.todo === 1 ? "" : "s"} haven't had the invitation card yet${participantCards.todo > MAX_LETTER_RECIPIENTS ? `; up to ${MAX_LETTER_RECIPIENTS} per send` : ""}. Pick who gets it.` : "Everyone has had it. Open to resend to someone."}>{participantCards.todo ? `Send invitation cards · ${participantCards.todo}` : <>Invitation cards sent <Icon name="check" /></>}</a>}
         {guestCards && <a className="btn ghost" href={guestCards.href} title={guestCards.todo ? `${guestCards.todo} complimentary guest${guestCards.todo === 1 ? "" : "s"} who said Coming haven't had their card yet. Pick who gets it.` : "Every complimentary guest has had theirs. Open to resend to someone."}>{guestCards.todo ? `Send guest cards · ${guestCards.todo}` : <>Guest cards sent <Icon name="check" /></>}</a>}
         {canEdit && <a className="btn ghost" href={`${base}/registrations/${event.id}/add`}>+ Add registration</a>}
-        <details className="head-more">
+        <details className="head-more pop-menu">
           <summary className="btn ghost">More <Icon name="chevronDown" /></summary>
           <div className="head-more-menu">
             <a href={`${base}/registrations/${event.id}/export`}>Export CSV</a>
@@ -202,12 +214,14 @@ export default async function EventRegistrations({ params, searchParams }) {
         )}
       </section>
 
-      <nav className="tabs" aria-label="Filter">
-        {/* Only filters with someone in them (and the one you're on), so the row stays short. */}
-        {FILTERS.filter(([key]) => key === "all" || key === filter || counts[key] > 0).filter(([key]) => key !== "deleted" || filter === "deleted").map(([key, label]) => (
-          <a key={key} href={listHref(key)} aria-current={filter === key ? "page" : undefined}>{label} · {counts[key]}</a>
-        ))}
-      </nav>
+      <ScrollRow label="filters" className="reg-tabs-row">
+        <nav className="tabs" aria-label="Filter">
+          {/* Only filters with someone in them (and the one you're on), so the row stays short. */}
+          {FILTERS.filter(([key]) => key === "all" || key === filter || counts[key] > 0).filter(([key]) => key !== "deleted" || filter === "deleted").map(([key, label]) => (
+            <a key={key} href={listHref(key)} aria-current={filter === key ? "page" : undefined}>{label} · {counts[key]}</a>
+          ))}
+        </nav>
+      </ScrollRow>
 
       {filter === "expired" && canFees && counts.expired > 0 && (
         <form action={remindExpiredHolds} className="card form remind-all">
@@ -260,7 +274,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       <td className="st-4" data-label="Ticket">{r.comp_type ? <span className="reg-ticket">{compLabel(r.comp_type)}<span className="small muted">Complimentary</span></span> : r.ticket_label ? <span className="reg-ticket">{r.ticket_label}{(r.amount_due ?? r.ticket_amount) != null && <span className="small muted">{ticketLine("", r.amount_due ?? r.ticket_amount)}</span>}</span> : <span className="muted">—</span>}</td>
                       <td className="st-3" data-label="Payment">
                         {r.status === "confirmed" ? <span className={`chip ${fee.tone}`}>{fee.label}</span> : <span className="small muted">—</span>}
-                        {r.fee_reference && <><br /><span className="small muted" title={`Reference ${r.fee_reference}`}>{[payMethodLabel(r.pay_method), r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).join(" · ")}<br />Ref …{String(r.fee_reference).replace(/\s+/g, "").slice(-6)}</span></>}
+                        {r.fee_reference && <><br /><span className="small muted reg-pay" title={`Reference ${r.fee_reference}`}>{[payMethodLabel(r.pay_method), r.pay_amount != null ? peso(r.pay_amount) : ""].filter(Boolean).map((part, i) => <Fragment key={i}>{i > 0 && " · "}<span>{part}</span></Fragment>)}<br /><span>Ref …{String(r.fee_reference).replace(/\s+/g, "").slice(-6)}</span></span></>}
                         {r.fee_status === "rejected" && r.fee_note && <><br /><span className="small muted">“{r.fee_note.slice(0, 60)}{r.fee_note.length > 60 ? "…" : ""}”</span></>}
                         {r.fee_status === "waiting" && (isActiveRegistrationHold({ feeStatus: r.fee_status, holdExpiresAt: r.hold_expires_at }) ? <><br /><span className="small muted">No proof yet</span></> : <><br /><span className="chip alert">Hold expired</span>{r.hold_reminders ? <span className="small muted"> · reminded {r.hold_reminders}×</span> : null}</>)}
                         {twins.length > 0 && <><br /><span className="small danger-text"><Icon name="warning" /> Same reference as {twins.map((t) => t.name).join(", ")}</span></>}
@@ -284,6 +298,13 @@ export default async function EventRegistrations({ params, searchParams }) {
                       {(() => {
                         const dogs = Math.min(10, r.furbaby_count ?? 0);
                         if (!dogs) return <span className="muted">N/A</span>;
+                        if (eventVaccines.length) return (
+                          <span className="vaccine-chips">{vaccineChips(r, dogs).map((v) => (
+                            <span key={v.key} className={`chip${v.state === "verified" ? " good" : v.state === "missing" && v.required ? " warn" : ""}`} title={v.state === "verified" ? "Checked" : v.state === "uploaded" ? "Photo in, to check" : "No photo yet"}>
+                              {v.state === "verified" && <Icon name="check" />} {vaccineShort(v.key)}{v.state === "uploaded" ? " · to check" : v.state === "missing" ? " · missing" : ""}
+                            </span>
+                          ))}</span>
+                        );
                         const missing = missingVaccinationCards(cardsOf.get(r.id) || [], dogs).length;
                         return missing ? <span className="chip warn">{missing === dogs ? "No card" : `${dogs - missing}/${dogs} cards`}</span> : <span className="chip good">{dogs > 1 ? `${dogs}/${dogs} cards` : "Card on file"}</span>;
                       })()}
@@ -332,7 +353,7 @@ export default async function EventRegistrations({ params, searchParams }) {
                       )}
                       {/* Less-used actions in a small menu (design review, 17 Nov 2026), so each row shows only its next step. */}
                       {canEdit && !r.deleted_at && (r.status !== "cancelled" || r.checked_in_at || (r.fee_status !== "paid" && !r.checked_in_at)) && (
-                        <details className="row-more">
+                        <details className="row-more pop-menu">
                           <summary className="btn small ghost">More <Icon name="chevronDown" /></summary>
                           <div className="row-more-menu">
                       {canEdit && !r.deleted_at && r.status !== "cancelled" && (

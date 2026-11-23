@@ -106,15 +106,15 @@ export default function EventGallery({ initial = [], autoDescribe = false }) {
             <FitPicker value={item.fit || "fit"} onChange={(fit) => update(item.key, { fit })} label="Shown as" />
             {items.length > 1 && (
               <div className="gallery-order">
-                <button type="button" className="linkish" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move photo ${i + 2} earlier`}><Icon name="arrowLeft" /></button>
-                <button type="button" className="linkish" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={`Move photo ${i + 2} later`}><Icon name="arrow" /></button>
+                <button type="button" className="gallery-move" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move photo ${i + 2} earlier`} title="Move earlier"><Icon name="arrowLeft" /></button>
+                <button type="button" className="gallery-move" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={`Move photo ${i + 2} later`} title="Move later"><Icon name="arrow" /></button>
               </div>
             )}
           </li>
         ))}
         {Array.from({ length: busy }, (_, i) => <li key={`busy-${i}`} className="gallery-busy" aria-hidden="true"><div className="gallery-thumb"><span>Adding…</span></div></li>)}
         {room > 0 && (
-          <li>
+          <li className="gallery-add-item">
             <label className="gallery-add">
               <input ref={input} type="file" accept="image/*" multiple className="visually-hidden" onChange={(e) => add(e.target.files)} />
               <span aria-hidden="true">+</span>

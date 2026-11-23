@@ -309,6 +309,16 @@ export default function Scanner({ base = "", eventId, title, confirmed, initialC
                   {!result.person.photoConsent && <span className="chip alert">No photos · tell the photographers</span>}
                   {tone !== "good" && result.person.id && <a className="btn ghost small" href={`${base}/registrations/${eventId}/r/${result.person.id}`}>Open their registration</a>}
                 </div>
+                {result.person.vaccines?.length > 0 && (
+                  <p className="checkin-vaccines small">
+                    <span>Vaccines:</span>
+                    {result.person.vaccines.map((v) => (
+                      <span key={v.key} className={`chip${v.state === "verified" ? " good" : v.state === "missing" && v.required ? " warn" : ""}`}>
+                        {v.state === "verified" && <Icon name="check" />} {v.short}{v.state === "uploaded" ? " · to check" : v.state === "missing" ? " · missing" : ""}
+                      </span>
+                    ))}
+                  </p>
+                )}
               </>
             )}
           </section>

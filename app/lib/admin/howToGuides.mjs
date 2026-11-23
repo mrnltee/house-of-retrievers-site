@@ -496,6 +496,19 @@ const PAY = {
   ],
 };
 
+const LEDGER = {
+  title: "Ledger",
+  sub: "Every peso in and out, with receipts. Fees, donations and brand cash come in by themselves.",
+  head: [{ t: "addExpense", label: "+ Add an expense", tone: "gold" }, { t: "addOther", label: "+ In-kind or income" }, { t: "addTurnover", label: "+ Turnover" }, { t: "report", label: "Transparency report" }],
+  tiles: [{ t: "tIn", label: "Cash in", value: "₱48,500" }, { t: "tOut", label: "Spent", value: "₱12,300" }, { t: "tTurn", label: "Turned over", value: "₱30,000" }, { t: "tHeld", label: "Held", value: "₱6,200" }],
+  search: { t: "search", placeholder: "Search description, payee, category…" },
+  rows: [
+    { t: "e1", name: "Venue deposit · Novotel", sub: "Expense · Venue · Nov 3", chip: "Receipt ✓", tone: "good", btns: [{ t: "edit1", label: "Edit" }, { t: "more1", label: "More ▾" }] },
+    { name: "Registration fees · 24 paid", sub: "From Registrations", chip: "₱42,000", btns: [{ t: "source1", label: "Open Registrations" }] },
+    { name: "Pawssion Project Foundation", sub: "Turnover · cash · Dec 2", chip: "Proof ✓", tone: "good", btns: [{ label: "Edit" }] },
+  ],
+};
+
 const JOURNEY = {
   title: "Journey timeline",
   head: [{ t: "fromEvent", label: "+ Add from an event", tone: "gold" }, { t: "milestone", label: "+ Add a milestone" }],
@@ -627,6 +640,22 @@ Object.assign(GUIDES, {
     step(P(PAY, { confirm: { title: "Request this GCash change?", note: "A different Owner approves it before it goes live.", yes: "Yes, request change" } }), "confirm", "Change the details and request the change.", { act: "click" }),
     step(PAY, "editG", "A different Owner reviews and approves it. Until then the old details stay live. Switching a method off is immediate.", { zoom: 1.35 }),
   ] },
+  "ledger-expense": { title: "Record an expense with its receipt", steps: [
+    step(LEDGER, "addExpense", "Press + Add an expense.", { act: "click" }),
+    step(P(LEDGER, { fields: [{ t: "fEvent", label: "Event", value: "A Golden Beginning" }, { t: "fCat", label: "Category", value: "Printing & signage" }, { t: "fAmt", label: "Amount (₱)", value: "" }, { t: "fRcpt", label: "Receipt", value: "Choose a photo or PDF" }] }), "fAmt", "Pick the event and category, type what it was for, who was paid and the amount.", { act: "type", text: "2,450" }),
+    step(P(LEDGER, { fields: [{ t: "fEvent", label: "Event", value: "A Golden Beginning" }, { t: "fCat", label: "Category", value: "Printing & signage" }, { t: "fAmt", label: "Amount (₱)", value: "2,450" }, { t: "fRcpt", label: "Receipt", value: "Choose a photo or PDF" }] }), "fRcpt", "Attach the receipt: a photo or PDF. Every expense needs one.", { act: "click" }),
+    step(P(LEDGER, { confirm: { title: "Add this expense?", note: "It counts in the ledger and the report.", yes: "Yes, add it" } }), "confirm", "Confirm, and it joins the ledger with its receipt.", { act: "click" }),
+  ] },
+  "ledger-fix": { title: "Edit, remove or restore a line", steps: [
+    step(LEDGER, "edit1", "Press Edit to change a line you added: its amount, date, category or receipts.", { act: "click" }),
+    step(LEDGER, "more1", "More ▾ → Remove takes it off the ledger and the report. It waits under the Removed tab, where Restore puts it back.", { act: "click" }),
+    step(LEDGER, "source1", "Fees, donations and brand cash come from their own pages. Change them there, and the ledger follows.", { act: "click" }),
+  ] },
+  "ledger-report": { title: "Make the transparency report", steps: [
+    step(LEDGER, "tIn", "The totals: cash in, spent, turned over to beneficiaries, and what HoR still holds.", { zoom: 1.35 }),
+    step(LEDGER, "addTurnover", "When you hand money or goods to a beneficiary, record it as a turnover with its proof.", { act: "click" }),
+    step(LEDGER, "report", "Transparency report makes the summary for one event or all of them, with every line item, as a page or a PDF.", { act: "click" }),
+  ] },
   "journey-add": { title: "Add a stop to the journey", steps: [
     step(JOURNEY, "fromEvent", "Press + Add from an event (its date follows the event), or + Add a milestone.", { act: "click" }),
     step(JOURNEY, "edit2", "New stops start as drafts. Open it to check the wording and add photos.", { act: "click" }),
@@ -671,6 +700,7 @@ export const PAGE_GUIDES = {
   media: ["media-edit"],
   photographers: ["photog-add"],
   payments: ["pay-change"],
+  ledger: ["ledger-expense", "ledger-fix", "ledger-report"],
   journey: ["journey-add", "journey-layout"],
   breeds: ["breeds-change"],
   admins: ["admins-invite", "admins-access"],

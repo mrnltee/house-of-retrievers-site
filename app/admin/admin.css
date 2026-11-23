@@ -80,7 +80,9 @@ p.card { display: block; }
 .chip.alert { background: var(--a-alert); color: white; }
 .chip.dark { background: var(--a-ink); color: white; }
 
-.table-wrap { background: white; border: 1px solid var(--a-line); border-radius: 16px; overflow-x: auto; }
+/* position: relative keeps screen-reader-only labels (.sr-only, absolutely positioned) inside the scroll box:
+   a hidden "Edit" header in a table's last column otherwise escaped it and widened the phone page (22 Nov 2026). */
+.table-wrap { position: relative; background: white; border: 1px solid var(--a-line); border-radius: 16px; overflow-x: auto; }
 .admin table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .admin th { text-align: left; background: var(--a-sand); color: var(--a-muted); font-size: 12px; font-weight: 700; padding: 12px 16px; white-space: nowrap; }
 .admin td { padding: 14px 16px; border-top: 1px solid var(--a-line); vertical-align: middle; }
@@ -1305,7 +1307,7 @@ fieldset.plain.guest-public { margin-top: 4px; padding: 14px; border-radius: 12p
 .rsvp-form-settings { border: 0; border-radius: 12px; background: var(--a-sand); padding: 16px; display: grid; gap: 10px; }
 .rsvp-form-settings legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; }
 .rsvp-form-settings > :not(legend) { clear: both; }
-.gallery-edit { grid-template-columns: repeat(auto-fill, minmax(150px, 190px)); }
+/* .gallery-edit columns: see "More photos layout" below. */
 @media (max-width: 860px) { .editor-nav { top: 64px; } .editor-nav-label { display: none; } }
 @media (prefers-reduced-motion: no-preference) { html:has(.editor-nav) { scroll-behavior: smooth; } }
 .editor-nav { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; }
@@ -2035,3 +2037,244 @@ details.sd-fold { display: block; }
 .reg-people { display: inline-block; margin-top: 2px; color: var(--a-muted, #6b665a); text-decoration: none; }
 a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
 .reg-people.is-ok { color: #2f6b3a; font-weight: 600; }
+
+/* Row More menu fix (22 Nov 2026, owner). Each pinned action cell (sticky, z-index 1) is its own layer, so an open
+   More menu went under the next row's pinned cell ("Cance…" cut off). The open row's cell is lifted above the
+   others, and the last two rows open their menu upwards so the table's scroll box doesn't clip it. */
+@media (min-width: 721px) {
+  .registrations-table td.st-10:has(details[open]) { z-index: 6; }
+  .registrations-table tbody tr:nth-last-child(-n+2):not(:nth-child(-n+2)) .row-more-menu { top: auto; bottom: calc(100% + 4px); }
+}
+
+/* Menus and the Payment cell (design review, 22 Nov 2026). A <details class="pop-menu"> is a menu, not a fold:
+   PopMenus.jsx keeps one open at a time and closes it on an outside click or Esc. The Payment cell keeps
+   "Bank transfer", "₱1,750" and "Ref …730938" whole; it breaks only between them. */
+.pop-menu > summary { list-style: none; cursor: pointer; }
+.pop-menu > summary::-webkit-details-marker { display: none; }
+.pop-menu[open] > summary { background: var(--a-sand); }
+.reg-pay > span { white-space: nowrap; }
+
+/* Donation tracker (22 Nov 2026, owner). An event's Donors page: the proceeds first (received, checked against
+   HoR's account, still to check, pledged; by method), then one table whose columns the admin picks
+   (ColumnPicker, saved per device). Each row's Edit details window attaches the returned form and proofs of
+   payment (DonationFiles); View opens them over the table (FileViewer). */
+.donation-proceeds h2 { margin: 0 0 12px; }
+.donation-proceeds-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.donation-total { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border: 1px solid var(--a-line); border-radius: 14px; background: #fff; }
+.donation-total strong { font-family: "DM Serif Display", serif; font-weight: 400; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.donation-total.good { border-color: #b9d4bf; background: #f4faf5; }
+.donation-total.alert { border-color: #e6c4c4; background: #fcf6f6; }
+.donation-methods { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0 8px; }
+.donation-methods .chip { margin: 0; }
+.donor-tracker { display: grid; gap: 12px; }
+.donor-tracker-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.donor-send { display: grid; justify-items: end; gap: 4px; margin-left: auto; }
+.donor-tracker-tools { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.donor-tracker-tools .brand-search { flex: 1 1 320px; }
+.column-picker-menu { right: 0; left: auto; min-width: 230px; padding: 12px 14px; gap: 10px; }
+.column-picker-menu fieldset { display: grid; gap: 6px; border: 0; margin: 0; padding: 0; }
+.column-picker-menu legend { margin-bottom: 4px; }
+.column-picker-foot { display: flex; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--a-line); }
+.donor-table th, .donor-table td { vertical-align: top; padding-left: 10px; padding-right: 10px; }
+.donor-table thead th { white-space: normal; }
+.donor-table th:first-child, .donor-table td:first-child { padding-left: 16px; }
+.donor-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.donor-table .nowrap { white-space: nowrap; }
+.donor-table .donor-cell { min-width: 200px; }
+.donor-table td .btn { white-space: nowrap; }
+.donor-table .donor-cell .edit-dialog-open { margin-top: 8px; }
+.donor-table .donor-notes { min-width: 180px; max-width: 280px; white-space: pre-line; }
+.donor-table tfoot th, .donor-table tfoot td { border-top: 2px solid var(--a-ink); background: var(--a-sand); font-weight: 600; }
+.donor-table .chip { white-space: nowrap; }
+.donation-files-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.donation-files { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; padding: 12px 14px; border-radius: 12px; background: var(--a-sand); }
+.donation-files-head { display: grid; gap: 2px; }
+.donation-file-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.donation-file-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 10px; background: #fff; }
+.donation-file-list a { display: flex; flex: 1 1 auto; align-items: center; gap: 8px; min-width: 0; color: var(--a-ink); }
+.donation-file-list a .small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.donation-file-list li > button, .donation-file-confirm { flex: none; }
+.donation-file-list img, .donation-file-pdf { flex: none; width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: var(--a-sand); }
+.donation-file-pdf { display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--a-alert); border: 1px solid var(--a-line); }
+.donation-file-confirm { display: flex; gap: 6px; flex: none; }
+.donation-file-add { justify-self: start; cursor: pointer; }
+.donation-file-add:focus-within .btn { outline: 2px solid var(--a-gold); outline-offset: 2px; }
+.donation-file-note { margin: 0; min-height: 1.2em; overflow-wrap: anywhere; }
+.donation-file-note.good { color: var(--a-success); }
+.donation-file-note.alert { color: var(--a-alert); }
+.donation-check { display: grid; gap: 6px; margin: 0; padding: 12px 14px; border: 1px solid var(--a-line); border-radius: 12px; }
+.donation-check legend { padding: 0 4px; }
+.file-viewer { width: min(1000px, 94vw); max-width: none; padding: 0; }
+.file-viewer-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--a-line); }
+.file-viewer-head h2 { margin: 0; font-size: 18px; }
+.file-viewer-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.file-viewer-body { height: min(78vh, 900px); overflow: auto; background: #f1ede4; }
+.file-viewer-body object { display: block; width: 100%; height: 100%; background: #fff; }
+.file-viewer-pdf-fallback { display: grid; place-items: center; gap: 12px; height: 100%; padding: 24px; text-align: center; }
+/* Payment screenshots are tall phone captures: full width, scroll down to the reference. */
+.file-viewer-body img { display: block; max-width: min(100%, 720px); height: auto; margin: 0 auto; background: #fff; }
+@media (max-width: 900px) { .donation-proceeds-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .donation-files-row { grid-template-columns: minmax(0, 1fr); }
+  .donor-send { justify-items: start; }
+  .file-viewer-body { height: 70vh; }
+}
+
+/* Ledger (22 Nov 2026, owner). Totals for the chosen scope (all, one event, or general lines), then every line
+   in one table: typed lines with their receipts, and lines from Registrations, Donors and the Brand tracker
+   (linked, not editable here). The add / edit windows reuse the donation tracker's file panels. */
+.ledger-summary-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.ledger-summary-head h2 { margin: 0; }
+.ledger-scope select { min-width: 260px; max-width: 100%; }
+.ledger-notes { display: grid; gap: 4px; margin: 12px 0 0; padding-left: 18px; }
+.ledger-lines { display: grid; gap: 12px; }
+.ledger-table th, .ledger-table td { vertical-align: top; padding-left: 10px; padding-right: 10px; }
+.ledger-table th:first-child, .ledger-table td:first-child { padding-left: 16px; }
+.ledger-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ledger-table .nowrap { white-space: nowrap; }
+.ledger-table td .btn, .ledger-table .chip { white-space: nowrap; }
+.ledger-table td:nth-child(3) { min-width: 220px; }
+.ledger-form .ledger-kind { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
+.donation-file-item { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
+.donation-file-item .small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.donation-file-item img { flex: none; width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
+@media (max-width: 640px) { .ledger-scope, .ledger-scope select { width: 100%; min-width: 0; } }
+
+/* Transparency report (22 Nov 2026, owner): a readable, printable page; Print leaves off the admin menu. */
+.ledger-report { max-width: 860px; display: grid; gap: 22px; }
+.ledger-report-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ledger-report-head .eyebrow { margin: 0 0 6px; color: var(--a-gold-ink); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.ledger-report-head h1 { margin: 0; }
+.ledger-report-head p { margin: 6px 0 0; }
+.ledger-report section { display: grid; gap: 8px; }
+.ledger-report h2 { margin: 0; padding-bottom: 6px; border-bottom: 1px solid var(--a-line); font-size: 22px; }
+.ledger-report-table { width: 100%; border-collapse: collapse; font-size: 14px; background: transparent; }
+.ledger-report-table th, .ledger-report-table td { padding: 6px 4px; text-align: left; font-weight: 400; background: transparent; color: var(--a-ink); font-size: 14px; white-space: normal; border-top: 0; border-bottom: 1px solid #ece6d6; }
+.ledger-report-table thead th { font-size: 12px; font-weight: 700; color: var(--a-muted); }
+.ledger-report-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; width: 130px; }
+.ledger-report-table tr.sub th, .ledger-report-table tr.sub td { font-weight: 700; }
+.ledger-report-table tr.item td:first-child { padding-left: 18px; color: var(--a-muted); }
+.ledger-report-table tr.total th, .ledger-report-table tr.total td { font-weight: 700; border-top: 2px solid var(--a-ink); border-bottom: 0; }
+.ledger-report-foot { border-top: 1px solid var(--a-line); padding-top: 10px; }
+@media print {
+  .admin-side, .admin-nav, .no-print, .howto-launch, nextjs-portal { display: none !important; }
+  .admin-shell { display: block !important; }
+  .admin-main { padding: 0 !important; }
+  .ledger-report { max-width: none; }
+  .ledger-report section { break-inside: avoid-page; }
+}
+
+/* Ledger: edit and remove (22 Nov 2026, owner). Typed lines: Edit, and More ▾ with Remove (a pop-menu); lines
+   from Registrations, Donors or the Brand tracker link there instead. Removed lines wait under the Removed tab. */
+.ledger-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: max-content; min-width: 112px; }
+.ledger-actions > .btn, .ledger-actions > details > summary.btn { justify-content: center; white-space: nowrap; }
+.ledger-actions .row-more > summary .icon { margin-left: 4px; }
+.ledger-table tbody tr:nth-last-child(-n+2):not(:nth-child(-n+2)) .row-more-menu { top: auto; bottom: calc(100% + 4px); }
+.ledger-removed { display: grid; gap: 10px; }
+
+/* Furbaby row in the RSVP form preview (22 Nov 2026, owner): the admin's own
+   dropdown style (ivory, rounded, 44 px) made Gender look unlike its row. */
+.admin .rsvp-preview .furbaby-sex-field select { height: 48px; min-height: 48px; padding: 0 38px 0 14px; border: 1px solid var(--line); border-radius: 0; background-color: white; background-position: right 14px center; color: var(--ink); font-size: inherit; }
+.admin .rsvp-preview .rsvp-furbaby-row .breed-select-button { font-size: var(--text-caption); }
+.admin .rsvp-preview .rsvp-vaccination input[type="file"] { min-height: 48px; padding: 7px 8px; border: 1px dashed var(--line); border-radius: 0; background: white; }
+
+/* Scrolling rows get arrows (owner, 22 Nov 2026: on phones the event editor's Jump to row cut
+   "Registration" off with no sign there was more). ScrollRow.jsx: the track scrolls; a ‹ / › button
+   over a soft fade shows on a side only while there is more that way. 44 px touch targets. */
+.scroll-row { position: relative; min-width: 0; flex: 1; --scroll-row-bg: var(--a-ivory); }
+.scroll-row-track { position: relative; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.scroll-row-track::-webkit-scrollbar { display: none; }
+.scroll-row-btn { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -22px; padding: 0; border: 0; color: var(--a-ink); cursor: pointer; font-size: 20px; }
+.scroll-row-btn[hidden] { display: none; }
+.scroll-row-btn.is-prev { left: 0; justify-content: start; padding-left: 4px; background: linear-gradient(90deg, var(--scroll-row-bg) 55%, transparent); }
+.scroll-row-btn.is-next { right: 0; justify-content: end; padding-right: 4px; background: linear-gradient(270deg, var(--scroll-row-bg) 55%, transparent); }
+.scroll-row-btn .icon { width: 30px; height: 30px; padding: 6px; border: 1px solid var(--a-line); border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(13, 13, 13, .12); }
+.scroll-row-btn:hover .icon { border-color: var(--a-ink); }
+.scroll-row-btn:focus-visible { outline: none; }
+.scroll-row-btn:focus-visible .icon { outline: 3px solid var(--a-gold); outline-offset: 1px; }
+.editor-nav .scroll-row { --scroll-row-bg: #fff; }
+.editor-nav .scroll-row-track > ul { overflow: visible; flex-wrap: nowrap; padding: 4px 0; }
+.reg-tabs-row .scroll-row-track > .tabs { overflow: visible; margin-right: 0; padding: 2px 0 4px; }
+
+/* Event editor on phones (owner, 22 Nov 2026): iOS draws date and time inputs at their own width,
+   centred, so they ran past the card; check labels keep their hint underneath; field hints get a line. */
+.admin .field { min-width: 0; }
+.admin input[type="date"], .admin input[type="time"], .admin input[type="datetime-local"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: left; }
+.admin input[type="date"]::-webkit-date-and-time-value, .admin input[type="time"]::-webkit-date-and-time-value, .admin input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.check .check-text { display: grid; gap: 2px; }
+.check .check-text > .small { font-size: 12px; }
+@media (max-width: 560px) {
+  .admin .field > span > small { display: block; margin-top: 2px; font-weight: 400; }
+}
+
+/* Vaccine records by type (22 Nov 2026, owner) */
+.vaccine-settings { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--a-sand, #f4efe4); }
+.vaccine-setting { display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: 12px; align-items: center; }
+.vaccine-setting > span { display: grid; gap: 2px; }
+.vaccine-setting small { font-weight: 400; }
+@media (max-width: 560px) { .vaccine-setting { grid-template-columns: 1fr; } }
+.vaccine-status { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.vaccine-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: 10px; background: var(--a-sand, #f4efe4); }
+.vaccine-row .vaccine-name { font-weight: 600; flex: 1 1 10rem; min-width: 0; }
+.vaccine-row .vaccine-by { flex-basis: 100%; order: 3; }
+.vaccine-row .vaccine-toggle { margin: 0; }
+.vaccine-type-form, .vaccine-type-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0; }
+.vaccine-type-form label { display: flex; align-items: center; gap: 6px; }
+.vaccine-type-form select, .vaccine-type-pick select { min-height: 36px; padding: 4px 32px 4px 10px; font-size: 13px; }
+.vaccine-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.vaccine-chips .chip { white-space: nowrap; }
+.checkin-vaccines { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; }
+
+/* More photos layout (22 Nov 2026, owner): each photo card keeps to its column, so cards, captions and
+   Fit / Fill / Tile no longer run into each other; the Add tile's paste outline hugs the tile; the
+   reorder arrows are 44 px buttons. */
+.gallery-edit { grid-template-columns: repeat(auto-fill, minmax(232px, 280px)); gap: 24px 16px; }
+.gallery-edit > li { min-width: 0; }
+.gallery-edit .gallery-thumb { width: 100%; }
+.gallery-edit textarea { width: 100%; box-sizing: border-box; }
+.gallery-edit .fit-picker { min-width: 0; }
+.admin .gallery-edit .segmented { display: flex; width: 100%; box-sizing: border-box; }
+.admin .gallery-edit .segmented.small label { flex: 1 1 0; justify-content: center; padding: 6px 8px; min-width: 0; }
+.gallery-edit > li.gallery-add-item { align-self: start; }
+.gallery-add.paste-zone { border-radius: 12px; }
+.gallery-order { gap: 8px; }
+.gallery-move { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid var(--a-line); background: white; color: var(--a-ink); font-size: 18px; cursor: pointer; }
+.gallery-move:hover:not(:disabled) { border-color: var(--a-ink); }
+.gallery-move:focus-visible { outline: 3px solid var(--a-gold); outline-offset: 2px; }
+.gallery-move:disabled { opacity: .35; cursor: default; }
+@media (max-width: 560px) { .gallery-edit { grid-template-columns: minmax(0, 1fr); } }
+
+/* Partner types in a column (owner, 23 Nov 2026): the Brand tracker's Type column sets Co-presenter, In-kind
+   partner, Exhibitor (or a sponsor level) right on the row; the tracker's one Save bar saves it. */
+.brand-tracker .st-type { min-width: 190px; }
+.type-select { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; }
+.type-select select { width: 100%; max-width: 220px; min-height: 36px; font-size: 13px; }
+@media (max-width: 720px) {
+  .stack-table .st-type { order: 1; }
+  .type-select select { max-width: none; }
+}
+
+/* Icon-only replies on the Brand and Guest trackers (owner, 23 Nov 2026): No reply yet (hourglass),
+   Yes / Coming (thumbs up), No / Can't make it (thumbs down), each 44 px round with its name as the tooltip and for screen readers. */
+.tracker-page .reply-quick.reply-icons { display: inline-flex; width: auto; gap: 2px; padding: 2px; }
+.tracker-page .reply-icons .reply-opt { flex: none; width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; font-size: 19px; color: var(--a-muted); }
+.tracker-page .reply-icons button.reply-opt:not(.is-on):hover, .tracker-page .reply-icons button.reply-opt:not(.is-on):focus-visible { color: var(--a-ink); background: var(--a-sand); }
+.tracker-page .reply-icons .reply-opt.is-on { color: var(--a-ink); }
+.tracker-page .reply-icons .reply-opt.is-on.good, .tracker-page .reply-icons .reply-opt.is-on.alert { color: #fff; }
+.tracker-page .reply-icons .icon { vertical-align: 0; }
+@media (max-width: 720px) { .tracker-page .reply-quick.reply-icons { display: inline-flex; width: auto; } }
+
+/* One Save for a tracker (owner, 23 Nov 2026): replies, Type and the Event page switch are staged on the rows
+   (outlined in gold until saved) and saved together from the bar under the table (TrackerChanges.jsx). The bar
+   reuses the Page access save bar and stays at the bottom of the screen while the table scrolls. */
+.tracker-savebar { margin: 12px 0 0; }
+.tracker-savebar:not(.has-changes) { position: static; }
+.tracker-savebar .actions { margin: 0; }
+.tracker-page .reply-quick.is-changed { border-color: var(--a-gold); box-shadow: 0 0 0 2px var(--a-gold); }
+.tracker-page .type-select.is-changed select { border-color: var(--a-gold); box-shadow: 0 0 0 2px var(--a-gold); }
+.tracker-page .onpage-form.is-changed .onpage-toggle { outline: 2px solid var(--a-gold); outline-offset: 3px; border-radius: 999px; }
+@media (max-width: 720px) {
+  /* An older phone rule (.brand-tracker .reply-quick:not(.role-quick) .reply-opt) shrank the icons to 12 px. */
+  .tracker-page .reply-quick.reply-icons .reply-opt { font-size: 19px; padding: 0; }
+  .tracker-savebar .actions { width: 100%; justify-content: space-between; }
+}

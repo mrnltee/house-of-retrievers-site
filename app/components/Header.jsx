@@ -1,10 +1,14 @@
+"use client";
+
 import Icon from "./Icon";
 import LogoMoments from "./LogoMoments";
 import { EVENTS_URL } from "../lib/eventsHost.mjs";
+import useHeaderReturn from "./useHeaderReturn";
 
 export default function Header({ menuOpen, setMenuOpen, onJoin, onSupport }) {
+  const headerClass = useHeaderReturn(menuOpen);
   return (
-    <header className="site-header">
+    <header className={headerClass}>
       <a href="#top" className="brand" aria-label="House of Retrievers home">
         <span className="brand-logo-frame">
           <LogoMoments className="brand-logo" tone="dark" priority />
