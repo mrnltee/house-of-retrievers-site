@@ -2267,3 +2267,32 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .rsvp-vaccine-hint { font-size: 12px; font-weight: 400; line-height: 1.4; text-transform: none; letter-spacing: 0; color: var(--muted-on-light); }
 .with-vaccination .rsvp-vaccines .rsvp-vaccination { grid-column: auto; }
 .rsvp-vaccines .rsvp-vaccination { grid-template-rows: auto 1fr auto; }
+
+/* Fact sheet and boilerplates alignment (23 Nov 2026, owner): both columns
+   start with a heading row of the same height ("Last updated" sits on the
+   Fact sheet's row, right-aligned), so the card tops line up; the columns
+   stretch to the taller one and the last card in each fills the rest, so
+   the bottoms line up too. The fact sheet gets a little more width (1.2 : 1)
+   so the two columns are close in height and the stretched card isn't left
+   with a large empty space. Fact values wrap like prose (balance had broken
+   short values early: "registered / with the SEC"). Phones stay stacked. */
+.media-press-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.media-press-grid > div { display: flex; flex-direction: column; }
+.media-press-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; min-height: 20px; margin-bottom: 18px; }
+.media-press-head .media-press-title { margin: 0; }
+.media-press-head .media-updated { margin: 0; }
+.media-press-grid .media-fact-list { flex: 1; }
+.media-press-grid .media-boilerplate:last-child { flex: 1; margin-bottom: 0; }
+.media-hub .media-fact-list dd { text-wrap: pretty; }
+/* Boilerplate header: label with the draft tag under it, Copy text on the
+   right, so the header is the same two lines whatever the column width. */
+@media (min-width: 801px) {
+  .media-press-grid .media-boilerplate header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; }
+  .media-press-grid .media-boilerplate header > strong { grid-column: 1; }
+  .media-press-grid .media-boilerplate header > .media-draft-tag { grid-column: 1; justify-self: start; }
+  .media-press-grid .media-boilerplate header > :last-child { grid-column: 2; grid-row: 1 / span 2; }
+}
+@media (max-width: 800px) {
+  .media-press-grid { grid-template-columns: 1fr; }
+  .media-press-grid .media-fact-list, .media-press-grid .media-boilerplate:last-child { flex: none; }
+}
