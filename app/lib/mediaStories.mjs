@@ -101,7 +101,7 @@ export const MEDIA_STORIES = [
     key: "free-hugs",
     match: /hugs/i,
     title: "Free hugs, every month",
-    meta: "Last Sunday of every month · Near Specific Gravity, BGC",
+    meta: "Usually the last Sunday of the month · Near Specific Gravity, BGC",
     summary: "Free hugs from our golden retrievers.",
     photos: [
       { src: "/journey/international-free-hugs-day/1.jpg", alt: "Members and their golden retrievers sitting in a circle on the lawn at BGC with Free Hugs signs" },
@@ -110,13 +110,13 @@ export const MEDIA_STORIES = [
     ],
     paragraphs: [
       "Free hugs: just a dog who is happy to see you, and a person who needed that today.",
-      "It began with International Free Hugs Day in July 2026. Our members sat in a circle on the lawn at BGC with their golden retrievers and their Free Hugs signs, and waited to see who would come. People did. Passers-by stopped to take photos, then crouched down to say hello. That late afternoon is where our Purpose to Care began.",
-      "In September we went back, and we kept going back. FreeHugs now happens on the last Sunday of every month in BGC, near Specific Gravity. Children reach out to a retriever for the first time. A boy sits on a bench beside a dog wearing a Free Hugs sign. Strangers kneel on the grass and, for a minute, forget about their week.",
-      "If you are in BGC on the last Sunday of the month, look for us near Specific Gravity and come say hello. You are welcome to bring your own dog, too: it’s a gentle way for them to meet new people and new dogs. And bring someone who could use a hug.",
+      "It began with International Free Hugs Day, on the first Sunday of July 2026. Our members sat in a circle on the lawn at BGC with their golden retrievers and their Free Hugs signs, and waited to see who would come. People did. Passers-by stopped to take photos, then crouched down to say hello. That late afternoon is where our Purpose to Care began.",
+      "August was rainy, so from September we moved it to the last Sunday of the month, near Specific Gravity in BGC, and we kept going back. Children reach out to a retriever for the first time. A boy sits on a bench beside a dog wearing a Free Hugs sign. Strangers kneel on the grass and, for a minute, forget about their week.",
+      "The next one doesn’t have a date yet. Some of our members are keeping Free Hugs going as a tradition while the rest of the pack gets ready for A Golden Beginning. When it’s on, look for us near Specific Gravity and come say hello. You are welcome to bring your own dog, too: it’s a gentle way for them to meet new people and new dogs. And bring someone who could use a hug.",
     ],
     confirm: [
       "The usual time",
-      "That it has run every month since September, and whether any month is skipped (29 November is the day before the launch)",
+      "The date of the next one, once the members set it",
     ],
   },
 ];
