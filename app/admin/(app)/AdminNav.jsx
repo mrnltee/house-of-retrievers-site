@@ -18,8 +18,16 @@ const NAV_KEY = "hor-admin-nav";
  * In the rail every label stays in the page for screen readers, and hovering or focusing an item shows
  * its name beside it.
  */
-export default function AdminNav({ groups, home, me }) {
+export default function AdminNav({ groups: serverGroups, home, me }) {
   const pathname = usePathname();
+  // The floating chat (ChatBubble.jsx) keeps the Team chat count current between page loads.
+  const [chatUnread, setChatUnread] = useState(null);
+  useEffect(() => {
+    const onUnread = (e) => setChatUnread(Number(e.detail?.unread) || 0);
+    window.addEventListener("hor-chat-unread", onUnread);
+    return () => window.removeEventListener("hor-chat-unread", onUnread);
+  }, []);
+  const groups = chatUnread === null ? serverGroups : serverGroups.map(([label, items]) => [label, items.map((i) => (i.icon === "chat" ? { ...i, badge: chatUnread } : i))]);
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [tip, setTip] = useState(null);

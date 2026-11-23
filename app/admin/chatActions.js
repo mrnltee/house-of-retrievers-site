@@ -55,3 +55,18 @@ export async function deleteChat(id) {
   const rows = await sql("UPDATE chat_messages SET deleted_at = now() WHERE id = $1 AND author_email = $2 AND deleted_at IS NULL RETURNING id", [Number(id) || 0, admin.email]);
   return rows.length ? { ok: true } : { error: "You can only delete your own messages." };
 }
+
+/**
+ * For the floating chat button (owner, 23 Nov 2026): how many messages from others this admin hasn't
+ * read, and the newest one from someone else, so the button can chime when it moves. Reads only.
+ */
+export async function chatUnread() {
+  const admin = await currentAdmin();
+  if (!admin) return { error: "Please sign in again." };
+  const [row] = await sql(
+    `SELECT count(*) FILTER (WHERE id > $1)::int AS unread, coalesce(max(id) FILTER (WHERE deleted_at IS NULL), 0)::int AS last_other
+       FROM chat_messages WHERE author_email <> $2 AND created_at > now() - interval '${CHAT_ROOM_DAYS} days'`,
+    [admin.chat_read_id || 0, admin.email],
+  );
+  return { unread: admin.preview ? 0 : row?.unread || 0, lastOther: row?.last_other || 0 };
+}
