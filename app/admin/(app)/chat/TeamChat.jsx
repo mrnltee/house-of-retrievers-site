@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { deleteChat, editChat, loadChat, sendChat } from "../../chatActions";
 import { CHAT_MAX } from "../../../lib/admin/chat.mjs";
+import { insertAtCursor } from "../../../lib/admin/chatEmoji.mjs";
+import EmojiPicker from "./EmojiPicker";
 
 const time = (iso) => new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 
@@ -117,6 +119,14 @@ export default function TeamChat({ preview, compact = false, autoFocus = false, 
     refresh();
   }
 
+  // An emoji from the picker goes in at the cursor (or over the selection); focus returns to the box.
+  const addEmoji = (emoji) => {
+    const el = box.current;
+    const { text: next, cursor } = insertAtCursor(text, emoji, el?.selectionStart ?? text.length, el?.selectionEnd ?? text.length, CHAT_MAX);
+    setText(next);
+    requestAnimationFrame(() => { if (!el) return; el.focus(); el.setSelectionRange(cursor, cursor); });
+  };
+
   const edit = async (id, body) => { const r = await editChat(id, body).catch(() => ({ error: "Didn't save. Try again." })); refresh(); return r; };
   const remove = async (id) => { const r = await deleteChat(id).catch(() => ({ error: "Didn't delete. Try again." })); refresh(); return r; };
 
@@ -127,6 +137,7 @@ export default function TeamChat({ preview, compact = false, autoFocus = false, 
         {messages.map((m) => <ChatMessage key={`${m.id}-${m.edited}-${m.deleted}`} m={m} onEdit={edit} onDelete={remove} readOnly={preview} />)}
       </div>
       <form className="chat-form" onSubmit={send}>
+        <EmojiPicker onPick={addEmoji} disabled={preview} />
         <label className="visually-hidden" htmlFor={textId}>Message</label>
         <textarea
           id={textId}
