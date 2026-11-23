@@ -28,8 +28,22 @@ export default function StoryCards({ cards, approved }) {
       <div className="media-angle-list">
         {cards.map(({ story, title, text }, index) => (
           <article key={story?.key || `${index}-${text.slice(0, 24)}`} className={story ? "has-story" : undefined}>
-            {title ? <h3>{title}</h3> : null}
-            <p>{text}</p>
+            {story ? (
+              <div className="media-angle-head">
+                <p className="media-angle-when">{story.when}</p>
+                <h3>{story.title}</h3>
+                <ul className="media-angle-facts">
+                  {story.place !== story.beneficiary ? <li><Icon name="pin" /><span><span className="visually-hidden">Where: </span>{story.place}</span></li> : null}
+                  {story.beneficiary ? <li><Icon name="heart" /><span>For {story.beneficiary}</span></li> : null}
+                  {story.with ? <li><Icon name="paw" /><span>With {story.with}</span></li> : null}
+                </ul>
+              </div>
+            ) : (
+              <>
+                {title ? <h3>{title}</h3> : null}
+                <p>{text}</p>
+              </>
+            )}
             {story ? (
               <button type="button" className="media-story-open" aria-haspopup="dialog" onClick={(e) => show(story, e.currentTarget)}>
                 Read the story <Icon name="arrow" />

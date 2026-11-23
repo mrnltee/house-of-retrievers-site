@@ -93,7 +93,7 @@ const FALLBACK_CONTENT = {
   heroLead: "The media hub for The House of Retrievers’ Society, Inc.—a Philippine nonprofit rooted in the bond between dogs and the people who care for them.",
   about: "We&apos;re furparents who raise our retrievers well—and bring them along to do some good. One paw, one person, and one community at a time.",
   mission: "To bring responsible furparents and furbabies together to support animal rescues, serve communities, and create meaningful memories.",
-  stories: "17 May 2026 · Parklinks Pet Park, Pasig · Beneficiary: MBY Pet Rescue and Sanctuary\n\nVisit to Milagros Elderly Shelter · August 2026 · Milagros Elderly Home Care and Services\n\nPack walk with Beagle Buddies PH · 23 August 2026 · Ayala Triangle, Makati",
+  stories: "Pawres de Mayo · 17 May 2026 · Parklinks Pet Park, Pasig · Beneficiary: MBY Pet Rescue and Sanctuary\n\nVisit to Milagros Elderly Shelter · August 2026 · Milagros Elderly Home Care and Services\n\nPack walk with Beagle Buddies PH · 23 August 2026 · Ayala Triangle, Makati",
   partnerships: "Partnerships are shaped around shared objectives—not a fixed price list. Possibilities include an event partnership, a Purpose program partnership, responsible-pet-ownership advocacy, product or in-kind support, educational sessions, venue collaboration, content, and CSR volunteering.",
 };
 

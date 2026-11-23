@@ -19,7 +19,10 @@ export const STORIES_APPROVED = false;
  * @property {string} key
  * @property {RegExp} match     Finds the Admin → Media hub Stories line about it.
  * @property {string} title
- * @property {string} meta      Date · place, as the card's small line.
+ * @property {string} meta      Date · place, at the top of the story window.
+ * @property {string} when      The card's eyebrow: the date, or how often it happens.
+ * @property {string} place     The card's place line.
+ * @property {string} [with]    Another group the activity was with, for the card.
  * @property {string} summary   The card's line when no saved line names it.
  * @property {string} [beneficiary]
  * @property {{src: string, alt: string}[]} photos
@@ -34,6 +37,8 @@ export const MEDIA_STORIES = [
     match: /pawres/i,
     title: "Pawres de Mayo",
     meta: "17 May 2026 · Parklinks Pet Park, Pasig",
+    when: "17 May 2026",
+    place: "Parklinks Pet Park, Pasig",
     summary: "Our first gathering, for MBY Pet Rescue and Sanctuary.",
     beneficiary: "MBY Pet Rescue and Sanctuary",
     photos: [
@@ -58,6 +63,8 @@ export const MEDIA_STORIES = [
     match: /milagros/i,
     title: "Care and companionship at Milagros",
     meta: "August 2026 · Milagros Elderly Home Care and Services",
+    when: "August 2026",
+    place: "Milagros Elderly Home Care and Services",
     summary: "Our retrievers spent time with the residents of Milagros.",
     beneficiary: "Milagros Elderly Home Care and Services",
     photos: [
@@ -81,6 +88,9 @@ export const MEDIA_STORIES = [
     match: /beagle/i,
     title: "Two communities, one walk",
     meta: "23 August 2026 · Ayala Triangle, Makati",
+    when: "23 August 2026",
+    place: "Ayala Triangle, Makati",
+    with: "Beagle Buddies PH",
     summary: "A pack walk with Beagle Buddies PH, our first collaboration with another dog community.",
     photos: [
       { src: "/journey/beagle-buddies-pack-walk/1.jpg", alt: "Walkers and their dogs filling the road at Ayala Avenue" },
@@ -102,6 +112,8 @@ export const MEDIA_STORIES = [
     match: /hugs/i,
     title: "Free hugs, every month",
     meta: "Usually the last Sunday of the month · Near Specific Gravity, BGC",
+    when: "Monthly · since July 2026",
+    place: "Near Specific Gravity, BGC",
     summary: "Free hugs from our golden retrievers.",
     photos: [
       { src: "/journey/international-free-hugs-day/1.jpg", alt: "Members and their golden retrievers sitting in a circle on the lawn at BGC with Free Hugs signs" },
