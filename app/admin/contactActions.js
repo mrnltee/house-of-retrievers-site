@@ -1,6 +1,7 @@
 "use server";
 
 import { syncGuestRsvp } from "../lib/guestRsvpStore";
+import { readTrackerChanges, savedMessage } from "../lib/trackerChanges.mjs";
 import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
@@ -144,53 +145,48 @@ export async function saveEventGuest(data) {
 }
 
 /**
- * Guest tracker quick reply (owner, 17 Nov 2026): set only this guest's reply from the row, without opening Edit.
- * Notes and "On the event page" are left as they are.
+ * The Guest tracker's one Save (owner, 23 Nov 2026): every reply and Event page switch picked on the rows,
+ * saved together. A reply saves only the reply (notes and event-page fields stay) and keeps the RSVP list in
+ * step as before (Coming adds a complimentary RSVP once; moving away cancels only one the tracker made). The
+ * switch turns only `show_on_site`; switched on with no role yet, a guest takes their specification's role.
  */
-export async function setEventGuestReply(data) {
+export async function saveGuestChanges(data) {
   const eventId = form(data, "event");
   const back = isUuid(eventId) ? `/events/${eventId}/guests` : "/events";
   return guarded(back, async () => {
     const admin = await actionAdmin("guests:edit");
-    const contactId = form(data, "contact");
-    const reply = ["waiting", "yes", "no"].includes(form(data, "reply")) ? form(data, "reply") : "waiting";
-    const [row] = isUuid(eventId) && isUuid(contactId)
-      ? await sql("UPDATE event_guests SET reply=$3, updated_at=now() WHERE event_id=$1 AND contact_id=$2 RETURNING show_on_site", [eventId, contactId, reply])
-      : [];
-    if (!row) await backWith(back, "error", "That guest isn't on this event's list.");
-    const [c] = await sql("SELECT name FROM letter_contacts WHERE id = $1", [contactId]);
-    await logActivity(admin.email, "event.guest.reply", c?.name || "", { eventId, contactId, reply });
-    const rsvp = await syncGuestRsvp({ eventId, contactId, reply, adminEmail: admin.email });
-    if (rsvp) await logActivity(admin.email, "event.guest.rsvp", c?.name || "", { eventId, contactId, reply });
-    const label = reply === "yes" ? "Coming" : reply === "no" ? "Can't make it" : "No reply yet";
-    const note = row.show_on_site ? (reply === "yes" ? " They now show on the event page." : " They're off the event page until they're Coming.") : "";
-    await backWith(back, "ok", `${c?.name}: ${label}.${note}${rsvp ? ` ${rsvp}` : ""}`);
-  });
-}
-
-/**
- * Guest tracker: the row's Event page toggle (owner, 18 Nov 2026). Switches only whether a guest shows under
- * Speakers and special guests; a guest switched on with no role yet takes the one their specification suggests.
- */
-export async function setEventGuestOnPage(data) {
-  const eventId = form(data, "event");
-  const back = isUuid(eventId) ? `/events/${eventId}/guests` : "/events";
-  return guarded(back, async () => {
-    const admin = await actionAdmin("guests:edit");
-    const contactId = form(data, "contact");
-    const on = form(data, "on") === "1";
-    const [c] = isUuid(contactId) ? await sql("SELECT name, specification FROM letter_contacts WHERE id = $1", [contactId]) : [];
-    const role = on ? roleForSpecification(c?.specification) || null : null;
-    const [row] = isUuid(eventId) && c
-      ? await sql(`UPDATE event_guests SET show_on_site=$3, public_role = CASE WHEN $3 AND coalesce(public_role, '') = '' THEN $4 ELSE public_role END, updated_at=now()
-                    WHERE event_id=$1 AND contact_id=$2 RETURNING reply, public_role`, [eventId, contactId, on, role])
-      : [];
-    if (!row) await backWith(back, "error", "That guest isn't on this event's list.");
-    await logActivity(admin.email, "event.guest.page", c.name, { eventId, contactId, on });
-    const msg = !on ? `${c.name} is off the event page.`
-      : row.reply === "yes" ? `${c.name} now shows on the event page${row.public_role ? ` as ${row.public_role}` : ""}.`
-      : `${c.name} will show on the event page once their reply is Coming.`;
-    await backWith(back, "ok", msg);
+    if (!isUuid(eventId)) await backWith("/events", "error", "That event wasn't found.");
+    const changes = readTrackerChanges(form(data, "changes"), {
+      reply: (v) => ["waiting", "yes", "no"].includes(v),
+      onPage: (v) => v === "0" || v === "1",
+    });
+    if (!changes.length) await backWith(back, "error", "There were no changes to save.");
+    const done = [];
+    const problems = [];
+    // Replies first, so a guest marked Coming and switched on in one save reads as shown.
+    for (const c of [...changes].sort((x, y) => (x.field === "reply" ? 0 : 1) - (y.field === "reply" ? 0 : 1))) {
+      const [contact] = await sql("SELECT name, specification FROM letter_contacts WHERE id = $1", [c.row]);
+      if (!contact) { problems.push("A guest wasn't found."); continue; }
+      if (c.field === "reply") {
+        const [row] = await sql("UPDATE event_guests SET reply=$3, updated_at=now() WHERE event_id=$1 AND contact_id=$2 RETURNING contact_id", [eventId, c.row, c.to]);
+        if (!row) { problems.push(`${contact.name} isn't on this event's list.`); continue; }
+        await logActivity(admin.email, "event.guest.reply", contact.name, { eventId, contactId: c.row, reply: c.to });
+        const rsvp = await syncGuestRsvp({ eventId, contactId: c.row, reply: c.to, adminEmail: admin.email });
+        if (rsvp) await logActivity(admin.email, "event.guest.rsvp", contact.name, { eventId, contactId: c.row, reply: c.to });
+        done.push(`${contact.name}: ${c.to === "yes" ? "Coming" : c.to === "no" ? "Can't make it" : "No reply yet"}.${rsvp ? ` ${rsvp}` : ""}`);
+      } else {
+        const on = c.to === "1";
+        const role = on ? roleForSpecification(contact.specification) || null : null;
+        const [row] = await sql(`UPDATE event_guests SET show_on_site=$3, public_role = CASE WHEN $3 AND coalesce(public_role, '') = '' THEN $4 ELSE public_role END, updated_at=now()
+                    WHERE event_id=$1 AND contact_id=$2 RETURNING reply, public_role`, [eventId, c.row, on, role]);
+        if (!row) { problems.push(`${contact.name} isn't on this event's list.`); continue; }
+        await logActivity(admin.email, "event.guest.page", contact.name, { eventId, contactId: c.row, on });
+        done.push(!on ? `${contact.name} is off the event page.`
+          : row.reply === "yes" ? `${contact.name} shows on the event page${row.public_role ? ` as ${row.public_role}` : ""}.`
+          : `${contact.name} will show on the event page once they're Coming.`);
+      }
+    }
+    await backWith(back, done.length ? "ok" : "error", savedMessage(done, problems));
   });
 }
 

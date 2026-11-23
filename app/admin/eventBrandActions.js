@@ -7,6 +7,7 @@ import { cleanEventBrand, readRole, replyLabel, roleLabel } from "../lib/eventBr
 import { inviteBrands, removeFromTracker, saveTrackerRow } from "../lib/eventBrandsStore";
 import { issueSupporterNumber } from "../lib/supporterNumbers";
 import { addedLine, applyEventPicks } from "../lib/brandEventPicks";
+import { readTrackerChanges, savedMessage } from "../lib/trackerChanges.mjs";
 
 const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 const form = (data, key) => {
@@ -106,58 +107,54 @@ export async function addBrandToEventsAction(data) {
 }
 
 /**
- * Brand tracker: the row's reply control (design review, 18 Nov 2026). Saves only the reply, like the Guest
- * tracker's; a brand's first Yes still needs its 4-letter code and issues its HOR number, as the Edit window does.
+ * The Brand tracker's one Save (owner, 23 Nov 2026): every reply and Type picked on the rows, saved together.
+ * Each change runs the same rules as before: a first Yes needs the brand's 4-letter code and issues its HOR
+ * number; a Type sets role, partner type and sponsor level together. Giving and notes stay; nothing is emailed.
  */
-export async function setTrackerReply(data) {
+export async function saveTrackerChanges(data) {
   const event = await eventOf(data);
   const back = event ? `/events/${event.id}/brands` : "/events";
   return guarded(back, async () => {
     const admin = await actionAdmin("supporters:edit");
     if (!event) await backWith("/events", "error", "That event wasn't found.");
-    const supporterId = form(data, "brand");
-    const reply = ["waiting", "yes", "no"].includes(form(data, "reply")) ? form(data, "reply") : "waiting";
-    const [brand] = isUuid(supporterId) ? await sql("SELECT name, code, number_no FROM supporters WHERE id = $1", [supporterId]) : [];
-    if (!brand) await backWith(back, "error", "That brand wasn't found.");
-    if (reply === "yes" && !brand.number_no && !brand.code) {
-      await backWith(back, "error", `Give ${brand.name} a 4-letter ID code first (on its brand page), then mark Yes.`);
+    const changes = readTrackerChanges(form(data, "changes"), {
+      reply: (v) => ["waiting", "yes", "no"].includes(v),
+      role: (v) => Boolean(readRole(v).role),
+    });
+    if (!changes.length) await backWith(back, "error", "There were no changes to save.");
+    const done = [];
+    const problems = [];
+    // Types first, so a brand changed to Sponsor and marked Yes in the same save is logged in that order.
+    for (const c of [...changes].sort((a, b) => (a.field === "role" ? 0 : 1) - (b.field === "role" ? 0 : 1))) {
+      const [brand] = await sql("SELECT name, code, number_no FROM supporters WHERE id = $1", [c.row]);
+      if (!brand) { problems.push("A brand wasn't found."); continue; }
+      if (c.field === "role") {
+        const { role, partnerType, sponsorLevel } = readRole(c.to);
+        const [row] = await sql(
+          `UPDATE event_brands SET role = $3, partner_type = $4, sponsor_level = $5, updated_at = now()
+            WHERE event_id = $1 AND supporter_id = $2 RETURNING role, partner_type, sponsor_level`,
+          [event.id, c.row, role, partnerType, sponsorLevel],
+        );
+        if (!row) { problems.push(`${brand.name} isn't on this event's tracker.`); continue; }
+        const label = roleLabel(row);
+        await logActivity(admin.email, "event.brand.role", brand.name, { eventId: event.id, supporterId: c.row, role, type: label });
+        done.push(`${brand.name} is ${/^[AEIOU]/.test(label) ? "an" : "a"} ${label.toLowerCase()}.`);
+      } else {
+        if (c.to === "yes" && !brand.number_no && !brand.code) {
+          problems.push(`Give ${brand.name} a 4-letter ID code first (on its brand page), then mark Yes.`);
+          continue;
+        }
+        const [row] = await sql(
+          `UPDATE event_brands SET reply = $3, replied_at = CASE WHEN $3 <> reply AND $3 <> 'waiting' THEN now() ELSE replied_at END, updated_at = now()
+            WHERE event_id = $1 AND supporter_id = $2 RETURNING reply`,
+          [event.id, c.row, c.to],
+        );
+        if (!row) { problems.push(`${brand.name} isn't on this event's tracker.`); continue; }
+        const numbered = c.to === "yes" && !brand.number_no ? await issueSupporterNumber(c.row) : "";
+        await logActivity(admin.email, "event.brand.reply", brand.name, { eventId: event.id, supporterId: c.row, reply: c.to, ...(numbered ? { number: numbered } : {}) });
+        done.push(`${brand.name}: ${replyLabel(c.to)}.${numbered ? ` Their number is ${numbered}.` : ""}`);
+      }
     }
-    const [row] = await sql(
-      `UPDATE event_brands SET reply = $3, replied_at = CASE WHEN $3 <> reply AND $3 <> 'waiting' THEN now() ELSE replied_at END, updated_at = now()
-        WHERE event_id = $1 AND supporter_id = $2 RETURNING reply`,
-      [event.id, supporterId, reply],
-    );
-    if (!row) await backWith(back, "error", "That brand isn't on this event's tracker.");
-    const numbered = reply === "yes" && !brand.number_no ? await issueSupporterNumber(supporterId) : "";
-    await logActivity(admin.email, "event.brand.reply", brand.name, { eventId: event.id, supporterId, reply, ...(numbered ? { number: numbered } : {}) });
-    await backWith(back, "ok", `${brand.name}: ${replyLabel(reply)}.${reply === "yes" ? " They show on this event's page." : ""}${numbered ? ` Their number is ${numbered}.` : ""}`);
-  });
-}
-
-/**
- * The Brand tracker's Type column (owner, 23 Nov 2026; was a Partner / Sponsor switch, 18 Nov): sets the brand's
- * role and its type at this event in one choice ("Partner:exhibitor", "Sponsor:major"; a bare "Partner" or
- * "Sponsor" clears the type). Reply, giving and notes stay as they are; nothing is emailed.
- */
-export async function setTrackerRole(data) {
-  const event = await eventOf(data);
-  const back = event ? `/events/${event.id}/brands` : "/events";
-  return guarded(back, async () => {
-    const admin = await actionAdmin("supporters:edit");
-    if (!event) await backWith("/events", "error", "That event wasn't found.");
-    const supporterId = form(data, "brand");
-    const { role, partnerType, sponsorLevel } = readRole(form(data, "role"));
-    if (!role) await backWith(back, "error", "Pick a type for this brand.");
-    const [brand] = isUuid(supporterId) ? await sql("SELECT name FROM supporters WHERE id = $1", [supporterId]) : [];
-    if (!brand) await backWith(back, "error", "That brand wasn't found.");
-    const [row] = await sql(
-      `UPDATE event_brands SET role = $3, partner_type = $4, sponsor_level = $5, updated_at = now()
-        WHERE event_id = $1 AND supporter_id = $2 RETURNING role, partner_type, sponsor_level`,
-      [event.id, supporterId, role, partnerType, sponsorLevel],
-    );
-    if (!row) await backWith(back, "error", "That brand isn't on this event's tracker.");
-    const label = roleLabel(row);
-    await logActivity(admin.email, "event.brand.role", brand.name, { eventId: event.id, supporterId, role, type: label });
-    await backWith(back, "ok", `${brand.name} is now listed as ${/^[AEIOU]/.test(label) ? "an" : "a"} ${label.toLowerCase()} at this event.`);
+    await backWith(back, done.length ? "ok" : "error", savedMessage(done, problems));
   });
 }
