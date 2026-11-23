@@ -29,6 +29,8 @@ const peso = (n) => `₱${Number(n).toLocaleString("en-PH")}`;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
 // The row's reply control reads like the Guest tracker's: No reply yet, Yes, No.
 const REPLY_ORDER = ["waiting", "yes", "no"];
+// Icon-only reply buttons (owner, 23 Nov 2026); each keeps its name for screen readers and as a tooltip.
+const REPLY_ICON = { waiting: "hourglass", yes: "thumbsUp", no: "thumbsDown" };
 
 /**
  * What a brand gives, amounts first: "₱25,000 cash", "₱15,000 in kind: Treats ×200 · Booth". A kind with an
@@ -191,16 +193,16 @@ export default async function BrandTrackerPage({ params, searchParams }) {
                     })()}
                   </td>
                   <td className="st-2" data-label="Their reply">{canEdit ? (
-                    <span className="reply-quick" role="group" aria-label={`${r.name}'s reply`}>
+                    <span className="reply-quick reply-icons" role="group" aria-label={`${r.name}'s reply`}>
                       {REPLY_ORDER.map((k) => (k === r.reply
-                        ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true">{replyLabel(k)}</span>
+                        ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true" title={`Their reply: ${replyLabel(k)}`}><Icon name={REPLY_ICON[k]} label={replyLabel(k)} /></span>
                         : (
                           <form key={k} action={setTrackerReply}>
                             <input type="hidden" name="event" value={event.id} />
                             <input type="hidden" name="brand" value={r.supporter_id} />
                             <input type="hidden" name="reply" value={k} />
                             <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, mark ${replyLabel(k)}`} title={`${r.name}: ${replyLabel(k)}?`}
-                              items={[`Their reply for ${event.title}: ${replyLabel(r.reply)} → ${replyLabel(k)}`, k === "yes" ? "They show on this event's page (and the home page once they have a logo, a blurb and are switched on)" : r.reply === "yes" ? "They come off this event's page" : "", k === "yes" && !r.number_no ? "This gives them their HOR number" : "", "Their giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)}>{replyLabel(k)}</ConfirmButton>
+                              items={[`Their reply for ${event.title}: ${replyLabel(r.reply)} → ${replyLabel(k)}`, k === "yes" ? "They show on this event's page (and the home page once they have a logo, a blurb and are switched on)" : r.reply === "yes" ? "They come off this event's page" : "", k === "yes" && !r.number_no ? "This gives them their HOR number" : "", "Their giving and notes stay as they are", "Nothing is emailed"].filter(Boolean)} buttonLabel={`Mark ${replyLabel(k)}`}><Icon name={REPLY_ICON[k]} /></ConfirmButton>
                           </form>
                         )))}
                     </span>
