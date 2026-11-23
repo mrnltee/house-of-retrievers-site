@@ -23,7 +23,7 @@ function inputNear(el) {
 
 /** The box an image upload sits in: its field, or the element around the upload button. */
 function zoneOf(input) {
-  return input.closest(".logo-field") || input.closest(".field") || input.closest("label")?.parentElement || input.parentElement;
+  return input.closest(".gallery-add") || input.closest(".logo-field") || input.closest(".field") || input.closest("label")?.parentElement || input.parentElement;
 }
 
 /** Puts the chosen images into an upload, as if they'd been picked. Returns how many. */
