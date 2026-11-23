@@ -2255,12 +2255,12 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
   .type-select select { max-width: none; }
 }
 
-/* Icon-only replies on the Brand tracker (owner, 23 Nov 2026): No reply yet (hourglass), Yes (thumbs up),
-   No (thumbs down), each 44 px round with its name as the tooltip and for screen readers. */
-.brand-tracker .reply-quick.reply-icons { display: inline-flex; width: auto; gap: 2px; padding: 2px; }
-.brand-tracker .reply-icons .reply-opt { flex: none; width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; font-size: 19px; color: var(--a-muted); }
-.brand-tracker .reply-icons button.reply-opt:hover, .brand-tracker .reply-icons button.reply-opt:focus-visible { color: var(--a-ink); background: var(--a-sand); }
-.brand-tracker .reply-icons .reply-opt.is-on { color: var(--a-ink); }
-.brand-tracker .reply-icons .reply-opt.is-on.good, .brand-tracker .reply-icons .reply-opt.is-on.alert { color: #fff; }
-.brand-tracker .reply-icons .icon { vertical-align: 0; }
-@media (max-width: 720px) { .brand-tracker .reply-quick.reply-icons { display: inline-flex; width: auto; } }
+/* Icon-only replies on the Brand and Guest trackers (owner, 23 Nov 2026): No reply yet (hourglass),
+   Yes / Coming (thumbs up), No / Can't make it (thumbs down), each 44 px round with its name as the tooltip and for screen readers. */
+.tracker-page .reply-quick.reply-icons { display: inline-flex; width: auto; gap: 2px; padding: 2px; }
+.tracker-page .reply-icons .reply-opt { flex: none; width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; font-size: 19px; color: var(--a-muted); }
+.tracker-page .reply-icons button.reply-opt:hover, .tracker-page .reply-icons button.reply-opt:focus-visible { color: var(--a-ink); background: var(--a-sand); }
+.tracker-page .reply-icons .reply-opt.is-on { color: var(--a-ink); }
+.tracker-page .reply-icons .reply-opt.is-on.good, .tracker-page .reply-icons .reply-opt.is-on.alert { color: #fff; }
+.tracker-page .reply-icons .icon { vertical-align: 0; }
+@media (max-width: 720px) { .tracker-page .reply-quick.reply-icons { display: inline-flex; width: auto; } }

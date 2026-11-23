@@ -28,6 +28,7 @@ import { GUEST_GUIDES } from "../../../../../lib/admin/howToGuides.mjs";
 
 const greetingOf = (f) => f.salutation || f.contact || f.name;
 const replyTone = { yes: "good", no: "alert", waiting: "" };
+const REPLY_ICON = { waiting: "hourglass", yes: "thumbsUp", no: "thumbsDown" };
 const guestReply = (reply) => (reply === "yes" ? "Coming" : reply === "no" ? "Can't make it" : replyLabel(reply));
 /** What a reply change does to the RSVP list, for the confirm dialog. */
 function rsvpNote(r, to) {
@@ -216,16 +217,16 @@ export default async function EventGuestsPage({ params, searchParams }) {
                     </td>
                     <td className="st-2" data-label="Their reply">
                       {canEdit ? (
-                        <span className="reply-quick" role="group" aria-label={`${r.name}'s reply`}>
+                        <span className="reply-quick reply-icons" role="group" aria-label={`${r.name}'s reply`}>
                           {REPLIES.map(([k]) => (k === r.reply
-                            ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true">{guestReply(k)}</span>
+                            ? <span key={k} className={`reply-opt is-on ${replyTone[k]}`.trim()} aria-current="true" title={`Their reply: ${guestReply(k)}`}><Icon name={REPLY_ICON[k]} label={guestReply(k)} /></span>
                             : (
                               <form key={k} action={setEventGuestReply}>
                                 <input type="hidden" name="event" value={event.id} />
                                 <input type="hidden" name="contact" value={r.id} />
                                 <input type="hidden" name="reply" value={k} />
                                 <ConfirmButton className="reply-opt" tone="ghost" yes={`Yes, ${guestReply(k)}`} title={`${r.name}: ${guestReply(k)}?`}
-                                  items={[`Their reply for ${event.title}: ${guestReply(r.reply)} → ${guestReply(k)}`, ...rsvpNote(r, k), ...(r.show_on_site ? [k === "yes" ? "They'll show on the event page" : "They'll be taken off the event page until they're Coming"] : []), "Nothing is emailed"]}>{guestReply(k)}</ConfirmButton>
+                                  items={[`Their reply for ${event.title}: ${guestReply(r.reply)} → ${guestReply(k)}`, ...rsvpNote(r, k), ...(r.show_on_site ? [k === "yes" ? "They'll show on the event page" : "They'll be taken off the event page until they're Coming"] : []), "Nothing is emailed"]} buttonLabel={`Mark ${guestReply(k)}`}><Icon name={REPLY_ICON[k]} /></ConfirmButton>
                               </form>
                             )))}
                         </span>
