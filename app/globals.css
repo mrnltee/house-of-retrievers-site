@@ -2368,3 +2368,16 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
   .media-angle-list { grid-template-columns: 1fr; }
   .media-angle-list article:last-child:nth-child(odd) { grid-column: auto; }
 }
+
+/* Story card hierarchy (23 Nov 2026, owner): like the Activity history cards, a gold
+   eyebrow (date or "Monthly"), the title, then one fact per line with an icon
+   (place, who it was for, who it was with), and Read the story on the bottom line. */
+.media-angle-list article.has-story { grid-template-rows: 1fr auto; gap: 20px; padding: 24px; }
+.media-angle-head { display: grid; gap: 10px; align-content: start; }
+.media-angle-list .media-angle-when { margin: 0; color: var(--media-gold-text); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.media-angle-list .has-story h3 { margin: 0; font-size: clamp(19px, 1.6vw, 22px); line-height: 1.2; text-wrap: balance; }
+.media-angle-facts { display: grid; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; color: var(--media-muted); font-size: 15px; line-height: 1.45; }
+.media-angle-facts li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; }
+.media-angle-facts .icon { margin-top: 3px; color: var(--media-gold-text); }
+.media-story-open { margin-top: 0; }
+.media-angle-list .media-angle-facts span { color: inherit; font-size: inherit; font-weight: 400; letter-spacing: normal; }

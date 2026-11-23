@@ -45,3 +45,10 @@ test("built-in timeline thumbnails come from each activity's own photos", () => 
     assert.ok(row.thumbnail.includes(folder), `${activity}: ${row.thumbnail}`);
   }
 });
+
+test("every story card has its eyebrow and place", () => {
+  for (const story of MEDIA_STORIES) {
+    assert.ok(story.when, story.key);
+    assert.ok(story.place, story.key);
+  }
+});
