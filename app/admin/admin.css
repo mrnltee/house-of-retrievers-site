@@ -2278,3 +2278,56 @@ a.reg-people:hover, a.reg-people:focus-visible { text-decoration: underline; tex
   .tracker-page .reply-quick.reply-icons .reply-opt { font-size: 19px; padding: 0; }
   .tracker-savebar .actions { width: 100%; justify-content: space-between; }
 }
+
+/* Collapsible sidebar (owner, 23 Nov 2026). Every item has its icon; on computers the paw button folds the
+   sidebar to a rail of icons (html[data-admin-nav="collapsed"], set before paint by layout.jsx, kept in
+   localStorage by AdminNav.jsx). Labels stay in the page for screen readers; AdminNav shows a name tip on
+   hover and focus. Phones keep their top bar and full menu: none of the rail rules apply under 861 px. */
+.admin-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.admin-side .logo { display: block; border-radius: 8px; }
+.admin-side .logo:focus-visible, .admin-collapse:focus-visible, .admin-side a.admin-link:focus-visible, .admin-signout:focus-visible { outline: 2px solid var(--a-gold); outline-offset: 2px; }
+.admin-side .logo-frame { display: block; width: 160px; overflow: hidden; }
+.admin-side .logo img { width: 160px; height: auto; display: block; }
+.admin-collapse { flex: none; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid rgba(255, 255, 255, .2); border-radius: 999px; background: none; color: var(--a-gold); cursor: pointer; }
+.admin-collapse:hover { background: rgba(255, 255, 255, .08); border-color: var(--a-gold); }
+/* lucide's paw points up and to the right: turned 45° it points right (expand), mirrored it points left (collapse). */
+.admin-collapse-paw { transform: scaleX(-1) rotate(45deg); }
+.admin-collapse-paw.is-right { transform: rotate(45deg); }
+.admin-side a.admin-link, .admin-side .soon { display: flex; align-items: center; gap: 12px; }
+.admin-side .admin-ico { flex: none; width: 20px; height: 20px; }
+.admin-side a.admin-link .admin-ico { color: var(--a-gold); }
+.admin-side a.admin-link[aria-current="page"] .admin-ico { color: var(--a-ink); }
+.admin-side a.admin-link .unread { margin-left: auto; }
+.admin-side .admin-label { min-width: 0; }
+.admin-signout { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
+.admin-side .me .admin-signout .admin-ico { width: 16px; height: 16px; }
+.admin-tip { position: fixed; z-index: 60; transform: translateY(-50%); padding: 6px 10px; border-radius: 8px; background: var(--a-ink); color: white; border: 1px solid rgba(255, 255, 255, .2); box-shadow: 0 6px 18px rgba(0, 0, 0, .25); font-size: 13px; font-weight: 600; white-space: nowrap; pointer-events: none; }
+
+@media (min-width: 861px) {
+  @media (prefers-reduced-motion: no-preference) {
+    .admin-shell { transition: grid-template-columns .22s cubic-bezier(.65, 0, .35, 1); }
+    .admin-collapse-paw { transition: transform .22s cubic-bezier(.65, 0, .35, 1); }
+  }
+  html[data-admin-nav="collapsed"] .admin-shell { grid-template-columns: 76px minmax(0, 1fr); }
+  html[data-admin-nav="collapsed"] .admin-side { padding: 20px 12px; overflow-x: hidden; }
+  html[data-admin-nav="collapsed"] .admin-side-head { flex-direction: column; gap: 14px; margin-bottom: 8px; }
+  /* The two dogs fill x 1.5–555.6 of the 1396-wide artwork: the frame shows that part, the wordmark is cropped off. */
+  html[data-admin-nav="collapsed"] .admin-side .logo-frame { width: 48px; }
+  html[data-admin-nav="collapsed"] .admin-side .logo img { width: 120px; }
+  html[data-admin-nav="collapsed"] .admin-side .tag { display: none; }
+  html[data-admin-nav="collapsed"] .admin-side .admin-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  html[data-admin-nav="collapsed"] .admin-side .group { padding: 12px 0 6px; }
+  html[data-admin-nav="collapsed"] .admin-side .group::before { content: ""; display: block; height: 1px; margin: 0 10px; background: rgba(255, 255, 255, .16); }
+  html[data-admin-nav="collapsed"] .admin-side a.admin-link, html[data-admin-nav="collapsed"] .admin-side .soon { position: relative; justify-content: center; padding: 0; min-height: 44px; }
+  html[data-admin-nav="collapsed"] .admin-side .soon .admin-ico { opacity: .55; }
+  html[data-admin-nav="collapsed"] .admin-side a.admin-link .unread { position: absolute; top: 2px; right: 2px; min-width: 18px; margin: 0; padding: 0 5px; font-size: 11px; line-height: 18px; }
+  html[data-admin-nav="collapsed"] .admin-side .me { padding: 14px 0 0; justify-items: center; }
+  html[data-admin-nav="collapsed"] .admin-side .me-card { margin: 0 0 6px; padding: 4px; justify-content: center; }
+  html[data-admin-nav="collapsed"] .admin-side .admin-signout { justify-content: center; width: 44px; height: 44px; border-radius: 8px; color: var(--a-on-dark-muted); }
+  html[data-admin-nav="collapsed"] .admin-side .admin-signout:hover { background: rgba(255, 255, 255, .08); color: white; }
+  html[data-admin-nav="collapsed"] .admin-side .me .admin-signout .admin-ico { width: 20px; height: 20px; }
+}
+@media (max-width: 860px) {
+  .admin-collapse, .admin-tip { display: none; }
+  .admin-side .admin-menu .admin-side-head { display: none; }
+}

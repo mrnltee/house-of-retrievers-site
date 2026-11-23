@@ -17,16 +17,20 @@ import { HOW, guidePages } from "../../lib/admin/guide.mjs";
 // Each page shows when the admin has its first capability (see PAGES).
 const page = (key) => {
   const p = PAGES.find((x) => x.key === key);
-  return [p.label, p.path, p.view[0]];
+  return [p.label, p.path, p.view[0], key];
 };
 const GROUPS = [
   ["Run", ["dashboard", "events", "registrations", "checkin", "people", "supporters", "beneficiaries"].map(page)],
-  ["Publish", [["Gallery", null], ["Forms", null], page("media"), page("photographers"), ["Content", null]]],
+  ["Publish", [["Gallery", null, null, "gallery"], ["Forms", null, null, "forms"], page("media"), page("photographers"), ["Content", null, null, "content"]]],
   ["Money", [page("payments"), page("ledger")]],
-  ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null], ["Admins & activity log", "/admins", "log:view"]]],
-  ["Team", [["Team chat", "/chat", "*"]]],
-  ["Help", [["Getting started", "/start", "*"]]],
+  ["Settings", [page("emails"), page("letters"), page("journey"), page("breeds"), ["Privacy requests", null, null, "privacy"], ["Admins & activity log", "/admins", "log:view", "admins"]]],
+  ["Team", [["Team chat", "/chat", "*", "chat"]]],
+  ["Help", [["Getting started", "/start", "*", "start"]]],
 ];
+
+// Runs before the sidebar paints, so a collapsed sidebar doesn't flash open on every page load
+// (AdminNav.jsx keeps the same key in localStorage). Phones ignore it: the top bar is unchanged.
+const NAV_STATE_SCRIPT = `try{if(localStorage.getItem("hor-admin-nav")==="collapsed")document.documentElement.dataset.adminNav="collapsed"}catch(e){}`;
 
 export default async function AdminAppLayout({ children }) {
   const { admin } = await pageAdmin();
@@ -42,7 +46,7 @@ export default async function AdminAppLayout({ children }) {
     label,
     items
       .filter(([, path, cap]) => (path === null ? !Array.isArray(admin.pages) || admin.roles.includes("owner") : cap === "*" || can(admin, cap)))
-      .map(([name, path]) => ({ name, href: path === null ? null : path === "/" ? base || "/" : `${base}${path}`, badge: path === "/chat" ? unread : 0 })),
+      .map(([name, path, , icon]) => ({ name, icon, href: path === null ? null : path === "/" ? base || "/" : `${base}${path}`, badge: path === "/chat" ? unread : 0 })),
   ]).filter(([, items]) => items.length);
 
   const href = (path) => (path === "/" ? base || "/" : `${base}${path}`);
@@ -62,6 +66,7 @@ export default async function AdminAppLayout({ children }) {
 
   return (
     <div className="admin-shell">
+      <script dangerouslySetInnerHTML={{ __html: NAV_STATE_SCRIPT }} />
       <AdminNav
         groups={groups}
         home={base || "/"}
