@@ -237,8 +237,10 @@ export default async function MediaPage() {
         </article>
         <div className="media-press-grid">
           <div>
-            <h3 className="media-press-title">Fact sheet</h3>
-            {published.publishedAt ? <p className="media-updated">Last updated {albumDate(published.publishedAt)}</p> : null}
+            <div className="media-press-head">
+              <h3 className="media-press-title">Fact sheet</h3>
+              {published.publishedAt ? <p className="media-updated">Last updated {albumDate(published.publishedAt)}</p> : null}
+            </div>
             <dl className="media-fact-list">
               {kit.factSheet.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}
               <div><dt>Mission</dt><dd dangerouslySetInnerHTML={rich(content.mission)} /></div>
@@ -246,7 +248,7 @@ export default async function MediaPage() {
             </dl>
           </div>
           <div>
-            <h3 className="media-press-title">About House of Retrievers</h3>
+            <div className="media-press-head"><h3 className="media-press-title">About House of Retrievers</h3></div>
             {[["Short, about 50 words", kit.boilerplateShort], ["Long, about 150 words", kit.boilerplateLong]].map(([label, text]) => <article className="media-boilerplate" key={label}><header><strong>{label}</strong>{kit.boilerplatesApproved ? null : <span className="media-draft-tag">Draft for approval</span>}<CopyButton text={text} label="Copy text" /></header>{text.split("\n\n").map((paragraph) => <p key={paragraph.slice(0, 24)}>{paragraph}</p>)}</article>)}
           </div>
         </div>
