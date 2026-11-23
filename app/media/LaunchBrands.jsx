@@ -28,6 +28,7 @@ export default function LaunchBrands({ groups }) {
   }
   return (
     <>
+      <div className="media-launch-brand-groups">
       {groups.map(([title, list]) => (
         <div className="media-launch-brands" key={title}>
           <span className="media-launch-brands-title">{title}</span>
@@ -45,6 +46,7 @@ export default function LaunchBrands({ groups }) {
           </ul>
         </div>
       ))}
+      </div>
       {/* Outside the dark launch card, so its white text rules don't reach the light dialog. */}
       {open && createPortal(<SupporterDialog supporter={open} onClose={() => setOpen(null)} />, document.body)}
     </>

@@ -2158,6 +2158,20 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-press .media-launch-card .media-launch-logo { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: #fff; color: #5c4515; font-size: 12px; font-weight: 700; line-height: 1; }
 .media-launch-logo img { width: 100%; height: 100%; object-fit: contain; }
 @media (max-width: 560px) { .media-launch-brands { grid-template-columns: 1fr; } .media-launch-brands-title { padding-top: 0; } }
+/* Partner list alignment (23 Nov 2026, owner): each group used to be its own grid sized to its own label, so
+   "Co-presented with", "In-kind partners" and "Exhibitors" started their chips at three different places. The groups
+   now share one grid (the group box steps aside with display: contents), so every row of chips starts at the edge
+   set by the longest label, wrapped rows included, and each label sits level with its first row of chips.
+   (".media-launch-card span:first-child" sets every first span to block, so the label rule carries the card class.)
+   Phones keep the label above its chips. */
+.media-launch-brand-groups { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 12px 16px; margin-top: 10px; }
+.media-launch-brand-groups .media-launch-brands { display: contents; }
+.media-launch-card .media-launch-brand-groups .media-launch-brands-title { display: flex; align-items: center; align-self: start; min-height: 36px; padding-top: 0; }
+@media (max-width: 560px) {
+  .media-launch-brand-groups { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .media-launch-card .media-launch-brand-groups .media-launch-brands-title { min-height: 0; }
+  .media-launch-brand-groups .media-launch-brands ul { margin-bottom: 8px; }
+}
 
 /* Journey timeline review (19 Nov 2026, design review): in the sideways row every card reads the same way,
    picture on top, text under it, the link on the bottom line, whichever side the vertical layout put the
