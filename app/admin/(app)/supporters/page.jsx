@@ -5,7 +5,8 @@ import { sql } from "../../../lib/db";
 import { adminBase, pageAdmin } from "../../../lib/admin/guard";
 import { can } from "../../../lib/admin/roles.mjs";
 import { gapLine, supporterNumber, brandNameFrom, newBrandHref, websiteGaps } from "../../../lib/supporters.mjs";
-import { joinedCounts } from "../../../lib/eventBrandsStore";
+import { joinedCounts, typeRows } from "../../../lib/eventBrandsStore";
+import { typesAtEvents } from "../../../lib/eventBrands.mjs";
 import { Flash, NotAllowed, PageHead } from "../ui";
 import HowTo from "../HowTo";
 
@@ -22,7 +23,7 @@ export default async function SupportersPage({ searchParams }) {
   const label = cleanParam(params?.label, 60);
   const q = cleanParam(params?.q);
   const view = params?.view === "list" ? "list" : "cards";
-  const [rows, counts, joined, waiting, labels] = await Promise.all([
+  const [rows, counts, joined, waiting, labels, types] = await Promise.all([
     sql(
       `SELECT * FROM supporters
         WHERE ($1 = '' OR kind = $1)
@@ -41,7 +42,9 @@ export default async function SupportersPage({ searchParams }) {
         ORDER BY p.created_at DESC LIMIT 20`,
     ),
     sql("SELECT DISTINCT category_label FROM supporters WHERE category_label IS NOT NULL ORDER BY category_label"),
+    typeRows(),
   ]);
+  const typesOf = (row) => typesAtEvents(types[row.id] || []);
   const count = (key) => counts.find((item) => item.kind === key)?.n || 0;
   const canEdit = can(admin, "supporters:edit");
   // Published events each brand said Yes to, from the Brand trackers.
@@ -55,7 +58,7 @@ export default async function SupportersPage({ searchParams }) {
   };
   const filtered = Boolean(kind || status || label || q);
   // What the live search looks through, per brand.
-  const searchOf = (row) => [row.name, row.code, supporterNumber(row), row.category_label, row.kind, row.contact_name, row.contact_email].filter(Boolean).join(" ").toLowerCase();
+  const searchOf = (row) => [row.name, row.code, supporterNumber(row), row.category_label, row.kind, ...typesOf(row), row.contact_name, row.contact_email].filter(Boolean).join(" ").toLowerCase();
   // On the website, or what it still needs to be.
   const siteLine = (row) => {
     const gaps = websiteGaps(row, { joined: joinedOf(row) });
@@ -100,7 +103,7 @@ export default async function SupportersPage({ searchParams }) {
         {canEdit && <BatchBar back={href().replace(base, "")} />}
         <div className="table-wrap supporter-list-wrap">
           <table>
-            <thead><tr>{canEdit && <th><SelectAllBrands /></th>}<th>Organization</th><th>Contact</th><th>ID</th><th>Usually</th><th>Events</th><th>On our website</th></tr></thead>
+            <thead><tr>{canEdit && <th><SelectAllBrands /></th>}<th>Organization</th><th>Contact</th><th>ID</th><th>Usually</th><th>Type at events</th><th>Events</th><th>On our website</th></tr></thead>
             <tbody>
               {rows.map((row) => {
                 return (
@@ -110,6 +113,7 @@ export default async function SupportersPage({ searchParams }) {
                     <td className="small">{row.contact_name || <span className="muted">No contact yet</span>}{row.contact_email && <><br /><span className="muted">{row.contact_email}</span></>}</td>
                     <td className="supporter-id-cell">{supporterNumber(row) || <span className="id-pending" title="Numbered at their first Yes on an event">Not yet{row.code ? ` · ${row.code}` : ""}</span>}</td>
                     <td><span className="chips"><span className="chip">{row.kind}</span>{row.category_label && <span className="chip">{row.category_label}</span>}</span></td>
+                    <td>{typesOf(row).length ? <span className="chips">{typesOf(row).map((t) => <span key={t} className="chip">{t}</span>)}</span> : <span className="muted">Not on an event</span>}</td>
                     <td>{joinedOf(row) ? `${joinedOf(row)} event${joinedOf(row) === 1 ? "" : "s"}` : <span className="muted">None yet</span>}</td>
                     <td className="small">{siteLine(row)}</td>
                   </tr>

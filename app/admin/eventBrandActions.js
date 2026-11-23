@@ -3,7 +3,7 @@
 import { sql } from "../lib/db";
 import { actionAdmin, backWith, Forbidden } from "../lib/admin/guard";
 import { logActivity } from "../lib/admin/log";
-import { cleanEventBrand, replyLabel } from "../lib/eventBrands.mjs";
+import { cleanEventBrand, readRole, replyLabel, roleLabel } from "../lib/eventBrands.mjs";
 import { inviteBrands, removeFromTracker, saveTrackerRow } from "../lib/eventBrandsStore";
 import { issueSupporterNumber } from "../lib/supporterNumbers";
 import { addedLine, applyEventPicks } from "../lib/brandEventPicks";
@@ -135,9 +135,9 @@ export async function setTrackerReply(data) {
 }
 
 /**
- * The Brand tracker row's Partner / Sponsor switch (owner, 18 Nov 2026): changes only the brand's role at this
- * event. Switching clears the other role's category (partner type or sponsor level); pick the new one in
- * Edit details. Reply, giving and notes stay as they are; nothing is emailed.
+ * The Brand tracker's Type column (owner, 23 Nov 2026; was a Partner / Sponsor switch, 18 Nov): sets the brand's
+ * role and its type at this event in one choice ("Partner:exhibitor", "Sponsor:major"; a bare "Partner" or
+ * "Sponsor" clears the type). Reply, giving and notes stay as they are; nothing is emailed.
  */
 export async function setTrackerRole(data) {
   const event = await eventOf(data);
@@ -146,17 +146,18 @@ export async function setTrackerRole(data) {
     const admin = await actionAdmin("supporters:edit");
     if (!event) await backWith("/events", "error", "That event wasn't found.");
     const supporterId = form(data, "brand");
-    const role = form(data, "role") === "Sponsor" ? "Sponsor" : "Partner";
+    const { role, partnerType, sponsorLevel } = readRole(form(data, "role"));
+    if (!role) await backWith(back, "error", "Pick a type for this brand.");
     const [brand] = isUuid(supporterId) ? await sql("SELECT name FROM supporters WHERE id = $1", [supporterId]) : [];
     if (!brand) await backWith(back, "error", "That brand wasn't found.");
     const [row] = await sql(
-      `UPDATE event_brands SET role = $3, partner_type = CASE WHEN $3 = 'Sponsor' OR role <> $3 THEN NULL ELSE partner_type END,
-         sponsor_level = CASE WHEN $3 = 'Partner' OR role <> $3 THEN NULL ELSE sponsor_level END, updated_at = now()
-        WHERE event_id = $1 AND supporter_id = $2 RETURNING role`,
-      [event.id, supporterId, role],
+      `UPDATE event_brands SET role = $3, partner_type = $4, sponsor_level = $5, updated_at = now()
+        WHERE event_id = $1 AND supporter_id = $2 RETURNING role, partner_type, sponsor_level`,
+      [event.id, supporterId, role, partnerType, sponsorLevel],
     );
     if (!row) await backWith(back, "error", "That brand isn't on this event's tracker.");
-    await logActivity(admin.email, "event.brand.role", brand.name, { eventId: event.id, supporterId, role });
-    await backWith(back, "ok", `${brand.name} is now a ${role.toLowerCase()} at this event.`);
+    const label = roleLabel(row);
+    await logActivity(admin.email, "event.brand.role", brand.name, { eventId: event.id, supporterId, role, type: label });
+    await backWith(back, "ok", `${brand.name} is now listed as ${/^[AEIOU]/.test(label) ? "an" : "a"} ${label.toLowerCase()} at this event.`);
   });
 }
