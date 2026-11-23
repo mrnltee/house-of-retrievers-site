@@ -36,7 +36,7 @@ export const DEFAULT_MEDIA_TIMELINE = [
   { activity: "Basic Embroidery Class", date: "August 2026", location: "Quezon City", purpose: "Purpose to Learn, with Pawfect Blooms", thumbnail: "/2-better/better3.jpg" },
   { activity: "Visit to Milagros Elderly Shelter", date: "August 2026", location: "Milagros Elderly Home Care and Services", purpose: "Community outreach: care and companionship", thumbnail: "/journey/milagros-elderly-shelter/4.jpg" },
   { activity: "Pack walk with Beagle Buddies PH", date: "23 August 2026", location: "Ayala Triangle, Makati", purpose: "Our first collaboration with another dog community", thumbnail: "/journey/beagle-buddies-pack-walk/3.jpg" },
-  { activity: "Monthly Free Hugs", date: "Last Sunday of every month", location: "BGC, Taguig", purpose: "Free hugs from our furbabies, every month since September 2026", thumbnail: "/journey/freehugs-bgc/3.jpg" },
+  { activity: "Monthly Free Hugs", date: "Last Sunday of every month", location: "Near Specific Gravity, BGC", purpose: "Free hugs from our furbabies, every month since September 2026", thumbnail: "/journey/freehugs-bgc/3.jpg" },
   { activity: "Weekend Social Run", date: "11 October 2026", location: "Filinvest City, Alabang", purpose: "", thumbnail: "/journey/weekend-social-run/1.jpg" },
   { activity: "Bedazzle Barkdate", date: "17 October 2026", location: "Wiltlover Café, MetLive Mall, Pasay", purpose: "", thumbnail: "/journey/bedazzle-barkdate/1.jpg" },
   { activity: "Retriever Romp", date: "8 November 2026", location: "Parklinks Pet Park, Pasig", purpose: "A retrievers’ casual meet-up", thumbnail: "/journey/retriever-romp/1.jpg" },

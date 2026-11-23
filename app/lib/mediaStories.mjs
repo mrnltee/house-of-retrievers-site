@@ -67,14 +67,13 @@ export const MEDIA_STORIES = [
     ],
     paragraphs: [
       "Some of our days are loud and joyful. This one was quiet, and that was the point.",
-      "In August 2026, a week after our embroidery class, members and their golden retrievers visited the residents of Milagros Elderly Home Care and Services. The dogs, most of them in red bandanas, went from chair to chair. Residents reached down from their wheelchairs to run a hand through soft fur. One retriever rested its head on a resident’s lap while a caregiver knelt beside them.",
+      "In August 2026, a week after our embroidery class, five of our golden retrievers visited Milagros Elderly Home Care and Services: Dog-tor (Dr.) Dallas, Macchiato, Faye, Molly and Maverick. Maverick was still a small puppy, so he stayed in his stroller and greeted everyone from there.",
+      "Around five to eight elders live at Milagros, some of them bedridden. The dogs, most of them in red bandanas, went from chair to chair. Residents reached down from their wheelchairs to run a hand through soft fur. One retriever rested its head on a resident’s lap while a caregiver knelt beside them.",
       "We planned the visit around care and companionship, not therapy. We didn’t come to fix anything. We came to sit with people for a while and share the quiet comfort a dog’s company brings.",
       "Before we left, the Milagros team gave us a certificate of appreciation. We went home with something bigger: the reminder that Purpose to Care can be as simple as showing up.",
     ],
     confirm: [
       "The exact date of the visit",
-      "How many residents, members and dogs took part",
-      "Whether Milagros is happy to be quoted, and a line from their team if so",
     ],
   },
   {
@@ -90,20 +89,19 @@ export const MEDIA_STORIES = [
     ],
     paragraphs: [
       "Retrievers and beagles don’t usually walk in the same pack. On 23 August 2026, they did.",
-      "We joined Beagle Buddies PH for a community pack walk at Ayala Triangle in Makati. Beagles trotted beside owners in matching shirts behind the Beagle Buddies PH flag. A golden retriever in a pink cap walked ahead of the House of Retrievers banner. For a stretch, walkers and their dogs filled the road along Ayala Avenue.",
+      "We joined Beagle Buddies PH for a community pack walk at Ayala Triangle in Makati. Beagles trotted beside owners in matching shirts behind the Beagle Buddies PH flag. A golden retriever in a pink cap walked ahead of the House of Retrievers banner. Around 20 to 40 dogs came, and for a stretch they and their walkers filled the road along Ayala Avenue.",
       "It was our first collaboration with another dog community, and it showed us something we want to keep doing: dog groups working together instead of competing. Different breeds, different clubs, the same love for the dog at the end of the leash.",
       "After the walk, beagles and their people stayed on the sidewalk to meet everyone, the way new friends do.",
     ],
     confirm: [
-      "How many walkers and dogs joined",
-      "Whether Beagle Buddies PH is happy to be quoted, and a line from them if so",
+      "How many people walked, if HoR would like to add it",
     ],
   },
   {
     key: "free-hugs",
     match: /hugs/i,
     title: "Free hugs, every month",
-    meta: "Last Sunday of every month · BGC, Taguig",
+    meta: "Last Sunday of every month · Near Specific Gravity, BGC",
     summary: "Free hugs from our golden retrievers.",
     photos: [
       { src: "/journey/international-free-hugs-day/1.jpg", alt: "Members and their golden retrievers sitting in a circle on the lawn at BGC with Free Hugs signs" },
@@ -113,13 +111,12 @@ export const MEDIA_STORIES = [
     paragraphs: [
       "Free hugs: just a dog who is happy to see you, and a person who needed that today.",
       "It began with International Free Hugs Day in July 2026. Our members sat in a circle on the lawn at BGC with their golden retrievers and their Free Hugs signs, and waited to see who would come. People did. Passers-by stopped to take photos, then crouched down to say hello. That late afternoon is where our Purpose to Care began.",
-      "In September we went back, and we kept going back. FreeHugs now happens on the last Sunday of every month at BGC. Children reach out to a retriever for the first time. A boy sits on a bench beside a dog wearing a Free Hugs sign. Strangers kneel on the grass and, for a minute, forget about their week.",
-      "If you are in BGC on the last Sunday of the month, come and say hello. Bring someone who could use a hug.",
+      "In September we went back, and we kept going back. FreeHugs now happens on the last Sunday of every month in BGC, near Specific Gravity. Children reach out to a retriever for the first time. A boy sits on a bench beside a dog wearing a Free Hugs sign. Strangers kneel on the grass and, for a minute, forget about their week.",
+      "If you are in BGC on the last Sunday of the month, look for us near Specific Gravity and come say hello. You are welcome to bring your own dog, too: it’s a gentle way for them to meet new people and new dogs. And bring someone who could use a hug.",
     ],
     confirm: [
-      "The exact spot in BGC and the usual time",
+      "The usual time",
       "That it has run every month since September, and whether any month is skipped (29 November is the day before the launch)",
-      "Whether visitors may bring their own dogs",
     ],
   },
 ];
