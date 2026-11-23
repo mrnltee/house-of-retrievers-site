@@ -12,7 +12,7 @@ test("saved Stories lines become their story's card, in their order", () => {
   ]);
   assert.deepEqual(cards.map((c) => c.story?.key), ["pawres-de-mayo", "milagros", "beagle-buddies", "free-hugs"]);
   assert.equal(cards[1].text, "Purpose to Care visit · Milagros Elderly Home Care and Services");
-  assert.match(cards[3].text, /Last Sunday of every month/);
+  assert.match(cards[3].text, /last Sunday of the month/);
 });
 
 test("a line no story matches stays a plain card", () => {
