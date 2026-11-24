@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chatBubbleHidden, shouldChime, liftAbove, chatButtonLabel } from "./chatBubble.mjs";
+import { chatBubbleHidden, shouldChime, liftAbove, chatButtonLabel, CHAT_POLL, shouldPoll } from "./chatBubble.mjs";
 
 test("hidden on the chat page and the check-in display screen only", () => {
   assert.equal(chatBubbleHidden("/chat"), true);
@@ -41,4 +41,22 @@ test("button label says what it does and how many are unread", () => {
   assert.equal(chatButtonLabel(1), "Team chat, 1 unread message");
   assert.equal(chatButtonLabel(4), "Team chat, 4 unread messages");
   assert.equal(chatButtonLabel(4, true), "Close team chat");
+});
+
+test("asks the server only while the tab is visible and the admin isn't away", () => {
+  const now = 1_000_000_000;
+  const idle = CHAT_POLL.idleAfterMs;
+  assert.equal(shouldPoll({ visible: true, lastActiveAt: now, now }), true);
+  assert.equal(shouldPoll({ visible: true, lastActiveAt: now - idle + 1, now }), true);
+  assert.equal(shouldPoll({ visible: true, lastActiveAt: now - idle, now }), false);
+  assert.equal(shouldPoll({ visible: false, lastActiveAt: now, now }), false);
+  assert.equal(shouldPoll({ visible: true, lastActiveAt: undefined, now }), false);
+  assert.equal(shouldPoll(), false);
+});
+
+test("polls less often than before: 30 s for the button, 10 s for an open room, away after 10 minutes", () => {
+  assert.equal(CHAT_POLL.bubbleMs, 30_000);
+  assert.equal(CHAT_POLL.roomMs, 10_000);
+  assert.equal(CHAT_POLL.idleAfterMs, 600_000);
+  assert.ok(Object.isFrozen(CHAT_POLL));
 });
