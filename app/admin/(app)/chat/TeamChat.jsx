@@ -5,6 +5,8 @@ import { deleteChat, editChat, loadChat, sendChat } from "../../chatActions";
 import { CHAT_MAX } from "../../../lib/admin/chat.mjs";
 import { insertAtCursor } from "../../../lib/admin/chatEmoji.mjs";
 import EmojiPicker from "./EmojiPicker";
+import { CHAT_POLL } from "../../../lib/admin/chatBubble.mjs";
+import { chatShouldPoll, onChatWake } from "../chatActivity";
 
 const time = (iso) => new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 
@@ -97,8 +99,10 @@ export default function TeamChat({ preview, compact = false, autoFocus = false, 
 
   useEffect(() => {
     refresh();
-    const timer = setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 5000);
-    return () => clearInterval(timer);
+    // Every 10 s while the tab is visible and the admin isn't away; at once when they come back (CHAT_POLL).
+    const timer = setInterval(() => { if (chatShouldPoll()) refresh(); }, CHAT_POLL.roomMs);
+    const stopWake = onChatWake(refresh);
+    return () => { clearInterval(timer); stopWake(); };
   }, [refresh]);
 
   useEffect(() => {

@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { Bell, BellOff, Maximize2, MessageCircle, X } from "lucide-react";
 import TeamChat from "./chat/TeamChat";
 import { chatUnread } from "../chatActions";
-import { chatBubbleHidden, chatButtonLabel, liftAbove, shouldChime } from "../../lib/admin/chatBubble.mjs";
+import { CHAT_POLL, chatBubbleHidden, chatButtonLabel, liftAbove, shouldChime } from "../../lib/admin/chatBubble.mjs";
+import { chatShouldPoll, onChatWake } from "./chatActivity";
 import { SOUND_EVENT, chime, isMuted, setMuted, unlockOnFirstPress } from "./chatSound";
 
 // Kept per browser: the newest message from someone else that already chimed (shared by every open tab).
@@ -15,7 +16,6 @@ const OPEN_KEY = "hor-chat-open";
 export const UNREAD_EVENT = "hor-chat-unread";
 // Bars that stick to the bottom of the screen; the button rises above them. A new one can add data-bottom-bar.
 const BOTTOM_BARS = ".form-actions-sticky, .access-savebar.has-changes, .access-savebar:not(.tracker-savebar), .sd-save, [data-bottom-bar]";
-const POLL_MS = 10000;
 
 const read = (store, key) => { try { return store.getItem(key); } catch { return null; } };
 const write = (store, key, value) => { try { if (value == null) store.removeItem(key); else store.setItem(key, value); } catch { /* private mode */ } };
@@ -66,21 +66,22 @@ export default function ChatBubble({ base, initialUnread = 0, preview = false })
     window.dispatchEvent(new CustomEvent(UNREAD_EVENT, { detail: { unread: n } }));
   }, []);
 
-  // While the panel is shut, ask every few seconds (only while the tab is visible).
+  // While the panel is shut, ask every 30 s, only while the tab is visible and the admin isn't away (CHAT_POLL).
   useEffect(() => {
     if (open) return undefined;
     let alive = true;
     const check = async () => {
-      if (document.visibilityState !== "visible") return;
+      if (!chatShouldPoll()) return;
       const r = await chatUnread().catch(() => null);
       if (!alive || !r || r.error) return;
       heardUpTo(r.lastOther);
       if (!hidden) showUnread(r.unread);
     };
     check();
-    const timer = setInterval(check, POLL_MS);
+    const timer = setInterval(check, CHAT_POLL.bubbleMs);
+    const stopWake = onChatWake(check);
     document.addEventListener("visibilitychange", check);
-    return () => { alive = false; clearInterval(timer); document.removeEventListener("visibilitychange", check); };
+    return () => { alive = false; clearInterval(timer); stopWake(); document.removeEventListener("visibilitychange", check); };
   }, [open, hidden, heardUpTo, showUnread]);
 
   // While it's open the room refreshes itself; reading it clears the count.

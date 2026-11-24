@@ -38,3 +38,16 @@ export function chatButtonLabel(unread = 0, open = false) {
   const n = Number(unread) || 0;
   return n > 0 ? `Team chat, ${n} unread ${n === 1 ? "message" : "messages"}` : "Open team chat";
 }
+
+/**
+ * How often the team chat asks the server (owner, 24 Nov 2026: fewer calls, to stay inside Vercel's free
+ * CPU allowance). The floating button checks the unread count every 30 s; an open room refreshes every 10 s.
+ * After 10 minutes with no click, key press, scroll or touch the admin counts as away and both stop asking;
+ * the next touch checks at once and picks up the pace again.
+ */
+export const CHAT_POLL = Object.freeze({ bubbleMs: 30_000, roomMs: 10_000, idleAfterMs: 10 * 60_000 });
+
+/** Whether to ask the server now: only while the tab is visible and the admin isn't away. */
+export function shouldPoll({ visible = false, lastActiveAt = 0, now = Date.now(), idleAfterMs = CHAT_POLL.idleAfterMs } = {}) {
+  return Boolean(visible) && now - (Number(lastActiveAt) || 0) < idleAfterMs;
+}
