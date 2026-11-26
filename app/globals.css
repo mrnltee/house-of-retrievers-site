@@ -2403,12 +2403,17 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-hero-slides { position: absolute; inset: 0; }
 .media-hero-frames { position: absolute; inset: 0; z-index: 0; overflow: hidden; opacity: 0; transition: opacity .4s ease; }
 .media-hero-frames.is-ready { opacity: 1; }
-.media-hero-frames::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13,13,13,.96), rgba(13,13,13,.6) 52%, rgba(13,13,13,.3)); pointer-events: none; }
-.media-hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.08); transition: opacity 1.6s ease-in-out; will-change: opacity, transform; }
-.media-hero-slide.is-active { opacity: 1; animation: media-hero-zoom 9s ease-out both; }
+.media-hero-frames::after { content: ''; position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(13,13,13,.96), rgba(13,13,13,.6) 52%, rgba(13,13,13,.3)); pointer-events: none; }
+.media-hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: translate3d(0,0,0) scale(1); backface-visibility: hidden; will-change: transform, opacity; }
+/* The new photo fades in on top of the old one, which stays fully opaque underneath: no dip to the dark background mid-crossfade.
+   Both share one zoom rule, so the outgoing photo keeps zooming where it was instead of snapping. The zoom (linear, 10 s) outlasts a
+   slide's life (6 s showing + 1.8 s fade), so it never reaches its end and stops. */
+.media-hero-slide.is-leaving { z-index: 1; opacity: 1; }
+.media-hero-slide.is-active { z-index: 2; opacity: 1; transition: opacity 1.8s cubic-bezier(.45, 0, .55, 1); }
+.media-hero-slide.is-active, .media-hero-slide.is-leaving { animation: media-hero-zoom 10s linear both; }
 .media-hero-frames.is-still .media-hero-slide { animation-play-state: paused; }
-@keyframes media-hero-zoom { from { transform: scale(1); } to { transform: scale(1.08); } }
-.media-hero-play { position: absolute; z-index: 2; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3vw, 32px); display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(13,13,13,.45); color: #fff; cursor: pointer; backdrop-filter: blur(6px); opacity: .8; transition: opacity .2s; }
+@keyframes media-hero-zoom { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,0,0) scale(1.06); } }
+.media-hero-play { position: absolute; z-index: 2; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3vw, 32px); display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(13,13,13,.62); color: #fff; cursor: pointer; opacity: .85; transition: opacity .2s; }
 .media-hero-play:hover, .media-hero-play:focus-visible { opacity: 1; }
 .media-hero-play:focus-visible { outline: 3px solid var(--media-gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .media-hero-slide { transition: none; animation: none !important; transform: none; } }

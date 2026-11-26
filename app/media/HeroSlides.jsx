@@ -13,6 +13,7 @@ import { HERO_SLIDE_MS, MEDIA_HERO_SLIDES } from "../lib/mediaHeroSlides.mjs";
  */
 export default function HeroSlides() {
   const [index, setIndex] = useState(0);
+  const [leaving, setLeaving] = useState(-1);
   const [loaded, setLoaded] = useState(() => new Set());
   const [mounted, setMounted] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -45,11 +46,18 @@ export default function HeroSlides() {
   // Move on only once the next photo is in, so a slow connection holds the current one instead of fading to black.
   useEffect(() => {
     if (!playing || !loaded.has(next)) return undefined;
-    const timer = setTimeout(() => setIndex(next), HERO_SLIDE_MS);
+    const timer = setTimeout(() => { setLeaving(index); setIndex(next); }, HERO_SLIDE_MS);
     return () => clearTimeout(timer);
   }, [playing, index, next, loaded]);
 
-  const markLoaded = (i) => setLoaded((s) => (s.has(i) ? s : new Set(s).add(i)));
+  // Decoded before it counts as in, so the fade never waits on decoding mid-frame.
+  const decoding = useRef(new Set());
+  const markLoaded = (i, img) => {
+    if (!img || decoding.current.has(i)) return;
+    decoding.current.add(i);
+    const done = () => setLoaded((s) => (s.has(i) ? s : new Set(s).add(i)));
+    (img.decode ? img.decode() : Promise.resolve()).then(done, done);
+  };
   // The one showing and the one after it (and any already in); the rest wait their turn.
   const wanted = (i) => i === index || i === next || loaded.has(i);
   const frames = ["media-hero-frames", loaded.has(0) && "is-ready", !playing && "is-still"].filter(Boolean).join(" ");
@@ -60,13 +68,13 @@ export default function HeroSlides() {
         {mounted && !reducedMotion && MEDIA_HERO_SLIDES.map((slide, i) => wanted(i) && (
           <img
             key={slide.src}
-            className={`media-hero-slide${i === index ? " is-active" : ""}`}
+            className={`media-hero-slide${i === index ? " is-active" : i === leaving ? " is-leaving" : ""}`}
             src={slide.src}
             alt=""
             style={{ objectPosition: slide.position }}
             decoding="async"
-            ref={(img) => { if (img?.complete && img.naturalWidth) markLoaded(i); }}
-            onLoad={() => markLoaded(i)}
+            ref={(img) => { if (img?.complete && img.naturalWidth) markLoaded(i, img); }}
+            onLoad={(e) => markLoaded(i, e.currentTarget)}
           />
         ))}
       </div>
