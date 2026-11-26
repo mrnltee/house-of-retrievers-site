@@ -5,11 +5,11 @@ import { ACTIVITY_CATEGORIES, isActivityCategory, participantsLabel, showsGuestL
 
 test("every activity category is one the editor offers", () => {
   for (const c of ACTIVITY_CATEGORIES) assert.ok(CATEGORIES.includes(c), c);
-  assert.ok(CATEGORIES.includes("Wellness"));
+  for (const c of ["Wellness", "Parties", "Themed parties", "Gatherings"]) assert.ok(CATEGORIES.includes(c), c);
 });
 
 test("activities have Participants and no guest list; fundraisers and outreach keep theirs", () => {
-  for (const c of ["Socials & runs", "Workshops", "Wellness"]) {
+  for (const c of ["Socials & runs", "Parties", "Themed parties", "Gatherings", "Workshops", "Wellness"]) {
     assert.equal(isActivityCategory(c), true);
     assert.equal(showsGuestList(c), false);
     assert.equal(participantsLabel(c), "Participants");
