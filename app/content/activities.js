@@ -44,8 +44,8 @@ import { SITE_VIDEOS } from "../lib/siteVideos.mjs";
  */
 export const missionFacts = [
   { value: "9", label: "gatherings since our first in May 2026" },
-  { value: "2", label: "causes helped: MBY Pet Rescue and Milagros Elderly Home" },
-  { value: "SEC", label: "registered since September 2026" },
+  { value: "2", label: "causes helped so far" },
+  { value: "2026", label: "registered with the SEC in September" },
 ];
 
 /** @type {Activity[]} */

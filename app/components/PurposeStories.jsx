@@ -6,6 +6,7 @@ import { activities, missionFacts } from "../content/activities";
 import { EVENTS_URL } from "../lib/eventsHost.mjs";
 import { formatWhen } from "../lib/share.mjs";
 import { trackCta } from "../lib/analytics.mjs";
+import { supportsLine } from "../lib/supportsLine.mjs";
 
 /** Above this many photos the dots stop fitting the control pill on a phone. */
 const MAX_DOTS = 6;
@@ -178,36 +179,50 @@ export default function PurposeStories({ onJoin, onSupport, nextEvent = null }) 
             </div>
           </div>
 
-          {item.steps ? (
-            <div className="mission-note">
-              <div className="mission-note-label">How giving works here</div>
-              <ol className="mission-steps">
-                {item.steps.map((step) => (
-                  <li key={step}><Icon name="check" size={16} />{step}</li>
-                ))}
-              </ol>
-            </div>
-          ) : item.proof ? (
-            <div className="mission-note">
-              <div className="mission-note-label">{item.proof.label}</div>
-              <p>{item.proof.text}</p>
-            </div>
-          ) : null}
+          {/* Every pillar's notes sit in one grid cell, so on computers the
+              section keeps the height of the tallest and switching tabs
+              doesn't move the page below. Inactive ones are inert. */}
+          <div className="mission-after">
+            {activities.map((pillar, index) => (
+              <div
+                key={pillar.title}
+                className={index === active ? "mission-after-item active" : "mission-after-item"}
+                inert={index !== active}
+                aria-hidden={index !== active}
+              >
+                {pillar.steps ? (
+                  <div className="mission-note">
+                    <div className="mission-note-label">How giving works here</div>
+                    <ol className="mission-steps">
+                      {pillar.steps.map((step) => (
+                        <li key={step}><Icon name="check" size={16} />{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : pillar.proof ? (
+                  <div className="mission-note">
+                    <div className="mission-note-label">{pillar.proof.label}</div>
+                    <p>{pillar.proof.text}</p>
+                  </div>
+                ) : null}
 
-          {item.steps && giving && (
-            <a
-              className="mission-next"
-              href={`${EVENTS_URL}/${giving.slug}`}
-              onClick={() => trackCta("mission_next_event", "mission", { event: giving.slug })}
-            >
-              <span>
-                <span className="mission-next-label">Next · {formatWhen(giving)}</span>
-                <strong>{giving.title}</strong>
-                <span className="mission-next-for">For {giving.supports}</span>
-              </span>
-              <span className="mission-next-go">See the event <Icon name="arrow" size={16} /></span>
-            </a>
-          )}
+                {pillar.steps && giving && (
+                  <a
+                    className="mission-next"
+                    href={`${EVENTS_URL}/${giving.slug}`}
+                    onClick={() => trackCta("mission_next_event", "mission", { event: giving.slug })}
+                  >
+                    <span>
+                      <span className="mission-next-label">Next · {formatWhen(giving)}</span>
+                      <strong>{giving.title}</strong>
+                      <span className="mission-next-for">For {supportsLine(giving.supports)}</span>
+                    </span>
+                    <span className="mission-next-go">See the event <Icon name="arrow" size={16} /></span>
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -2436,7 +2436,7 @@ main :is(.journey-story, .mission-caption p, .mission-lead, .join-grid p, .insta
    and button over them, a "Last time" or "How giving works here" note, and the next charity event. */
 .mission-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(40px, 5vw, 72px); align-items: start; }
 .mission-grid > * { min-width: 0; }
-.mission-side h2 { font-size: clamp(46px, 4.6vw, 70px); margin: 20px 0 0; }
+.mission-side h2 { font-size: clamp(44px, 4.2vw, 62px); margin: 20px 0 0; }
 .mission-lead { margin: 24px 0 0; max-width: 440px; color: #3c3c36; font-size: 17px; line-height: 1.65; }
 .mission-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 36px 0 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
 .mission-facts > div { padding: 20px 16px 18px 0; }
@@ -2445,7 +2445,7 @@ main :is(.journey-story, .mission-caption p, .mission-lead, .join-grid p, .insta
 .mission-facts dd { margin: 8px 0 0; color: #3c3c36; font-size: 13px; line-height: 1.45; }
 .mission-tabs { display: grid; margin-top: 36px; border-top: 1px solid var(--line); }
 .mission-tabs button { display: grid; grid-template-columns: 40px minmax(0, 1fr) 20px; gap: 12px; align-items: center; min-height: 64px; padding: 16px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--muted-on-light); text-align: left; cursor: pointer; transition: color .2s; }
-.mission-tabs button .icon { opacity: 0; transform: translateX(-6px); transition: opacity .2s, transform .2s; }
+.mission-tabs button .icon { opacity: .45; transform: translateX(-4px); transition: opacity .2s, transform .2s; }
 .mission-tabs button:hover, .mission-tabs button.active { color: var(--ink); }
 .mission-tabs button:hover .icon, .mission-tabs button.active .icon { opacity: 1; transform: none; }
 .mission-tabs button:focus-visible { outline: 2px solid var(--gold-on-light); outline-offset: 2px; border-radius: 6px; }
@@ -2455,9 +2455,9 @@ main :is(.journey-story, .mission-caption p, .mission-lead, .join-grid p, .insta
 
 .mission-photo { position: relative; overflow: hidden; border-radius: 24px; box-shadow: 0 30px 60px rgba(17,17,17,.14); background: #cbc4b5; }
 .mission-photo .pillar-media { position: absolute; inset: 0; min-height: 0; box-shadow: none; }
-.mission-frame { position: relative; aspect-ratio: 4 / 5; }
+.mission-frame { position: relative; aspect-ratio: 5 / 4.4; }
 .mission-photo .video-toggle { top: 18px; bottom: auto; }
-.mission-caption { position: absolute; z-index: 2; left: 18px; right: 18px; bottom: 18px; padding: 20px 22px 22px; border-radius: 16px; background: rgba(245,241,230,.95); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.mission-caption { position: relative; padding: 22px 24px 24px; background: #fff; }
 .mission-caption .eyebrow { color: var(--gold-on-light); }
 .mission-caption h3 { margin: 8px 0 8px; font-family: "DM Serif Display", serif; font-size: clamp(28px, 2.6vw, 34px); font-weight: 400; letter-spacing: -.03em; line-height: 1.05; }
 .mission-caption p { margin: 0 0 16px; color: #2c2c28; font-size: 15px; line-height: 1.55; }
@@ -2480,7 +2480,11 @@ main :is(.journey-story, .mission-caption p, .mission-lead, .join-grid p, .insta
 .mission-next .mission-next-label { color: var(--gold); }
 .mission-next strong { display: block; margin-top: 6px; font-family: "DM Serif Display", serif; font-size: 22px; font-weight: 400; line-height: 1.15; }
 .mission-next-for { display: block; margin-top: 4px; color: rgba(255,255,255,.75); font-size: 13px; line-height: 1.45; }
-.mission-next-go { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 12px 16px; border-radius: 999px; background: var(--gold); color: var(--ink); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.mission-next-go { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-height: 44px; padding: 10px 16px; border: 1px solid rgba(201,162,84,.7); border-radius: 999px; color: var(--gold); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.mission-next:hover .mission-next-go { background: rgba(201,162,84,.14); }
+.mission-after { display: grid; }
+.mission-after-item { grid-area: 1 / 1; visibility: hidden; }
+.mission-after-item.active { visibility: visible; }
 
 @media (max-width: 900px) {
   .mission-grid { grid-template-columns: 1fr; gap: 24px; }
@@ -2489,9 +2493,8 @@ main :is(.journey-story, .mission-caption p, .mission-lead, .join-grid p, .insta
   .mission-facts > div { padding: 16px 10px 14px 0; }
   .mission-facts > div + div { padding-left: 10px; }
   .mission-facts dd { font-size: 12px; }
-  .mission-tabs { display: flex; gap: 8px; margin: 24px calc(-1 * clamp(24px, 6vw, 84px)) 0; padding: 0 clamp(24px, 6vw, 84px) 4px; border: 0; overflow-x: auto; scrollbar-width: none; }
-  .mission-tabs::-webkit-scrollbar { display: none; }
-  .mission-tabs button { display: inline-flex; flex: 0 0 auto; gap: 6px; min-height: 44px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); white-space: nowrap; }
+  .mission-tabs { display: grid; gap: 8px; margin: 24px 0 0; border: 0; }
+  .mission-tabs button { display: flex; gap: 8px; min-height: 48px; padding: 12px 18px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); text-align: left; }
   .mission-tabs button .icon { display: none; }
   .mission-tab-number { font-size: 14px; }
   .mission-tab-title { font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0; }
@@ -2500,7 +2503,9 @@ main :is(.journey-story, .mission-caption p, .mission-lead, .join-grid p, .insta
   .mission-tabs button.active .mission-tab-title { box-shadow: none; padding-bottom: 0; }
   .mission-frame { aspect-ratio: 4 / 3.6; }
   .mission-photo { background: #fff; }
-  .mission-caption { position: static; padding: 18px 18px 20px; border-radius: 0; background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .mission-caption { padding: 18px 18px 20px; }
+  .mission-after-item { display: none; }
+  .mission-after-item.active { display: block; }
   .mission-actions .button { width: 100%; }
   .mission-next { flex-direction: column; align-items: stretch; }
   .mission-next-go { justify-content: center; }
