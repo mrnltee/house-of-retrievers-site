@@ -487,8 +487,8 @@ input:focus-visible, textarea:focus-visible { border-color: var(--gold); box-sha
 .rsvp-stepper-row input { -moz-appearance: textfield; appearance: textfield; }
 .rsvp-stepper-row input::-webkit-outer-spin-button, .rsvp-stepper-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 /* Each furbaby on one row: name, breed, gender, age (owner, 10 Nov 2026); two by two on narrow screens. The vaccination card and angel tick span the row. */
-.rsvp-furbaby-row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(6.5rem, .75fr) minmax(5.5rem, .6fr); align-items: end; }
-.breed-select-row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1.4fr) minmax(6.5rem, .75fr) minmax(5.5rem, .6fr); align-items: end; }
+.rsvp-furbaby-row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.15fr) minmax(6.5rem, .7fr) minmax(9.5rem, .8fr); align-items: end; }
+.breed-select-row { display: grid; gap: 12px; grid-template-columns: minmax(0, 1.3fr) minmax(6.5rem, .7fr) minmax(9.5rem, .8fr); align-items: end; }
 .breed-select-row > .rainbow-check { grid-column: 1 / -1; }
 @media (max-width: 760px) { .rsvp-furbaby-row { grid-template-columns: 1fr 1fr; } .breed-select-row { grid-template-columns: 1fr 1fr; } .breed-select-row > .breed-select { grid-column: 1 / -1; } }
 .with-vaccination .rsvp-vaccination { grid-column: 1 / -1; }
@@ -2417,3 +2417,19 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-hero-play:hover, .media-hero-play:focus-visible { opacity: 1; }
 .media-hero-play:focus-visible { outline: 3px solid var(--media-gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .media-hero-slide { transition: none; animation: none !important; transform: none; } }
+
+/* Dog age in months (26 Nov 2026, owner, from user feedback): the age field is a
+   number and a Years / Months choice side by side, so a puppy can be "5 months".
+   The furbaby row gives the age column room for both (at least 9.5rem). */
+.furbaby-age-box { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr); gap: 6px; }
+.furbaby-age-box input { padding-left: 8px; padding-right: 8px; text-align: center; }
+.furbaby-age-box > * { min-width: 0; width: 100%; }
+.furbaby-age-box input, .furbaby-age-box select { font-family: inherit; font-size: var(--text-caption); font-weight: 700; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.furbaby-age-box select { min-height: 48px; border: 1px solid var(--line); border-radius: 0; padding: 0 28px 0 12px; background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center / 16px; -webkit-appearance: none; appearance: none; cursor: pointer; text-overflow: ellipsis; }
+.furbaby-age-box select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .furbaby-age-box input, .furbaby-age-box select { font-size: 16px; }
+  .furbaby-age-box { grid-template-columns: 2.75rem minmax(0, 1fr); }
+  .rsvp-furbaby-row { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
+  .breed-select-row { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
+}

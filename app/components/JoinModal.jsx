@@ -185,7 +185,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                     <label>{dogs > 1 ? `Furbaby ${i + 1} name (optional)` : fieldCopy.furbabyLabel}<input type="text" maxLength={60} placeholder={fieldCopy.furbabyPlaceholder} value={furbabyNames[i] || ""} onChange={(e) => setAt(setFurbabyNames, i, e.target.value)} /></label>
                     <BreedSelect name={`furbabyBreed${i}`} label="Breed" value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} halo={rainbowAt(i)} />
                     <FurbabySexSelect name={`furbabySex${i}`} label="Gender" value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
-                    <FurbabyAgeInput name={`furbabyAge${i}`} label="Age (years)" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
+                    <FurbabyAgeInput name={`furbabyAge${i}`} label="Age" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
                     <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>This furbaby is now an angel 🌈</span></label>
                   </div>
                 ))}
