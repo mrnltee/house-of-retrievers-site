@@ -91,7 +91,7 @@ export default function HomePage({ journeySettings, journeyStops, nextEvent = nu
       <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
       <ComingUp event={nextEvent} more={moreEvents} />
-      <PurposeStories />
+      <PurposeStories onJoin={openJoin} onSupport={() => setSupportOpen(true)} nextEvent={nextEvent} />
       <Journey onJoin={openJoin} settings={journeySettings} stops={journeyStops} />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />
