@@ -99,3 +99,14 @@ test("dogTicketsSoldOut: true only when every ticket with a furbaby is closed", 
   assert.equal(dogTicketsSoldOut([], {}), false);
   assert.equal(dogTicketsSoldOut([{ label: "Hooman only", amount: 1, attendanceBasis: "human_only" }], {}), false);
 });
+
+test("spotHeldKey: the first payment request is sent once, a changed ticket or a resend always goes out", async () => {
+  const { spotHeldKey } = await import("./eventPayments.mjs");
+  const row = { check_in_code: "ABC123", hold_reminders: 2 };
+  assert.equal(spotHeldKey(row), "held/ABC123");
+  assert.equal(spotHeldKey(row, { again: true }), "held/ABC123/again/2");
+  assert.equal(spotHeldKey(row, { updated: true }, 111), "held/ABC123/updated/111");
+  assert.equal(spotHeldKey(row, { resend: true }, 111), "held/ABC123/resend/111");
+  assert.notEqual(spotHeldKey(row, { updated: true }, 111), spotHeldKey(row, { updated: true }, 222));
+  assert.notEqual(spotHeldKey(row, { updated: true }), spotHeldKey(row));
+});
