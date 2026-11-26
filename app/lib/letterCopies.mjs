@@ -41,3 +41,24 @@ export function copiesFor({ to = "", cc = [] } = {}, extraCc = [], extraBcc = []
   const outBcc = take(extraBcc);
   return { cc: outCc, bcc: outBcc };
 }
+
+/**
+ * Typing in the CC / BCC chip field (owner, 26 Nov 2026): each address becomes
+ * its own chip, like an event's Partners and Sponsors. A comma, semicolon,
+ * space or new line ends an address; whatever follows the last one stays as
+ * the draft being typed. Repeats (any case) are dropped.
+ * → { chips, draft }
+ */
+export function splitCopyDraft(chips = [], text = "") {
+  const parts = String(text ?? "").split(/[\s,;]+/);
+  const draft = parts.pop() ?? "";
+  const out = [...chips];
+  for (const raw of parts) {
+    const part = raw.trim().replace(/^<|>$/g, "");
+    if (part && !out.some((c) => c.toLowerCase() === part.toLowerCase())) out.push(part);
+  }
+  return { chips: out, draft };
+}
+
+/** True when a chip is a usable address (a bad one is shown in red). */
+export const isCopyEmail = (v) => looksLikeEmail(String(v ?? ""));

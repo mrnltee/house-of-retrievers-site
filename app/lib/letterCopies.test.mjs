@@ -23,3 +23,14 @@ test("copiesFor adds the extras without repeating anyone", () => {
   );
   assert.deepEqual(copiesFor({ to: "a@x.ph" }), { cc: [], bcc: [] });
 });
+
+test("splitCopyDraft turns each finished address into a chip and keeps the draft", async () => {
+  const { splitCopyDraft, isCopyEmail } = await import("./letterCopies.mjs");
+  assert.deepEqual(splitCopyDraft([], "ana@x.ph"), { chips: [], draft: "ana@x.ph" });
+  assert.deepEqual(splitCopyDraft([], "ana@x.ph,"), { chips: ["ana@x.ph"], draft: "" });
+  assert.deepEqual(splitCopyDraft(["ana@x.ph"], "ben@y.com; cy@z.org, d"), { chips: ["ana@x.ph", "ben@y.com", "cy@z.org"], draft: "d" });
+  assert.deepEqual(splitCopyDraft(["ana@x.ph"], "ANA@x.ph, <ben@y.com>\n"), { chips: ["ana@x.ph", "ben@y.com"], draft: "" });
+  assert.deepEqual(splitCopyDraft([], " , ,"), { chips: [], draft: "" });
+  assert.equal(isCopyEmail("ana@x.ph"), true);
+  assert.equal(isCopyEmail("ana@"), false);
+});
