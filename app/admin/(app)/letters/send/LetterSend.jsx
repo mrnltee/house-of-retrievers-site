@@ -13,6 +13,7 @@ import ConfirmButton from "../../ConfirmButton";
 import { MAX_COPIES, copiesFor, parseCopies } from "../../../../lib/letterCopies.mjs";
 import { SEND_TO_NAME_MAX, readSendTo, withSendTo } from "../../../../lib/letterSendTo.mjs";
 import LetterView from "../LetterView";
+import CopyEmailsField from "./CopyEmailsField";
 import Icon from "../../../../components/Icon";
 
 /** Shown in place of a guest's card while it's being drawn (4:5, HOR black and gold). */
@@ -277,15 +278,9 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 
         {/* Folded until needed (Guest tracker UX review, 17 Nov 2026): most sends copy nobody in. */}
         <details className="field letter-copies" open={copiesOpen || undefined}>
-          <summary className="field-head">Copy others in{extraCc.emails.length + extraBcc.emails.length ? ` · ${extraCc.emails.length + extraBcc.emails.length}` : ""} <small>Optional CC or BCC on every email in this send, up to {MAX_COPIES} each; separate addresses with commas.</small></summary>
-          <label className="field">
-            <span>CC <small>Everyone on the email can see these</small></span>
-            <input type="text" name="copyCc" value={copyCc} onChange={(e) => setCopyCc(e.target.value)} placeholder="name@example.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraCc.error)} />
-          </label>
-          <label className="field">
-            <span>BCC <small>Hidden from the recipient. HoR&apos;s own inbox is copied in on every email already</small></span>
-            <input type="text" name="copyBcc" value={copyBcc} onChange={(e) => setCopyBcc(e.target.value)} placeholder="name@example.com" autoComplete="off" spellCheck={false} aria-invalid={Boolean(extraBcc.error)} />
-          </label>
+          <summary className="field-head">Copy others in{extraCc.emails.length + extraBcc.emails.length ? ` · ${extraCc.emails.length + extraBcc.emails.length}` : ""} <small>Optional CC or BCC on every email in this send, up to {MAX_COPIES} each.</small></summary>
+          <CopyEmailsField name="copyCc" label="CC" hint="Everyone on the email can see these" invalid={Boolean(extraCc.error)} onChange={setCopyCc} />
+          <CopyEmailsField name="copyBcc" label="BCC" hint={"Hidden from the recipient. HoR's own inbox is copied in on every email already"} invalid={Boolean(extraBcc.error)} onChange={setCopyBcc} />
           {copyError ? <p className="small error-text" role="alert">{copyError}</p>
             : count > 1 && (extraCc.emails.length || extraBcc.emails.length) ? <p className="small muted">Each recipient gets their own email, so these addresses get {count} copies.</p> : null}
         </details>
