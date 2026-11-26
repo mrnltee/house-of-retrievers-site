@@ -2406,11 +2406,12 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-hero-frames::after { content: ''; position: absolute; inset: 0; z-index: 3; background: linear-gradient(90deg, rgba(13,13,13,.96), rgba(13,13,13,.6) 52%, rgba(13,13,13,.3)); pointer-events: none; }
 .media-hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: translate3d(0,0,0) scale(1); backface-visibility: hidden; will-change: transform, opacity; }
 /* The new photo fades in on top of the old one, which stays fully opaque underneath: no dip to the dark background mid-crossfade.
-   Both share one zoom rule, so the outgoing photo keeps zooming where it was instead of snapping. The zoom (linear, 10 s) outlasts a
-   slide's life (6 s showing + 1.8 s fade), so it never reaches its end and stops. */
+   Both share one zoom rule, so the outgoing photo keeps zooming where it was instead of snapping. The zoom (linear, --hero-zoom) outlasts a
+   slide's life (its seconds + the fade), so it never reaches its end and stops. Fade length and zoom come from Admin → Media hub. */
 .media-hero-slide.is-leaving { z-index: 1; opacity: 1; }
-.media-hero-slide.is-active { z-index: 2; opacity: 1; transition: opacity 1.8s cubic-bezier(.45, 0, .55, 1); }
-.media-hero-slide.is-active, .media-hero-slide.is-leaving { animation: media-hero-zoom 10s linear both; }
+.media-hero-slide.is-active { z-index: 2; opacity: 1; transition: opacity var(--hero-fade, 2s) cubic-bezier(.45, 0, .55, 1); }
+.media-hero-slide.is-active, .media-hero-slide.is-leaving { animation: media-hero-zoom var(--hero-zoom, 12s) linear both; }
+.media-hero-frames.no-zoom .media-hero-slide { animation: none; transform: none; }
 .media-hero-frames.is-still .media-hero-slide { animation-play-state: paused; }
 @keyframes media-hero-zoom { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,0,0) scale(1.06); } }
 .media-hero-play { position: absolute; z-index: 2; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3vw, 32px); display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(13,13,13,.62); color: #fff; cursor: pointer; opacity: .85; transition: opacity .2s; }

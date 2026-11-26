@@ -7,6 +7,7 @@ import PackCards from "./PackCards";
 import LaunchBrands from "./LaunchBrands";
 import StoryCards from "./StoryCards";
 import HeroSlides from "./HeroSlides";
+import { cleanHeroSlideshow, heroSlides } from "../lib/mediaHeroSlides.mjs";
 import { STORIES_APPROVED, storyCards } from "../lib/mediaStories.mjs";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
@@ -124,13 +125,15 @@ export default async function MediaPage() {
   const timeline = Array.isArray(content.timeline) ? cleanMediaTimeline(content.timeline) : DEFAULT_MEDIA_TIMELINE;
   const timelineOrientation = cleanTimelineOrientation(content.timelineOrientation);
   const profile = cleanMediaProfile(content.profile || DEFAULT_MEDIA_PROFILE);
+  // The background slideshow as set in Admin → Media hub (built-in photos until it is saved there).
+  const slideshow = cleanHeroSlideshow(content.heroSlideshow);
   return (
     <main className="media-hub">
       <a className="skip-link media-skip" href="#media-content">Skip to content</a>
       <MediaHeader />
 
       <section className="media-hero" id="media-content" aria-labelledby="media-title">
-        <HeroSlides />
+        <HeroSlides slides={heroSlides(slideshow)} seconds={slideshow.seconds} fade={slideshow.fade} zoom={slideshow.zoom} />
         <div className="media-hero-copy">
           <p className="media-kicker">Press · partnerships · stories</p>
           <h1 id="media-title" dangerouslySetInnerHTML={rich(content.heroTitle)} />

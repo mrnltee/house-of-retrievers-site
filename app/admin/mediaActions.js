@@ -8,6 +8,7 @@ import { safeRichHtml } from "../lib/safeRichHtml.mjs";
 import { cleanMediaProfile, cleanMediaTimeline, cleanTimelineOrientation } from "../lib/mediaHub.mjs";
 import { cleanStoryAngles, factSheetText, parseFactSheet, plainText } from "../lib/mediaPressKit.mjs";
 import { cleanCommunity, cleanPack } from "../lib/mediaReach.mjs";
+import { cleanHeroSlideshow } from "../lib/mediaHeroSlides.mjs";
 
 const MAX_HTML = 12000;
 
@@ -26,6 +27,7 @@ export async function saveMediaHub(data) {
   const content = {
     heroTitle: cleanHtml(data.get("heroTitle")),
     heroLead: cleanHtml(data.get("heroLead")),
+    heroSlideshow: cleanHeroSlideshow(data.get("heroSlideshow")),
     about: cleanHtml(data.get("about")),
     mission: cleanHtml(data.get("mission")),
     stories: cleanHtml(data.get("stories")),
