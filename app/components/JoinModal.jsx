@@ -6,6 +6,7 @@ import { resizeImage } from "../lib/resizeImage";
 import { HONEYPOT_FIELD } from "../lib/spamGuard.mjs";
 import { PRIVACY_URL } from "../lib/siteSeo.mjs";
 import BreedSelect from "./BreedSelect";
+import MixedBreedFields from "./MixedBreedFields";
 import FurbabySexSelect from "./FurbabySexSelect";
 import FurbabyAgeInput from "./FurbabyAgeInput";
 import Stepper from "./Stepper";
@@ -186,6 +187,7 @@ export default function JoinModal({ interest, setInterest, onClose }) {
                     <BreedSelect name={`furbabyBreed${i}`} label="Breed" value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} halo={rainbowAt(i)} />
                     <FurbabySexSelect name={`furbabySex${i}`} label="Gender" value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
                     <FurbabyAgeInput name={`furbabyAge${i}`} label="Age" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
+                    <MixedBreedFields value={breeds[i] || ""} onChange={(v) => setAt(setBreeds, i, v)} />
                     <label className="check rainbow-check"><input type="checkbox" checked={rainbowAt(i)} onChange={(e) => setAt(setRainbow, i, e.target.checked)} /> <span>This furbaby is now an angel 🌈</span></label>
                   </div>
                 ))}
