@@ -16,7 +16,37 @@ import { SITE_VIDEOS } from "../lib/siteVideos.mjs";
  * @property {string} alt                     Alternative text for the story stage.
  * @property {ActivityPhoto[]} [gallery]      Optional auto-advancing photo carousel.
  * @property {string} [video]                 Optional looping video in `public/`.
+ * @property {ActivityAction} action          The pillar's main button.
+ * @property {ActivityAction} [secondary]     Optional quieter link beside it.
+ * @property {{label: string, text: string}} [proof]  A real activity that shows the pillar ("Last time").
+ * @property {string[]} [steps]               Shown instead of `proof`: how giving works, in order.
  */
+
+/**
+ * A pillar's call to action. `kind` "join" opens the Join form at `interest`
+ * (one of `interests` in `join.js`); "support" opens the Support panel.
+ * `track` is the GA4 `cta_name`, so keep it stable once it is live.
+ *
+ * @typedef {Object} ActivityAction
+ * @property {string} label
+ * @property {"join" | "support"} kind
+ * @property {string} [interest]
+ * @property {string} track
+ */
+
+/**
+ * The facts under the "What moves us" intro. Only facts on the site already:
+ * gatherings are the past stops on the journey timeline (`journey.js`, May to
+ * Nov 2026, the SEC registration left out); causes are the beneficiaries named
+ * there. Update by hand when the timeline grows. (26 Nov 2026)
+ *
+ * @type {{value: string, label: string}[]}
+ */
+export const missionFacts = [
+  { value: "9", label: "gatherings since our first in May 2026" },
+  { value: "2", label: "causes helped: MBY Pet Rescue and Milagros Elderly Home" },
+  { value: "SEC", label: "registered since September 2026" },
+];
 
 /** @type {Activity[]} */
 export const activities = [
@@ -43,6 +73,8 @@ export const activities = [
       { src: "/1-purpaws/purpaw15.jpg", alt: "A golden retriever leaning in to be petted by a resident while a nurse steadies the wheelchair" },
     ],
     alt: "Paws for a purpose community outreach photo gallery",
+    proof: { label: "Last time · August 2026", text: "Five of our dogs visited the residents of Milagros Elderly Home." },
+    action: { label: "Volunteer with your dog", kind: "join", interest: "Volunteer", track: "mission_volunteer" },
   },
   {
     eyebrow: "Shared experience",
@@ -60,6 +92,8 @@ export const activities = [
       { src: "/2-better/better8.jpg", alt: "The group gathered for a photo at the end of the embroidery class" },
     ],
     alt: "Better humans for better dogs photo gallery",
+    proof: { label: "Last time", text: "An embroidery class with Pawfect Blooms, and a surf day in San Juan with the whole pack." },
+    action: { label: "Join the pack", kind: "join", interest: "Member", track: "mission_join" },
   },
   {
     eyebrow: "Activities for a cause",
@@ -68,5 +102,12 @@ export const activities = [
     video: SITE_VIDEOS.giveBack,
     image: "/3-giveback/mby-give-back-poster.jpg",
     alt: "Two golden retrievers beside a car boot loaded with donated dog food",
+    steps: [
+      "We name the beneficiary before the day starts.",
+      "The pack turns up and has a good day.",
+      "We publish what was turned over, as we did for MBY Pet Rescue after Pawres de Mayo.",
+    ],
+    action: { label: "Support the pack", kind: "support", track: "mission_support" },
+    secondary: { label: "Partner with us", kind: "join", interest: "Partner", track: "mission_partner" },
   },
 ];
