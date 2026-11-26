@@ -100,3 +100,14 @@ test("paid events: spot held, then the pass with QR and the matched payment, or 
   assert.match(spotHeld({ name: "Ana Reyes", event, passUrl: "p", deadline: "Sat, Oct 18 · 1:00 PM" }).text, /by Sat, Oct 18/);
   assert.equal(passQrImage("7KQ2MPX4RT").caption, "Code 7KQ2M PX4RT");
 });
+
+test("a changed ticket gets its own payment request, naming the new ticket and replacing the old one", async () => {
+  const { spotHeld } = await import("./emailTemplates.mjs");
+  const event = { title: "Bedazzle Barkdate", date: "2026-10-17", venue: "Wiltlover Café", city: "Pasay" };
+  const mail = spotHeld({ name: "Ana Reyes", event, passUrl: "p", ticket: "Regular · ₱1,950", deadline: "Sat, Oct 18 · 1:00 PM", updated: true });
+  assert.equal(mail.subject, "Your ticket was updated: Bedazzle Barkdate");
+  assert.match(mail.text, /updated your RSVP to Regular · ₱1,950/);
+  assert.match(mail.text, /replaces the payment details we sent before/);
+  assert.match(mail.text, /by Sat, Oct 18/);
+  assert.doesNotMatch(mail.text, /ran out/);
+});

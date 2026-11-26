@@ -4,7 +4,7 @@ import { loadCustomTemplate, loadTemplate } from "./emailSettings";
 import { eventReminder, receiptRejected, rsvpConfirmed, spotHeld } from "./emailTemplates.mjs";
 import { reminderEligibility, wordingKey } from "./eventReminders.mjs";
 import { EVENTS_URL } from "./eventsHost.mjs";
-import { payMethodLabel, paymentNotice, ticketLine } from "./eventPayments.mjs";
+import { payMethodLabel, paymentNotice, spotHeldKey, ticketLine } from "./eventPayments.mjs";
 import { formatOpens } from "./rsvpOpens.mjs";
 
 /**
@@ -78,14 +78,21 @@ export async function sendPass(registrationId, { paid = false, again = false } =
   return sent;
 }
 
-/** Paid event, straight after the RSVP: the spot is held, here's how to pay. */
-export async function sendSpotHeld(registrationId, { again = false } = {}) {
+/**
+ * Paid event, straight after the RSVP: the spot is held, here's how to pay.
+ * `again`: a payment reminder after the hold ran out. `updated`: an admin
+ * changed the ticket or amount, so this is the new payment request. `resend`:
+ * an admin asked for it again. Those last two get a new key each time: the
+ * first email's key would make Resend skip the send (or refuse it, since the
+ * amount in it changed) for 24 hours.
+ */
+export async function sendSpotHeld(registrationId, { again = false, updated = false, resend = false } = {}) {
   const row = await load(registrationId);
   if (!row) return { ok: false };
   const deadline = row.hold_expires_at ? formatOpens(new Date(row.hold_expires_at).toISOString()) : "";
-  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount), deadline, again });
-  // A reminder is a new email each time (its own key), the first "spot held" note is sent once.
-  return safeSend({ to: row.email, ...mail, idempotencyKey: again ? `held/${row.check_in_code}/again/${row.hold_reminders || 0}` : `held/${row.check_in_code}` });
+  const mail = spotHeld({ name: row.name, event: eventOf(row), passUrl: passUrl(row), ticket: ticketLine(row.ticket_label, row.amount_due ?? row.ticket_amount), deadline, again: again && !updated, updated });
+  // A reminder or an admin's resend is a new email each time (its own key); the first "spot held" note is sent once.
+  return safeSend({ to: row.email, ...mail, idempotencyKey: spotHeldKey(row, { again, updated, resend }) });
 }
 
 /** Waitlist note (fixed wording). */

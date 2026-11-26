@@ -195,3 +195,16 @@ export function dogTicketsSoldOut(tiers, counts = {}, now = Date.now()) {
   const dogTiers = (tiers || []).filter((t) => t.attendanceBasis !== "human_only");
   return dogTiers.length > 0 && dogTiers.every((t) => !tierAvailable(t, now, counts));
 }
+
+/**
+ * The Resend idempotency key for a "spot held" (how to pay) email. The first
+ * one is sent once per registration. A payment reminder (`again`) is keyed by
+ * its count. An admin's resend or a changed ticket (`resend` / `updated`) gets
+ * a new key every time: reusing the first one made Resend skip the email, or
+ * refuse it because the amount inside had changed, for 24 hours.
+ */
+export function spotHeldKey(row, { again = false, updated = false, resend = false } = {}, now = Date.now()) {
+  if (updated || resend) return `held/${row.check_in_code}/${updated ? "updated" : "resend"}/${now}`;
+  if (again) return `held/${row.check_in_code}/again/${row.hold_reminders || 0}`;
+  return `held/${row.check_in_code}`;
+}
