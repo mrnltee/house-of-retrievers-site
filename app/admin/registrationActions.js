@@ -26,6 +26,7 @@ import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS, freeVaccinationPages } 
 import { cleanVaccineKey, isVaccineKey, vaccineLabel } from "../lib/vaccineTypes.mjs";
 import { applyPromo, normalizeCode, promoSnapshot } from "../lib/promoCodes.mjs";
 import { checkPromo } from "../lib/promoStore";
+import { cleanQuery, likePattern, pastPeopleSuggestions } from "../lib/admin/pastPeople.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -215,6 +216,33 @@ export async function resendPass(data) {
 function answersJson(event, data) {
   const value = adminCustomAnswers(cleanCustomQuestions(event?.rsvp_form_config?.questions), (key) => data.get(key));
   return value ? JSON.stringify(value) : null;
+}
+
+/**
+ * Name suggestions for Add registration (owner feedback, 26 Nov 2026): People records (with
+ * people:view) and RSVPs to other events whose name or email holds the typed text, so a
+ * returning guest's email and furbabies fill in. Read-only; nothing is saved or logged.
+ */
+export async function findPastPeople(eventId, query) {
+  try {
+    const admin = await actionAdmin("registrations:edit");
+    const text = cleanQuery(query);
+    if (!text || !isUuid(eventId)) return [];
+    const like = likePattern(text);
+    const [people, registrations] = await Promise.all([
+      can(admin, "people:view")
+        ? sql(`SELECT id, kind, name, email, membership, member_no, member_year, furbaby_name, furbaby_breeds, furbaby_sexes, furbaby_ages, furbaby_ages_on, furbaby_rainbow
+                 FROM people WHERE email <> '' AND (name ILIKE $1 OR email ILIKE $1) ORDER BY created_at DESC LIMIT 40`, [like])
+        : [],
+      sql(`SELECT r.name, r.email, r.furbaby_name, r.furbaby_count, r.furbaby_breeds, r.furbaby_sexes, r.furbaby_ages, r.created_at, r.event_id, e.title AS event_title, e.date AS event_date
+             FROM registrations r JOIN events e ON e.id = r.event_id
+            WHERE r.deleted_at IS NULL AND r.email <> '' AND (r.name ILIKE $1 OR r.email ILIKE $1)
+            ORDER BY r.created_at DESC LIMIT 80`, [like]),
+    ]);
+    return pastPeopleSuggestions({ query: text, people, registrations, eventId });
+  } catch {
+    return [];
+  }
 }
 
 export async function addRegistration(data) {

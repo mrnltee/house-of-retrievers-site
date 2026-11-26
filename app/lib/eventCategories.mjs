@@ -5,8 +5,9 @@
  * are called Participants. Fundraisers and Community outreach keep the guest
  * list, donors, beneficiaries and letters. An event with no category yet is
  * treated like a fundraiser, which is how every event worked before.
+ * Parties, Themed parties and Gatherings (26 Nov 2026, owner) are activities too.
  */
-export const ACTIVITY_CATEGORIES = ["Socials & runs", "Workshops", "Wellness"];
+export const ACTIVITY_CATEGORIES = ["Socials & runs", "Parties", "Themed parties", "Gatherings", "Workshops", "Wellness"];
 
 export const isActivityCategory = (category) => ACTIVITY_CATEGORIES.includes(category);
 

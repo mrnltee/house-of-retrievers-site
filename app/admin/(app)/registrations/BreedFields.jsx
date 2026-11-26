@@ -31,7 +31,20 @@ export default function BreedFields({ initial = [], count = 1, label = null, rai
     };
     sync();
     field.addEventListener("input", sync);
-    return () => field.removeEventListener("input", sync);
+    // Add registration's name suggestions fill these in (PastPersonField); an empty list clears them.
+    const form = field.form;
+    const fill = (e) => {
+      const list = Array.isArray(e.detail) ? e.detail : [];
+      const at = (key) => Array.from({ length: MAX_PICKERS }, (_, i) => list[i]?.[key] || "");
+      setBreeds(at("breed"));
+      setSex(at("sex"));
+      setAge(at("age"));
+    };
+    form?.addEventListener("hor:fill-furbabies", fill);
+    return () => {
+      field.removeEventListener("input", sync);
+      form?.removeEventListener("hor:fill-furbabies", fill);
+    };
   }, []);
 
   return (
@@ -44,7 +57,7 @@ export default function BreedFields({ initial = [], count = 1, label = null, rai
         <div key={i} className="breed-select-row">
           <BreedSelect name={`furbabyBreed${i}`} label={label || (shown > 1 ? `Furbaby ${i + 1} breed (optional)` : "Breed (optional)")} value={value} onChange={(key) => setBreeds((list) => list.map((v, j) => (j === i ? key : v)))} />
           <FurbabySexSelect name={`furbabySex${i}`} label={shown > 1 ? `Furbaby ${i + 1} gender` : "Gender"} value={sex[i]} onChange={(v) => setSex((list) => list.map((x, j) => (j === i ? v : x)))} />
-          <FurbabyAgeInput name={`furbabyAge${i}`} label={shown > 1 ? `Furbaby ${i + 1} age (years)` : "Age (years)"} value={age[i]} onChange={(v) => setAge((list) => list.map((x, j) => (j === i ? v : x)))} />
+          <FurbabyAgeInput name={`furbabyAge${i}`} label={shown > 1 ? `Furbaby ${i + 1} age` : "Age"} value={age[i]} onChange={(v) => setAge((list) => list.map((x, j) => (j === i ? v : x)))} />
           <MixedBreedFields value={value} onChange={(key) => setBreeds((list) => list.map((v, j) => (j === i ? key : v)))} />
           {showRainbow && <label className="check rainbow-check"><input type="checkbox" name={`furbabyRainbow${i}`} checked={gone[i]} onChange={(e) => setGone((list) => list.map((v, j) => (j === i ? e.target.checked : v)))} /> <span>{shown > 1 ? `Furbaby ${i + 1} is now an angel 🌈` : "This furbaby is now an angel 🌈"}</span></label>}
         </div>

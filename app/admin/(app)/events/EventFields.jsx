@@ -86,7 +86,7 @@ export function WhenFields({ date, allDay, startTime, endTime, isNew = false, re
   );
 }
 
-/** Category. Socials, Workshops and Wellness are activities: no guest list, and sign-ups are called Participants. */
+/** Category. Socials, Parties, Themed parties, Gatherings, Workshops and Wellness are activities: no guest list, and sign-ups are called Participants. */
 export function CategoryField({ value = "", categories }) {
   return (
     <label className="field"><span>Category</span>
