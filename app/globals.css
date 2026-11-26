@@ -2417,3 +2417,29 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-hero-play:hover, .media-hero-play:focus-visible { opacity: 1; }
 .media-hero-play:focus-visible { outline: 3px solid var(--media-gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .media-hero-slide { transition: none; animation: none !important; transform: none; } }
+
+/* Mixed breed (26 Nov 2026, owner): picking Mixed breed opens this panel across the furbaby's
+   row (`MixedBreedFields.jsx`): the parent breeds side by side with × between, then the mix name,
+   suggested from them (`breedMix.mjs`). A soft sand panel so it reads as part of that furbaby. */
+.breed-mix { grid-column: 1 / -1; display: grid; gap: 12px; min-width: 0; margin: 0; padding: 14px 16px 16px; border: 0; border-radius: 12px; background: #f6f1e7; }
+.breed-mix legend { float: left; width: 100%; margin: 0; padding: 0; font-size: var(--text-caption); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #585c54; }
+.breed-mix-parents { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: end; }
+.breed-mix-parent { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; min-width: 0; }
+.breed-mix-parent > .breed-select { min-width: 0; }
+.breed-mix-parent .breed-select-label { color: #585c54; letter-spacing: .07em; }
+.breed-mix .breed-select-button { height: 48px; min-height: 48px; padding: 0 14px; font-size: var(--text-caption); font-weight: 700; text-transform: none; letter-spacing: 0; }
+.breed-mix .breed-select-button span:not(.breed-select-icon):not(.breed-select-caret) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.breed-mix-remove { display: grid; place-items: center; width: 44px; height: 48px; padding: 0; border: 1px solid var(--line); background: white; color: var(--ink); cursor: pointer; }
+.breed-mix-add { justify-self: start; align-self: end; min-height: 44px; padding: 0 4px; border: 0; background: none; color: #7a5a1c; font: inherit; font-size: var(--text-caption); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.breed-mix-name { display: grid; gap: 7px; margin: 0; font-size: var(--text-caption); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #585c54; }
+.breed-mix-name input { height: 48px; min-height: 48px; width: 100%; padding: 0 14px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; letter-spacing: 0; text-transform: none; }
+.breed-mix-name input:focus-visible { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(167,133,63,.18); }
+.breed-mix-hint { margin: -4px 0 0; font-size: 13px; line-height: 1.45; color: #585c54; text-wrap: pretty; }
+.breed-mix-hint b { color: var(--ink); }
+.breed-mix-others { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 0; font-size: 13px; color: #585c54; }
+.breed-mix-others button { min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.breed-mix-others button:hover, .breed-mix-others button:focus-visible { border-color: var(--gold); }
+.breed-mix-others button:focus-visible, .breed-mix-add:focus-visible, .breed-mix-remove:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.breed-mix-parents-line { font-weight: 400; color: var(--muted-on-light); }
+.breed-select-row > .breed-mix { grid-column: 1 / -1; }
+@media (max-width: 760px) { .breed-mix .breed-select-button { font-size: 16px; } }

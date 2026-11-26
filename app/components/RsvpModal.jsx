@@ -8,6 +8,7 @@ import { tierAvailable, tierWindow } from "../lib/prices.mjs";
 import { PUBLIC_MAX_FURBABIES, PUBLIC_MAX_HUMANS, calculateAmountDue, ticketLimitLine, ticketLimitUnits } from "../lib/registrationPricing.mjs";
 import PayStep from "./PayStep";
 import BreedSelect from "./BreedSelect";
+import MixedBreedFields from "./MixedBreedFields";
 import FurbabySexSelect from "./FurbabySexSelect";
 import FurbabyAgeInput from "./FurbabyAgeInput";
 import Stepper from "./Stepper";
@@ -289,6 +290,7 @@ export default function RsvpModal({ event, onClose, preview = false }) {
                       <BreedSelect name={`furbabyBreed${i}`} label="Breed" value={breeds[i] || ""} onChange={(key) => setAt(setBreeds, i, key)} />
                       <FurbabySexSelect name={`furbabySex${i}`} label="Gender" value={sexes[i] || ""} onChange={(v) => setAt(setSexes, i, v)} />
                       <FurbabyAgeInput name={`furbabyAge${i}`} label="Age (years)" value={ages[i] || ""} onChange={(v) => setAt(setAges, i, v)} />
+                      <MixedBreedFields value={breeds[i] || ""} onChange={(v) => setAt(setBreeds, i, v)} />
                       {vaccineTypes.length > 0 && <fieldset className="rsvp-vaccines"><legend>Vaccine records <small>up to {MAX_IMAGES_PER_FURBABY} photos in all</small></legend>{vaccineTypes.map((v) => <label key={v.key} className="rsvp-vaccination"><span className="rsvp-vaccine-name">{vaccineLabel(v.key)} <small>{v.required ? "Required" : "Optional"}</small></span><span className="rsvp-vaccine-hint">{VACCINE_TYPES.find((t) => t.key === v.key)?.hint}</span><input type="file" name={`vaccine${i}-${v.key}`} accept="image/jpeg,image/png,image/webp" multiple required={v.required} /></label>)}<label className="rsvp-vaccination"><span className="rsvp-vaccine-name">Other pages <small>Optional</small></span><span className="rsvp-vaccine-hint">The rest of the card, if it helps</span><input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" multiple /></label></fieldset>}
                       {askVaccination && vaccineTypes.length === 0 && <label className="rsvp-vaccination">Vaccination card (up to {MAX_IMAGES_PER_FURBABY} photos)<input type="file" name={`vaccinationRecord${i}`} accept="image/jpeg,image/png,image/webp" multiple required={Boolean(formConfig.vaccinationRequired)} onChange={(e) => { if (e.target.files.length > MAX_IMAGES_PER_FURBABY) { e.target.value = ""; setState((st) => ({ ...st, error: `Pick up to ${MAX_IMAGES_PER_FURBABY} photos for each furbaby's vaccination card.` })); } else setState((st) => (st.error?.startsWith("Pick up to") ? { ...st, error: "" } : st)); }} /></label>}
                     </div>

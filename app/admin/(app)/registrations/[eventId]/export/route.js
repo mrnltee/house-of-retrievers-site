@@ -5,7 +5,7 @@ import { sql } from "../../../../../lib/db";
 import { currentAdmin } from "../../../../../lib/admin/auth";
 import { logActivity } from "../../../../../lib/admin/log";
 import { can } from "../../../../../lib/admin/roles.mjs";
-import { breedLabel } from "../../../../../lib/breeds.mjs";
+import { breedFullLabel } from "../../../../../lib/breeds.mjs";
 import { sexLabel } from "../../../../../lib/furbabySex.mjs";
 import { ageLabel } from "../../../../../lib/furbabyAge.mjs";
 
@@ -35,7 +35,7 @@ export async function GET(_request, { params }) {
   );
   const head = ["Name", "Email", "Furbaby", "Breeds", "Genders", "Ages", "Other hoomans", "People", "Furbabies", "Photo consent", "Under 18", "Guardian", "Status", "Fee", "Reference", "Checked in", "Registered", "Ticket", "Amount due", "Promo code", "Promo discount", "Paid with", "Amount sent", "Refunded", "Checked by", "Added by", ...questions.map((q) => q.label)];
   const lines = [head.map(cell).join(",")].concat(
-    rows.map((r) => [r.name, r.email, r.furbaby_name, (r.furbaby_breeds || []).filter(Boolean).map(breedLabel).join(", "), (r.furbaby_sexes || []).map((v) => sexLabel(v) || "—").join(", ").replace(/^(—(, )?)+$/, ""), (r.furbaby_ages || []).map((v) => ageLabel(v) || "—").join(", ").replace(/^(—(, )?)+$/, ""), (r.guest_names || []).filter(Boolean).join(", "), r.human_count ?? 1, r.furbaby_count ?? 0, r.photo_consent ? "Yes" : "No", r.under_18 ? "Yes" : "No", r.guardian_name, r.status, FEE_STATUS[r.fee_status]?.label || r.fee_status, r.fee_reference, r.checked_in_at?.toISOString?.() || "", r.created_at.toISOString(), r.comp_type ? compLine(r.comp_type) : r.ticket_label, r.amount_due ?? r.ticket_amount, r.promo?.code || "", r.promo_discount ?? "", payMethodLabel(r.pay_method), r.pay_amount, r.refund_amount, r.fee_checked_by, r.added_by, ...questions.map((q) => answerText(r.custom_answers?.[q.id]))].map(cell).join(",")),
+    rows.map((r) => [r.name, r.email, r.furbaby_name, (r.furbaby_breeds || []).filter(Boolean).map(breedFullLabel).join(", "), (r.furbaby_sexes || []).map((v) => sexLabel(v) || "—").join(", ").replace(/^(—(, )?)+$/, ""), (r.furbaby_ages || []).map((v) => ageLabel(v) || "—").join(", ").replace(/^(—(, )?)+$/, ""), (r.guest_names || []).filter(Boolean).join(", "), r.human_count ?? 1, r.furbaby_count ?? 0, r.photo_consent ? "Yes" : "No", r.under_18 ? "Yes" : "No", r.guardian_name, r.status, FEE_STATUS[r.fee_status]?.label || r.fee_status, r.fee_reference, r.checked_in_at?.toISOString?.() || "", r.created_at.toISOString(), r.comp_type ? compLine(r.comp_type) : r.ticket_label, r.amount_due ?? r.ticket_amount, r.promo?.code || "", r.promo_discount ?? "", payMethodLabel(r.pay_method), r.pay_amount, r.refund_amount, r.fee_checked_by, r.added_by, ...questions.map((q) => answerText(r.custom_answers?.[q.id]))].map(cell).join(",")),
   );
   await logActivity(admin.email, "registration.export", event.title);
   return new Response(`﻿${lines.join("\r\n")}`, {

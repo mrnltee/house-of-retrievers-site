@@ -2,9 +2,10 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { BREEDS, breedIcon, breedLabel } from "../lib/breeds.mjs";
+import { MIXED_KEY, isMixValue } from "../lib/breedMix.mjs";
 import Icon from "./Icon";
 
-const OPTIONS = [{ key: "", label: "Choose a breed (optional)", icon: false }, ...BREEDS];
+const PLACEHOLDER = "Choose a breed (optional)";
 
 /**
  * A breed picker with each breed's icon. A native select can't show icons, so
@@ -12,15 +13,21 @@ const OPTIONS = [{ key: "", label: "Choose a breed (optional)", icon: false }, .
  * typing a letter move; Enter or Space picks; Escape or Tab closes.
  * The chosen key travels in a hidden input named `name`.
  */
-/** `halo`: the furbaby crossed the rainbow bridge, so the chosen breed's icon gets a soft gold halo. */
-export default function BreedSelect({ name, label, value = "", onChange, halo = false }) {
+/**
+ * `halo`: the furbaby crossed the rainbow bridge, so the chosen breed's icon gets a soft gold halo.
+ * `breeds` / `placeholder`: another list (a mix's parent pickers leave out Mixed and Other).
+ * A mix value ("mix:…", breedMix.mjs) shows as Mixed breed; MixedBreedFields asks the rest.
+ */
+export default function BreedSelect({ name, label, value = "", onChange, halo = false, breeds = BREEDS, placeholder = PLACEHOLDER }) {
+  const OPTIONS = [{ key: "", label: placeholder, icon: false }, ...breeds];
+  const shown = isMixValue(value) ? MIXED_KEY : value;
   const id = useId();
   const button = useRef(null);
   const list = useRef(null);
   const typed = useRef({ text: "", at: 0 });
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const selected = Math.max(0, OPTIONS.findIndex((o) => o.key === value));
+  const selected = Math.max(0, OPTIONS.findIndex((o) => o.key === shown));
 
   useEffect(() => {
     if (!open) return undefined;
@@ -35,7 +42,8 @@ export default function BreedSelect({ name, label, value = "", onChange, halo = 
 
   function show(index = selected) { setActive(index); setOpen(true); }
   function pick(index) {
-    onChange?.(OPTIONS[index].key);
+    // Picking Mixed breed again keeps the parents already chosen.
+    if (!(OPTIONS[index].key === MIXED_KEY && isMixValue(value))) onChange?.(OPTIONS[index].key);
     setOpen(false);
     button.current?.focus();
   }
@@ -57,11 +65,11 @@ export default function BreedSelect({ name, label, value = "", onChange, halo = 
     }
   }
 
-  const icon = breedIcon(value);
+  const icon = breedIcon(shown);
   return (
     <div className="breed-select">
       <span className="breed-select-label" id={`${id}-label`}>{label}</span>
-      <input type="hidden" name={name} value={value} />
+      {name ? <input type="hidden" name={name} value={value} /> : null}
       <button
         ref={button}
         type="button"
@@ -73,7 +81,7 @@ export default function BreedSelect({ name, label, value = "", onChange, halo = 
         onKeyDown={onButtonKey}
       >
         <span className={`breed-select-icon${halo && icon ? " has-halo" : ""}`} aria-hidden="true">{halo && icon ? <span className="furbaby-halo" /> : null}{icon ? <img src={icon} alt="" width={28} height={28} /> : null}</span>
-        <span id={`${id}-value`} className={value ? "" : "breed-select-placeholder"}>{value ? breedLabel(value) : OPTIONS[0].label}</span>
+        <span id={`${id}-value`} className={shown ? "" : "breed-select-placeholder"}>{shown ? breedLabel(shown) : OPTIONS[0].label}</span>
         <span className="breed-select-caret" aria-hidden="true"><Icon name="chevronDown" /></span>
       </button>
       {open && (

@@ -4,7 +4,7 @@ import { parseSocialProfile } from "../../lib/socialProfile";
 import { hasDatabase, sql } from "../../lib/db";
 import { logActivity } from "../../lib/admin/log";
 import { savePersonPhoto } from "../../lib/personPhotos";
-import { breedLabel, cleanBreeds } from "../../lib/breeds.mjs";
+import { breedFullLabel, cleanBreeds } from "../../lib/breeds.mjs";
 import { cleanSexes } from "../../lib/furbabySex.mjs";
 import { cleanAges } from "../../lib/furbabyAge.mjs";
 import { sendEmail } from "../../lib/email";
@@ -137,7 +137,7 @@ export async function POST(request) {
       furbabyName: joinRainbow && Array.isArray(body?.furbabyNames) ? sheetFurbabyNames(body.furbabyNames, joinRainbow, joinFurbabies) : joinNames,
       // Older copies of the Apps Script ignore this; the current one adds it as the last column.
       // Several furbabies: their breeds, in order, as one line ("Golden Retriever, Aspin").
-      furbabyBreed: (joinBreeds || []).filter(Boolean).map(breedLabel).join(", "),
+      furbabyBreed: (joinBreeds || []).filter(Boolean).map(breedFullLabel).join(", "),
       photo,
       photoName: clean(body?.photoName, LIMITS.photoName),
       message: clean(body?.message, LIMITS.message),

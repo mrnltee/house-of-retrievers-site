@@ -1,4 +1,4 @@
-import { breedIcon, breedLabel } from "../../../lib/breeds.mjs";
+import { breedFullLabel, breedIcon, breedLabel } from "../../../lib/breeds.mjs";
 import { splitFurbabyNames } from "../../../lib/attendeeNames.mjs";
 import { sexLabel } from "../../../lib/furbabySex.mjs";
 import { ageLabel, humanYearsLabel } from "../../../lib/furbabyAge.mjs";
@@ -29,7 +29,7 @@ export default function FurbabyList({ names, breeds, rainbow = null, sexes = nul
         const age = ageLabel(ages?.[i]);
         const human = age ? humanYearsLabel(ages[i]) : "";
         return (
-          <span key={i} className={`furbaby-item${remembered ? " is-remembered" : ""}`} title={[name, sexLabel(sex), key ? breedLabel(key) : "", remembered ? "Over the rainbow bridge" : ""].filter(Boolean).join(" · ")}>
+          <span key={i} className={`furbaby-item${remembered ? " is-remembered" : ""}`} title={[name, sexLabel(sex), key ? breedFullLabel(key) : "", remembered ? "Over the rainbow bridge" : ""].filter(Boolean).join(" · ")}>
             <span className="furbaby-icon" style={{ width: size, height: size }} aria-hidden="true">
               {remembered ? <span className="furbaby-halo" /> : null}
               {icon ? <img src={icon} alt="" width={size} height={size} /> : null}
@@ -37,7 +37,7 @@ export default function FurbabyList({ names, breeds, rainbow = null, sexes = nul
             <span className={sex ? `furbaby-name is-${sex}` : "furbaby-name"}>{name}{remembered ? <span className="furbaby-rainbow" aria-hidden="true"> 🌈</span> : null}</span>
             {age ? <span className="furbaby-age" tabIndex={0} title="" data-human={human}> ({age})<span className="visually-hidden">, {human.toLowerCase()}</span></span> : null}
             {sex ? <span className="visually-hidden">, {sexLabel(sex).toLowerCase()}</span> : null}
-            {key && list[i] ? <span className="visually-hidden"> ({breedLabel(key)})</span> : null}
+            {key && list[i] ? <span className="visually-hidden"> ({breedFullLabel(key)})</span> : null}
             {remembered ? <span className="visually-hidden">, in loving memory</span> : null}
           </span>
         );
