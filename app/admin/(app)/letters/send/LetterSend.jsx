@@ -10,7 +10,7 @@ import { designLabel, escapeFills, fillDesign, renderDesign, sendBlanks } from "
 import { hasSignatureMark, placeSignatureMark } from "../../../../lib/letterSignature.mjs";
 import { sendLetters } from "../../../letterActions";
 import ConfirmButton from "../../ConfirmButton";
-import { MAX_COPIES, copiesFor, parseCopies } from "../../../../lib/letterCopies.mjs";
+import { MAX_COPIES, copiesFor, isCopyEmail, parseCopies } from "../../../../lib/letterCopies.mjs";
 import { SEND_TO_NAME_MAX, readSendTo, withSendTo } from "../../../../lib/letterSendTo.mjs";
 import LetterView from "../LetterView";
 import CopyEmailsField from "./CopyEmailsField";
@@ -29,14 +29,20 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
   // Every fill-in this page could ask for (the letter's and every design's), so switching design keeps answers.
   const [values, setValues] = useState(() => Object.fromEntries([...blanks, ...designs.flatMap((d) => sendBlanks(letter, d, false))].map((b) => [b.label, saved[b.label] ?? b.suggestion ?? ""])));
   const [designId, setDesignId] = useState("");
-  // Extra CC / BCC for this send, copied on every recipient's email.
-  const [copyCc, setCopyCc] = useState("");
-  const [copyBcc, setCopyBcc] = useState("");
-  const extraCc = parseCopies(copyCc, "CC");
-  const extraBcc = parseCopies(copyBcc, "BCC");
+  // Extra CC / BCC for this send, copied on every recipient's email: { chips, draft } from each chip field.
+  const [copyCc, setCopyCc] = useState({ chips: [], draft: "" });
+  const [copyBcc, setCopyBcc] = useState({ chips: [], draft: "" });
+  // The address being typed counts once it's a whole address; until then it isn't an error, only unfinished.
+  const copyList = ({ chips, draft }) => [...chips, ...(isCopyEmail(draft.trim()) ? [draft.trim()] : [])].join(", ");
+  const unfinished = ({ draft }) => Boolean(draft.trim()) && !isCopyEmail(draft.trim());
+  const extraCc = parseCopies(copyList(copyCc), "CC");
+  const extraBcc = parseCopies(copyList(copyBcc), "BCC");
   const copyError = extraCc.error || extraBcc.error || "";
-  // A bad address unfolds Copy others in, so the reason Send is off is on screen.
-  const copiesOpen = Boolean(copyError);
+  const copyTyping = unfinished(copyCc) || unfinished(copyBcc);
+  // Copy others in stays open once opened (a bad address opens it too). It used to follow the error,
+  // so finishing an address ("…@gmail.c" became valid) folded it shut mid-word and lost the rest.
+  const [copiesOpen, setCopiesOpen] = useState(false);
+  useEffect(() => { if (copyError) setCopiesOpen(true); }, [copyError]);
   const design = designs.find((d) => d.id === designId) || null;
   // Another email (and name) for a recipient, for this send only: { ref: { email, contact } }.
   const [sendTo, setSendTo] = useState({});
@@ -277,7 +283,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
         </fieldset>
 
         {/* Folded until needed (Guest tracker UX review, 17 Nov 2026): most sends copy nobody in. */}
-        <details className="field letter-copies" open={copiesOpen || undefined}>
+        <details className="field letter-copies" open={copiesOpen} onToggle={(e) => setCopiesOpen(e.currentTarget.open)}>
           <summary className="field-head">Copy others in{extraCc.emails.length + extraBcc.emails.length ? ` · ${extraCc.emails.length + extraBcc.emails.length}` : ""} <small>Optional CC or BCC on every email in this send, up to {MAX_COPIES} each.</small></summary>
           <CopyEmailsField name="copyCc" label="CC" hint="Everyone on the email can see these" invalid={Boolean(extraCc.error)} onChange={setCopyCc} />
           <CopyEmailsField name="copyBcc" label="BCC" hint={"Hidden from the recipient. HoR's own inbox is copied in on every email already"} invalid={Boolean(extraBcc.error)} onChange={setCopyBcc} />
@@ -332,7 +338,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
 
         <div className="actions send-actions">
           <ConfirmButton
-            disabled={!ready || count === 0 || count > max || missing.length > 0 || ownLeft || Boolean(copyError) || Boolean(sendToCheck.error)}
+            disabled={!ready || count === 0 || count > max || missing.length > 0 || ownLeft || Boolean(copyError) || copyTyping || Boolean(sendToCheck.error)}
             title={`Send “${letter.name}” to ${count} recipient${count === 1 ? "" : "s"}?`}
             items={[invite ? "Each guest gets the invitation email with their own card, and the full invitation as a PDF" : design ? `Each gets the “${design.name}” email, addressed to them by name${attach ? ", with the letter as a PDF" : " (no PDF attached)"}` : attach ? "Each gets an email with the letter as a PDF, addressed to them by name" : "Each gets the email only, addressed to them by name (no PDF)", ...(otherCount ? [`${otherCount} go${otherCount === 1 ? "es" : ""} to another email for this send; ${otherCount === 1 ? "that record keeps" : "those records keep"} their saved email`] : []), ...(extraCc.emails.length ? [`CC on every email: ${extraCc.emails.join(", ")}`] : []), ...(extraBcc.emails.length ? [`BCC (hidden) on every email: ${extraBcc.emails.join(", ")}`] : []), "Each send is logged in the activity log", "What you typed is remembered for next time; standard details don't change"]}
             yes="Yes, send letters"
@@ -349,6 +355,7 @@ export default function LetterSend({ letters, letter, blanks, saved, standard = 
               {!ready && <p className="small muted">Sending switches on once the Resend key is in Vercel.</p>}
               {missing.length > 0 && <p className="small muted">Still to fill: {missing.join(", ")}.</p>}
               {ownLeft && <p className="small muted">Write your subject and message first: <button type="button" className="linkish small" data-confirm="not-needed-read-only" onClick={() => setWantWording(true)}><Icon name="edit" /> Write your email</button>.</p>}
+              {copyTyping && !copyError && <p className="small muted">Finish the address in CC or BCC, then type a comma or press Enter.</p>}
               {sendToCheck.error && <p className="small error-text" role="alert">{sendToCheck.error}</p>}
             </div>
           )}
