@@ -30,7 +30,20 @@ export default function BreedFields({ initial = [], count = 1, label = null, rai
     };
     sync();
     field.addEventListener("input", sync);
-    return () => field.removeEventListener("input", sync);
+    // Add registration's name suggestions fill these in (PastPersonField); an empty list clears them.
+    const form = field.form;
+    const fill = (e) => {
+      const list = Array.isArray(e.detail) ? e.detail : [];
+      const at = (key) => Array.from({ length: MAX_PICKERS }, (_, i) => list[i]?.[key] || "");
+      setBreeds(at("breed"));
+      setSex(at("sex"));
+      setAge(at("age"));
+    };
+    form?.addEventListener("hor:fill-furbabies", fill);
+    return () => {
+      field.removeEventListener("input", sync);
+      form?.removeEventListener("hor:fill-furbabies", fill);
+    };
   }, []);
 
   return (
