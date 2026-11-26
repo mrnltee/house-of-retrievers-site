@@ -10,7 +10,7 @@ import Icon from "../../../../components/Icon";
  * list splits into chips; Backspace in an empty box removes the last one.
  * A chip that isn't an email shows red. The form still posts one text value,
  * "a@x.ph, b@y.com", under `name`, so the server's parseCopies is unchanged.
- * `onChange` gets that same text, including what's still being typed.
+ * `onChange` gets { chips, draft }: the finished addresses and what's still being typed.
  */
 export default function CopyEmailsField({ name, label, hint, invalid = false, onChange }) {
   const [chips, setChips] = useState([]);
@@ -22,7 +22,7 @@ export default function CopyEmailsField({ name, label, hint, invalid = false, on
   function update(nextChips, nextDraft) {
     setChips(nextChips);
     setDraft(nextDraft);
-    onChange?.([...nextChips, nextDraft.trim()].filter(Boolean).join(", "));
+    onChange?.({ chips: nextChips, draft: nextDraft });
   }
 
   // Typing or pasting: finished addresses become chips, the rest stays typed.
