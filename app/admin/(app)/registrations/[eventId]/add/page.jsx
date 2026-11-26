@@ -9,6 +9,7 @@ import { calculateAmountDue } from "../../../../../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, capacityUnitLabel } from "../../../../../lib/eventCapacity.mjs";
 import { emailReady } from "../../../../../lib/email";
 import BreedFields from "../../BreedFields";
+import PastPersonField from "../../PastPersonField";
 import CompOptions from "../../CompOptions";
 import CustomAnswerFields from "../../CustomAnswerFields";
 import { addRegistration } from "../../../../registrationActions";
@@ -48,7 +49,7 @@ export default async function AddRegistration({ params, searchParams }) {
       <form action={addRegistration} className="card form" style={{ maxWidth: 720, gap: 16 }}>
         <input type="hidden" name="eventId" value={eventId} />
         <div className="row-2">
-          <label className="field"><span>Name</span><input type="text" name="name" required maxLength={120} /></label>
+          <PastPersonField eventId={eventId} />
           <label className="field"><span>Email</span><input type="email" name="email" required maxLength={200} /></label>
         </div>
         <div className="row-2">
