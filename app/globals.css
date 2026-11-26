@@ -2395,3 +2395,20 @@ main :is(.journey-story, .pillar-copy p, .join-grid p, .instagram-fallback p, .p
 .media-angle-facts .icon { margin-top: 3px; color: var(--media-gold-text); }
 .media-story-open { margin-top: 0; }
 .media-angle-list .media-angle-facts span { color: inherit; font-size: inherit; font-weight: 400; letter-spacing: normal; }
+
+/* Media hub hero slideshow (26 Nov 2026, owner): event photos crossfade behind the headline
+   with a slow zoom (`HeroSlides.jsx`, `MEDIA_HERO_SLIDES`). The section's own background
+   (gradient + the first photo) is the fallback before it loads, without JavaScript and under
+   reduced motion; the frames carry the same gradient, so the hand-off doesn't change the tone. */
+.media-hero-slides { position: absolute; inset: 0; }
+.media-hero-frames { position: absolute; inset: 0; z-index: 0; overflow: hidden; opacity: 0; transition: opacity .4s ease; }
+.media-hero-frames.is-ready { opacity: 1; }
+.media-hero-frames::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13,13,13,.96), rgba(13,13,13,.6) 52%, rgba(13,13,13,.3)); pointer-events: none; }
+.media-hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.08); transition: opacity 1.6s ease-in-out; will-change: opacity, transform; }
+.media-hero-slide.is-active { opacity: 1; animation: media-hero-zoom 9s ease-out both; }
+.media-hero-frames.is-still .media-hero-slide { animation-play-state: paused; }
+@keyframes media-hero-zoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+.media-hero-play { position: absolute; z-index: 2; right: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3vw, 32px); display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(13,13,13,.45); color: #fff; cursor: pointer; backdrop-filter: blur(6px); opacity: .8; transition: opacity .2s; }
+.media-hero-play:hover, .media-hero-play:focus-visible { opacity: 1; }
+.media-hero-play:focus-visible { outline: 3px solid var(--media-gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .media-hero-slide { transition: none; animation: none !important; transform: none; } }

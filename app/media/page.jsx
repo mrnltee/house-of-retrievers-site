@@ -6,6 +6,7 @@ import MessageForm from "./MessageForm";
 import PackCards from "./PackCards";
 import LaunchBrands from "./LaunchBrands";
 import StoryCards from "./StoryCards";
+import HeroSlides from "./HeroSlides";
 import { STORIES_APPROVED, storyCards } from "../lib/mediaStories.mjs";
 import { loadMediaAlbums, loadPublishedMediaContent } from "../lib/mediaHubStore";
 import { photoAlt, pressKitFrom } from "../lib/mediaPressKit.mjs";
@@ -129,6 +130,7 @@ export default async function MediaPage() {
       <MediaHeader />
 
       <section className="media-hero" id="media-content" aria-labelledby="media-title">
+        <HeroSlides />
         <div className="media-hero-copy">
           <p className="media-kicker">Press · partnerships · stories</p>
           <h1 id="media-title" dangerouslySetInnerHTML={rich(content.heroTitle)} />
