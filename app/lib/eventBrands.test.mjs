@@ -158,12 +158,17 @@ test("sponsor levels: read back, labels, event-page groups and tracker groups", 
   assert.equal(roleChoice({ role: "Sponsor", sponsor_level: "presenting" }), "Sponsor:presenting");
   assert.equal(roleChoice({ role: "Partner", sponsor_level: "presenting" }), "Partner");
   assert.equal(roleLabel({ role: "Sponsor", sponsor_level: "supporting" }), "Supporting sponsor");
+  assert.equal(roleLabel({ role: "Sponsor", sponsor_level: "minor" }), "Minor sponsor");
   assert.equal(roleLabel({ role: "Sponsor" }), "Sponsor");
   assert.equal(cleanEventBrand({ role: "Sponsor:major", reply: "yes" }).value.sponsorLevel, "major");
   assert.deepEqual(sponsorGroups(["Acme", "Bark", "Typed Co"], { acme: "major", bark: "presenting" }), [
     { key: "presenting", title: "Presenting sponsors", names: ["Bark"] },
     { key: "major", title: "Major sponsors", names: ["Acme"] },
     { key: "", title: "Sponsored by", names: ["Typed Co"] },
+  ]);
+  assert.deepEqual(sponsorGroups(["Major Co", "Minor Co"], { "major co": "major", "minor co": "minor" }), [
+    { key: "major", title: "Major sponsors", names: ["Major Co"] },
+    { key: "minor", title: "Minor sponsors", names: ["Minor Co"] },
   ]);
   assert.deepEqual(brandGroups([{ role: "Sponsor", sponsor_level: "major" }, { role: "Sponsor" }]), [
     ["sponsor", "Sponsors", 2], ["sponsor:major", "Sponsors · Major sponsor", 1], ["sponsor:none", "Sponsors · no level yet", 1],

@@ -29,6 +29,7 @@ export const SPONSOR_LEVELS = [
   ["presenting", "Presenting sponsor", "Top billing; named with the event"],
   ["major", "Major sponsor", "A large share of the funding or goods"],
   ["supporting", "Supporting sponsor", "Helps with a smaller amount or items"],
+  ["minor", "Minor sponsor", "Contributes a modest amount or item"],
 ];
 export const sponsorLevelLabel = (key) => SPONSOR_LEVELS.find(([k]) => k === key)?.[1] || "";
 
@@ -65,7 +66,7 @@ export function partnerGroups(partners = [], types = {}) {
 }
 
 /**
- * An event page's sponsors grouped by level, for "With thanks to": presenting, major, supporting, then
+ * An event page's sponsors grouped by level, for "With thanks to": presenting, major, supporting, minor, then
  * sponsors with no level (and names typed into the event) under "Sponsored by". Empty groups are left out.
  * `levels` is { lower-case name → sponsor level }.
  */
@@ -74,6 +75,7 @@ export function sponsorGroups(sponsors = [], levels = {}) {
     { key: "presenting", title: "Presenting sponsors" },
     { key: "major", title: "Major sponsors" },
     { key: "supporting", title: "Supporting sponsors" },
+    { key: "minor", title: "Minor sponsors" },
     { key: "", title: "Sponsored by" },
   ];
   const levelOf = (name) => { const l = levels[String(name).toLowerCase()]; return SPONSOR_LEVELS.some(([k]) => k === l) ? l : ""; };
