@@ -13,7 +13,7 @@ import { sendPass, sendReceiptRejected, sendSpotHeld, sendWaitlisted } from "../
 import { deletionState } from "../lib/registrationRecovery.mjs";
 import { calculateAmountDue, cleanAttendeeCounts, cleanPricingBasis, overpaidBy, paidAmountChangeAllowed } from "../lib/registrationPricing.mjs";
 import { CAPACITY_USED_SQL, validateCapacityCounts } from "../lib/eventCapacity.mjs";
-import { ACTIVE_REGISTRATION_SQL, REMINDER_HOLD_OPTIONS, cleanReminderHoldMinutes, isActiveRegistrationHold, isExpiredHold } from "../lib/registrationHolds.mjs";
+import { ACTIVE_REGISTRATION_SQL, REMINDER_HOLD_OPTIONS, cleanReminderHoldMinutes, holdExpiresAt, isActiveRegistrationHold, isExpiredHold, resolveHoldMinutes } from "../lib/registrationHolds.mjs";
 import { expiredHoldFits } from "../lib/expiredHoldFit";
 import { can } from "../lib/admin/roles.mjs";
 import { savePersonPhoto } from "../lib/personPhotos";
@@ -26,6 +26,7 @@ import { MAX_IMAGES_PER_FURBABY, MAX_VACCINATION_PHOTOS, freeVaccinationPages } 
 import { cleanVaccineKey, isVaccineKey, vaccineLabel } from "../lib/vaccineTypes.mjs";
 import { applyPromo, normalizeCode, promoSnapshot } from "../lib/promoCodes.mjs";
 import { checkPromo } from "../lib/promoStore";
+import { cleanQuery, likePattern, pastPeopleSuggestions } from "../lib/admin/pastPeople.mjs";
 
 /**
  * Payments on paid events (Figma R1–R4). Every button that calls these is a
@@ -217,6 +218,33 @@ function answersJson(event, data) {
   return value ? JSON.stringify(value) : null;
 }
 
+/**
+ * Name suggestions for Add registration (owner feedback, 26 Nov 2026): People records (with
+ * people:view) and RSVPs to other events whose name or email holds the typed text, so a
+ * returning guest's email and furbabies fill in. Read-only; nothing is saved or logged.
+ */
+export async function findPastPeople(eventId, query) {
+  try {
+    const admin = await actionAdmin("registrations:edit");
+    const text = cleanQuery(query);
+    if (!text || !isUuid(eventId)) return [];
+    const like = likePattern(text);
+    const [people, registrations] = await Promise.all([
+      can(admin, "people:view")
+        ? sql(`SELECT id, kind, name, email, membership, member_no, member_year, furbaby_name, furbaby_breeds, furbaby_sexes, furbaby_ages, furbaby_ages_on, furbaby_rainbow
+                 FROM people WHERE email <> '' AND (name ILIKE $1 OR email ILIKE $1) ORDER BY created_at DESC LIMIT 40`, [like])
+        : [],
+      sql(`SELECT r.name, r.email, r.furbaby_name, r.furbaby_count, r.furbaby_breeds, r.furbaby_sexes, r.furbaby_ages, r.created_at, r.event_id, e.title AS event_title, e.date AS event_date
+             FROM registrations r JOIN events e ON e.id = r.event_id
+            WHERE r.deleted_at IS NULL AND r.email <> '' AND (r.name ILIKE $1 OR r.email ILIKE $1)
+            ORDER BY r.created_at DESC LIMIT 80`, [like]),
+    ]);
+    return pastPeopleSuggestions({ query: text, people, registrations, eventId });
+  } catch {
+    return [];
+  }
+}
+
 export async function addRegistration(data) {
   const eventId = form(data, "eventId");
   const back = isUuid(eventId) ? `/registrations/${eventId}/add` : "/registrations";
@@ -325,7 +353,7 @@ export async function updateRegistration(data) {
     if (error) await backWith(back, "error", error);
     const attendees = cleanAttendeeCounts(form(data, "humanCount") || 1, form(data, "furbabyCount") || 0);
     if (attendees.error) await backWith(back, "error", attendees.error);
-    const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config, promo_codes FROM events WHERE id=$1", [reg.event_id]);
+    const [event] = await sql("SELECT title, fee_required, capacity, capacity_basis, pricing_basis, included_furbabies_per_human, additional_furbaby_fee, price_tiers, cost, rsvp_form_config, promo_codes, payment_hold_minutes FROM events WHERE id=$1", [reg.event_id]);
     // Complimentary: picked in the ticket field; a form without one keeps what's saved.
     const comp = data.has("ticket") ? compFromTicket(form(data, "ticket")) : reg.comp_type || null;
     const capacityRequest = validateCapacityCounts(event?.capacity_basis, attendees.humans, attendees.furbabies, { allowNoFurbaby: true, comp: Boolean(comp) });
@@ -358,6 +386,10 @@ export async function updateRegistration(data) {
     }
     const amountChanged = due.amount !== oldDue || normalizeCode(promo?.code) !== normalizeCode(reg.promo?.code) || chosen.value.label !== reg.ticket_label || Number(chosen.value.amount ?? 0) !== Number(reg.ticket_amount ?? 0);
     const nextFee = amountChanged && reg.status === "confirmed" && due.amount > 0 && reg.fee_status !== "paid" ? "waiting" : (due.amount === 0 ? "not_due" : reg.fee_status);
+    // A new amount to pay starts a fresh payment hold (the event's hold length), so the new
+    // payment request never carries an old or already-passed deadline.
+    const newHold = amountChanged && nextFee === "waiting";
+    const holdUntil = newHold ? holdExpiresAt(new Date(), resolveHoldMinutes(event?.payment_hold_minutes)) : null;
     const saved = await transaction(async (tx) => {
       await tx.sql("SELECT id FROM events WHERE id=$1 FOR UPDATE", [reg.event_id]);
       if (reg.status === "confirmed" && event?.capacity != null) {
@@ -367,18 +399,19 @@ export async function updateRegistration(data) {
       await tx.sql(
         `UPDATE registrations SET name=$2, email=$3, furbaby_name=$4, photo_consent=$5, under_18=$6, guardian_name=$7,
            ticket_label=$8, ticket_amount=$9, human_count=$10, furbaby_count=$11, amount_due=$12,
-           fee_status=$13, comp_type=$25, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END, custom_answers=CASE WHEN $18 THEN $17::jsonb ELSE custom_answers END, promo=$19, promo_discount=$20, furbaby_sexes=CASE WHEN $22 THEN $21 ELSE furbaby_sexes END, furbaby_ages=CASE WHEN $24 THEN $23 ELSE furbaby_ages END WHERE id=$1`,
+           fee_status=$13, comp_type=$25, fee_note=CASE WHEN $14 THEN NULL ELSE fee_note END, furbaby_breeds=CASE WHEN $16 THEN $15 ELSE furbaby_breeds END, custom_answers=CASE WHEN $18 THEN $17::jsonb ELSE custom_answers END, promo=$19, promo_discount=$20, furbaby_sexes=CASE WHEN $22 THEN $21 ELSE furbaby_sexes END, furbaby_ages=CASE WHEN $24 THEN $23 ELSE furbaby_ages END, hold_expires_at=CASE WHEN $26 THEN $27::timestamptz ELSE hold_expires_at END WHERE id=$1`,
         [id, value.name, value.email, value.furbabyName, value.photoConsent, value.under18, value.guardianName,
-          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent"), answersJson(event, data), data.has("customAnswersSent"), promo ? JSON.stringify(promo) : null, discount, formSexes(data, attendees.furbabies), data.has("sexesSent"), formAges(data, attendees.furbabies), data.has("agesSent"), comp],
+          chosen.value.label, chosen.value.amount, attendees.humans, attendees.furbabies, due.amount, nextFee, amountChanged, formBreeds(data, attendees.furbabies), data.has("breedsSent"), answersJson(event, data), data.has("customAnswersSent"), promo ? JSON.stringify(promo) : null, discount, formSexes(data, attendees.furbabies), data.has("sexesSent"), formAges(data, attendees.furbabies), data.has("agesSent"), comp, newHold, holdUntil],
       );
       return true;
     });
     if (!saved) await backWith(back, "error", "Those attendee counts would exceed the event capacity. Cancel someone or raise the capacity first.");
-    await logActivity(admin.email, "registration.edit", event?.title || reg.title, { registrationId: id, amountChanged });
+    await logActivity(admin.email, "registration.edit", event?.title || reg.title, { registrationId: id, amountChanged, ...(chosen.value.label !== reg.ticket_label ? { ticket: chosen.value.label, previousTicket: reg.ticket_label } : {}) });
     let note = `${value.name}'s registration was saved.`;
     if (amountChanged && nextFee === "waiting") note += " The payment is waiting for a new proof at the updated amount.";
     if (data.get("sendEmail") === "on") {
-      const sent = reg.status === "waitlist" ? await sendWaitlisted(id) : nextFee === "waiting" ? await sendSpotHeld(id) : await sendPass(id, { paid: nextFee === "paid", again: true });
+      // A resend always goes out: the first payment request's email key would make Resend skip it.
+      const sent = reg.status === "waitlist" ? await sendWaitlisted(id) : nextFee === "waiting" ? await sendSpotHeld(id, { updated: amountChanged, resend: true }) : await sendPass(id, { paid: nextFee === "paid", again: true });
       note += emailNote(sent, reg.status === "waitlist" ? "The waitlist note was" : nextFee === "waiting" ? "Payment instructions were" : "Their QR pass was");
     }
     revalidatePath("/events", "layout");

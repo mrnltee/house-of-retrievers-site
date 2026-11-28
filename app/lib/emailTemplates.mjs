@@ -636,15 +636,18 @@ export function eventReminder({ name, event, passUrl, code = "", comp = null, co
 }
 
 /** Paid event: sent straight after the RSVP. The spot is held; the pass comes once the payment is approved. */
-export function spotHeld({ name, event, passUrl, ticket = "", deadline = "", again = false }) {
+export function spotHeld({ name, event, passUrl, ticket = "", deadline = "", again = false, updated = false }) {
+  // `updated`: the team changed their ticket or amount, so this replaces the first payment request.
+  const first = firstName(name);
   return build({
-    subject: again ? `Your spot is still available: ${event.title}` : `Your spot is held: ${event.title}`,
-    preheader: again ? "We're holding it for you again. Pay and upload your receipt to keep it." : "Pay and upload your receipt to get your QR pass.",
-    heading: again ? `Your spot is still available, ${firstName(name)}.` : `Your spot is held, ${firstName(name)}.`,
+    subject: updated ? `Your ticket was updated: ${event.title}` : again ? `Your spot is still available: ${event.title}` : `Your spot is held: ${event.title}`,
+    preheader: updated ? "Here's the new amount to pay. Upload your receipt to get your QR pass." : again ? "We're holding it for you again. Pay and upload your receipt to keep it." : "Pay and upload your receipt to get your QR pass.",
+    heading: updated ? `Your ticket was updated, ${first}.` : again ? `Your spot is still available, ${first}.` : `Your spot is held, ${first}.`,
     paragraphs: [
       eventBox(event),
-      ...(again ? ["The time to pay for your RSVP ran out, but there's still room, so we're holding your spot for you again."] : []),
+      ...(updated ? [`The team updated your RSVP${ticket ? ` to <strong style="white-space:nowrap">${esc(ticket)}</strong>` : ""}. This replaces the payment details we sent before, and your spot is still held.`] : again ? ["The time to pay for your RSVP ran out, but there's still room, so we're holding your spot for you again."] : []),
       `To confirm it, pay${ticket ? ` <strong style="white-space:nowrap">${esc(ticket)}</strong>` : ""} using one of the approved payment methods on your RSVP page, then upload your reference number and confirmation screenshot there.`,
+      ...(updated ? ["Already sent a receipt for the old amount? Reply to this email and the team will sort out the difference with you."] : []),
       deadline
         ? `Please do this by <strong>${esc(deadline)}</strong>, or the spot may go to someone else. We'll email your QR pass once the team has matched your payment.`
         : "We'll email your QR pass once the team has matched your payment. Your spot stays held in the meantime.",

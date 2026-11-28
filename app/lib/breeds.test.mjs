@@ -13,8 +13,8 @@ test("every listed breed has its icon in public/breeds", () => {
   for (const key of ["aspin", "akita", "american-bully", "beagle", "belgian-malinois", "bichon-frise", "borzoi", "chihuahua", "chow-chow", "cocker-spaniel", "corgi", "dachshund", "dalmatian", "french-bulldog", "german-shepherd", "golden-retriever", "jack-russell-terrier", "labrador-retriever", "lhasa-apso", "maltese", "pit-bull", "pomeranian", "poodle", "samoyed", "shiba-inu", "shih-tzu", "siberian-husky", "toy-poodle", "yorkshire-terrier"]) {
     assert.ok(BREEDS.some((b) => b.key === key), key);
   }
-  assert.deepEqual(BREEDS.slice(0, 3).map((b) => b.key), ["aspin", "golden-retriever", "labrador-retriever"]);
-  const rest = BREEDS.slice(3, -1).map((b) => b.label);
+  assert.deepEqual(BREEDS.slice(0, 4).map((b) => b.key), ["aspin", "golden-retriever", "labrador-retriever", "mixed"]);
+  const rest = BREEDS.slice(4, -1).map((b) => b.label);
   assert.deepEqual(rest, [...rest].sort((a, b) => a.localeCompare(b, "en")));
   assert.equal(new Set(BREEDS.map((b) => b.key)).size, BREEDS.length);
   assert.equal(BREEDS[BREEDS.length - 1].key, "other");

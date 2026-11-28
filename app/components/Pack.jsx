@@ -30,18 +30,6 @@ export default function Pack({ packView, setPackView, onSupport }) {
           </div>
           <div className="view-switch" role="tablist" aria-label="Pack content">
             <button
-              id="pack-tab-impact"
-              role="tab"
-              aria-selected={packView === "impact"}
-              aria-controls="pack-panel-impact"
-              tabIndex={packView === "impact" ? 0 : -1}
-              className={packView === "impact" ? "active" : ""}
-              onClick={() => setPackView("impact")}
-              onKeyDown={handleTabKey}
-            >
-              How to join
-            </button>
-            <button
               id="pack-tab-families"
               role="tab"
               aria-selected={packView === "families"}
@@ -52,6 +40,18 @@ export default function Pack({ packView, setPackView, onSupport }) {
               onKeyDown={handleTabKey}
             >
               Meet the Founding Pawmilies
+            </button>
+            <button
+              id="pack-tab-impact"
+              role="tab"
+              aria-selected={packView === "impact"}
+              aria-controls="pack-panel-impact"
+              tabIndex={packView === "impact" ? 0 : -1}
+              className={packView === "impact" ? "active" : ""}
+              onClick={() => setPackView("impact")}
+              onKeyDown={handleTabKey}
+            >
+              How to join
             </button>
           </div>
         </div>

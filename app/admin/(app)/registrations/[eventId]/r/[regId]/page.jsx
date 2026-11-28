@@ -308,7 +308,7 @@ export default async function RegistrationDetail({ params, searchParams }) {
                 <label className="check"><input type="checkbox" name="under18" defaultChecked={reg.under_18} /> <span>Under 18 (comes with a guardian)</span></label>
                 {reg.under_18 && <label className="field"><span>Parent or guardian&apos;s name <small>Only for under 18s</small></span><input name="guardianName" maxLength={120} defaultValue={reg.guardian_name || ""} /></label>}
                 <label className="check"><input type="checkbox" name="sendEmail" /> <span>Send the updated confirmation or payment instructions after saving</span></label>
-                <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_status === "paid" ? ["The paid status, payment amount, reference and QR pass stay unchanged"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
+                <div className="actions"><ConfirmButton title={`Save ${reg.name}'s registration changes?`} items={["Their registration details and attendee count are updated", "No email is sent unless you ticked the email box", ...(reg.fee_required && !["paid", "not_due"].includes(reg.fee_status) ? ["If the ticket or amount changes, their payment is pending again with a fresh time to pay, and the ticked email is the updated payment request"] : []), ...(reg.fee_status === "paid" ? ["The paid status, payment amount, reference and QR pass stay unchanged"] : [])]} yes="Yes, save changes">Save changes</ConfirmButton></div>
               </form>
             </section>
           )}

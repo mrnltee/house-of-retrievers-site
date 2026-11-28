@@ -19,7 +19,7 @@ import ScrollProgress from "./ScrollProgress";
 
 /** The homepage. app/page.jsx (server) passes in the admin-set journey timeline settings. */
 export default function HomePage({ journeySettings, journeyStops, nextEvent = null, moreEvents = 0 }) {
-  const [packView, setPackView] = useState("impact");
+  const [packView, setPackView] = useState("families");
   const [modalOpen, setModalOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,9 +45,10 @@ export default function HomePage({ journeySettings, journeyStops, nextEvent = nu
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
-    if (view === "families") setPackView(view);
-    // Old shared links carry ?view=impact (the default): tidy it away.
-    if (view === "impact") {
+    // "How to join" opens from ?view=join (older links say ?view=impact).
+    if (view === "join" || view === "impact") setPackView("impact");
+    // ?view=families is now the default: tidy it away.
+    if (view === "families") {
       params.delete("view");
       const query = params.toString();
       window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
@@ -56,7 +57,7 @@ export default function HomePage({ journeySettings, journeyStops, nextEvent = nu
 
   // Keep the address clean: only write ?view= after a visitor switches tabs,
   // and only for the non-default tab, so shared links stay
-  // houseofretrieversph.org/ unless they point at the founding families.
+  // houseofretrieversph.org/ unless they point at How to join.
   const viewChanged = useRef(false);
   useEffect(() => {
     if (!viewChanged.current) {
@@ -64,8 +65,8 @@ export default function HomePage({ journeySettings, journeyStops, nextEvent = nu
       return;
     }
     const params = new URLSearchParams(window.location.search);
-    if (packView === "impact") params.delete("view");
-    else params.set("view", packView);
+    if (packView === "families") params.delete("view");
+    else params.set("view", "join");
     params.delete("story");
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
@@ -91,7 +92,7 @@ export default function HomePage({ journeySettings, journeyStops, nextEvent = nu
       <main id="main" tabIndex={-1}>
       <Hero onJoin={openJoin} />
       <ComingUp event={nextEvent} more={moreEvents} />
-      <PurposeStories />
+      <PurposeStories onJoin={openJoin} onSupport={() => setSupportOpen(true)} nextEvent={nextEvent} />
       <Journey onJoin={openJoin} settings={journeySettings} stops={journeyStops} />
       <InstagramFeed />
       <Pack packView={packView} setPackView={setPackView} onSupport={() => setSupportOpen(true)} />

@@ -2,9 +2,10 @@
 
 You are continuing work that Claude Code and Codex did on this repo through 19 Oct 2026.
 Read this file fully before you change anything. Then read `CLAUDE.md` in full.
-Then read the latest handoff in `docs/` (`docs/handoff-2026-10-19.md`): the
-current state, the live event's settings and what's waiting on the owner.
-It ends with an alignment check: do what it says in your first reply.
+Then read the latest handoff in `docs/` (`docs/handoff-2026-11-26.md`): how
+the owner and the AI work together, the current state and what's open.
+(`docs/handoff-2026-10-19.md` is the earlier one, with the live event's
+settings and an alignment check.)
 
 - **AGENTS.md** (this file) is *how to work here*: workflow, safety rules,
   conventions, the file map, what's open.
@@ -67,7 +68,7 @@ then built. Plain, warm language matters as much as the code (see §7).
      `main`, it *does* run against live data, so treat staging as a dry run,
      not proof it's safe for production.)
    - Never edit or rename a migration that has been applied. Add the next
-     number (the next one is **`055_…sql`**).
+     number (the next one is **`121_…sql`** as of 26 Nov 2026).
    - On staging use **throwaway records only**, and delete them afterwards.
      No test Join submissions on staging or production (they go to HOR's real
      Google Sheet).
